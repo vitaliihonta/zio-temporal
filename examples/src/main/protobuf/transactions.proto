@@ -1,0 +1,42 @@
+syntax = "proto2";
+
+package com.example.transactions;
+
+import "ztemporal.proto";
+
+message ProceedTransactionCommand {
+  required ztemporal.proto.UUID id = 1;
+  required ztemporal.proto.UUID sender = 2;
+  required ztemporal.proto.UUID receiver = 3;
+  required ztemporal.proto.BigDecimal amount = 4;
+}
+
+message ConfirmTransactionCommand {
+  required ztemporal.proto.UUID id = 1;
+  required string confirmationCode = 2;
+}
+
+message CancelTransactionCommand {
+  required ztemporal.proto.UUID id = 1;
+}
+
+enum TransactionStatus {
+  Created = 0;
+  InProgress = 1;
+  Succeeded = 2;
+  Failed = 3;
+}
+
+message TransactionView {
+  required ztemporal.proto.UUID id = 1;
+  required TransactionStatus status = 2;
+  required string description = 3;
+  required ztemporal.proto.UUID sender = 4;
+  required ztemporal.proto.UUID receiver = 5;
+  required ztemporal.proto.BigDecimal amount = 6;
+}
+
+message TransactionError {
+  required int32 code = 1;
+  required string message = 2;
+}
