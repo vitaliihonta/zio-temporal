@@ -1,10 +1,10 @@
 package com.example.payments.workflows
 
 import com.example.transactions._
-import io.temporal.activity.ActivityInterface
+import ztemporal._
 import ztemporal.proto.ZUnit
 
-@ActivityInterface
+@activity
 trait PaymentActivity {
 
   def proceed(transaction: ProceedTransactionCommand): Either[TransactionError, TransactionView]

@@ -1,22 +1,19 @@
 package ztemporal.internal
 
 import io.temporal.workflow.Functions
-import io.temporal.workflow.SignalMethod
-import io.temporal.workflow.WorkflowInterface
-import io.temporal.workflow.WorkflowMethod
+import ztemporal._
 import izumi.reflect.Tag
 import ztemporal.signal.ZInput
 import ztemporal.signal.ZSignal
 import ztemporal.utils.macros.MacroUtils
-
 import scala.reflect.macros.blackbox
 
 class ZSignalMacro(override val c: blackbox.Context) extends MacroUtils(c) {
   import c.universe._
 
-  private val WorkflowInterface = typeOf[WorkflowInterface].dealias
-  private val SignalMethod      = typeOf[SignalMethod].dealias
-  private val WorkflowMethod    = typeOf[WorkflowMethod].dealias
+  private val WorkflowInterface = typeOf[workflow].dealias
+  private val SignalMethod      = typeOf[signalMethod].dealias
+  private val WorkflowMethod    = typeOf[workflowMethod].dealias
   private val ZSignalMethod     = typeOf[ZSignal.SignalMethod]
   private val ZWorkflowMethod   = reify(ZSignal.WorkflowMethod)
 

@@ -1,12 +1,11 @@
 package ztemporal.fixture
 
-import io.temporal.workflow.WorkflowInterface
-import io.temporal.workflow.WorkflowMethod
+import ztemporal._
 
-@WorkflowInterface
+@workflow
 trait SampleWorkflow {
 
-  @WorkflowMethod
+  @workflowMethod
   def echo(str: String): String
 }
 

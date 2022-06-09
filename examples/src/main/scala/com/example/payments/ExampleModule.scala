@@ -8,10 +8,8 @@ import com.example.transactions.TransactionsProto
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import distage.config.AppConfig
-import io.temporal.common.converter.DataConverter
 import izumi.logstage.api.IzLogger
 import izumi.logstage.api.Log
-import izumi.logstage.api.logger.LogSink
 import izumi.logstage.api.routing.StaticLogRouter
 import izumi.logstage.sink.ConsoleSink
 import logstage.LogIO

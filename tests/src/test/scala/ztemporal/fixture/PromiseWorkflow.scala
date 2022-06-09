@@ -1,25 +1,22 @@
 package ztemporal.fixture
 
-import io.temporal.activity.ActivityInterface
-import io.temporal.workflow.WorkflowInterface
-import io.temporal.workflow.WorkflowMethod
+import ztemporal._
 import ztemporal.ZRetryOptions
 import ztemporal.workflow._
 import ztemporal.promise._
-
 import scala.concurrent.duration._
 
-@ActivityInterface
+@activity
 trait PromiseActivity {
   def foo(x: Int): Int
 
   def bar(x: Int): Int
 }
 
-@WorkflowInterface
+@workflow
 trait PromiseWorkflow {
 
-  @WorkflowMethod
+  @workflowMethod
   def fooBar(x: Int, y: Int): Int
 }
 

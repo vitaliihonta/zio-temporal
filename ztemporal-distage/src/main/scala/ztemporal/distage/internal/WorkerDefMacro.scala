@@ -1,7 +1,6 @@
 package ztemporal.distage.internal
 
-import io.temporal.activity.ActivityInterface
-import io.temporal.workflow.WorkflowInterface
+import ztemporal._
 import ztemporal.distage.RegisteredActivity
 import ztemporal.distage.RegisteredWorkflow
 import ztemporal.distage.ZWorkerDef
@@ -14,8 +13,8 @@ import izumi.distage.model.definition.dsl.ModuleDefDSL.MakeDSL
 class WorkerDefMacro(override val c: blackbox.Context) extends MacroUtils(c) {
   import c.universe._
 
-  private val WorkflowInterface = typeOf[WorkflowInterface]
-  private val ActivityInterface = typeOf[ActivityInterface]
+  private val WorkflowInterface = typeOf[workflow]
+  private val ActivityInterface = typeOf[activity]
 
   private val anyClass    = typeOf[Class[AnyRef]].dealias
   private val anyWorkflow = typeOf[RegisteredWorkflow[AnyRef]].dealias
@@ -25,7 +24,7 @@ class WorkerDefMacro(override val c: blackbox.Context) extends MacroUtils(c) {
     val A = weakTypeOf[A].dealias
 
     if (!extendsWorkflow(A))
-      error(s"$A is not a workflow: it should extend a trait with $WorkflowInterface annotation")
+      error(s"$A is not a workflow: it should extend a trait with @$WorkflowInterface annotation")
 
     if (!isConcrete(A))
       error(s"workflow $A is abstract, should be a concrete class or object")
@@ -42,7 +41,7 @@ class WorkerDefMacro(override val c: blackbox.Context) extends MacroUtils(c) {
     val A = weakTypeOf[A].dealias
 
     if (!extendsWorkflow(A))
-      error(s"$A is not a workflow: it should extend a trait with $WorkflowInterface annotation")
+      error(s"$A is not a workflow: it should extend a trait with @$WorkflowInterface annotation")
 
     if (isConcrete(A))
       error(s"workflow $A is concrete, should be a trait or abstract class")
@@ -56,7 +55,7 @@ class WorkerDefMacro(override val c: blackbox.Context) extends MacroUtils(c) {
     val A = weakTypeOf[A].dealias
 
     if (!isActivity(A))
-      error(s"$A is not an activity: missing $ActivityInterface annotation")
+      error(s"$A is not an activity: missing @$ActivityInterface annotation")
 
     val activity = freshTermName("activity")
 

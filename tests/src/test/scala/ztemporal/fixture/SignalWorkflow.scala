@@ -1,21 +1,18 @@
 package ztemporal.fixture
 
-import io.temporal.workflow.QueryMethod
-import io.temporal.workflow.SignalMethod
-import io.temporal.workflow.WorkflowInterface
-import io.temporal.workflow.WorkflowMethod
+import ztemporal._
 import ztemporal.workflow.ZWorkflow
 
-@WorkflowInterface
+@workflow
 trait SignalWorkflow {
 
-  @WorkflowMethod
+  @workflowMethod
   def echoServer(prefix: String): String
 
-  @QueryMethod(name = "progress")
+  @queryMethod(name = "progress")
   def getProgress: Option[String]
 
-  @SignalMethod
+  @signalMethod
   def echo(value: String): Unit
 }
 

@@ -1,8 +1,6 @@
 package ztemporal.fixture
 
-import io.temporal.activity.ActivityInterface
-import io.temporal.workflow.WorkflowInterface
-import io.temporal.workflow.WorkflowMethod
+import ztemporal._
 import ztemporal.ZRetryOptions
 import ztemporal.saga._
 import ztemporal.workflow._
@@ -11,7 +9,7 @@ import scala.concurrent.duration._
 case class Error(msg: String)
 case class Done()
 
-@ActivityInterface
+@activity
 trait TransferActivity {
   def deposit(account: String, amount: BigDecimal): Either[Error, Done]
 
@@ -32,10 +30,10 @@ class TransferActivityImpl(
 
 case class TransferCommand(from: String, to: String, amount: BigDecimal)
 
-@WorkflowInterface
+@workflow
 trait SagaWorkflow {
 
-  @WorkflowMethod
+  @workflowMethod
   def transfer(command: TransferCommand): Either[Error, BigDecimal]
 }
 

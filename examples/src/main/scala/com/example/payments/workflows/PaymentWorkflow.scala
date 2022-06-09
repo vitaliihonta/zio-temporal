@@ -1,20 +1,17 @@
 package com.example.payments.workflows
 
 import com.example.transactions._
-import io.temporal.workflow.QueryMethod
-import io.temporal.workflow.SignalMethod
-import io.temporal.workflow.WorkflowInterface
-import io.temporal.workflow.WorkflowMethod
+import ztemporal._
 
-@WorkflowInterface
+@workflow
 trait PaymentWorkflow {
 
-  @WorkflowMethod
+  @workflowMethod
   def proceed(transaction: ProceedTransactionCommand): Either[TransactionError, TransactionView]
 
-  @QueryMethod
+  @queryMethod
   def getStatus: Either[TransactionError, TransactionView]
 
-  @SignalMethod
+  @signalMethod
   def confirmTransaction(command: ConfirmTransactionCommand): Unit
 }
