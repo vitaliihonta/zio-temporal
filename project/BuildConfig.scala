@@ -30,6 +30,7 @@ object BuildConfig extends Dependencies {
   val ztemporalScalapbLibs = baseLibs ++ Seq(
     Scalapb.runtime,
     Scalapb.runtimeProtobuf,
+    Utility.reflections,
     Enumeratum.enumeratum % Optional
   )
 
@@ -92,12 +93,17 @@ trait Dependencies {
   object Utility {
     val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
     val izumiReflect     = org.zio                  %% "izumi-reflect"      % "2.1.0"
+    val reflections      = "org.reflections"         % "reflections"        % "0.10.2"
   }
 
-  object Macros {
+  object ScalaReflect {
 
-    val scalaReflect = Def.setting {
+    val macros = Def.setting {
       "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided
+    }
+
+    val runtime = Def.setting {
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value
     }
   }
 

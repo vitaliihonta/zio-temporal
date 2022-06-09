@@ -87,7 +87,7 @@ lazy val `ztemporal-macro-utils` = projectMatrix
   .settings(defaultSettings)
   .settings(crossCompileSettings)
   .settings(
-    libraryDependencies += BuildConfig.Macros.scalaReflect.value
+    libraryDependencies += BuildConfig.ScalaReflect.macros.value
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
 
@@ -98,7 +98,7 @@ lazy val `ztemporal-core` = projectMatrix
   .settings(crossCompileSettings)
   .settings(
     libraryDependencies ++= BuildConfig.ztemporalCoreLibs ++ Seq(
-      BuildConfig.Macros.scalaReflect.value
+      BuildConfig.ScalaReflect.macros.value
     )
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
@@ -110,7 +110,7 @@ lazy val `ztemporal-testkit` = projectMatrix
   .settings(crossCompileSettings)
   .settings(
     libraryDependencies ++= BuildConfig.ztemporalTestKitLibs ++ Seq(
-      BuildConfig.Macros.scalaReflect.value
+      BuildConfig.ScalaReflect.macros.value
     )
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
@@ -139,6 +139,7 @@ lazy val `ztemporal-scalapb` = projectMatrix
   .settings(crossCompileSettings)
   .settings(
     libraryDependencies ++= BuildConfig.ztemporalScalapbLibs,
+    libraryDependencies += BuildConfig.ScalaReflect.runtime.value,
     Compile / PB.targets := Seq(
       scalapb.gen(
         flatPackage = true,
@@ -155,7 +156,7 @@ lazy val `ztemporal-distage` = projectMatrix
   .settings(crossCompileSettings)
   .settings(
     libraryDependencies ++= BuildConfig.ztemporalDistageLibs ++ Seq(
-      BuildConfig.Macros.scalaReflect.value
+      BuildConfig.ScalaReflect.macros.value
     )
   )
   .jvmPlatform(scalaVersions = allScalaVersions)

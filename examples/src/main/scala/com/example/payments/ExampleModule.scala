@@ -44,11 +44,7 @@ object ExampleModule extends ModuleDef {
 
   make[ZWorkflowClientOptions].fromValue(
     ZWorkflowClientOptions.default.withDataConverter(
-      ScalapbDataConverter.make(
-        List(
-          TransactionsProto
-        )
-      )
+      ScalapbDataConverter.makeAutoLoad()
     )
   )
 
