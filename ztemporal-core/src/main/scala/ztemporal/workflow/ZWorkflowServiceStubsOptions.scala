@@ -3,12 +3,10 @@ package ztemporal.workflow
 import io.grpc.ManagedChannel
 import io.grpc.Metadata
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext
-import io.temporal.api.workflowservice.v1.WorkflowServiceGrpc
 import io.temporal.serviceclient.RpcRetryOptions
 import io.temporal.serviceclient.WorkflowServiceStubsOptions
 import scala.concurrent.duration.FiniteDuration
 import scala.compat.java8.DurationConverters._
-import scala.compat.java8.FunctionConverters._
 
 /** Represents temporal workflow service stubs options
   *
@@ -29,9 +27,7 @@ class ZWorkflowServiceStubsOptions private[ztemporal] (
   val rpcRetryOptions:                 Option[RpcRetryOptions],
   val connectionBackoffResetFrequency: Option[FiniteDuration],
   val grpcReconnectFrequency:          Option[FiniteDuration],
-  val headers:                         Option[Metadata],
-  val blockingStubInterceptor:         Option[ZWorkflowServiceStubsOptions.BlockingStubInterceptor],
-  val futureStubInterceptor:           Option[ZWorkflowServiceStubsOptions.FutureStubInterceptor]) {
+  val headers:                         Option[Metadata]) {
 
   def withChannel(value: ManagedChannel): ZWorkflowServiceStubsOptions =
     copy(_channel = Some(value))
@@ -75,16 +71,6 @@ class ZWorkflowServiceStubsOptions private[ztemporal] (
   def withHeaders(value: Metadata): ZWorkflowServiceStubsOptions =
     copy(_headers = Some(value))
 
-  def withBlockingStubInterceptor(
-    value: ZWorkflowServiceStubsOptions.BlockingStubInterceptor
-  ): ZWorkflowServiceStubsOptions =
-    copy(_blockingStubInterceptor = Some(value))
-
-  def withFutureStubInterceptor(
-    value: ZWorkflowServiceStubsOptions.FutureStubInterceptor
-  ): ZWorkflowServiceStubsOptions =
-    copy(_futureStubInterceptor = Some(value))
-
   def toJava: WorkflowServiceStubsOptions = {
     val builder = WorkflowServiceStubsOptions.newBuilder()
 
@@ -103,8 +89,6 @@ class ZWorkflowServiceStubsOptions private[ztemporal] (
     connectionBackoffResetFrequency.foreach(t => builder.setConnectionBackoffResetFrequency(t.toJava))
     grpcReconnectFrequency.foreach(t => builder.setGrpcReconnectFrequency(t.toJava))
     headers.foreach(builder.setHeaders)
-    blockingStubInterceptor.foreach(f => builder.setBlockingStubInterceptor(f.asJava))
-    futureStubInterceptor.foreach(f => builder.setFutureStubInterceptor(f.asJava))
     builder.build()
   }
 
@@ -123,9 +107,7 @@ class ZWorkflowServiceStubsOptions private[ztemporal] (
     _rpcRetryOptions:                 Option[RpcRetryOptions] = rpcRetryOptions,
     _connectionBackoffResetFrequency: Option[FiniteDuration] = connectionBackoffResetFrequency,
     _grpcReconnectFrequency:          Option[FiniteDuration] = grpcReconnectFrequency,
-    _headers:                         Option[Metadata] = headers,
-    _blockingStubInterceptor:         Option[ZWorkflowServiceStubsOptions.BlockingStubInterceptor] = blockingStubInterceptor,
-    _futureStubInterceptor:           Option[ZWorkflowServiceStubsOptions.FutureStubInterceptor] = futureStubInterceptor
+    _headers:                         Option[Metadata] = headers
   ): ZWorkflowServiceStubsOptions =
     new ZWorkflowServiceStubsOptions(
       _serverUrl,
@@ -142,19 +124,11 @@ class ZWorkflowServiceStubsOptions private[ztemporal] (
       _rpcRetryOptions,
       _connectionBackoffResetFrequency,
       _grpcReconnectFrequency,
-      _headers,
-      _blockingStubInterceptor,
-      _futureStubInterceptor
+      _headers
     )
 }
 
 object ZWorkflowServiceStubsOptions {
-
-  type BlockingStubInterceptor =
-    WorkflowServiceGrpc.WorkflowServiceBlockingStub => WorkflowServiceGrpc.WorkflowServiceBlockingStub
-
-  type FutureStubInterceptor =
-    WorkflowServiceGrpc.WorkflowServiceFutureStub => WorkflowServiceGrpc.WorkflowServiceFutureStub
 
   val DefaultLocalDocker: ZWorkflowServiceStubsOptions = new ZWorkflowServiceStubsOptions(
     serverUrl = "127.0.0.1:7233",
@@ -171,8 +145,6 @@ object ZWorkflowServiceStubsOptions {
     rpcRetryOptions = None,
     connectionBackoffResetFrequency = None,
     grpcReconnectFrequency = None,
-    headers = None,
-    blockingStubInterceptor = None,
-    futureStubInterceptor = None
+    headers = None
   )
 }

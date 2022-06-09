@@ -54,9 +54,7 @@ object ZTemporalConfigModule extends ConfigModuleDef {
       rpcRetryOptions = None,
       connectionBackoffResetFrequency = config.connectionBackoffResetFrequency,
       grpcReconnectFrequency = config.grpcReconnectFrequency,
-      headers = None,
-      blockingStubInterceptor = None,
-      futureStubInterceptor = None
+      headers = None
     )
   }
 }

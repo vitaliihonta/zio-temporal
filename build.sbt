@@ -1,5 +1,5 @@
-val scala2_13 = "2.13.5"
-val scala2_12 = "2.12.13"
+val scala2_13 = "2.13.8"
+val scala2_12 = "2.12.15"
 
 val allScalaVersions          = List(scala2_12, scala2_13)
 val documentationScalaVersion = scala2_13
@@ -7,7 +7,7 @@ val documentationScalaVersion = scala2_13
 scalaVersion := scala2_13
 
 ThisBuild / organization := "com.github.vitaliihonta"
-ThisBuild / version := "0.1.4"
+ThisBuild / version := "0.2.0"
 ThisBuild / scalaVersion := scala2_13
 
 lazy val defaultSettings = Seq(
@@ -119,7 +119,7 @@ lazy val tests = projectMatrix
   .in(file("tests"))
   .dependsOn(
     `ztemporal-core`,
-    `ztemporal-testkit`,
+    `ztemporal-testkit` % "compile->compile;test->test",
     `ztemporal-scalapb`,
     `ztemporal-distage`
   )

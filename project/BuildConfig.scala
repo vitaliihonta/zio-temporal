@@ -47,10 +47,10 @@ object BuildConfig extends Dependencies {
 trait Dependencies {
 
   object version {
-    val temporal   = "1.0.7"
-    val zio        = "1.0.7"
-    val izumi      = "1.0.6"
-    val enumeratum = "1.6.1"
+    val temporal   = "1.12.0"
+    val zio        = "1.0.15"
+    val izumi      = "1.0.8"
+    val enumeratum = "1.7.0"
   }
 
   object org {
@@ -66,12 +66,12 @@ trait Dependencies {
   }
 
   object Jackson {
-    val scala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.3"
+    val scala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.3"
   }
 
   object Zio {
     val self        = org.zio %% "zio"              % version.zio
-    val interopCats = org.zio %% "zio-interop-cats" % "2.2.0.1"
+    val interopCats = org.zio %% "zio-interop-cats" % "2.5.1.1"
   }
 
   object Distage {
@@ -90,8 +90,8 @@ trait Dependencies {
   }
 
   object Utility {
-    val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
-    val izumiReflect     = org.zio                  %% "izumi-reflect"      % "1.1.1"
+    val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
+    val izumiReflect     = org.zio                  %% "izumi-reflect"      % "2.1.0"
   }
 
   object Macros {
@@ -104,7 +104,7 @@ trait Dependencies {
   object ScalaExt {
 
     val kindProjectorCompilerPlugin = compilerPlugin(
-      "org.typelevel" %% "kind-projector" % "0.11.3" cross CrossVersion.full
+      "org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full
     )
   }
 
@@ -116,7 +116,7 @@ trait Dependencies {
   }
 
   object Testing {
-    val scalatest = "org.scalatest" %% "scalatest" % "3.2.0" % Test
+    val scalatest = "org.scalatest" %% "scalatest" % "3.2.12" % Test
   }
 
   object Examples {
