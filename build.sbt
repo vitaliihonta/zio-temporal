@@ -107,7 +107,11 @@ lazy val root = project
 
 lazy val coverage = project
   .in(file("./.coverage"))
-  .settings(baseSettings, coverageSettings, noPublishSettings)
+  .settings(baseSettings, coverageSettings)
+  .settings(
+    publish / skip := true,
+    publish        := {}
+  )
   .aggregate(
     `ztemporal-core`.jvm(scala213),
     `ztemporal-testkit`.jvm(scala213),
