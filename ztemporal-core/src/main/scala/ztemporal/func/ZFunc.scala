@@ -14,8 +14,10 @@ class ZFunc0[A](private val self: () => A) extends AnyVal {
 
   /** Executes zero argument workflow waiting for it's result.
     *
-    * The only supported value is method reference to a proxy created through [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
-    * @return IO that contains workflow result or failure
+    * The only supported value is method reference to a proxy created through
+    * [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
+    * @return
+    *   IO that contains workflow result or failure
     */
   def execute: ZTemporalIO[ZTemporalClientError, A] =
     TemporalInteraction.fromFuture {
@@ -24,8 +26,10 @@ class ZFunc0[A](private val self: () => A) extends AnyVal {
 
   /** Executes zero argument workflow waiting for it's result.
     *
-    * The only supported value is method reference to a proxy created through [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
-    * @return IO that contains workflow result or failure
+    * The only supported value is method reference to a proxy created through
+    * [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
+    * @return
+    *   IO that contains workflow result or failure
     */
   def executeEither[E, V](implicit ev: A <:< Either[E, V]): ZTemporalIO[ZTemporalError[E], V] =
     TemporalInteraction.fromFutureEither {
@@ -34,8 +38,10 @@ class ZFunc0[A](private val self: () => A) extends AnyVal {
 
   /** Starts zero argument workflow.
     *
-    * The only supported value is method reference to a proxy created through [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
-    * @return IO that contains workflow execution info
+    * The only supported value is method reference to a proxy created through
+    * [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
+    * @return
+    *   IO that contains workflow execution info
     */
   def start: ZTemporalIO[ZTemporalClientError, ZWorkflowExecution] =
     TemporalInteraction.from {
@@ -46,14 +52,16 @@ class ZFunc0[A](private val self: () => A) extends AnyVal {
 
   /** Executes zero argument workflow in background.
     *
-    * @return [[ZPromise]] that contains workflow result or failure
+    * @return
+    *   [[ZPromise]] that contains workflow result or failure
     */
   def async: ZPromise[Nothing, A] =
     ZPromise.fromEither(Right(self()))
 
   /** Executes zero argument workflow in background.
     *
-    * @return [[ZPromise]] that contains workflow result or failure
+    * @return
+    *   [[ZPromise]] that contains workflow result or failure
     */
   def asyncEither[E, V](implicit ev: A <:< Either[E, V]): ZPromise[E, V] =
     new ZPromise.Impl[E, V](Async.function(() => ev(self())))
@@ -64,9 +72,12 @@ class ZFunc1[A, B](private val self: A => B) extends AnyVal {
 
   /** Executes one argument workflow waiting for it's result.
     *
-    * The only supported value is method reference to a proxy created through [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
-    * @param a workflow argument
-    * @return IO that contains workflow result or failure
+    * The only supported value is method reference to a proxy created through
+    * [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
+    * @param a
+    *   workflow argument
+    * @return
+    *   IO that contains workflow result or failure
     */
   def execute(a: A): ZTemporalIO[ZTemporalClientError, B] =
     TemporalInteraction.fromFuture {
@@ -75,9 +86,12 @@ class ZFunc1[A, B](private val self: A => B) extends AnyVal {
 
   /** Executes one argument workflow waiting for it's result.
     *
-    * The only supported value is method reference to a proxy created through [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
-    * @param a workflow argument
-    * @return IO that contains workflow result or failure
+    * The only supported value is method reference to a proxy created through
+    * [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
+    * @param a
+    *   workflow argument
+    * @return
+    *   IO that contains workflow result or failure
     */
   def executeEither[E, V](a: A)(implicit ev: B <:< Either[E, V]): ZTemporalIO[ZTemporalError[E], V] =
     TemporalInteraction.fromFutureEither {
@@ -86,9 +100,12 @@ class ZFunc1[A, B](private val self: A => B) extends AnyVal {
 
   /** Starts one argument workflow.
     *
-    * The only supported value is method reference to a proxy created through [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
-    * @param a workflow argument
-    * @return IO that contains workflow execution info
+    * The only supported value is method reference to a proxy created through
+    * [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
+    * @param a
+    *   workflow argument
+    * @return
+    *   IO that contains workflow execution info
     */
   def start(a: A): ZTemporalIO[ZTemporalClientError, ZWorkflowExecution] =
     TemporalInteraction.from {
@@ -99,16 +116,20 @@ class ZFunc1[A, B](private val self: A => B) extends AnyVal {
 
   /** Executes one argument workflow in background.
     *
-    * @param a workflow argument
-    * @return [[ZPromise]] that contains workflow result or failure
+    * @param a
+    *   workflow argument
+    * @return
+    *   [[ZPromise]] that contains workflow result or failure
     */
   def async(a: A): ZPromise[Nothing, B] =
     new ZPromise.Impl[Nothing, B](Async.function((a: A) => Right(self(a)), a))
 
   /** Executes one argument workflow in background.
     *
-    * @param a workflow argument
-    * @return [[ZPromise]] that contains workflow result or failure
+    * @param a
+    *   workflow argument
+    * @return
+    *   [[ZPromise]] that contains workflow result or failure
     */
   def asyncEither[E, V](a: A)(implicit ev: B <:< Either[E, V]): ZPromise[E, V] =
     new ZPromise.Impl[E, V](Async.function((a: A) => ev(self(a)), a))
@@ -119,10 +140,14 @@ class ZFunc2[A, B, C](private val self: (A, B) => C) extends AnyVal {
 
   /** Executes two argument workflow waiting for it's result.
     *
-    * The only supported value is method reference to a proxy created through [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
-    * @param a first workflow argument
-    * @param b second workflow argument
-    * @return IO that contains workflow result or failure
+    * The only supported value is method reference to a proxy created through
+    * [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
+    * @param a
+    *   first workflow argument
+    * @param b
+    *   second workflow argument
+    * @return
+    *   IO that contains workflow result or failure
     */
   def execute(a: A, b: B): ZTemporalIO[ZTemporalClientError, C] =
     TemporalInteraction.fromFuture {
@@ -131,10 +156,14 @@ class ZFunc2[A, B, C](private val self: (A, B) => C) extends AnyVal {
 
   /** Executes two argument workflow waiting for it's result.
     *
-    * The only supported value is method reference to a proxy created through [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
-    * @param a first workflow argument
-    * @param b second workflow argument
-    * @return IO that contains workflow result or failure
+    * The only supported value is method reference to a proxy created through
+    * [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
+    * @param a
+    *   first workflow argument
+    * @param b
+    *   second workflow argument
+    * @return
+    *   IO that contains workflow result or failure
     */
   def executeEither[E, V](a: A, b: B)(implicit ev: C <:< Either[E, V]): ZTemporalIO[ZTemporalError[E], V] =
     TemporalInteraction.fromFutureEither {
@@ -143,10 +172,14 @@ class ZFunc2[A, B, C](private val self: (A, B) => C) extends AnyVal {
 
   /** Starts two argument workflow.
     *
-    * The only supported value is method reference to a proxy created through [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
-    * @param a first workflow argument
-    * @param b second workflow argument
-    * @return IO that contains workflow execution info
+    * The only supported value is method reference to a proxy created through
+    * [[ztemporal.workflow.ZWorkflowClient.newWorkflowStub]]
+    * @param a
+    *   first workflow argument
+    * @param b
+    *   second workflow argument
+    * @return
+    *   IO that contains workflow execution info
     */
   def start(a: A, b: B): ZTemporalIO[ZTemporalClientError, ZWorkflowExecution] =
     TemporalInteraction.from {
@@ -157,18 +190,24 @@ class ZFunc2[A, B, C](private val self: (A, B) => C) extends AnyVal {
 
   /** Executes two argument workflow in background.
     *
-    * @param a first workflow argument
-    * @param b second workflow argument
-    * @return [[ZPromise]] that contains workflow result or failure
+    * @param a
+    *   first workflow argument
+    * @param b
+    *   second workflow argument
+    * @return
+    *   [[ZPromise]] that contains workflow result or failure
     */
   def async(a: A, b: B): ZPromise[Nothing, C] =
     new ZPromise.Impl[Nothing, C](Async.function((a: A, b: B) => Right(self(a, b)), a, b))
 
   /** Executes zero argument workflow in background.
     *
-    * @param a first workflow argument
-    * @param b second workflow argument
-    * @return [[ZPromise]] that contains workflow result or failure
+    * @param a
+    *   first workflow argument
+    * @param b
+    *   second workflow argument
+    * @return
+    *   [[ZPromise]] that contains workflow result or failure
     */
   def asyncEither[E, V](a: A, b: B)(implicit ev: C <:< Either[E, V]): ZPromise[E, V] =
     new ZPromise.Impl[E, V](Async.function((a: A, b: B) => ev(self(a, b)), a, b))

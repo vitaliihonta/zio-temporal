@@ -11,7 +11,8 @@ import scala.jdk.CollectionConverters._
 
 /** Represents temporal workflow options
   *
-  *  @see [[WorkflowOptions]]
+  * @see
+  *   [[WorkflowOptions]]
   */
 class ZWorkflowOptions private[ztemporal] (
   val workflowIdReusePolicy:    Option[WorkflowIdReusePolicy],

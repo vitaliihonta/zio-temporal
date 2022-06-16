@@ -50,7 +50,8 @@ final class ZWorkflowStubBuilder[A] private[ztemporal] (
     copy(_.setRetryOptions(options.toJava))
 
   /** Builds typed ZWorkflowStub
-    * @return typed workflow stub
+    * @return
+    *   typed workflow stub
     */
   def build: UIO[ZWorkflowStub.Of[A]] =
     UIO.effectTotal {

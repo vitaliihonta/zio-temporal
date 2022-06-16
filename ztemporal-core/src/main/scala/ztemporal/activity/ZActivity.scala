@@ -4,17 +4,20 @@ import zio._
 import io.temporal.activity.Activity
 import ztemporal.ZActivityFatalError
 
-/** Executed arbitrary effects within an activity implementation
-  * asynchronously completing the activity
+/** Executed arbitrary effects within an activity implementation asynchronously completing the activity
   */
 object ZActivity {
 
   /** Runs provided unexceptional effect completing this activity with the effect result.
     *
-    * @tparam A effect result type
-    * @param action the effect
-    * @param zactivityOptions options required to run the action
-    * @return result of executing the action
+    * @tparam A
+    *   effect result type
+    * @param action
+    *   the effect
+    * @param zactivityOptions
+    *   options required to run the action
+    * @return
+    *   result of executing the action
     */
   def run[A](action: URIO[ZEnv, A])(implicit zactivityOptions: ZActivityOptions): A = {
     val ctx       = Activity.getExecutionContext
@@ -41,11 +44,16 @@ object ZActivity {
 
   /** Runs provided effect completing this activity with the effect result.
     *
-    * @tparam E effect error type
-    * @tparam A effect result type
-    * @param action the effect
-    * @param zactivityOptions options required to run the action
-    * @return result of executing the action
+    * @tparam E
+    *   effect error type
+    * @tparam A
+    *   effect result type
+    * @param action
+    *   the effect
+    * @param zactivityOptions
+    *   options required to run the action
+    * @return
+    *   result of executing the action
     */
   def run[E, A](action: ZIO[ZEnv, E, A])(implicit zactivityOptions: ZActivityOptions): Either[E, A] = {
     val ctx       = Activity.getExecutionContext

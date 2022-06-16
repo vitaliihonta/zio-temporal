@@ -1,16 +1,53 @@
-val scala2_13 = "2.13.8"
-val scala2_12 = "2.12.15"
+val scala213 = "2.13.8"
+val scala212 = "2.12.15"
 
-val allScalaVersions          = List(scala2_12, scala2_13)
-val documentationScalaVersion = scala2_13
+val allScalaVersions          = List(scala212, scala213)
+val documentationScalaVersion = scala213
 
-scalaVersion := scala2_13
+ThisBuild / scalaVersion  := scala213
+ThisBuild / organization  := "com.github.vitaliihonta"
+ThisBuild / version       := "0.1.0-RC1"
+ThisBuild / versionScheme := Some("early-semver")
 
-ThisBuild / organization := "com.github.vitaliihonta"
-ThisBuild / version := "0.2.0"
-ThisBuild / scalaVersion := scala2_13
+val publishSettings = Seq(
+  publishTo            := sonatypePublishToBundle.value,
+  publishMavenStyle    := true,
+  sonatypeProfileName  := "com.github.vitaliihonta",
+  organizationHomepage := Some(url("https://github.com/vitaliihonta")),
+  homepage             := Some(url("https://github.com/vitaliihonta")),
+  licenses := Seq(
+    "Apache 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
+  ),
+  scmInfo := Some(
+    ScmInfo(
+      url(s"https://github.com/vitaliihonta/ztemporal"),
+      s"scm:git:https://github.com/vitaliihonta/ztemporal.git",
+      Some(s"scm:git:git@github.com:vitaliihonta/ztemporal.git")
+    )
+  ),
+  developers := List(
+    Developer(
+      id = "vitaliihonta",
+      name = "Vitalii Honta",
+      email = "vitalii.honta@gmail.com",
+      url = new URL("https://github.com/vitaliihonta")
+    )
+  ),
+  sonatypeCredentialHost := "oss.sonatype.org"
+)
 
-lazy val defaultSettings = Seq(
+val coverageSettings = Seq(
+  //  Keys.fork in org.jacoco.core.
+  jacocoAggregateReportSettings := JacocoReportSettings(
+    title = "ZTemporal Coverage Report",
+    subDirectory = None,
+    thresholds = JacocoThresholds(),
+    formats = Seq(JacocoReportFormats.ScalaHTML, JacocoReportFormats.XML), // note XML formatter
+    fileEncoding = "utf-8"
+  )
+)
+
+lazy val baseProjectSettings = Seq(
   scalacOptions ++= {
     val baseOptions = Seq(
       "-language:implicitConversions",
@@ -40,15 +77,19 @@ val crossCompileSettings: Seq[Def.Setting[_]] = {
   )
 }
 
+val noPublishSettings = Seq(
+  publish / skip := true,
+  publish        := {}
+)
+
+val baseSettings    = baseProjectSettings
+val baseLibSettings = baseSettings ++ publishSettings ++ coverageSettings
+
 lazy val root = project
   .in(file("."))
-  .settings(defaultSettings)
+  .settings(baseSettings, noPublishSettings)
   .settings(
-    name := "ztemporal-root",
-    publishArtifact := false
-  )
-  .aggregate(
-    examples
+    name := "ztemporal-root"
   )
   .aggregate(
     `ztemporal-macro-utils`.projectRefs ++
@@ -59,16 +100,35 @@ lazy val root = project
       tests.projectRefs ++
       docs.projectRefs: _*
   )
+  .aggregate(
+    examples,
+    coverage
+  )
+
+lazy val coverage = project
+  .in(file("./.coverage"))
+  .settings(baseSettings, coverageSettings)
+  .settings(
+    publish / skip := true,
+    publish        := {}
+  )
+  .aggregate(
+    `ztemporal-core`.jvm(scala213),
+    `ztemporal-testkit`.jvm(scala213),
+    `ztemporal-scalapb`.jvm(scala213),
+    `ztemporal-distage`.jvm(scala213),
+    tests.jvm(scala213)
+  )
 
 lazy val docs = projectMatrix
   .in(file("doc-template"))
-  .settings(defaultSettings)
+  .settings(baseSettings, noPublishSettings)
   .settings(
-    name := "doc",
+    name            := "doc",
     publishArtifact := false,
-    mdocIn := file("doc-template/src/main/mdoc"),
-    mdocOut := file("docs"),
-    moduleName := "ztemporal-doc",
+    mdocIn          := file("doc-template/src/main/mdoc"),
+    mdocOut         := file("docs"),
+    moduleName      := "ztemporal-doc",
     mdocVariables := Map(
       "VERSION" -> version.value
     )
@@ -84,7 +144,7 @@ lazy val docs = projectMatrix
 
 lazy val `ztemporal-macro-utils` = projectMatrix
   .in(file("ztemporal-macro-utils"))
-  .settings(defaultSettings)
+  .settings(baseLibSettings)
   .settings(crossCompileSettings)
   .settings(
     libraryDependencies += BuildConfig.ScalaReflect.macros.value
@@ -94,7 +154,7 @@ lazy val `ztemporal-macro-utils` = projectMatrix
 lazy val `ztemporal-core` = projectMatrix
   .in(file("ztemporal-core"))
   .dependsOn(`ztemporal-macro-utils`)
-  .settings(defaultSettings)
+  .settings(baseLibSettings)
   .settings(crossCompileSettings)
   .settings(
     libraryDependencies ++= BuildConfig.ztemporalCoreLibs ++ Seq(
@@ -106,7 +166,7 @@ lazy val `ztemporal-core` = projectMatrix
 lazy val `ztemporal-testkit` = projectMatrix
   .in(file("ztemporal-testkit"))
   .dependsOn(`ztemporal-core`)
-  .settings(defaultSettings)
+  .settings(baseLibSettings)
   .settings(crossCompileSettings)
   .settings(
     libraryDependencies ++= BuildConfig.ztemporalTestKitLibs ++ Seq(
@@ -123,18 +183,16 @@ lazy val tests = projectMatrix
     `ztemporal-scalapb`,
     `ztemporal-distage`
   )
-  .settings(defaultSettings)
-  .settings(crossCompileSettings)
+  .settings(baseSettings, coverageSettings, noPublishSettings, crossCompileSettings)
   .settings(
     name := "tests",
-    publishArtifact := false,
     libraryDependencies ++= BuildConfig.testLibs
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
 
 lazy val `ztemporal-scalapb` = projectMatrix
   .in(file("ztemporal-scalapb"))
-  .settings(defaultSettings)
+  .settings(baseLibSettings)
   .dependsOn(`ztemporal-core`)
   .settings(crossCompileSettings)
   .settings(
@@ -152,7 +210,7 @@ lazy val `ztemporal-scalapb` = projectMatrix
 lazy val `ztemporal-distage` = projectMatrix
   .in(file("ztemporal-distage"))
   .dependsOn(`ztemporal-core`, `ztemporal-macro-utils`)
-  .settings(defaultSettings)
+  .settings(baseLibSettings)
   .settings(crossCompileSettings)
   .settings(
     libraryDependencies ++= BuildConfig.ztemporalDistageLibs ++ Seq(
@@ -163,10 +221,10 @@ lazy val `ztemporal-distage` = projectMatrix
 
 lazy val examples = project
   .in(file("examples"))
-  .settings(defaultSettings)
+  .settings(baseSettings, noPublishSettings)
   .settings(
-    name := "examples",
-    scalaVersion := scala2_13,
+    name         := "examples",
+    scalaVersion := scala213,
     Compile / PB.targets := Seq(
       scalapb.gen(
         flatPackage = true,
@@ -176,8 +234,8 @@ lazy val examples = project
     libraryDependencies ++= BuildConfig.examplesLibs
   )
   .dependsOn(
-    `ztemporal-core`.jvm(scala2_13),
-    `ztemporal-testkit`.jvm(scala2_13),
-    `ztemporal-scalapb`.jvm(scala2_13),
-    `ztemporal-distage`.jvm(scala2_13)
+    `ztemporal-core`.jvm(scala213),
+    `ztemporal-testkit`.jvm(scala213),
+    `ztemporal-scalapb`.jvm(scala213),
+    `ztemporal-distage`.jvm(scala213)
   )

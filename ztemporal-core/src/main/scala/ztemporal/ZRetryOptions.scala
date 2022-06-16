@@ -7,7 +7,8 @@ import scala.concurrent.duration.FiniteDuration
 
 /** Represents temporal retry options
   *
-  *  @see [[RetryOptions]]
+  * @see
+  *   [[RetryOptions]]
   */
 class ZRetryOptions private[ztemporal] (
   val maximumAttempts:    Option[Int],

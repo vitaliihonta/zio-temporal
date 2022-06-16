@@ -54,7 +54,8 @@ class ZChildWorkflowStubBuilder[A: ClassTag] private[ztemporal] (
     copy(_.setCancellationType(cancellationType))
 
   /** Builds typed ZChildWorkflowStub
-    * @return typed child workflow stub
+    * @return
+    *   typed child workflow stub
     */
   def build: ZChildWorkflowStub.Of[A] = {
     val options = additionalOptions(ChildWorkflowOptions.newBuilder()).build()

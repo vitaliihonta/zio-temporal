@@ -13,7 +13,8 @@ import ztemporal.worker.ZWorkerFactoryOptions
 import ztemporal.workflow.ZWorkflowClientOptions
 
 /** Represents ZTestEnvironment options.
-  * @see [[TestEnvironmentOptions]]
+  * @see
+  *   [[TestEnvironmentOptions]]
   */
 class ZTestEnvironmentOptions private (
   workerFactoryOptions:  ZWorkerFactoryOptions,

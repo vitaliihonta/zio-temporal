@@ -10,7 +10,8 @@ import scala.jdk.CollectionConverters._
 /** Base type for attribute value.
   *
   * Restricted to allowed elasticsearch types.
-  * @see https://docs.temporal.io/docs/server/workflow-search#search-attributes
+  * @see
+  *   https://docs.temporal.io/docs/server/workflow-search#search-attributes
   */
 sealed trait ZSearchAttribute {
   private[ztemporal] def attributeValue: Any
@@ -20,17 +21,22 @@ object ZSearchAttribute {
 
   /** Converts a value to [[ZSearchAttribute]] having implicit [[Convert]] instance
     *
-    * @param value attributes value to convert
-    * @param convert conversion typeclass
-    * @return converted search attribute
+    * @param value
+    *   attributes value to convert
+    * @param convert
+    *   conversion typeclass
+    * @return
+    *   converted search attribute
     */
   implicit def from[A](value: A)(implicit convert: Convert[A]): ZSearchAttribute =
     convert.toAttribute(value)
 
   /** Converts custom search attributes to [[java.util.Map]] that temporal Java SDK can consume
     *
-    * @param attrs attributes to convert
-    * @return attributes converted
+    * @param attrs
+    *   attributes to convert
+    * @return
+    *   attributes converted
     */
   implicit def toJava(attrs: Map[String, ZSearchAttribute]): ju.Map[String, AnyRef] =
     attrs.map { case (k, v) => k -> v.attributeValue }.asInstanceOf[Map[String, AnyRef]].asJava
@@ -71,9 +77,9 @@ or provide a reasonable instance of Convert[${A}] using .contramap""")
     }
   }
 
-  final class StringAttr private[ztemporal] (override val attributeValue: String) extends ZSearchAttribute
-  final class BooleanAttr private[ztemporal] (override val attributeValue: Boolean) extends ZSearchAttribute
-  final class IntegralAttr private[ztemporal] (override val attributeValue: Long) extends ZSearchAttribute
-  final class NumberAttr private[ztemporal] (override val attributeValue: Double) extends ZSearchAttribute
+  final class StringAttr private[ztemporal] (override val attributeValue: String)          extends ZSearchAttribute
+  final class BooleanAttr private[ztemporal] (override val attributeValue: Boolean)        extends ZSearchAttribute
+  final class IntegralAttr private[ztemporal] (override val attributeValue: Long)          extends ZSearchAttribute
+  final class NumberAttr private[ztemporal] (override val attributeValue: Double)          extends ZSearchAttribute
   final class DateTimeAttr private[ztemporal] (override val attributeValue: LocalDateTime) extends ZSearchAttribute
 }

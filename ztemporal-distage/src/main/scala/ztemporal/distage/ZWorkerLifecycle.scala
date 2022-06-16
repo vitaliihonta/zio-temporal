@@ -8,7 +8,8 @@ import ztemporal.worker.ZWorkerFactory
   */
 class ZWorkerLifecycle(workerFactory: ZWorkerFactory, workers: Set[ZWorker]) {
 
-  /** @return info about all the registered workers
+  /** @return
+    *   info about all the registered workers
     */
   def info: String = {
     val taskQueues = workers.map(_.toString).mkString("{", ", ", "}")

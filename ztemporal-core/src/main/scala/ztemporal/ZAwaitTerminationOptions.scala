@@ -2,7 +2,7 @@ package ztemporal
 
 import scala.concurrent.duration._
 
-/**  Represents options for [[ztemporal.workflow.ZWorkflowServiceStubs.awaitTermination]] method
+/** Represents options for [[ztemporal.workflow.ZWorkflowServiceStubs.awaitTermination]] method
   */
 class ZAwaitTerminationOptions private[ztemporal] (val pollTimeout: FiniteDuration, val pollDelay: FiniteDuration) {
 
@@ -17,16 +17,15 @@ class ZAwaitTerminationOptions private[ztemporal] (val pollTimeout: FiniteDurati
 
 object ZAwaitTerminationOptions {
 
-  /** Used by default in [[ztemporal.workflow.ZWorkflowServiceStubs.awaitTermination]].
-    * Configured to avoid redundant polling in production.
+  /** Used by default in [[ztemporal.workflow.ZWorkflowServiceStubs.awaitTermination]]. Configured to avoid redundant
+    * polling in production.
     */
   val default: ZAwaitTerminationOptions = new ZAwaitTerminationOptions(
     pollTimeout = 5.seconds,
     pollDelay = 2.seconds
   )
 
-  /** Default value for tests using ztemporal-testkit.
-    * Smaller than [[default]] to increase tests speed
+  /** Default value for tests using ztemporal-testkit. Smaller than [[default]] to increase tests speed
     */
   val testDefault: ZAwaitTerminationOptions = new ZAwaitTerminationOptions(
     pollTimeout = 100.millis,

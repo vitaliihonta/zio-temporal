@@ -10,7 +10,8 @@ import scala.compat.java8.DurationConverters._
 
 /** Represents temporal workflow service stubs options
   *
-  *  @see [[WorkflowServiceStubsOptions]]
+  * @see
+  *   [[WorkflowServiceStubsOptions]]
   */
 class ZWorkflowServiceStubsOptions private[ztemporal] (
   val serverUrl:                       String,

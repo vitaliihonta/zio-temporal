@@ -8,7 +8,8 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.FiniteDuration
 
 /** Represents current workflow information
-  * @see [[WorkflowInfo]]
+  * @see
+  *   [[WorkflowInfo]]
   */
 class ZWorkflowInfo private[ztemporal] (val toJava: WorkflowInfo) extends AnyVal {
   def namespace: String    = toJava.getNamespace

@@ -61,7 +61,6 @@ abstract class MacroUtils(val c: blackbox.Context) {
         Some(idt.tpe -> method)
 
       case _ =>
-        println(t.getClass)
         None
     }
 

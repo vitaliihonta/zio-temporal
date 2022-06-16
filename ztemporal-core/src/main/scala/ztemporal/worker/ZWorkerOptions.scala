@@ -4,7 +4,8 @@ import io.temporal.worker.WorkerOptions
 
 /** Represents worker options
   *
-  * @see [[WorkerOptions]]
+  * @see
+  *   [[WorkerOptions]]
   */
 class ZWorkerOptions private (
   val maxWorkerActivitiesPerSecond:            Option[Double],
