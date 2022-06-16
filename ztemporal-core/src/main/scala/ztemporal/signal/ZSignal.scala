@@ -8,9 +8,12 @@ import scala.language.experimental.macros
 
 /** Represents a call to a signal handler method.
   *
-  * @see [[io.temporal.workflow.SignalMethod]]
-  * @tparam A signal method input
-  * @tparam T signal method type
+  * @see
+  *   [[io.temporal.workflow.SignalMethod]]
+  * @tparam A
+  *   signal method input
+  * @tparam T
+  *   signal method type
   */
 class ZSignal[-A, T <: ZSignal.Type] @internalApi() (
   private[ztemporal] val tpe:         T,
@@ -19,8 +22,10 @@ class ZSignal[-A, T <: ZSignal.Type] @internalApi() (
 
   /** Provide this signal input in-place.
     *
-    * @param value this signal input parameter
-    * @return this signal without inputs
+    * @param value
+    *   this signal input parameter
+    * @return
+    *   this signal without inputs
     */
   def provide[B <: A](value: B)(implicit inputFrom: ZInput.From[B]): ZSignal[Any, T] =
     new ZSignal[Any, T](
@@ -49,89 +54,111 @@ class ZSignal[-A, T <: ZSignal.Type] @internalApi() (
 object ZSignal {
 
   /** Represents signal type, can be one of:
-    * - [[SignalMethod]] - a single call to the signal method
-    * - [[WorkflowMethod]] - a call to workflow handler method (uncomplete signal)
-    * - [[SignalWithStart]] - a batch request calling workflow method and then signal method
-    * @see [[BatchRequest]]
+    *   - [[SignalMethod]] - a single call to the signal method
+    *   - [[WorkflowMethod]] - a call to workflow handler method (uncomplete signal)
+    *   - [[SignalWithStart]] - a batch request calling workflow method and then signal method
+    * @see
+    *   [[BatchRequest]]
     */
   sealed trait Type
-  sealed trait WorkflowMethod extends Type
-  case object WorkflowMethod  extends WorkflowMethod
-  class SignalMethod @internalApi() (private[ztemporal] val signalName: String) extends Type
+  sealed trait WorkflowMethod                                                          extends Type
+  case object WorkflowMethod                                                           extends WorkflowMethod
+  class SignalMethod @internalApi() (private[ztemporal] val signalName: String)        extends Type
   class SignalWithStart private[ztemporal] (private[ztemporal] val signalName: String) extends Type
   // todo: add class Multiple() extends Type to send few signals at once
 
   /** Creates [[ZSignal]] from the specified signal handler method.
     *
-    * This method won't compile if the passed function is not a method [[io.temporal.workflow.SignalMethod]]
-    * which belongs to workflow interface
+    * This method won't compile if the passed function is not a method [[io.temporal.workflow.SignalMethod]] which
+    * belongs to workflow interface
     *
-    * @param f signal method call
-    * @return a new ZSignal
+    * @param f
+    *   signal method call
+    * @return
+    *   a new ZSignal
     */
   def signal0(f: Unit): ZSignal[Any, ZSignal.SignalMethod] =
     macro ZSignalMacro.signalImpl0
 
   /** Creates [[ZSignal]] from the specified signal handler method.
     *
-    * This method won't compile if the passed function is not a method [[io.temporal.workflow.SignalMethod]]
-    * which belongs to workflow interface
+    * This method won't compile if the passed function is not a method [[io.temporal.workflow.SignalMethod]] which
+    * belongs to workflow interface
     *
-    * @tparam A signal method input parameter
-    * @param f signal method call
-    * @return a new ZSignal
+    * @tparam A
+    *   signal method input parameter
+    * @param f
+    *   signal method call
+    * @return
+    *   a new ZSignal
     */
   def signal[A](f: A => Unit): ZSignal[ZInput[A], ZSignal.SignalMethod] =
     macro ZSignalMacro.signalImpl1[A]
 
   /** Creates [[ZSignal]] from the specified signal handler method.
     *
-    * This method won't compile if the passed function is not a method [[io.temporal.workflow.SignalMethod]]
-    * which belongs to workflow interface
+    * This method won't compile if the passed function is not a method [[io.temporal.workflow.SignalMethod]] which
+    * belongs to workflow interface
     *
-    * @tparam A first signal method input parameter
-    * @tparam B second signal method input parameter
-    * @param f signal method call
-    * @return a new ZSignal
+    * @tparam A
+    *   first signal method input parameter
+    * @tparam B
+    *   second signal method input parameter
+    * @param f
+    *   signal method call
+    * @return
+    *   a new ZSignal
     */
   def signal[A, B](f: (A, B) => Unit): ZSignal[ZInput[A] with ZInput[B], ZSignal.SignalMethod] =
     macro ZSignalMacro.signalImpl2[A, B]
 
   /** Creates [[ZSignal]] from the specified workflow handler method.
     *
-    * This method won't compile if the passed function is not a method [[io.temporal.workflow.WorkflowMethod]]
-    * which belongs to workflow interface
+    * This method won't compile if the passed function is not a method [[io.temporal.workflow.WorkflowMethod]] which
+    * belongs to workflow interface
     *
-    * @tparam R workflow method result
-    * @param f workflow method call
-    * @return a new ZSignal
+    * @tparam R
+    *   workflow method result
+    * @param f
+    *   workflow method call
+    * @return
+    *   a new ZSignal
     */
   def workflowMethod0[R](f: R): ZSignal[Any, ZSignal.WorkflowMethod] =
     macro ZSignalMacro.workflowMethodImpl0[R]
 
   /** Creates [[ZSignal]] from the specified workflow handler method.
     *
-    * This method won't compile if the passed function is not a method [[io.temporal.workflow.WorkflowMethod]]
-    * which belongs to workflow interface
+    * This method won't compile if the passed function is not a method [[io.temporal.workflow.WorkflowMethod]] which
+    * belongs to workflow interface
     *
-    * @tparam A workflow method input parameter
-    * @tparam R workflow method result
-    * @param f workflow method call
-    * @return a new ZSignal
+    * @tparam A
+    *   workflow method input parameter
+    * @tparam R
+    *   workflow method result
+    * @param f
+    *   workflow method call
+    * @return
+    *   a new ZSignal
     */
   def workflowMethod[A, R](f: A => R): ZSignal[ZInput[A], ZSignal.WorkflowMethod] =
     macro ZSignalMacro.workflowMethodImpl1[A, R]
 
   /** Creates [[ZSignal]] from the specified workflow handler method.
     *
-    * This method won't compile if the passed function is not a method [[io.temporal.workflow.WorkflowMethod]]
-    * which belongs to workflow interface
+    * This method won't compile if the passed function is not a method [[io.temporal.workflow.WorkflowMethod]] which
+    * belongs to workflow interface
     *
-    * @tparam A first workflow method input parameter
-    * @tparam B second workflow method input parameter
-    * @tparam R workflow method result
-    * @param f workflow method call
-    * @return a new ZSignal
+    * @tparam A
+    *   first workflow method input parameter
+    * @tparam B
+    *   second workflow method input parameter
+    * @tparam R
+    *   workflow method result
+    * @param f
+    *   workflow method call
+    * @return
+    *   a new ZSignal
     */
   def workflowMethod0[A, B, R](f: (A, B) => R): ZSignal[ZInput[A] with ZInput[B], ZSignal.WorkflowMethod] =
     macro ZSignalMacro.workflowMethodImpl2[A, B, R]

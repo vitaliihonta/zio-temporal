@@ -12,18 +12,24 @@ protected[ztemporal] trait CanSignal[Self] extends Any {
 
   /** Signals temporal workflow.
     *
-    * @param zsignal signal method to be invoked
-    * @return signal result
+    * @param zsignal
+    *   signal method to be invoked
+    * @return
+    *   signal result
     */
   def signal(zsignal: ZSignal[Any, ZSignal.SignalMethod]): ZTemporalIO[ZTemporalClientError, Unit] =
     signal[Any](zsignal)(())
 
   /** Signals temporal workflow.
     *
-    * @tparam A signal input type
-    * @param zsignal signal method to be invoked
-    * @param input signal input
-    * @return signal result
+    * @tparam A
+    *   signal input type
+    * @param zsignal
+    *   signal method to be invoked
+    * @param input
+    *   signal input
+    * @return
+    *   signal result
     */
   def signal[A](
     zsignal:            ZSignal[A, ZSignal.SignalMethod]

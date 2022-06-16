@@ -35,10 +35,10 @@ class ExampleFlow(client: ZWorkflowClient, rootLogger: LogIO[UIO]) {
         _            <- sendConfirmation(workflowStub, paymentWorkflow)(transactionId)
         _            <- logger.info("Confirmation sent!")
         _            <- simulateUserActivity(logger)
-        _            <- (clock.sleep(100.millis) *> checkStatus(workflowStub, logger)(transactionId)).repeatWhile(isNotFinished)
-        _            <- logger.info("End-up polling status, fetching the result")
-        result       <- workflowStub.resultEither[TransactionError, TransactionView]
-        _            <- logger.info(s"Transaction finished $result")
+        _ <- (clock.sleep(100.millis) *> checkStatus(workflowStub, logger)(transactionId)).repeatWhile(isNotFinished)
+        _ <- logger.info("End-up polling status, fetching the result")
+        result <- workflowStub.resultEither[TransactionError, TransactionView]
+        _      <- logger.info(s"Transaction finished $result")
       } yield ()
 
       paymentFlow.catchAll { error =>

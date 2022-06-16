@@ -13,51 +13,54 @@ import scala.language.experimental.macros
 
 /** Distage module for creating [[ZWorker]]s
   *
-  * @param taskQueue the task queue this worker would listen to
+  * @param taskQueue
+  *   the task queue this worker would listen to
   */
 abstract class ZWorkerDef(val taskQueue: String) extends ModuleDef {
 
-  /** '''WARNING''' should not be used outside of this [[ZWorkerDef]]
-    *  A helper type tag
+  /** '''WARNING''' should not be used outside of this [[ZWorkerDef]] A helper type tag
     */
   protected[this] sealed trait ThisWorkerTag extends Any
 
-  /** '''WARNING''' should not be used outside of this [[ZWorkerDef]]
-    * A type ensuring that the given activity or workflow was registered into this worker.
+  /** '''WARNING''' should not be used outside of this [[ZWorkerDef]] A type ensuring that the given activity or
+    * workflow was registered into this worker.
     *
-    * @tparam F either [[RegisteredActivity]] or [[RegisteredWorkflow]]
+    * @tparam F
+    *   either [[RegisteredActivity]] or [[RegisteredWorkflow]]
     */
   protected[this] final type Mine[F[_]] = F[AnyRef] with ThisWorkerTag
 
-  /** '''WARNING''' should not be used directly
-    * Used during the macro expansion
+  /** '''WARNING''' should not be used directly Used during the macro expansion
     */
   @internalApi
   protected[this] def Mine[F[_], A](value: F[A]): Mine[F] = value.asInstanceOf[Mine[F]]
 
   /** Entry-point for registering the workflow implementation.
     *
-    * Ensures that the given type is a workflow implementation
-    * (it's a child type of any interface with [[io.temporal.workflow.WorkflowInterface]] annotation)
-    * @tparam A workflow implementation
+    * Ensures that the given type is a workflow implementation (it's a child type of any interface with
+    * [[io.temporal.workflow.WorkflowInterface]] annotation)
+    * @tparam A
+    *   workflow implementation
     */
   protected[this] def registerWorkflowImplementation[A]: SetElementDSL[Mine[RegisteredWorkflow]] =
     macro WorkerDefMacro.registerWorkflowImplementationImpl[A]
 
   /** Entry-point for registering the workflow implementation.
     *
-    * Ensures that the given type is a workflow implementation
-    * (it's a child type of any interface with [[io.temporal.workflow.WorkflowInterface]] annotation)
-    * @tparam A workflow implementation
+    * Ensures that the given type is a workflow implementation (it's a child type of any interface with
+    * [[io.temporal.workflow.WorkflowInterface]] annotation)
+    * @tparam A
+    *   workflow implementation
     */
   protected[this] def registerWorkflow[A]: MakeWorkflowImplementationDsl[A] =
     macro WorkerDefMacro.registerWorkflowFactoryImpl[A]
 
   /** Entry-point for registering the activity implementation.
     *
-    * Ensures that the given type is a activity interface
-    * (it's a child type of any interface with [[io.temporal.activity.ActivityInterface]] annotation)
-    * @tparam A workflow implementation
+    * Ensures that the given type is a activity interface (it's a child type of any interface with
+    * [[io.temporal.activity.ActivityInterface]] annotation)
+    * @tparam A
+    *   workflow implementation
     */
   protected[this] def registerActivity[A]: MakeDSL[A] = macro WorkerDefMacro.registerActivityImpl[A]
 

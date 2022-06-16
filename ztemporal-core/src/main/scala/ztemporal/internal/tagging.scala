@@ -11,7 +11,8 @@ private[ztemporal] object tagging {
 
     /** Tagged type
       *
-      * @tparam A raw type
+      * @tparam A
+      *   raw type
       */
     type Of[+A] = A @@ Tagged
 

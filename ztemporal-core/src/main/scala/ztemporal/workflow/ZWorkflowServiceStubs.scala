@@ -12,10 +12,11 @@ class ZWorkflowServiceStubs private[ztemporal] (private[ztemporal] val self: Wor
 
   /** Allows to run arbitrary effect ensuring a shutdown on effect completion.
     *
-    * Shutdown will be initiated when effect either completes successfully or fails (with error or defect)
-    * The effect will return after shutdown completed
+    * Shutdown will be initiated when effect either completes successfully or fails (with error or defect) The effect
+    * will return after shutdown completed
     *
-    * @param options await options with polling interval and poll delay
+    * @param options
+    *   await options with polling interval and poll delay
     */
   def use[R, E, A](
     options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.default
@@ -46,7 +47,8 @@ class ZWorkflowServiceStubs private[ztemporal] (private[ztemporal] val self: Wor
     *
     * The shutdown has to be initiated through shutdown or shutdownNow.
     *
-    * @param options await options with polling interval and poll delay
+    * @param options
+    *   await options with polling interval and poll delay
     */
   def awaitTermination(
     options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.default
@@ -67,7 +69,8 @@ object ZWorkflowServiceStubs {
 
   /** Create gRPC connection stubs using provided options.
     *
-    * @param options workflow service stub options
+    * @param options
+    *   workflow service stub options
     */
   def make(options: ZWorkflowServiceStubsOptions): UManaged[ZWorkflowServiceStubs] =
     ZManaged.make(UIO(new ZWorkflowServiceStubs(WorkflowServiceStubs.newInstance(options.toJava))))(_.shutdownNow)

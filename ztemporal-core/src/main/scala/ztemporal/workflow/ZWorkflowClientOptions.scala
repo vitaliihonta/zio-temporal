@@ -9,7 +9,8 @@ import scala.jdk.CollectionConverters._
 
 /** Represents temporal workflow client options
   *
-  *  @see [[WorkflowClientOptions]]
+  * @see
+  *   [[WorkflowClientOptions]]
   */
 class ZWorkflowClientOptions private[ztemporal] (
   val namespace:            Option[String],

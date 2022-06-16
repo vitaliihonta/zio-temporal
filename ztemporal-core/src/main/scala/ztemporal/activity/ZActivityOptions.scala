@@ -12,8 +12,10 @@ object ZActivityOptions {
 
   /** Creates [[ZActivityOptions]]
     *
-    * @param client workflow client
-    * @return build activity options
+    * @param client
+    *   workflow client
+    * @return
+    *   build activity options
     */
   def make(client: ZWorkflowClient): URIO[ZEnv, ZActivityOptions] =
     for {

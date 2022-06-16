@@ -14,15 +14,16 @@ import scala.reflect.ClassTag
 
 /** Represents temporal workflow client
   *
-  * @see [[WorkflowClient]]
+  * @see
+  *   [[WorkflowClient]]
   */
 class ZWorkflowClient private[ztemporal] (private[ztemporal] val self: WorkflowClient) extends AnyVal {
 
-  /** Creates workflow untyped client stub for a known execution.
-    * Use it to send signals or queries to a running workflow.
-    * Do not call methods annotated with @WorkflowMethod.
+  /** Creates workflow untyped client stub for a known execution. Use it to send signals or queries to a running
+    * workflow. Do not call methods annotated with @WorkflowMethod.
     *
-    * @see [[ZWorkflowStub]]
+    * @see
+    *   [[ZWorkflowStub]]
     */
   def newUntypedWorkflowStub(workflowId: String, runId: Option[String] = None): UIO[ZWorkflowStub] =
     UIO.effectTotal {
@@ -31,8 +32,10 @@ class ZWorkflowClient private[ztemporal] (private[ztemporal] val self: WorkflowC
 
   /** Invokes SignalWithStart operation.
     *
-    * @param signal ZSignal to invoke (containing both @WorkflowMethod and @SignalMethod annotations
-    * @return workflowExecution of the signaled or started workflow.
+    * @param signal
+    *   ZSignal to invoke (containing both @WorkflowMethod and @SignalMethod annotations
+    * @return
+    *   workflowExecution of the signaled or started workflow.
     */
   def signalWithStart(
     signal: ZSignal[Any, ZSignal.SignalWithStart]
@@ -41,9 +44,12 @@ class ZWorkflowClient private[ztemporal] (private[ztemporal] val self: WorkflowC
 
   /** Invokes SignalWithStart operation.
     *
-    * @param signal ZSignal to invoke (containing both @WorkflowMethod and @SignalMethod annotations
-    * @param input ZSignal input
-    * @return workflowExecution of the signaled or started workflow.
+    * @param signal
+    *   ZSignal to invoke (containing both @WorkflowMethod and @SignalMethod annotations
+    * @param input
+    *   ZSignal input
+    * @return
+    *   workflowExecution of the signaled or started workflow.
     */
   def signalWithStart[A](
     signal:             ZSignal[A, ZSignal.SignalWithStart]
@@ -57,14 +63,17 @@ class ZWorkflowClient private[ztemporal] (private[ztemporal] val self: WorkflowC
     }
 
   /** Creates new ActivityCompletionClient
-    * @see [[ActivityCompletionClient]]
+    * @see
+    *   [[ActivityCompletionClient]]
     */
   def newActivityCompletionClient: UIO[ActivityCompletionClient] =
     UIO.effectTotal(self.newActivityCompletionClient())
 
   /** Creates new type workflow stub builder
-    * @tparam A workflow interface
-    * @return builder instance
+    * @tparam A
+    *   workflow interface
+    * @return
+    *   builder instance
     */
   def newWorkflowStub[A: ClassTag]: ZWorkflowStubBuilderTaskQueueDsl[A] =
     new ZWorkflowStubBuilderTaskQueueDsl[A](self, implicitly[ClassTag[A]])
@@ -74,10 +83,14 @@ object ZWorkflowClient {
 
   /** Create [[ZWorkflowClient]] instance
     *
-    * @param service client to the Temporal Service endpoint.
-    * @param options client option
-    * @return - workflow client instance
-    * @see [[WorkflowClient]]
+    * @param service
+    *   client to the Temporal Service endpoint.
+    * @param options
+    *   client option
+    * @return
+    *   \- workflow client instance
+    * @see
+    *   [[WorkflowClient]]
     */
   def make(
     service: ZWorkflowServiceStubs,

@@ -7,7 +7,8 @@ import scala.concurrent.duration.FiniteDuration
 
 /** Represents worker factory options
   *
-  * @see [[WorkerFactoryOptions]]
+  * @see
+  *   [[WorkerFactoryOptions]]
   */
 class ZWorkerFactoryOptions private (
   workflowHostLocalTaskQueueScheduleToStartTimeout: Option[FiniteDuration],

@@ -147,9 +147,8 @@ class ZSignalMacro(override val c: blackbox.Context) extends MacroUtils(c) {
 
   private def getSignalName(workflow: Type, methodName: TermName): String =
     getMethodAnnotation(workflow, methodName, SignalMethod).children.tail
-      .collectFirst {
-        case AssignOrNamedArg(_, Literal(Constant(signalName: String))) =>
-          signalName
+      .collectFirst { case AssignOrNamedArg(_, Literal(Constant(signalName: String))) =>
+        signalName
       }
       .getOrElse(methodName.toString)
 

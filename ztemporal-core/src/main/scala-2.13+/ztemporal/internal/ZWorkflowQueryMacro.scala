@@ -59,9 +59,8 @@ class ZWorkflowQueryMacro(override val c: blackbox.Context) extends MacroUtils(c
 
   private def getQueryType(workflow: Type, methodName: TermName): String =
     getMethodAnnotation(workflow, methodName, QueryMethod).children.tail
-      .collectFirst {
-        case NamedArg(_, Literal(Constant(queryName: String))) =>
-          queryName
+      .collectFirst { case NamedArg(_, Literal(Constant(queryName: String))) =>
+        queryName
       }
       .getOrElse(methodName.toString)
 

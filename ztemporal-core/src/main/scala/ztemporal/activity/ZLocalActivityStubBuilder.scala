@@ -30,7 +30,8 @@ class ZLocalActivityStubBuilder[A] private[ztemporal] (
     copy(_.setRetryOptions(options.toJava))
 
   /** Builds typed ZLocalActivityStub
-    * @return typed local activity stub
+    * @return
+    *   typed local activity stub
     */
   def build: A = {
     val options = additionalOptions {

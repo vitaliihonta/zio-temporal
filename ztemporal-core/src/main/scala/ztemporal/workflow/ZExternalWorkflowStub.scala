@@ -6,7 +6,8 @@ import ztemporal.internal.tagging.Tagged
 
 /** Represents untyped external workflow stub
   *
-  * @see [[ExternalWorkflowStub]]
+  * @see
+  *   [[ExternalWorkflowStub]]
   */
 class ZExternalWorkflowStub private[ztemporal] (override protected[ztemporal] val self: ExternalWorkflowStub)
     extends AnyVal
@@ -22,7 +23,8 @@ object ZExternalWorkflowStub extends Tagged {
 
     /** Converts typed stub [[A]] to [[ZExternalWorkflowStub]]
       *
-      * @return untyped external workflow stub
+      * @return
+      *   untyped external workflow stub
       */
     def toStub: ZExternalWorkflowStub = new ZExternalWorkflowStub(ExternalWorkflowStub.fromTyped(self))
   }

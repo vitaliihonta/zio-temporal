@@ -7,20 +7,25 @@ import zio.BuildFrom
 import scala.collection.mutable
 import scala.util.Try
 
-/** Implements the logic to execute compensation operations that is often required in Saga applications.
-  * The following is a skeleton to show of how it is supposed to be used in workflow code:
+/** Implements the logic to execute compensation operations that is often required in Saga applications. The following
+  * is a skeleton to show of how it is supposed to be used in workflow code:
   *
-  * @see https://en.wikipedia.org/wiki/Compensating_transaction
-  * @tparam E error type
-  * @tparam A value type
+  * @see
+  *   https://en.wikipedia.org/wiki/Compensating_transaction
+  * @tparam E
+  *   error type
+  * @tparam A
+  *   value type
   */
 sealed trait ZSaga[+E, +A] { self =>
 
-  /** Runs this saga, returning either error or successful value.
-    * Compensations are automatically applied if error occurs
+  /** Runs this saga, returning either error or successful value. Compensations are automatically applied if error
+    * occurs
     *
-    * @param options ZSaga options
-    * @return either successful value or error (with compensations executed)
+    * @param options
+    *   ZSaga options
+    * @return
+    *   either successful value or error (with compensations executed)
     */
   final def run(options: ZSaga.Options = ZSaga.Options.default): Either[E, A] =
     ZSaga.runImpl(self)(options)
@@ -63,34 +68,47 @@ object ZSaga {
   }
 
   /** Creates immediately completed [[ZSaga]] instance which won't fail
-    * @tparam A value type
-    * @param value result value
-    * @return value wrapped into [[ZSaga]]
+    * @tparam A
+    *   value type
+    * @param value
+    *   result value
+    * @return
+    *   value wrapped into [[ZSaga]]
     */
   def succeed[A](value: A): ZSaga[Nothing, A] =
     ZSaga.Succeed(value)
 
   /** Creates immediately failed [[ZSaga]] instance
-    * @tparam E error type
-    * @param error error value
-    * @return failed [[ZSaga]]
+    * @tparam E
+    *   error type
+    * @param error
+    *   error value
+    * @return
+    *   failed [[ZSaga]]
     */
   def fail[E](error: E): ZSaga[E, Nothing] =
     ZSaga.Failed(error)
 
   /** Suspends side effect execution within [[ZSaga]]
-    * @tparam E error value
-    * @tparam A value type
-    * @param thunk side effect (which should not throw exceptions)
-    * @return suspended [[ZSaga]]
+    * @tparam E
+    *   error value
+    * @tparam A
+    *   value type
+    * @param thunk
+    *   side effect (which should not throw exceptions)
+    * @return
+    *   suspended [[ZSaga]]
     */
   def fromEither[E, A](thunk: => Either[E, A]): ZSaga[E, A] =
     ZSaga.FromEither(() => thunk)
 
   /** Suspends side effect execution within [[ZSaga]]
-    * @tparam A value type
-    * @param thunk effectful side effect (which may throw exceptions)
-    * @return suspended [[ZSaga]]
+    * @tparam A
+    *   value type
+    * @param thunk
+    *   effectful side effect (which may throw exceptions)
+    * @return
+    *   suspended [[ZSaga]]
     */
   def effect[A](thunk: => A): ZSaga[Throwable, A] =
     fromEither(Try(thunk).toEither)
