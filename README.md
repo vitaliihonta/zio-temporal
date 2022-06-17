@@ -1,4 +1,4 @@
-[![ZTemporal Scala version support](https://index.scala-lang.org/vitaliihonta/ztemporal/ztemporal/latest-by-scala-version.svg?platform=jvm)](https://index.scala-lang.org/vitaliihonta/ztemporal/ztemporal)
+[![ztemporal-core Scala version support](https://index.scala-lang.org/vitaliihonta/ztemporal/ztemporal-core/latest-by-scala-version.svg?platform=jvm)](https://index.scala-lang.org/vitaliihonta/ztemporal/ztemporal-core)
 ![Build status](https://github.com/vitaliihonta/ztemporal/actions/workflows/publish.yaml/badge.svg)
 [![codecov](https://codecov.io/gh/vitaliihonta/ztemporal/branch/main/graph/badge.svg?token=T8NBC4R360)](https://codecov.io/gh/vitaliihonta/ztemporal)
 
