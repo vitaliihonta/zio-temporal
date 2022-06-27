@@ -1,6 +1,8 @@
 package zio.temporal
 
-import java.time.{Instant, LocalDateTime, ZoneOffset}
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 /** Represents current timestamp in epoch millis format
   */

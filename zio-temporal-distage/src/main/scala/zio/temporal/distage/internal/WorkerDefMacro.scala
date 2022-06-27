@@ -3,7 +3,9 @@ package zio.temporal.distage.internal
 import izumi.distage.constructors.macros.AnyConstructorMacro
 import izumi.distage.model.definition.dsl.ModuleDefDSL.MakeDSL
 import zio.temporal._
-import zio.temporal.distage.{RegisteredActivity, RegisteredWorkflow, ZWorkerDef}
+import zio.temporal.distage.RegisteredActivity
+import zio.temporal.distage.RegisteredWorkflow
+import zio.temporal.distage.ZWorkerDef
 import zio.temporal.utils.macros.MacroUtils
 
 import scala.reflect.macros.blackbox

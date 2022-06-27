@@ -163,8 +163,7 @@ object ZSaga {
       pf.applyOrElse[E, ZSaga[E0, A0]](error, _ => this)
   }
 
-  final case class Compensation[E, A] private[zio] (compensate: () => Unit, cont: ZSaga[E, A])
-      extends ZSaga[E, A] {
+  final case class Compensation[E, A] private[zio] (compensate: () => Unit, cont: ZSaga[E, A]) extends ZSaga[E, A] {
     override def swap: ZSaga[A, E] = ZSaga.Compensation(compensate, cont.swap)
 
     override def map[B](f: A => B): ZSaga[E, B] = ZSaga.Compensation(compensate, cont.map(f))
@@ -186,8 +185,7 @@ object ZSaga {
       ZSaga.BindError[E0, E2, A](base, cont(_).map(f))
   }
 
-  final case class CatchAll[E0, E, A] private[zio] (base: ZSaga[E0, A], handle: E0 => ZSaga[E, A])
-      extends ZSaga[E, A] {
+  final case class CatchAll[E0, E, A] private[zio] (base: ZSaga[E0, A], handle: E0 => ZSaga[E, A]) extends ZSaga[E, A] {
 
     override def catchAll[E2, A0 >: A](f: E => ZSaga[E2, A0]): ZSaga[E2, A0] =
       ZSaga.CatchAll[E0, E2, A0](base, handle(_).catchAll(f))

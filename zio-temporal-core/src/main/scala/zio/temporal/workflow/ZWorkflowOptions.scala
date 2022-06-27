@@ -3,7 +3,8 @@ package zio.temporal.workflow
 import io.temporal.api.enums.v1.WorkflowIdReusePolicy
 import io.temporal.client.WorkflowOptions
 import io.temporal.common.context.ContextPropagator
-import zio.temporal.{ZRetryOptions, ZSearchAttribute}
+import zio.temporal.ZRetryOptions
+import zio.temporal.ZSearchAttribute
 
 import scala.compat.java8.DurationConverters.FiniteDurationops
 import scala.concurrent.duration.FiniteDuration

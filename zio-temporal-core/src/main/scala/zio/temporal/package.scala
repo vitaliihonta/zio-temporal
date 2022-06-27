@@ -1,7 +1,11 @@
 package zio
 
-import io.temporal.activity.{ActivityInterface, ActivityMethod}
-import io.temporal.workflow.{QueryMethod, SignalMethod, WorkflowInterface, WorkflowMethod}
+import io.temporal.activity.ActivityInterface
+import io.temporal.activity.ActivityMethod
+import io.temporal.workflow.QueryMethod
+import io.temporal.workflow.SignalMethod
+import io.temporal.workflow.WorkflowInterface
+import io.temporal.workflow.WorkflowMethod
 import zio.blocking.Blocking
 
 package object temporal {

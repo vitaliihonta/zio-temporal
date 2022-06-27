@@ -1,7 +1,8 @@
 package zio.temporal.distage
 
 import zio._
-import zio.temporal.worker.{ZWorker, ZWorkerFactory}
+import zio.temporal.worker.ZWorker
+import zio.temporal.worker.ZWorkerFactory
 
 /** A component which starts [[ZWorkerFactory]]
   */

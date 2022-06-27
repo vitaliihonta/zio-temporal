@@ -1,7 +1,9 @@
 package zio.temporal.proto.enumeratum
 
-import _root_.enumeratum.{Enum, EnumEntry}
-import scalapb.{GeneratedEnum, GeneratedEnumCompanion}
+import _root_.enumeratum.Enum
+import _root_.enumeratum.EnumEntry
+import scalapb.GeneratedEnum
+import scalapb.GeneratedEnumCompanion
 import zio.temporal.proto.ProtoType
 
 final class EnumeratumEnumException[E <: EnumEntry, P <: GeneratedEnum] private[proto] (

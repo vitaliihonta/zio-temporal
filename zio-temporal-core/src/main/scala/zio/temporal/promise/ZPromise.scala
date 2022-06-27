@@ -1,7 +1,8 @@
 package zio.temporal.promise
 
 import io.temporal.failure.CanceledFailure
-import io.temporal.workflow.{Async, Promise}
+import io.temporal.workflow.Async
+import io.temporal.workflow.Promise
 import zio.BuildFrom
 import zio.temporal.ZCanceledFailure
 

@@ -1,7 +1,8 @@
 package zio.temporal.proto.internal
 
 import org.reflections.Reflections
-import org.reflections.util.{ClasspathHelper, ConfigurationBuilder}
+import org.reflections.util.ClasspathHelper
+import org.reflections.util.ConfigurationBuilder
 import org.slf4j.LoggerFactory
 import scalapb.GeneratedFileObject
 import zio.temporal.experimentalApi

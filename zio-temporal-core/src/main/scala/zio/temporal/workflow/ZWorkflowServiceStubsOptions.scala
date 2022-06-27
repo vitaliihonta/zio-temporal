@@ -1,8 +1,10 @@
 package zio.temporal.workflow
 
-import io.grpc.{ManagedChannel, Metadata}
+import io.grpc.ManagedChannel
+import io.grpc.Metadata
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext
-import io.temporal.serviceclient.{RpcRetryOptions, WorkflowServiceStubsOptions}
+import io.temporal.serviceclient.RpcRetryOptions
+import io.temporal.serviceclient.WorkflowServiceStubsOptions
 
 import scala.compat.java8.DurationConverters._
 import scala.concurrent.duration.FiniteDuration

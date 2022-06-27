@@ -62,9 +62,9 @@ object ZSignal {
     *   [[BatchRequest]]
     */
   sealed trait Type
-  sealed trait WorkflowMethod                                                          extends Type
-  case object WorkflowMethod                                                           extends WorkflowMethod
-  class SignalMethod @internalApi() (private[zio] val signalName: String)        extends Type
+  sealed trait WorkflowMethod                                              extends Type
+  case object WorkflowMethod                                               extends WorkflowMethod
+  class SignalMethod @internalApi() (private[zio] val signalName: String)  extends Type
   class SignalWithStart private[zio] (private[zio] val signalName: String) extends Type
   // todo: add class Multiple() extends Type to send few signals at once
 

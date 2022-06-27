@@ -1,8 +1,10 @@
 package zio.temporal.workflow
 
-import io.temporal.client.{WorkflowClient, WorkflowOptions}
+import io.temporal.client.WorkflowClient
+import io.temporal.client.WorkflowOptions
 import zio.UIO
-import zio.temporal.{ZRetryOptions, ZSearchAttribute}
+import zio.temporal.ZRetryOptions
+import zio.temporal.ZSearchAttribute
 
 import scala.compat.java8.DurationConverters._
 import scala.concurrent.duration.FiniteDuration

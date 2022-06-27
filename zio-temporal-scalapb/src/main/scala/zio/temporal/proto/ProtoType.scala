@@ -1,10 +1,14 @@
 package zio.temporal.proto
 
 import com.google.protobuf.ByteString
-import scalapb.{GeneratedMessage, GeneratedSealedOneof}
+import scalapb.GeneratedMessage
+import scalapb.GeneratedSealedOneof
 
-import java.time.{Instant, LocalDateTime, ZoneOffset}
-import java.{math, util => ju}
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.math
+import java.{util => ju}
 import scala.annotation.implicitNotFound
 
 /** Typeclass allowing conversion to protocol buffers supported type

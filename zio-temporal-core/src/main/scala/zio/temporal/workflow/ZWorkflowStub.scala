@@ -1,9 +1,14 @@
 package zio.temporal.workflow
 
 import io.temporal.client.WorkflowStub
-import zio.temporal.{TemporalClientError, TemporalError, TemporalIO}
+import zio.temporal.TemporalClientError
+import zio.temporal.TemporalError
+import zio.temporal.TemporalIO
 import zio.temporal.func._
-import zio.temporal.internal.{CanSignal, ClassTagUtils, TemporalInteraction, ZWorkflowQueryMacro}
+import zio.temporal.internal.CanSignal
+import zio.temporal.internal.ClassTagUtils
+import zio.temporal.internal.TemporalInteraction
+import zio.temporal.internal.ZWorkflowQueryMacro
 import zio.temporal.internal.tagging.Tagged
 
 import scala.language.experimental.macros

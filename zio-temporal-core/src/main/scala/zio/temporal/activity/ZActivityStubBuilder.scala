@@ -1,6 +1,7 @@
 package zio.temporal.activity
 
-import io.temporal.activity.{ActivityCancellationType, ActivityOptions}
+import io.temporal.activity.ActivityCancellationType
+import io.temporal.activity.ActivityOptions
 import io.temporal.common.context.ContextPropagator
 import io.temporal.workflow.Workflow
 import zio.temporal.ZRetryOptions

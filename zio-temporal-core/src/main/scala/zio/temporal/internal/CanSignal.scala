@@ -1,7 +1,9 @@
 package zio.temporal.internal
 
-import zio.temporal.{TemporalClientError, TemporalIO}
-import zio.temporal.signal.{ZInput, ZSignal}
+import zio.temporal.TemporalClientError
+import zio.temporal.TemporalIO
+import zio.temporal.signal.ZInput
+import zio.temporal.signal.ZSignal
 
 protected[zio] trait CanSignal[Self] extends Any {
   protected[zio] def self: Self

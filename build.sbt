@@ -4,10 +4,10 @@ val scala212 = "2.12.15"
 val allScalaVersions          = List(scala212, scala213)
 val documentationScalaVersion = scala213
 
-ThisBuild / scalaVersion  := scala213
-ThisBuild / organization  := "dev.vhonta"
-ThisBuild / version       := "0.1.0-RC2"
-ThisBuild / versionScheme := Some("early-semver")
+ThisBuild / scalaVersion           := scala213
+ThisBuild / organization           := "dev.vhonta"
+ThisBuild / version                := "0.1.0-RC2"
+ThisBuild / versionScheme          := Some("early-semver")
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 ThisBuild / sonatypeRepository     := "https://s01.oss.sonatype.org/service/local"
 

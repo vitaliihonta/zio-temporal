@@ -2,8 +2,11 @@ package zio.temporal.workflow
 
 import io.temporal.api.enums.v1.WorkflowIdReusePolicy
 import io.temporal.common.context.ContextPropagator
-import io.temporal.workflow.{ChildWorkflowCancellationType, ChildWorkflowOptions, Workflow}
-import zio.temporal.{ZRetryOptions, ZSearchAttribute}
+import io.temporal.workflow.ChildWorkflowCancellationType
+import io.temporal.workflow.ChildWorkflowOptions
+import io.temporal.workflow.Workflow
+import zio.temporal.ZRetryOptions
+import zio.temporal.ZSearchAttribute
 import zio.temporal.internal.ClassTagUtils
 
 import scala.compat.java8.DurationConverters._

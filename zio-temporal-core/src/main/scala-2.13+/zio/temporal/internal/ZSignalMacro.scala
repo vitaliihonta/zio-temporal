@@ -3,7 +3,8 @@ package zio.temporal.internal
 import io.temporal.workflow.Functions
 import izumi.reflect.Tag
 import zio.temporal._
-import zio.temporal.signal.{ZInput, ZSignal}
+import zio.temporal.signal.ZInput
+import zio.temporal.signal.ZSignal
 import zio.temporal.utils.macros.MacroUtils
 
 import scala.reflect.macros.blackbox

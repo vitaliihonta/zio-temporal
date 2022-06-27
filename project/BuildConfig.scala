@@ -1,4 +1,5 @@
 import sbt.Keys.scalaVersion
+
 import sbt._
 
 object BuildConfig extends Dependencies {

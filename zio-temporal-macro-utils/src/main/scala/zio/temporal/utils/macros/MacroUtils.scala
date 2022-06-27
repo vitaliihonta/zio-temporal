@@ -1,6 +1,7 @@
 package zio.temporal.utils.macros
 
-import scala.reflect.macros.{TypecheckException, blackbox}
+import scala.reflect.macros.TypecheckException
+import scala.reflect.macros.blackbox
 
 abstract class MacroUtils(val c: blackbox.Context) {
   import c.universe._

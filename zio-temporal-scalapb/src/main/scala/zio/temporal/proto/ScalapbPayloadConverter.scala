@@ -2,7 +2,8 @@ package zio.temporal.proto
 
 import com.google.protobuf.ByteString
 import com.google.protobuf.`type`.TypeProto
-import com.google.protobuf.any.{Any, AnyProto}
+import com.google.protobuf.any.Any
+import com.google.protobuf.any.AnyProto
 import com.google.protobuf.duration.DurationProto
 import com.google.protobuf.empty.EmptyProto
 import com.google.protobuf.field_mask.FieldMaskProto
@@ -11,7 +12,9 @@ import com.google.protobuf.timestamp.TimestampProto
 import com.google.protobuf.wrappers.WrappersProto
 import io.temporal.api.common.v1.Payload
 import io.temporal.common.converter.PayloadConverter
-import scalapb.{GeneratedFileObject, GeneratedMessage, GeneratedMessageCompanion}
+import scalapb.GeneratedFileObject
+import scalapb.GeneratedMessage
+import scalapb.GeneratedMessageCompanion
 import scalapb.options.ScalapbProto
 
 import java.lang.reflect.Type
@@ -88,7 +91,8 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
     writeGeneratedMessage(Optional.of(opt.map(value => Any.pack(value, temporalZioPrefix))))
 
   override def fromData[T](content: Payload, valueClass: Class[T], valueType: Type): T =
-    getCompanion(content, dropTemporalZioPrefix(valueType.getTypeName)).parseFrom(content.getData.newCodedInput()) match {
+    getCompanion(content, dropTemporalZioPrefix(valueType.getTypeName))
+      .parseFrom(content.getData.newCodedInput()) match {
       case optional: Optional =>
         optional.value match {
           case None => None.asInstanceOf[T]

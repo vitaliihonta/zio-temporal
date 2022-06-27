@@ -1,10 +1,14 @@
 package zio.temporal.workflow
 
-import io.temporal.client.{ActivityCompletionClient, WorkflowClient}
+import io.temporal.client.ActivityCompletionClient
+import io.temporal.client.WorkflowClient
 import zio.UIO
 import zio.temporal.internal.TemporalInteraction
-import zio.temporal.signal.{ZInput, ZSignal}
-import zio.temporal.{TemporalClientError, TemporalIO, ZWorkflowExecution}
+import zio.temporal.signal.ZInput
+import zio.temporal.signal.ZSignal
+import zio.temporal.TemporalClientError
+import zio.temporal.TemporalIO
+import zio.temporal.ZWorkflowExecution
 
 import scala.compat.java8.OptionConverters._
 import scala.reflect.ClassTag

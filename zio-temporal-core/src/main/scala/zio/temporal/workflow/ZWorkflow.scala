@@ -1,9 +1,14 @@
 package zio.temporal.workflow
 
-import io.temporal.workflow.{CancellationScope, Workflow}
-import zio.temporal.activity.{ZActivityStubBuilderInitial, ZLocalActivityStubBuilderInitial}
+import io.temporal.workflow.CancellationScope
+import io.temporal.workflow.Workflow
+import zio.temporal.activity.ZActivityStubBuilderInitial
+import zio.temporal.activity.ZLocalActivityStubBuilderInitial
 import zio.temporal.internal.ClassTagUtils
-import zio.temporal.{ZCurrentTimeMillis, ZSearchAttribute, ZWorkflowExecution, ZWorkflowInfo}
+import zio.temporal.ZCurrentTimeMillis
+import zio.temporal.ZSearchAttribute
+import zio.temporal.ZWorkflowExecution
+import zio.temporal.ZWorkflowInfo
 
 import java.util.UUID
 import scala.compat.java8.DurationConverters._

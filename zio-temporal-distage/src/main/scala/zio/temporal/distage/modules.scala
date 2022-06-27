@@ -6,7 +6,10 @@ import pureconfig.ConfigReader
 import pureconfig.module.magnolia.semiauto.reader.deriveReader
 import zio.temporal.activity.ZActivityOptions
 import zio.temporal.worker.ZWorkerFactory
-import zio.temporal.workflow.{ZWorkflowClient, ZWorkflowClientOptions, ZWorkflowServiceStubs, ZWorkflowServiceStubsOptions}
+import zio.temporal.workflow.ZWorkflowClient
+import zio.temporal.workflow.ZWorkflowClientOptions
+import zio.temporal.workflow.ZWorkflowServiceStubs
+import zio.temporal.workflow.ZWorkflowServiceStubsOptions
 
 import scala.concurrent.duration.FiniteDuration
 

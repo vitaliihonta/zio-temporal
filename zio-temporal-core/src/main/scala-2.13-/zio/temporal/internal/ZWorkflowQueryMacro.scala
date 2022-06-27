@@ -1,7 +1,9 @@
 package zio.temporal.internal
 
 import io.temporal.workflow.QueryMethod
-import zio.temporal.func.{ZWorkflowQuery0, ZWorkflowQuery1, ZWorkflowQuery2}
+import zio.temporal.func.ZWorkflowQuery0
+import zio.temporal.func.ZWorkflowQuery1
+import zio.temporal.func.ZWorkflowQuery2
 import zio.temporal.utils.macros.MacroUtils
 import zio.temporal.workflow.ZWorkflowStub
 

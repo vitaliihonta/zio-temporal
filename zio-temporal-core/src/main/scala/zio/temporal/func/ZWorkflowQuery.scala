@@ -1,7 +1,10 @@
 package zio.temporal.func
 
 import zio.temporal.internal.TemporalInteraction
-import zio.temporal.{TemporalClientError, TemporalError, TemporalIO, internalApi}
+import zio.temporal.TemporalClientError
+import zio.temporal.TemporalError
+import zio.temporal.TemporalIO
+import zio.temporal.internalApi
 import zio.temporal.workflow.ZWorkflowStub
 
 /** Represents workflow query (method annotated with [[io.temporal.workflow.QueryMethod]])

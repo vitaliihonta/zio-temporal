@@ -5,8 +5,10 @@ import zio._
 import zio.blocking.Blocking
 import zio.clock.Clock
 import zio.temporal.ZAwaitTerminationOptions
-import zio.temporal.worker.{ZWorker, ZWorkerOptions}
-import zio.temporal.workflow.{ZWorkflowClient, ZWorkflowServiceStubs}
+import zio.temporal.worker.ZWorker
+import zio.temporal.worker.ZWorkerOptions
+import zio.temporal.workflow.ZWorkflowClient
+import zio.temporal.workflow.ZWorkflowServiceStubs
 
 /** TestWorkflowEnvironment provides workflow unit testing capabilities.
   *

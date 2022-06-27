@@ -2,11 +2,13 @@ package zio.temporal.distage
 
 import distage.Functoid
 import izumi.distage.model.definition.ModuleDef
-import izumi.distage.model.definition.dsl.ModuleDefDSL.{MakeDSL, SetElementDSL}
+import izumi.distage.model.definition.dsl.ModuleDefDSL.MakeDSL
+import izumi.distage.model.definition.dsl.ModuleDefDSL.SetElementDSL
 import izumi.fundamentals.platform.language.CodePositionMaterializer
 import zio.temporal.distage.internal.WorkerDefMacro
 import zio.temporal.internalApi
-import zio.temporal.worker.{ZWorker, ZWorkerFactory}
+import zio.temporal.worker.ZWorker
+import zio.temporal.worker.ZWorkerFactory
 
 import scala.language.experimental.macros
 

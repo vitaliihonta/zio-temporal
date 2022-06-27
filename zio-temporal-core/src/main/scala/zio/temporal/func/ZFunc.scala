@@ -3,7 +3,10 @@ package zio.temporal.func
 import io.temporal.client.WorkflowClient
 import io.temporal.workflow.Async
 import io.temporal.workflow.Functions._
-import zio.temporal.{TemporalClientError, TemporalError, TemporalIO, ZWorkflowExecution}
+import zio.temporal.TemporalClientError
+import zio.temporal.TemporalError
+import zio.temporal.TemporalIO
+import zio.temporal.ZWorkflowExecution
 import zio.temporal.internal.TemporalInteraction
 import zio.temporal.promise.ZPromise
 

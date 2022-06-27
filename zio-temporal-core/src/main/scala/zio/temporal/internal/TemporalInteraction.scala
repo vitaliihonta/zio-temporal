@@ -1,7 +1,11 @@
 package zio.temporal.internal
 
-import zio.{IO, ZIO}
-import zio.temporal.{TemporalBusinessError, TemporalClientError, TemporalError, TemporalIO}
+import zio.IO
+import zio.ZIO
+import zio.temporal.TemporalBusinessError
+import zio.temporal.TemporalClientError
+import zio.temporal.TemporalError
+import zio.temporal.TemporalIO
 
 import java.util.concurrent.CompletableFuture
 
