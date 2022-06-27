@@ -1,5 +1,4 @@
 import sbt.Keys.scalaVersion
-
 import sbt._
 
 object BuildConfig extends Dependencies {
@@ -12,14 +11,14 @@ object BuildConfig extends Dependencies {
     Distage.testKit
   ) ++ Logging.test
 
-  val ztemporalCoreLibs = baseLibs ++ Seq(
+  val temporalZioCoreLibs = baseLibs ++ Seq(
     Scalapb.runtime,
     Utility.scalaJava8Compat,
     Utility.izumiReflect,
     Enumeratum.enumeratum % Optional
   )
 
-  val ztemporalTestKitLibs = baseLibs ++ Seq(
+  val temporalZioTestKitLibs = baseLibs ++ Seq(
     Temporal.testing,
     Jackson.scala
   )
@@ -28,14 +27,14 @@ object BuildConfig extends Dependencies {
     Distage.core
   )
 
-  val ztemporalScalapbLibs = baseLibs ++ Seq(
+  val temporalZioScalapbLibs = baseLibs ++ Seq(
     Scalapb.runtime,
     Scalapb.runtimeProtobuf,
     Utility.reflections,
     Enumeratum.enumeratum % Optional
   )
 
-  val ztemporalDistageLibs = baseLibs ++ Seq(
+  val temporalZioDistageLibs = baseLibs ++ Seq(
     Distage.core,
     Distage.config
   )

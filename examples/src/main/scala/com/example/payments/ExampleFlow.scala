@@ -3,11 +3,12 @@ package com.example.payments
 import com.example.payments.workflows.PaymentWorkflow
 import com.example.transactions._
 import logstage.LogIO
-import ztemporal.workflow._
-import ztemporal.signal._
-import ztemporal.proto.syntax._
 import zio._
 import zio.duration._
+import zio.temporal.proto.syntax._
+import zio.temporal.signal._
+import zio.temporal.workflow._
+
 import java.util.UUID
 
 class ExampleFlow(client: ZWorkflowClient, rootLogger: LogIO[UIO]) {

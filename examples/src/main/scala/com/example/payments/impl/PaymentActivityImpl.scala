@@ -2,14 +2,12 @@ package com.example.payments.impl
 
 import com.example.payments.workflows.PaymentActivity
 import com.example.transactions._
-import izumi.logstage.api.IzLogger
 import logstage.LogIO
-import ztemporal.proto.syntax._
 import zio._
-import zio.random
-import ztemporal.activity.ZActivity
-import ztemporal.activity.ZActivityOptions
-import ztemporal.proto.ZUnit
+import zio.temporal.activity.ZActivity
+import zio.temporal.activity.ZActivityOptions
+import zio.temporal.proto.ZUnit
+import zio.temporal.proto.syntax._
 
 class PaymentActivityImpl(logger: LogIO[UIO])(implicit options: ZActivityOptions) extends PaymentActivity {
 

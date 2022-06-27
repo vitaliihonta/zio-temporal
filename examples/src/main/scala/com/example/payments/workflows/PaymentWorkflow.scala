@@ -1,7 +1,7 @@
 package com.example.payments.workflows
 
 import com.example.transactions._
-import ztemporal._
+import zio.temporal._
 
 @workflow
 trait PaymentWorkflow {

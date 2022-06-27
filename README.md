@@ -1,22 +1,22 @@
-[![ztemporal-core Scala version support](https://index.scala-lang.org/vitaliihonta/ztemporal/ztemporal-core/latest-by-scala-version.svg?platform=jvm)](https://index.scala-lang.org/vitaliihonta/ztemporal/ztemporal-core)
-![Build status](https://github.com/vitaliihonta/ztemporal/actions/workflows/publish.yaml/badge.svg)
-[![codecov](https://codecov.io/gh/vitaliihonta/ztemporal/branch/main/graph/badge.svg?token=T8NBC4R360)](https://codecov.io/gh/vitaliihonta/ztemporal)
+[![zio-temporal-core Scala version support](https://index.scala-lang.org/vitaliihonta/zio-temporal/zio-temporal-core/latest-by-scala-version.svg?platform=jvm)](https://index.scala-lang.org/vitaliihonta/zio-temporal/zio-temporal-core)
+![Build status](https://github.com/vitaliihonta/zio-temporal/actions/workflows/publish.yaml/badge.svg)
+[![codecov](https://codecov.io/gh/vitaliihonta/zio-temporal/branch/main/graph/badge.svg?token=T8NBC4R360)](https://codecov.io/gh/vitaliihonta/zio-temporal)
 
-# ZTemporal
+# ZIO Temporal
 
-ZTemporal is a ZIO integration with [Temporal workflow](https://temporal.io) based on Java SDK.  
+This is an integration with [Temporal workflow](https://temporal.io) based on Java SDK and ZIO.  
 It allows you to define and use workflows in a Scala way!
 
 [TL;DR intro about Temporal workflow](https://youtu.be/2HjnQlnA5eY)
 
 ## Modules
 
-1. **ztemporal-core** - ZIO integration and basic wrappers that bring type safety to your workflows.  
+1. **zio-temporal-core** - ZIO integration and basic wrappers that bring type safety to your workflows.  
    Allows you to use arbitrary ZIO code in your activities
-2. **ztemporal-scalapb** - integration with [ScalaPB](https://scalapb.github.io/) which allows you to
+2. **zio-temporal-scalapb** - integration with [ScalaPB](https://scalapb.github.io/) which allows you to
    use [Protobuf](https://developers.google.com/protocol-buffers)  
    as a transport layer protocol for communication with Temporal cluster
-3. **ztemporal-distage** - provides a concise integration with [DIstage](https://izumi.7mind.io/distage/index.html)
+3. **zio-temporal-distage** - provides a concise integration with [DIstage](https://izumi.7mind.io/distage/index.html)
    which allows  
    to use Dependency Injection for building Workflows and Activities
 
@@ -24,13 +24,13 @@ It allows you to define and use workflows in a Scala way!
 
 ```sbt
 // Core
-libraryDependencies += "com.github.vitaliihonta" %% "ztemporal-core" % "<VERSION>"
+libraryDependencies += "dev.vhonta" %% "zio-temporal-core" % "<VERSION>"
 
 // ScalaPB integration
-libraryDependencies += "com.github.vitaliihonta" %% "ztemporal-scalapb" % "<VERSION>"
+libraryDependencies += "dev.vhonta" %% "zio-temporal-scalapb" % "<VERSION>"
 
 // DIstage integration**** integration
-libraryDependencies += "com.github.vitaliihonta" %% "ztemporal-distage" % "<VERSION>"
+libraryDependencies += "dev.vhonta" %% "zio-temporal-distage" % "<VERSION>"
 ```
 
 ## Examples
@@ -39,7 +39,7 @@ You can find the source code of example workflow in [examples directory](./examp
 
 ### Defining workflows
 
-When you work with **ZTemporal**, first you need to define [Activities](https://docs.temporal.io/activities)
+When you work with **ZIO Temporal**, first you need to define [Activities](https://docs.temporal.io/activities)
 and [Workflows](https://docs.temporal.io/workflows).
 
 Lets started with protocol buffers:
@@ -49,26 +49,26 @@ syntax = "proto2";
 
 package com.example.transactions;
 
-// ZTemporal provides some useful types for your protocols, like UUID, BigDecimal, etc.
-import "ztemporal.proto";
+// ZIO Temporal provides some useful types for your protocols, like UUID, BigDecimal, etc.
+import "zio.temporal.proto";
 
 // Workflow method input - request to proceed a transaction
 message ProceedTransactionCommand {
-  required ztemporal.proto.UUID id = 1;
-  required ztemporal.proto.UUID sender = 2;
-  required ztemporal.proto.UUID receiver = 3;
-  required ztemporal.proto.BigDecimal amount = 4;
+  required zio.temporal.proto.UUID id = 1;
+  required zio.temporal.proto.UUID sender = 2;
+  required zio.temporal.proto.UUID receiver = 3;
+  required zio.temporal.proto.BigDecimal amount = 4;
 }
 
 // User confirms the transaction with CVV code
 message ConfirmTransactionCommand {
-  required ztemporal.proto.UUID id = 1;
+  required zio.temporal.proto.UUID id = 1;
   required string confirmationCode = 2;
 }
 
 // Cancel transaction execution
 message CancelTransactionCommand {
-  required ztemporal.proto.UUID id = 1;
+  required zio.temporal.proto.UUID id = 1;
 }
 
 // Statuses
@@ -81,12 +81,12 @@ enum TransactionStatus {
 
 // Snapshot of the transaction state
 message TransactionView {
-  required ztemporal.proto.UUID id = 1;
+  required zio.temporal.proto.UUID id = 1;
   required TransactionStatus status = 2;
   required string description = 3;
-  required ztemporal.proto.UUID sender = 4;
-  required ztemporal.proto.UUID receiver = 5;
-  required ztemporal.proto.BigDecimal amount = 6;
+  required zio.temporal.proto.UUID sender = 4;
+  required zio.temporal.proto.UUID receiver = 5;
+  required zio.temporal.proto.BigDecimal amount = 6;
 }
 
 // Possible error
@@ -100,8 +100,8 @@ Then you could define your workflow and activity using them
 
 ```scala
 import com.example.transactions._
-import ztemporal._
-import ztemporal.proto.ZUnit
+import zio.temporal._
+import zio.temporal.proto.ZUnit
 
 // Notice the annotation! It's required by Java SDK
 @activity
@@ -145,9 +145,9 @@ That means that you'll use ZIO only inside activities:
 ```scala
 // Library imports
 import zio._
-import ztemporal.activity.ZActivity
-import ztemporal.activity.ZActivityOptions
-import ztemporal.proto.ZUnit
+import zio.temporal.activity.ZActivity
+import zio.temporal.activity.ZActivityOptions
+import zio.temporal.proto.ZUnit
 
 // The protocol and activities
 import com.example.transactions._
@@ -189,10 +189,10 @@ Then you could use the Activity inside a Workflow:
 ```scala
 // Library imports
 import zio._
-import ztemporal._
-import ztemporal.saga._
-import ztemporal.state.ZWorkflowState
-import ztemporal.workflow.ZWorkflow
+import zio.temporal._
+import zio.temporal.saga._
+import zio.temporal.state.ZWorkflowState
+import zio.temporal.workflow.ZWorkflow
 
 // Protocol imports
 import com.example.transactions._
@@ -327,9 +327,9 @@ by sending Signals and Querying the state:
 import com.example.payments.workflows.PaymentWorkflow
 import com.example.transactions._
 import logstage.LogIO
-import ztemporal.workflow._
-import ztemporal.signal._
-import ztemporal.proto.syntax._
+import zio.temporal.workflow._
+import zio.temporal.signal._
+import zio.temporal.proto.syntax._
 import zio._
 import zio.duration._
 import java.util.UUID
@@ -386,7 +386,7 @@ class ExampleFlow(client: ZWorkflowClient, rootLogger: LogIO[UIO]) {
     receiver:        UUID
   ) = {
     // Statically-typed workflow invocation.
-    // ZTemporal automatically picks up the method name via macros.
+    // ZIO Temporal automatically picks up the method name via macros.
     (paymentWorkflow.proceed _).start(
       // Provide input arguments
       ProceedTransactionCommand(
@@ -403,7 +403,7 @@ class ExampleFlow(client: ZWorkflowClient, rootLogger: LogIO[UIO]) {
     logger.info("Checking transaction status...") *>
       workflowStub
         // Statically-typed query method invocation.
-        // ZTemporal automatically picks up the method name via macros.
+        // ZIO Temporal automatically picks up the method name via macros.
         .query0((_: PaymentWorkflow).getStatus)
         .runEither
   }
@@ -414,7 +414,7 @@ class ExampleFlow(client: ZWorkflowClient, rootLogger: LogIO[UIO]) {
   )(transactionId:   UUID
   ) = {
    // Statically-typed signal method invocation.
-   // ZTemporal automatically picks up the method name via macros.
+   // ZIO Temporal automatically picks up the method name via macros.
     workflowStub.signal(
       ZSignal.signal(paymentWorkflow.confirmTransaction _)
     )(
@@ -440,7 +440,7 @@ defining Workflows looks pretty similar to defining Module:
 
 ```scala
 // Library imports
-import ztemporal.distage._
+import zio.temporal.distage._
 
 // Protocol imports
 import com.example.payments.impl._
@@ -463,10 +463,10 @@ import distage.ModuleDef
 
 
 object ExampleModule extends ModuleDef {
-   // Predefined modules from ZTemporal
-   include(ZTemporalConfigModule)
-   include(ZTemporalClientModule)
-   include(ZTemporalWorkerModule)
+   // Predefined modules from ZIO Temporal
+   include(TemporalZioConfigModule)
+   include(TemporalZioClientModule)
+   include(TemporalZioWorkerModule)
   
    // Include your worker
    include(PaymentWorker)
@@ -474,7 +474,7 @@ object ExampleModule extends ModuleDef {
    // Some Temporal client options, like serializers
    make[ZWorkflowClientOptions].fromValue(
       ZWorkflowClientOptions.default.withDataConverter(
-         // ZTemporal can automatically find all your generated Protobuf files inside the Classpath!
+         // ZIO Temporal can automatically find all your generated Protobuf files inside the Classpath!
          ScalapbDataConverter.makeAutoLoad()
       )
    )

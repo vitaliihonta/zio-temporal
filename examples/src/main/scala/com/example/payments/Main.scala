@@ -5,7 +5,7 @@ import distage.Injector
 import distage.Roots
 import logstage.LogIO
 import zio._
-import ztemporal.distage.ZWorkerLifecycle
+import zio.temporal.distage.ZWorkerLifecycle
 
 object Main extends App {
 

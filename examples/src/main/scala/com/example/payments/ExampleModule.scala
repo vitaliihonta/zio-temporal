@@ -1,12 +1,10 @@
 package com.example.payments
 
-import distage.ModuleDef
-import ztemporal.distage._
-import com.example.payments.workflows._
 import com.example.payments.impl._
-import com.example.transactions.TransactionsProto
+import com.example.payments.workflows._
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
+import distage.ModuleDef
 import distage.config.AppConfig
 import izumi.logstage.api.IzLogger
 import izumi.logstage.api.Log
@@ -15,9 +13,9 @@ import izumi.logstage.sink.ConsoleSink
 import logstage.LogIO
 import logstage.LogRouter
 import zio.UIO
-import ztemporal.distage.ZWorkerDef
-import ztemporal.proto.ScalapbDataConverter
-import ztemporal.workflow.ZWorkflowClientOptions
+import zio.temporal.distage._
+import zio.temporal.proto.ScalapbDataConverter
+import zio.temporal.workflow.ZWorkflowClientOptions
 
 object PaymentWorker extends ZWorkerDef("payments") {
   registerActivity[PaymentActivity].from[PaymentActivityImpl]
@@ -37,9 +35,9 @@ object ExampleModule extends ModuleDef {
 
   make[LogIO[UIO]].from(LogIO.fromLogger[UIO](_: IzLogger))
 
-  include(ZTemporalConfigModule)
-  include(ZTemporalClientModule)
-  include(ZTemporalWorkerModule)
+  include(TemporalZioConfigModule)
+  include(TemporalZioClientModule)
+  include(TemporalZioWorkerModule)
   include(PaymentWorker)
 
   make[ZWorkflowClientOptions].fromValue(

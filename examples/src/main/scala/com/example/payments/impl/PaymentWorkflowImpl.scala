@@ -2,18 +2,12 @@ package com.example.payments.impl
 
 import com.example.payments.workflows.PaymentActivity
 import com.example.payments.workflows.PaymentWorkflow
-import com.example.transactions.CancelTransactionCommand
-import com.example.transactions.ConfirmTransactionCommand
-import com.example.transactions.ProceedTransactionCommand
-import com.example.transactions.TransactionError
-import com.example.transactions.TransactionStatus
-import com.example.transactions.TransactionView
+import com.example.transactions._
 import izumi.logstage.api.IzLogger
-import ztemporal._
-import ztemporal.saga._
-import zio._
-import ztemporal.state.ZWorkflowState
-import ztemporal.workflow.ZWorkflow
+import zio.temporal._
+import zio.temporal.saga._
+import zio.temporal.state.ZWorkflowState
+import zio.temporal.workflow.ZWorkflow
 
 import scala.concurrent.duration._
 
