@@ -2,49 +2,38 @@ package com.example.payments
 
 import com.example.payments.impl._
 import com.example.payments.workflows._
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
-import distage.ModuleDef
-import distage.config.AppConfig
-import izumi.logstage.api.IzLogger
-import izumi.logstage.api.Log
-import izumi.logstage.api.routing.StaticLogRouter
-import izumi.logstage.sink.ConsoleSink
-import logstage.LogIO
-import logstage.LogRouter
-import zio.UIO
-import zio.temporal.distage._
+import zio._
 import zio.temporal.proto.ScalapbDataConverter
+import zio.temporal.worker.ZWorker
+import zio.temporal.worker.ZWorkerFactory
+import zio.temporal.worker.ZWorkerFactoryOptions
 import zio.temporal.workflow.ZWorkflowClientOptions
+import zio.temporal.workflow.ZWorkflowServiceStubsOptions
 
-object PaymentWorker extends ZWorkerDef("payments") {
-  registerActivity[PaymentActivity].from[PaymentActivityImpl]
-
-  registerWorkflow[PaymentWorkflow].fromFactory((rootLogger: IzLogger) => () => new PaymentWorkflowImpl(rootLogger))
-}
-
-object ExampleModule extends ModuleDef {
-  make[Config].from(ConfigFactory.load())
-  make[AppConfig].from(AppConfig(_))
-
-  make[IzLogger].from {
-    val logger = IzLogger(LogRouter(threshold = Log.Level.Info, sink = ConsoleSink.SimpleConsoleSink))
-    StaticLogRouter.instance.setup(logger.router)
-    logger
+object ExampleModule {
+  val stubOptions: ULayer[ZWorkflowServiceStubsOptions] = ZLayer.succeed {
+    ZWorkflowServiceStubsOptions.DefaultLocalDocker
   }
 
-  make[LogIO[UIO]].from(LogIO.fromLogger[UIO](_: IzLogger))
-
-  include(TemporalZioConfigModule)
-  include(TemporalZioClientModule)
-  include(TemporalZioWorkerModule)
-  include(PaymentWorker)
-
-  make[ZWorkflowClientOptions].fromValue(
+  val clientOptions: ULayer[ZWorkflowClientOptions] = ZLayer.succeed {
     ZWorkflowClientOptions.default.withDataConverter(
       ScalapbDataConverter.makeAutoLoad()
     )
-  )
+  }
 
-  make[ExampleFlow]
+  val workerFactoryOptions: ULayer[ZWorkerFactoryOptions] = ZLayer.succeed {
+    ZWorkerFactoryOptions.default
+  }
+
+  val worker: URLayer[PaymentActivityImpl with ZWorkerFactory, Unit] =
+    ZLayer.fromZIO {
+      ZIO.serviceWithZIO[ZWorkerFactory] { workerFactory =>
+        for {
+          worker       <- workerFactory.newWorker("payments")
+          activityImpl <- ZIO.service[PaymentActivityImpl]
+          _ = worker.addActivityImplementation(activityImpl)
+          _ = worker.addWorkflow[PaymentWorkflow](new PaymentWorkflowImpl)
+        } yield ()
+      }
+    }
 }

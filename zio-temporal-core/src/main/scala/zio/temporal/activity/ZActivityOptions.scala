@@ -12,6 +12,9 @@ class ZActivityOptions[R](
 
 object ZActivityOptions {
 
+  val default: URLayer[ZWorkflowClient, ZActivityOptions[Any]] =
+    make[Any]
+
   /** Creates [[ZActivityOptions]]
     *
     * @return

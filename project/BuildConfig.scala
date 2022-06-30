@@ -25,7 +25,7 @@ object BuildConfig extends Dependencies {
   val testLibs = baseLibs ++ Seq(
     Zio.test,
     Zio.testSbt,
-    Zio.logging % Test
+    Logging.zio % Test
   )
 
   val temporalZioScalapbLibs = baseLibs ++ Seq(
@@ -36,7 +36,9 @@ object BuildConfig extends Dependencies {
   )
 
   val examplesLibs = baseLibs ++ Seq(
-    Zio.logging
+    Logging.zio,
+    Logging.zioSlf4j,
+    Logging.logback
   )
 }
 
@@ -68,7 +70,6 @@ trait Dependencies {
     val self           = org.zio %% "zio"          % version.zio
     val test           = org.zio %% "zio-test"     % version.zio % Test
     val testSbt        = org.zio %% "zio-test-sbt" % version.zio % Test
-    val logging        = org.zio %% "zio-logging"  % version.zioLogging
     val testFrameworks = Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   }
 
@@ -103,5 +104,11 @@ trait Dependencies {
     val kindProjectorCompilerPlugin = compilerPlugin(
       "org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full
     )
+  }
+
+  object Logging {
+    val zio      = org.zio         %% "zio-logging"       % version.zioLogging
+    val zioSlf4j = org.zio         %% "zio-logging-slf4j" % version.zioLogging
+    val logback  = "ch.qos.logback" % "logback-classic"   % "1.2.11"
   }
 }

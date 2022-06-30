@@ -2,48 +2,63 @@ package com.example.payments
 
 import com.example.payments.workflows.PaymentWorkflow
 import com.example.transactions._
-import logstage.LogIO
-import zio._
-import zio.duration._
+import zio.{LogAnnotation => _, _}
+import zio.logging.LogAnnotation
+import zio.logging.logContext
 import zio.temporal.proto.syntax._
 import zio.temporal.signal._
 import zio.temporal.workflow._
 
 import java.util.UUID
 
-class ExampleFlow(client: ZWorkflowClient, rootLogger: LogIO[UIO]) {
+object ExampleFlow {
+  val make: URLayer[ZWorkflowClient, ExampleFlow] = ZLayer.fromFunction(new ExampleFlow(_))
+}
 
-  def proceedPayment(): URIO[ZEnv, Unit] =
-    random.nextUUID.flatMap { transactionId =>
-      val logger = rootLogger("transaction_id" -> transactionId)
+class ExampleFlow(client: ZWorkflowClient) {
+
+  private val transactionIdAnnotation = LogAnnotation[UUID](
+    name = "transaction_id",
+    combine = (_: UUID, r: UUID) => r,
+    render = _.toString
+  )
+
+  def proceedPayment(): UIO[Unit] =
+    Random.nextUUID.flatMap { transactionId =>
       val paymentFlow = for {
-        sender   <- random.nextUUID
-        receiver <- random.nextUUID
+        _ <- logContext.update(
+               _.annotate(
+                 transactionIdAnnotation,
+                 transactionId
+               )
+             )
+        sender   <- Random.nextUUID
+        receiver <- Random.nextUUID
         paymentWorkflow <- client
                              .newWorkflowStub[PaymentWorkflow]
                              .withTaskQueue("payments")
                              .withWorkflowId(transactionId.toString)
                              .build
-        _            <- logger.info("Going to trigger workflow")
+        _            <- ZIO.logInfo("Going to trigger workflow")
         _            <- initiateTransaction(paymentWorkflow)(transactionId, sender, receiver)
-        _            <- logger.info("Trxn workflow started id")
-        _            <- simulateUserActivity(logger)
+        _            <- ZIO.logInfo("Trxn workflow started id")
+        _            <- simulateUserActivity
         workflowStub <- client.newUntypedWorkflowStub(workflowId = transactionId.toString)
-        currentState <- checkStatus(workflowStub, logger)(transactionId)
-        _            <- logger.info(s"Trxn status checked $currentState")
-        _            <- simulateUserActivity(logger)
-        _            <- logger.info("Going to send confirmation")
+        currentState <- checkStatus(workflowStub)(transactionId)
+        _            <- ZIO.logInfo(s"Trxn status checked $currentState")
+        _            <- simulateUserActivity
+        _            <- ZIO.logInfo("Going to send confirmation")
         _            <- sendConfirmation(workflowStub, paymentWorkflow)(transactionId)
-        _            <- logger.info("Confirmation sent!")
-        _            <- simulateUserActivity(logger)
-        _ <- (clock.sleep(100.millis) *> checkStatus(workflowStub, logger)(transactionId)).repeatWhile(isNotFinished)
-        _ <- logger.info("End-up polling status, fetching the result")
-        result <- workflowStub.resultEither[TransactionError, TransactionView]
-        _      <- logger.info(s"Transaction finished $result")
+        _            <- ZIO.logInfo("Confirmation sent!")
+        _            <- simulateUserActivity
+        _            <- (ZIO.sleep(100.millis) *> checkStatus(workflowStub)(transactionId)).repeatWhile(isNotFinished)
+        _            <- ZIO.logInfo("End-up polling status, fetching the result")
+        result       <- workflowStub.resultEither[TransactionError, TransactionView]
+        _            <- ZIO.logInfo(s"Transaction finished result=$result")
       } yield ()
 
       paymentFlow.catchAll { error =>
-        logger.error(s"Error processing transaction: $error")
+        ZIO.logError(s"Error processing transaction: $error")
       }
     }
 
@@ -62,8 +77,8 @@ class ExampleFlow(client: ZWorkflowClient, rootLogger: LogIO[UIO]) {
       )
     )
 
-  private def checkStatus(workflowStub: ZWorkflowStub, logger: LogIO[UIO])(transactionId: UUID) =
-    logger.info("Checking transaction status...") *>
+  private def checkStatus(workflowStub: ZWorkflowStub)(transactionId: UUID) =
+    ZIO.logInfo("Checking transaction status...") *>
       workflowStub
         .query0((_: PaymentWorkflow).getStatus)
         .runEither
@@ -84,7 +99,7 @@ class ExampleFlow(client: ZWorkflowClient, rootLogger: LogIO[UIO]) {
   private def isNotFinished(state: TransactionView): Boolean =
     state.status.isCreated || state.status.isInProgress
 
-  private def simulateUserActivity(logger: LogIO[UIO]): URIO[clock.Clock, Unit] =
-    logger.info("User is thinking...") *>
-      zio.clock.sleep(1.second)
+  private def simulateUserActivity: UIO[Unit] =
+    ZIO.logInfo("User is thinking...") *>
+      ZIO.sleep(1.second)
 }

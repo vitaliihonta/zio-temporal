@@ -1,8 +1,8 @@
 package zio.temporal.worker
 
-import io.temporal.worker.Worker
+import zio._
 import zio.temporal.internal.ClassTagUtils
-
+import io.temporal.worker.Worker
 import scala.reflect.ClassTag
 
 /** Hosts activity and workflow implementations. Uses long poll to receive activity and workflow tasks and processes

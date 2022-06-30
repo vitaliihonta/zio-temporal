@@ -3,19 +3,20 @@ package com.example.payments.impl
 import com.example.payments.workflows.PaymentActivity
 import com.example.payments.workflows.PaymentWorkflow
 import com.example.transactions._
-import izumi.logstage.api.IzLogger
+import zio._
 import zio.temporal._
 import zio.temporal.saga._
 import zio.temporal.state.ZWorkflowState
 import zio.temporal.workflow.ZWorkflow
-
-import scala.concurrent.duration._
+import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 
 case class TransactionState(transaction: TransactionView, confirmation: Option[ConfirmTransactionCommand])
 
-class PaymentWorkflowImpl(rootLogger: IzLogger) extends PaymentWorkflow {
+class PaymentWorkflowImpl extends PaymentWorkflow {
 
-  private val logger = rootLogger("workflow_id" -> ZWorkflow.info.workflowId)
+  private lazy val logger = LoggerFactory.getLogger(getClass)
+  MDC.put("transaction_id", ZWorkflow.info.workflowId)
 
   private val activity = ZWorkflow
     .newActivityStub[PaymentActivity]
@@ -26,11 +27,11 @@ class PaymentWorkflowImpl(rootLogger: IzLogger) extends PaymentWorkflow {
   private val state = ZWorkflowState.empty[TransactionState]
 
   override def proceed(transaction: ProceedTransactionCommand): Either[TransactionError, TransactionView] = {
-    logger.info(s"Processing $transaction")
+    logger.info(s"Processing transaction=$transaction")
     state.setTo(initialState(transaction))
     val saga = for {
       created <- proceedTransaction(transaction)
-      _ = logger.info(s"Initiated transaction $created")
+      _ = logger.info(s"Initiated transaction=$created")
       _ <- updateStateWith(created)
       _ = logger.info("Waiting for confirmation")
       _ <- waitForConfirmation()
