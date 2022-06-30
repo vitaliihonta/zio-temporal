@@ -2,13 +2,13 @@ package zio.temporal.testkit
 
 import io.temporal.testing.TestWorkflowEnvironment
 import zio._
-import zio.blocking.Blocking
-import zio.clock.Clock
 import zio.temporal.ZAwaitTerminationOptions
 import zio.temporal.worker.ZWorker
 import zio.temporal.worker.ZWorkerOptions
 import zio.temporal.workflow.ZWorkflowClient
 import zio.temporal.workflow.ZWorkflowServiceStubs
+
+import java.util.concurrent.TimeUnit
 
 /** TestWorkflowEnvironment provides workflow unit testing capabilities.
   *
@@ -36,7 +36,7 @@ class ZTestWorkflowEnvironment private[zio] (private val self: TestWorkflowEnvir
   def workflowClient = new ZWorkflowClient(self.getWorkflowClient)
 
   /** Returns the in-memory test Temporal service that is owned by this. */
-  def workflowService = new ZWorkflowServiceStubs(self.getWorkflowService)
+  def workflowService = new ZWorkflowServiceStubs(self.getWorkflowServiceStubs)
 
   /** Allows to run arbitrary effect ensuring a shutdown on effect completion.
     *
@@ -49,7 +49,7 @@ class ZTestWorkflowEnvironment private[zio] (private val self: TestWorkflowEnvir
   def use[R, E, A](
     options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.testDefault
   )(thunk:   ZIO[R, E, A]
-  ): ZIO[R with Blocking with Clock, E, A] =
+  ): ZIO[R, E, A] =
     for {
       started    <- start.fork
       awaitFiber <- awaitTermination(options).fork
@@ -64,7 +64,7 @@ class ZTestWorkflowEnvironment private[zio] (private val self: TestWorkflowEnvir
 
   /** Start all workers created by this test environment. */
   def start: UIO[Unit] =
-    UIO.effectTotal(self.start())
+    ZIO.blocking(ZIO.succeed(self.start()))
 
   /** Initiates an orderly shutdown in which polls are stopped and already received workflow and activity tasks are
     * executed.
@@ -73,7 +73,7 @@ class ZTestWorkflowEnvironment private[zio] (private val self: TestWorkflowEnvir
     *   [[TestWorkflowEnvironment#shutdown]]
     */
   def shutdown: UIO[Unit] =
-    UIO.effectTotal(self.shutdown())
+    ZIO.blocking(ZIO.succeed(self.shutdown()))
 
   /** Initiates an orderly shutdown in which polls are stopped and already received workflow and activity tasks are
     * attempted to be stopped. This implementation cancels tasks via Thread.interrupt(), so any task that fails to
@@ -83,7 +83,7 @@ class ZTestWorkflowEnvironment private[zio] (private val self: TestWorkflowEnvir
     *   [[TestWorkflowEnvironment#shutdownNow]]
     */
   def shutdownNow: UIO[Unit] =
-    UIO.effectTotal(self.shutdownNow())
+    ZIO.blocking(ZIO.succeed(self.shutdownNow()))
 
   /** Blocks until all tasks have completed execution after a shutdown request, or the timeout occurs, or the current
     * thread is interrupted, whichever happens first.
@@ -93,17 +93,15 @@ class ZTestWorkflowEnvironment private[zio] (private val self: TestWorkflowEnvir
     */
   def awaitTermination(
     options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.testDefault
-  ): URIO[Blocking with Clock, Unit] = {
-    import zio.duration._
-    blocking
+  ): UIO[Unit] =
+    ZIO
       .blocking {
-        IO.effectTotal(
-          self.awaitTermination(options.pollTimeout.length, options.pollTimeout.unit)
+        ZIO.succeed(
+          self.awaitTermination(options.pollTimeout.toNanos, TimeUnit.NANOSECONDS)
         )
       }
-      .repeat(Schedule.recurUntil((_: Unit) => true) && Schedule.fixed(Duration.fromScala(options.pollDelay)))
+      .repeat(Schedule.recurUntil((_: Unit) => true) && Schedule.fixed(options.pollDelay))
       .unit
-  }
 }
 
 object ZTestWorkflowEnvironment {
@@ -112,15 +110,19 @@ object ZTestWorkflowEnvironment {
     *
     * @see
     *   [[TestWorkflowEnvironment.newInstance]]
-    * @param options
-    *   test environment options
     * @return
     *   managed instance of test environment
     */
-  def make(options: ZTestEnvironmentOptions = ZTestEnvironmentOptions.default): UManaged[ZTestWorkflowEnvironment] =
-    ZManaged.make(
-      IO.effectTotal(
-        new ZTestWorkflowEnvironment(TestWorkflowEnvironment.newInstance(options.toJava))
-      )
-    )(_.shutdown)
+  val make: URLayer[ZTestEnvironmentOptions, ZTestWorkflowEnvironment] =
+    ZLayer.scoped {
+      ZIO.environmentWithZIO[ZTestEnvironmentOptions] { environment =>
+        ZIO.acquireRelease(
+          ZIO.blocking(
+            ZIO.succeed(
+              new ZTestWorkflowEnvironment(TestWorkflowEnvironment.newInstance(environment.get.toJava))
+            )
+          )
+        )(_.shutdownNow)
+      }
+    }
 }

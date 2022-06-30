@@ -5,12 +5,10 @@ import io.temporal.common.context.ContextPropagator
 import io.temporal.workflow.ChildWorkflowCancellationType
 import io.temporal.workflow.ChildWorkflowOptions
 import io.temporal.workflow.Workflow
+import zio._
 import zio.temporal.ZRetryOptions
 import zio.temporal.ZSearchAttribute
 import zio.temporal.internal.ClassTagUtils
-
-import scala.compat.java8.DurationConverters._
-import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
@@ -26,14 +24,14 @@ class ZChildWorkflowStubBuilder[A: ClassTag] private[zio] (
   def withWorkflowIdReusePolicy(policy: WorkflowIdReusePolicy): ZChildWorkflowStubBuilder[A] =
     copy(_.setWorkflowIdReusePolicy(policy))
 
-  def withWorkflowRunTimeout(timeout: FiniteDuration): ZChildWorkflowStubBuilder[A] =
-    copy(_.setWorkflowRunTimeout(timeout.toJava))
+  def withWorkflowRunTimeout(timeout: Duration): ZChildWorkflowStubBuilder[A] =
+    copy(_.setWorkflowRunTimeout(timeout.asJava))
 
-  def withWorkflowExecutionTimeout(timeout: FiniteDuration): ZChildWorkflowStubBuilder[A] =
-    copy(_.setWorkflowExecutionTimeout(timeout.toJava))
+  def withWorkflowExecutionTimeout(timeout: Duration): ZChildWorkflowStubBuilder[A] =
+    copy(_.setWorkflowExecutionTimeout(timeout.asJava))
 
-  def withWorkflowTaskTimeout(timeout: FiniteDuration): ZChildWorkflowStubBuilder[A] =
-    copy(_.setWorkflowTaskTimeout(timeout.toJava))
+  def withWorkflowTaskTimeout(timeout: Duration): ZChildWorkflowStubBuilder[A] =
+    copy(_.setWorkflowTaskTimeout(timeout.asJava))
 
   def withTaskQueue(taskQueue: String): ZChildWorkflowStubBuilder[A] =
     copy(_.setTaskQueue(taskQueue))

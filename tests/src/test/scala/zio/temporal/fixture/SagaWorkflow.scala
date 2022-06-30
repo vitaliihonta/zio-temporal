@@ -1,10 +1,9 @@
 package zio.temporal.fixture
 
+import zio._
 import zio.temporal._
 import zio.temporal.saga._
 import zio.temporal.workflow._
-
-import scala.concurrent.duration._
 
 case class Error(msg: String)
 case class Done()

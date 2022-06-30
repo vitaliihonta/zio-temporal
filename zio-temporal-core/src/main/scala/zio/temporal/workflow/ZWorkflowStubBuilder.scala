@@ -2,12 +2,10 @@ package zio.temporal.workflow
 
 import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowOptions
-import zio.UIO
+import zio._
 import zio.temporal.ZRetryOptions
 import zio.temporal.ZSearchAttribute
-
 import scala.compat.java8.DurationConverters._
-import scala.concurrent.duration.FiniteDuration
 import scala.reflect.ClassTag
 
 final class ZWorkflowStubBuilderTaskQueueDsl[A] private[zio] (client: WorkflowClient, ctg: ClassTag[A]) {
@@ -41,11 +39,11 @@ final class ZWorkflowStubBuilder[A] private[zio] (
   def withCronSchedule(schedule: String): ZWorkflowStubBuilder[A] =
     copy(_.setCronSchedule(schedule))
 
-  def withWorkflowRunTimeout(timeout: FiniteDuration): ZWorkflowStubBuilder[A] =
-    copy(_.setWorkflowRunTimeout(timeout.toJava))
+  def withWorkflowRunTimeout(timeout: Duration): ZWorkflowStubBuilder[A] =
+    copy(_.setWorkflowRunTimeout(timeout.asJava))
 
-  def withWorkflowTaskTimeout(timeout: FiniteDuration): ZWorkflowStubBuilder[A] =
-    copy(_.setWorkflowTaskTimeout(timeout.toJava))
+  def withWorkflowTaskTimeout(timeout: Duration): ZWorkflowStubBuilder[A] =
+    copy(_.setWorkflowTaskTimeout(timeout.asJava))
 
   def withRetryOptions(options: ZRetryOptions): ZWorkflowStubBuilder[A] =
     copy(_.setRetryOptions(options.toJava))
@@ -55,7 +53,7 @@ final class ZWorkflowStubBuilder[A] private[zio] (
     *   typed workflow stub
     */
   def build: UIO[ZWorkflowStub.Of[A]] =
-    UIO.effectTotal {
+    ZIO.succeed {
       val options =
         additionalConfig {
           WorkflowOptions

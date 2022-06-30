@@ -95,7 +95,6 @@ lazy val root = project
       `zio-temporal-core`.projectRefs ++
       `zio-temporal-testkit`.projectRefs ++
       `zio-temporal-scalapb`.projectRefs ++
-      `zio-temporal-distage`.projectRefs ++
       tests.projectRefs: _*
   )
   .aggregate(
@@ -114,7 +113,6 @@ lazy val coverage = project
     `zio-temporal-core`.jvm(scala213),
     `zio-temporal-testkit`.jvm(scala213),
     `zio-temporal-scalapb`.jvm(scala213),
-    `zio-temporal-distage`.jvm(scala213),
     tests.jvm(scala213)
   )
 
@@ -156,13 +154,13 @@ lazy val tests = projectMatrix
   .dependsOn(
     `zio-temporal-core`,
     `zio-temporal-testkit` % "compile->compile;test->test",
-    `zio-temporal-scalapb`,
-    `zio-temporal-distage`
+    `zio-temporal-scalapb`
   )
   .settings(baseSettings, coverageSettings, noPublishSettings, crossCompileSettings)
   .settings(
     name := "tests",
-    libraryDependencies ++= BuildConfig.testLibs
+    libraryDependencies ++= BuildConfig.testLibs,
+    testFrameworks := BuildConfig.Zio.testFrameworks
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
 
@@ -179,18 +177,6 @@ lazy val `zio-temporal-scalapb` = projectMatrix
         flatPackage = true,
         grpc = false
       ) -> (Compile / sourceManaged).value / "scalapb"
-    )
-  )
-  .jvmPlatform(scalaVersions = allScalaVersions)
-
-lazy val `zio-temporal-distage` = projectMatrix
-  .in(file("zio-temporal-distage"))
-  .dependsOn(`zio-temporal-core`, `zio-temporal-macro-utils`)
-  .settings(baseLibSettings)
-  .settings(crossCompileSettings)
-  .settings(
-    libraryDependencies ++= BuildConfig.temporalZioDistageLibs ++ Seq(
-      BuildConfig.ScalaReflect.macros.value
     )
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
@@ -212,6 +198,5 @@ lazy val examples = project
   .dependsOn(
     `zio-temporal-core`.jvm(scala213),
     `zio-temporal-testkit`.jvm(scala213),
-    `zio-temporal-scalapb`.jvm(scala213),
-    `zio-temporal-distage`.jvm(scala213)
+    `zio-temporal-scalapb`.jvm(scala213)
   )

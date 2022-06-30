@@ -19,24 +19,27 @@ object ZActivity {
     * @return
     *   result of executing the action
     */
-  def run[A](action: URIO[ZEnv, A])(implicit zactivityOptions: ZActivityOptions): A = {
+  def run[R, A](action: URIO[R, A])(implicit zactivityOptions: ZActivityOptions[R]): A = {
     val ctx       = Activity.getExecutionContext
     val taskToken = ctx.getTaskToken
 
     ctx.doNotCompleteOnReturn()
 
-    zactivityOptions.runtime.unsafeRunAsync(action) {
-      case Exit.Failure(cause) =>
-        zactivityOptions.activityCompletionClient.completeExceptionally(
-          taskToken,
-          Activity.wrap(ZActivityFatalError(cause))
-        )
+    Unsafe.unsafe { implicit unsafe =>
+      val fiber = zactivityOptions.runtime.unsafe.fork(action)
+      fiber.unsafe.addObserver {
+        case Exit.Failure(cause) =>
+          zactivityOptions.activityCompletionClient.completeExceptionally(
+            taskToken,
+            Activity.wrap(ZActivityFatalError(cause))
+          )
 
-      case Exit.Success(value) =>
-        zactivityOptions.activityCompletionClient.complete[A](
-          taskToken,
-          value
-        )
+        case Exit.Success(value) =>
+          zactivityOptions.activityCompletionClient.complete[A](
+            taskToken,
+            value
+          )
+      }
     }
 
     null.asInstanceOf[A]
@@ -55,30 +58,34 @@ object ZActivity {
     * @return
     *   result of executing the action
     */
-  def run[E, A](action: ZIO[ZEnv, E, A])(implicit zactivityOptions: ZActivityOptions): Either[E, A] = {
+  def run[R, E, A](action: ZIO[R, E, A])(implicit zactivityOptions: ZActivityOptions[R]): Either[E, A] = {
     val ctx       = Activity.getExecutionContext
     val taskToken = ctx.getTaskToken
 
     ctx.doNotCompleteOnReturn()
 
-    zactivityOptions.runtime.unsafeRunAsync(action) {
-      case Exit.Failure(cause) if cause.died | cause.failureOption.isEmpty =>
-        zactivityOptions.activityCompletionClient.completeExceptionally(
-          taskToken,
-          Activity.wrap(ZActivityFatalError(cause))
-        )
+    Unsafe.unsafe { implicit unsafe =>
+      val fiber = zactivityOptions.runtime.unsafe.fork(action)
 
-      case Exit.Failure(cause) =>
-        zactivityOptions.activityCompletionClient.complete[Either[E, A]](
-          taskToken,
-          Left(cause.failureOption.get)
-        )
+      fiber.unsafe.addObserver {
+        case Exit.Failure(cause) if cause.dieOption.nonEmpty | cause.failureOption.isEmpty =>
+          zactivityOptions.activityCompletionClient.completeExceptionally(
+            taskToken,
+            Activity.wrap(ZActivityFatalError(cause))
+          )
 
-      case Exit.Success(value) =>
-        zactivityOptions.activityCompletionClient.complete[Either[E, A]](
-          taskToken,
-          Right(value)
-        )
+        case Exit.Failure(cause) =>
+          zactivityOptions.activityCompletionClient.complete[Either[E, A]](
+            taskToken,
+            Left(cause.failureOption.get)
+          )
+
+        case Exit.Success(value) =>
+          zactivityOptions.activityCompletionClient.complete[Either[E, A]](
+            taskToken,
+            Right(value)
+          )
+      }
     }
 
     null.asInstanceOf[Either[E, A]]

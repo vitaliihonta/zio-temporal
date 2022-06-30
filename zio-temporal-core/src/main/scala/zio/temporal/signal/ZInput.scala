@@ -7,7 +7,7 @@ import scala.annotation.implicitNotFound
 
 /** Represents [[ZSignal]] input type.
   *
-  * Inspired by [[zio.Has]]
+  * Inspired by `zio.Has`
   */
 final class ZInput[A] private (private[zio] val inputs: Map[LightTypeTag, Any]) extends Serializable {
   def get(tag: LightTypeTag): Any = inputs(tag)

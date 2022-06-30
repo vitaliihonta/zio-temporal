@@ -14,7 +14,7 @@ class ZWorkerFactory private (private val self: WorkerFactory) extends AnyVal {
   /** Starts all the workers created by this factory.
     */
   def start: UIO[Unit] =
-    UIO.effectTotal(self.start())
+    ZIO.blocking(ZIO.succeed(self.start()))
 
   /** Initiates an orderly shutdown in which polls are stopped and already received workflow and activity tasks are
     * executed.
@@ -23,7 +23,7 @@ class ZWorkerFactory private (private val self: WorkerFactory) extends AnyVal {
     *   [[WorkerFactory#shutdown]]
     */
   def shutdown: UIO[Unit] =
-    UIO.effectTotal(self.shutdown())
+    ZIO.blocking(ZIO.succeed(self.shutdown()))
 
   /** Initiates an orderly shutdown in which polls are stopped and already received workflow and activity tasks are
     * attempted to be stopped. This implementation cancels tasks via Thread.interrupt(), so any task that fails to
@@ -33,7 +33,7 @@ class ZWorkerFactory private (private val self: WorkerFactory) extends AnyVal {
     *   [[WorkerFactory#shutdownNow]]
     */
   def shutdownNow: UIO[Unit] =
-    UIO.effectTotal(self.shutdownNow())
+    ZIO.blocking(ZIO.succeed(self.shutdownNow()))
 
   /** Creates worker that connects to an instance of the Temporal Service. It uses the namespace configured at the
     * Factory level. New workers cannot be created after the start() has been called
@@ -48,7 +48,7 @@ class ZWorkerFactory private (private val self: WorkerFactory) extends AnyVal {
     *   ZWorker
     */
   def newWorker(taskQueue: String, options: ZWorkerOptions = ZWorkerOptions.default): UIO[ZWorker] =
-    UIO.effectTotal(new ZWorker(self.newWorker(taskQueue, options.toJava), Nil, Nil))
+    ZIO.succeed(new ZWorker(self.newWorker(taskQueue, options.toJava), Nil, Nil))
 
 }
 
@@ -66,11 +66,15 @@ object ZWorkerFactory {
     * @return
     *   new worker factory
     */
-  def make(
-    client:  ZWorkflowClient,
-    options: ZWorkerFactoryOptions = ZWorkerFactoryOptions.default
-  ): UIO[ZWorkerFactory] =
-    UIO.effectTotal(
-      new ZWorkerFactory(WorkerFactory.newInstance(client.self, options.toJava))
-    )
+  val make: URLayer[ZWorkflowClient with ZWorkerFactoryOptions, ZWorkerFactory] =
+    ZLayer.fromZIO {
+      ZIO.environmentWith[ZWorkflowClient with ZWorkerFactoryOptions] { environment =>
+        new ZWorkerFactory(
+          WorkerFactory.newInstance(
+            environment.get[ZWorkflowClient].self,
+            environment.get[ZWorkerFactoryOptions].toJava
+          )
+        )
+      }
+    }
 }

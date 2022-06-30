@@ -2,9 +2,8 @@ package zio.temporal.workflow
 
 import io.temporal.serviceclient.WorkflowServiceStubs
 import zio._
-import zio.blocking.Blocking
-import zio.clock.Clock
 import zio.temporal.ZAwaitTerminationOptions
+import java.util.concurrent.TimeUnit
 
 /** Initializes and holds gRPC blocking and future stubs.
   */
@@ -21,7 +20,7 @@ class ZWorkflowServiceStubs private[zio] (private[zio] val self: WorkflowService
   def use[R, E, A](
     options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.default
   )(thunk:   ZIO[R, E, A]
-  ): ZIO[R with Blocking with Clock, E, A] =
+  ): ZIO[R, E, A] =
     for {
       awaitFiber <- awaitTermination(options).fork
       result <- thunk.onExit { _ =>
@@ -32,15 +31,19 @@ class ZWorkflowServiceStubs private[zio] (private[zio] val self: WorkflowService
   /** Shutdowns client asynchronously allowing existing gRPC calls to finish
     */
   def shutdown: UIO[Unit] =
-    IO.effectTotal(
-      self.shutdown()
+    ZIO.blocking(
+      ZIO.succeed(
+        self.shutdown()
+      )
     )
 
   /** Shutdowns client immediately cancelling existing gRPC calls
     */
   def shutdownNow: UIO[Unit] =
-    IO.effectTotal(
-      self.shutdownNow()
+    ZIO.blocking(
+      ZIO.succeed(
+        self.shutdownNow()
+      )
     )
 
   /** Awaits for gRPC stubs shutdown up to the specified timeout.
@@ -52,26 +55,30 @@ class ZWorkflowServiceStubs private[zio] (private[zio] val self: WorkflowService
     */
   def awaitTermination(
     options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.default
-  ): URIO[Blocking with Clock, Unit] = {
-    import zio.duration._
-    blocking
+  ): UIO[Unit] =
+    ZIO
       .blocking {
-        IO.effectTotal(
-          self.awaitTermination(options.pollTimeout.length, options.pollTimeout.unit)
+        ZIO.succeed(
+          self.awaitTermination(options.pollTimeout.toNanos, TimeUnit.NANOSECONDS)
         )
       }
-      .repeat(Schedule.recurUntil[Boolean](identity) && Schedule.fixed(Duration.fromScala(options.pollDelay)))
+      .repeat(Schedule.recurUntil[Boolean](identity) && Schedule.fixed(options.pollDelay))
       .unit
-  }
 }
 
 object ZWorkflowServiceStubs {
 
   /** Create gRPC connection stubs using provided options.
-    *
-    * @param options
-    *   workflow service stub options
     */
-  def make(options: ZWorkflowServiceStubsOptions): UManaged[ZWorkflowServiceStubs] =
-    ZManaged.make(UIO(new ZWorkflowServiceStubs(WorkflowServiceStubs.newInstance(options.toJava))))(_.shutdownNow)
+  val make: URLayer[ZWorkflowServiceStubsOptions, ZWorkflowServiceStubs] = ZLayer.scoped {
+    ZIO.serviceWithZIO[ZWorkflowServiceStubsOptions] { options =>
+      ZIO.acquireRelease(
+        ZIO.blocking(
+          ZIO.succeed(
+            new ZWorkflowServiceStubs(WorkflowServiceStubs.newServiceStubs(options.toJava))
+          )
+        )
+      )(_.shutdownNow)
+    }
+  }
 }

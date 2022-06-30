@@ -1,14 +1,13 @@
 package zio.temporal.activity
 
+import zio._
 import io.temporal.activity.ActivityCancellationType
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.context.ContextPropagator
 import io.temporal.workflow.Workflow
 import zio.temporal.ZRetryOptions
 import zio.temporal.internal.ClassTagUtils
-
 import scala.compat.java8.DurationConverters._
-import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
@@ -19,12 +18,12 @@ class ZActivityStubBuilderInitial[A] private[zio] (private val ctg: ClassTag[A])
     * @see
     *   [[ActivityOptions.Builder.setStartToCloseTimeout]]
     */
-  def withStartToCloseTimeout(timeout: FiniteDuration): ZActivityStubBuilder[A] =
+  def withStartToCloseTimeout(timeout: Duration): ZActivityStubBuilder[A] =
     new ZActivityStubBuilder[A](timeout, identity)(ctg)
 }
 
 class ZActivityStubBuilder[A] private[zio] (
-  startToCloseTimeout: FiniteDuration,
+  startToCloseTimeout: Duration,
   additionalOptions:   ActivityOptions.Builder => ActivityOptions.Builder
 )(implicit ctg:        ClassTag[A]) {
 
@@ -36,24 +35,24 @@ class ZActivityStubBuilder[A] private[zio] (
     * @see
     *   [[ActivityOptions.Builder.setScheduleToCloseTimeout]]
     */
-  def withScheduleToCloseTimeout(timeout: FiniteDuration): ZActivityStubBuilder[A] =
-    copy(_.setScheduleToCloseTimeout(timeout.toJava))
+  def withScheduleToCloseTimeout(timeout: Duration): ZActivityStubBuilder[A] =
+    copy(_.setScheduleToCloseTimeout(timeout.asJava))
 
   /** Configures scheduleToStartTimeout
     *
     * @see
     *   [[ActivityOptions.Builder.setScheduleToStartTimeout]]
     */
-  def withScheduleToStartTimeout(timeout: FiniteDuration): ZActivityStubBuilder[A] =
-    copy(_.setScheduleToStartTimeout(timeout.toJava))
+  def withScheduleToStartTimeout(timeout: Duration): ZActivityStubBuilder[A] =
+    copy(_.setScheduleToStartTimeout(timeout.asJava))
 
   /** Configures heartbeatTimeout
     *
     * @see
     *   [[ActivityOptions.Builder.setHeartbeatTimeout]]
     */
-  def withHeartbeatTimeout(timeout: FiniteDuration): ZActivityStubBuilder[A] =
-    copy(_.setHeartbeatTimeout(timeout.toJava))
+  def withHeartbeatTimeout(timeout: Duration): ZActivityStubBuilder[A] =
+    copy(_.setHeartbeatTimeout(timeout.asJava))
 
   /** Configures taskQueue
     *
@@ -97,7 +96,7 @@ class ZActivityStubBuilder[A] private[zio] (
     val options = additionalOptions {
       ActivityOptions
         .newBuilder()
-        .setStartToCloseTimeout(startToCloseTimeout.toJava)
+        .setStartToCloseTimeout(startToCloseTimeout.asJava)
     }.build()
 
     Workflow.newActivityStub[A](ClassTagUtils.classOf[A], options)

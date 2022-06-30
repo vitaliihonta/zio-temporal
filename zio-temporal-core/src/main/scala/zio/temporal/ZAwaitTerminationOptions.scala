@@ -1,15 +1,15 @@
 package zio.temporal
 
-import scala.concurrent.duration._
+import zio._
 
 /** Represents options for [[zio.temporal.workflow.ZWorkflowServiceStubs.awaitTermination]] method
   */
-class ZAwaitTerminationOptions private[zio] (val pollTimeout: FiniteDuration, val pollDelay: FiniteDuration) {
+class ZAwaitTerminationOptions private[zio] (val pollTimeout: Duration, val pollDelay: Duration) {
 
-  def withPollTimeout(timeout: FiniteDuration): ZAwaitTerminationOptions =
+  def withPollTimeout(timeout: Duration): ZAwaitTerminationOptions =
     new ZAwaitTerminationOptions(timeout, pollDelay)
 
-  def withPollDelay(delay: FiniteDuration): ZAwaitTerminationOptions =
+  def withPollDelay(delay: Duration): ZAwaitTerminationOptions =
     new ZAwaitTerminationOptions(pollTimeout, delay)
 
   override def toString: String = s"ZAwaitTerminationOptions(pollTimeout=$pollTimeout, pollDelay=$pollDelay)"

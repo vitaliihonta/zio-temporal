@@ -9,10 +9,8 @@ import zio.temporal.ZCurrentTimeMillis
 import zio.temporal.ZSearchAttribute
 import zio.temporal.ZWorkflowExecution
 import zio.temporal.ZWorkflowInfo
-
+import zio._
 import java.util.UUID
-import scala.compat.java8.DurationConverters._
-import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
@@ -55,8 +53,8 @@ object ZWorkflow {
     * @return
     *   unblocks when duration elapsed
     */
-  def sleep(duration: FiniteDuration): Unit =
-    Workflow.sleep(duration.toJava)
+  def sleep(duration: Duration): Unit =
+    Workflow.sleep(duration.asJava)
 
   /** Suspends workflow execution while the given predicate holds
     *
@@ -81,7 +79,7 @@ object ZWorkflow {
     * @return
     *   unblocks when condition becomes false or timeout elapsed
     */
-  def awaitWhile(timeout: FiniteDuration)(cond: => Boolean): Boolean =
+  def awaitWhile(timeout: Duration)(cond: => Boolean): Boolean =
     awaitUntil(timeout)(!cond)
 
   /** Suspends workflow execution until the given predicate holds
@@ -107,8 +105,8 @@ object ZWorkflow {
     * @return
     *   unblocks when condition becomes true or timeout elapsed
     */
-  def awaitUntil(timeout: FiniteDuration)(cond: => Boolean): Boolean =
-    Workflow.await(timeout.toJava, () => cond)
+  def awaitUntil(timeout: Duration)(cond: => Boolean): Boolean =
+    Workflow.await(timeout.asJava, () => cond)
 
   /** Wraps a procedure in a CancellationScope. The procedure receives the wrapping CancellationScope as a parameter.
     * Useful when cancellation is requested from within the wrapped code. The following example cancels the sibling
@@ -153,7 +151,7 @@ object ZWorkflow {
 
   /** Returns current timestamp
     *
-    * Should be used instead of [[System.currentTimeMillis()]] to guarantee determinism
+    * Should be used instead of [[java.lang.System.currentTimeMillis()]] to guarantee determinism
     * @see
     *   [[Workflow.currentTimeMillis()]]
     * @return

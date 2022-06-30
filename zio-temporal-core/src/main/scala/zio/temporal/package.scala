@@ -6,7 +6,6 @@ import io.temporal.workflow.QueryMethod
 import io.temporal.workflow.SignalMethod
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
-import zio.blocking.Blocking
 
 package object temporal {
 
@@ -25,5 +24,5 @@ package object temporal {
     * @tparam A
     *   the value type
     */
-  type TemporalIO[+E <: TemporalError[_], +A] = ZIO[Blocking, E, A]
+  type TemporalIO[+E <: TemporalError[_], +A] = ZIO[Any, E, A]
 }

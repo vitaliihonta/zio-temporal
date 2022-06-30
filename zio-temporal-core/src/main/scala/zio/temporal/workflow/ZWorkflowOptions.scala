@@ -5,9 +5,7 @@ import io.temporal.client.WorkflowOptions
 import io.temporal.common.context.ContextPropagator
 import zio.temporal.ZRetryOptions
 import zio.temporal.ZSearchAttribute
-
-import scala.compat.java8.DurationConverters.FiniteDurationops
-import scala.concurrent.duration.FiniteDuration
+import zio._
 import scala.jdk.CollectionConverters._
 
 /** Represents temporal workflow options
@@ -17,8 +15,8 @@ import scala.jdk.CollectionConverters._
   */
 class ZWorkflowOptions private[zio] (
   val workflowIdReusePolicy:    Option[WorkflowIdReusePolicy],
-  val workflowRunTimeout:       Option[FiniteDuration],
-  val workflowExecutionTimeout: Option[FiniteDuration],
+  val workflowRunTimeout:       Option[Duration],
+  val workflowExecutionTimeout: Option[Duration],
   val retryOptions:             Option[ZRetryOptions],
   val cronSchedule:             Option[String],
   val memo:                     Map[String, AnyRef],
@@ -39,10 +37,10 @@ class ZWorkflowOptions private[zio] (
   def withWorkflowIdReusePolicy(value: WorkflowIdReusePolicy): ZWorkflowOptions =
     copy(_workflowIdReusePolicy = Some(value))
 
-  def withWorkflowRunTimeout(value: FiniteDuration): ZWorkflowOptions =
+  def withWorkflowRunTimeout(value: Duration): ZWorkflowOptions =
     copy(_workflowRunTimeout = Some(value))
 
-  def withWorkflowExecutionTimeout(value: FiniteDuration): ZWorkflowOptions =
+  def withWorkflowExecutionTimeout(value: Duration): ZWorkflowOptions =
     copy(_workflowExecutionTimeout = Some(value))
 
   def withRetryOptions(value: ZRetryOptions): ZWorkflowOptions =
@@ -64,8 +62,8 @@ class ZWorkflowOptions private[zio] (
     val builder = WorkflowOptions.newBuilder().setWorkflowId(workflowId)
 
     workflowIdReusePolicy.foreach(builder.setWorkflowIdReusePolicy)
-    workflowRunTimeout.foreach(t => builder.setWorkflowRunTimeout(t.toJava))
-    workflowExecutionTimeout.foreach(t => builder.setWorkflowExecutionTimeout(t.toJava))
+    workflowRunTimeout.foreach(t => builder.setWorkflowRunTimeout(t.asJava))
+    workflowExecutionTimeout.foreach(t => builder.setWorkflowExecutionTimeout(t.asJava))
     retryOptions.foreach(t => builder.setRetryOptions(t.toJava))
     cronSchedule.foreach(builder.setCronSchedule)
 
@@ -78,8 +76,8 @@ class ZWorkflowOptions private[zio] (
 
   private def copy(
     _workflowIdReusePolicy:    Option[WorkflowIdReusePolicy] = workflowIdReusePolicy,
-    _workflowRunTimeout:       Option[FiniteDuration] = workflowRunTimeout,
-    _workflowExecutionTimeout: Option[FiniteDuration] = workflowExecutionTimeout,
+    _workflowRunTimeout:       Option[Duration] = workflowRunTimeout,
+    _workflowExecutionTimeout: Option[Duration] = workflowExecutionTimeout,
     _retryOptions:             Option[ZRetryOptions] = retryOptions,
     _cronSchedule:             Option[String] = cronSchedule,
     _memo:                     Map[String, AnyRef] = memo,

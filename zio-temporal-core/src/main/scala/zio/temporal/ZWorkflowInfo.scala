@@ -1,10 +1,8 @@
 package zio.temporal
 
+import zio._
 import io.temporal.workflow.WorkflowInfo
-
-import scala.compat.java8.DurationConverters._
 import scala.compat.java8.OptionConverters._
-import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
 /** Represents current workflow information
@@ -23,8 +21,8 @@ class ZWorkflowInfo private[zio] (val toJava: WorkflowInfo) extends AnyVal {
   def parentWorkflowId: Option[String]        = toJava.getParentWorkflowId.asScala
   def parentRunId: Option[String]             = toJava.getParentRunId.asScala
 
-  def workflowRunTimeout: FiniteDuration       = toJava.getWorkflowRunTimeout.toScala
-  def workflowExecutionTimeout: FiniteDuration = toJava.getWorkflowExecutionTimeout.toScala
+  def workflowRunTimeout: Duration       = Duration.fromJava(toJava.getWorkflowRunTimeout)
+  def workflowExecutionTimeout: Duration = Duration.fromJava(toJava.getWorkflowExecutionTimeout)
 
   def runStartedTimestampMillis: Long = toJava.getRunStartedTimestampMillis
 

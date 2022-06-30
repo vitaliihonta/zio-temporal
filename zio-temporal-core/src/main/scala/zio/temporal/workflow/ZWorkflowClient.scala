@@ -2,14 +2,13 @@ package zio.temporal.workflow
 
 import io.temporal.client.ActivityCompletionClient
 import io.temporal.client.WorkflowClient
-import zio.UIO
+import zio._
 import zio.temporal.internal.TemporalInteraction
 import zio.temporal.signal.ZInput
 import zio.temporal.signal.ZSignal
 import zio.temporal.TemporalClientError
 import zio.temporal.TemporalIO
 import zio.temporal.ZWorkflowExecution
-
 import scala.compat.java8.OptionConverters._
 import scala.reflect.ClassTag
 
@@ -27,7 +26,7 @@ class ZWorkflowClient private[zio] (private[zio] val self: WorkflowClient) exten
     *   [[ZWorkflowStub]]
     */
   def newUntypedWorkflowStub(workflowId: String, runId: Option[String] = None): UIO[ZWorkflowStub] =
-    UIO.effectTotal {
+    ZIO.succeed {
       new ZWorkflowStub(self.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava))
     }
 
@@ -68,7 +67,7 @@ class ZWorkflowClient private[zio] (private[zio] val self: WorkflowClient) exten
     *   [[ActivityCompletionClient]]
     */
   def newActivityCompletionClient: UIO[ActivityCompletionClient] =
-    UIO.effectTotal(self.newActivityCompletionClient())
+    ZIO.blocking(ZIO.succeed(self.newActivityCompletionClient()))
 
   /** Creates new type workflow stub builder
     * @tparam A
@@ -83,19 +82,22 @@ class ZWorkflowClient private[zio] (private[zio] val self: WorkflowClient) exten
 object ZWorkflowClient {
 
   /** Create [[ZWorkflowClient]] instance
-    *
-    * @param service
-    *   client to the Temporal Service endpoint.
-    * @param options
-    *   client option
-    * @return
-    *   \- workflow client instance
     * @see
     *   [[WorkflowClient]]
     */
-  def make(
-    service: ZWorkflowServiceStubs,
-    options: ZWorkflowClientOptions = ZWorkflowClientOptions.default
-  ): ZWorkflowClient =
-    new ZWorkflowClient(WorkflowClient.newInstance(service.self, options.toJava))
+  val make: URLayer[ZWorkflowServiceStubs with ZWorkflowClientOptions, ZWorkflowClient] =
+    ZLayer.fromZIO {
+      ZIO.environmentWithZIO[ZWorkflowServiceStubs with ZWorkflowClientOptions] { environment =>
+        ZIO.blocking {
+          ZIO.succeed {
+            new ZWorkflowClient(
+              WorkflowClient.newInstance(
+                environment.get[ZWorkflowServiceStubs].self,
+                environment.get[ZWorkflowClientOptions].toJava
+              )
+            )
+          }
+        }
+      }
+    }
 }

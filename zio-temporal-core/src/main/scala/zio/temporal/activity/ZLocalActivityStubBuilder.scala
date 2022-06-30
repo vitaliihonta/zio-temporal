@@ -1,30 +1,28 @@
 package zio.temporal.activity
 
+import zio._
 import io.temporal.activity.LocalActivityOptions
 import io.temporal.workflow.Workflow
 import zio.temporal.ZRetryOptions
 import zio.temporal.internal.ClassTagUtils
-
-import scala.compat.java8.DurationConverters._
-import scala.concurrent.duration.FiniteDuration
 import scala.reflect.ClassTag
 
 class ZLocalActivityStubBuilderInitial[A] private[zio] (private val ctg: ClassTag[A]) extends AnyVal {
 
-  def withStartToCloseTimeout(timeout: FiniteDuration): ZLocalActivityStubBuilder[A] =
+  def withStartToCloseTimeout(timeout: Duration): ZLocalActivityStubBuilder[A] =
     new ZLocalActivityStubBuilder[A](timeout, identity)(ctg)
 }
 
 class ZLocalActivityStubBuilder[A] private[zio] (
-  startToCloseTimeout: FiniteDuration,
+  startToCloseTimeout: Duration,
   additionalOptions:   LocalActivityOptions.Builder => LocalActivityOptions.Builder
 )(implicit ctg:        ClassTag[A]) {
 
-  def withScheduleToCloseTimeout(timeout: FiniteDuration): ZLocalActivityStubBuilder[A] =
-    copy(_.setScheduleToCloseTimeout(timeout.toJava))
+  def withScheduleToCloseTimeout(timeout: Duration): ZLocalActivityStubBuilder[A] =
+    copy(_.setScheduleToCloseTimeout(timeout.asJava))
 
-  def withLocalRetryThreshold(localRetryThreshold: FiniteDuration): ZLocalActivityStubBuilder[A] =
-    copy(_.setLocalRetryThreshold(localRetryThreshold.toJava))
+  def withLocalRetryThreshold(localRetryThreshold: Duration): ZLocalActivityStubBuilder[A] =
+    copy(_.setLocalRetryThreshold(localRetryThreshold.asJava))
 
   def withRetryOptions(options: ZRetryOptions): ZLocalActivityStubBuilder[A] =
     copy(_.setRetryOptions(options.toJava))
@@ -37,7 +35,7 @@ class ZLocalActivityStubBuilder[A] private[zio] (
     val options = additionalOptions {
       LocalActivityOptions
         .newBuilder()
-        .setStartToCloseTimeout(startToCloseTimeout.toJava)
+        .setStartToCloseTimeout(startToCloseTimeout.asJava)
     }.build()
 
     Workflow.newLocalActivityStub[A](ClassTagUtils.classOf[A], options)

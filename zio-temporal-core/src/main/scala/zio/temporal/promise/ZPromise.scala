@@ -3,13 +3,13 @@ package zio.temporal.promise
 import io.temporal.failure.CanceledFailure
 import io.temporal.workflow.Async
 import io.temporal.workflow.Promise
-import zio.BuildFrom
+import zio._
 import zio.temporal.ZCanceledFailure
 
+import java.util.concurrent.TimeUnit
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.mutable
 import scala.concurrent.TimeoutException
-import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
@@ -35,9 +35,9 @@ sealed trait ZPromise[+E, +A] { self =>
 
   def runCancellable: ZPromise.Result[ZPromise.Cancel, E, A]
 
-  def run(timeout: FiniteDuration): ZPromise.Result[ZPromise.Timeout, E, A]
+  def run(timeout: Duration): ZPromise.Result[ZPromise.Timeout, E, A]
 
-  def runCancellable(timeout: FiniteDuration): ZPromise.Result[ZPromise.Cancel with ZPromise.Timeout, E, A]
+  def runCancellable(timeout: Duration): ZPromise.Result[ZPromise.Cancel with ZPromise.Timeout, E, A]
 
   def swap: ZPromise[A, E]
 
@@ -142,7 +142,7 @@ object ZPromise {
       Promise.allOf(in.map(_.underlying).asJava).thenApply(_ => Right(()))
     )
 
-  /** Similar to [[zio.IO.foreach]] for Option
+  /** Similar to [[zio.ZIO.foreach]] for Option
     *
     * @param in
     *   optional value
@@ -154,7 +154,7 @@ object ZPromise {
   def foreach[E, A, B](in: Option[A])(f: A => ZPromise[E, B]): ZPromise[E, Option[B]] =
     in.fold[ZPromise[E, Option[B]]](succeed(None))(f(_).map(Some(_)))
 
-  /** Similar to [[zio.IO.foreach]] for collections
+  /** Similar to [[zio.ZIO.foreach]] for collections
     *
     * @param in
     *   sequence of values
@@ -182,10 +182,10 @@ object ZPromise {
           ZPromise.Success(_)
         )
 
-    override def run(timeout: FiniteDuration): ZPromise.Result[Timeout, E, A] =
+    override def run(timeout: Duration): ZPromise.Result[Timeout, E, A] =
       try
         underlying
-          .get(timeout.length, timeout.unit)
+          .get(timeout.toNanos, TimeUnit.NANOSECONDS)
           .fold[ZPromise.Result[Timeout, E, A]](
             ZPromise.Failure(_),
             ZPromise.Success(_)
@@ -206,10 +206,10 @@ object ZPromise {
         case e: CanceledFailure => ZPromise.Cancelled(new ZCanceledFailure(e))
       }
 
-    override def runCancellable(timeout: FiniteDuration): Result[Cancel with Timeout, E, A] =
+    override def runCancellable(timeout: Duration): Result[Cancel with Timeout, E, A] =
       try
         underlying
-          .cancellableGet(timeout.length, timeout.unit)
+          .cancellableGet(timeout.toNanos, TimeUnit.NANOSECONDS)
           .fold[ZPromise.Result[Timeout, E, A]](
             ZPromise.Failure(_),
             ZPromise.Success(_)

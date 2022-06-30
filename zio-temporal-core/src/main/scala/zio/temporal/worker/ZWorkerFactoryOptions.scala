@@ -2,9 +2,7 @@ package zio.temporal.worker
 
 import io.temporal.common.interceptors.WorkerInterceptor
 import io.temporal.worker.WorkerFactoryOptions
-
-import scala.compat.java8.DurationConverters._
-import scala.concurrent.duration.FiniteDuration
+import zio._
 
 /** Represents worker factory options
   *
@@ -12,7 +10,7 @@ import scala.concurrent.duration.FiniteDuration
   *   [[WorkerFactoryOptions]]
   */
 class ZWorkerFactoryOptions private (
-  workflowHostLocalTaskQueueScheduleToStartTimeout: Option[FiniteDuration],
+  workflowHostLocalTaskQueueScheduleToStartTimeout: Option[Duration],
   workflowCacheSize:                                Option[Int],
   maxWorkflowThreadCount:                           Option[Int],
   workerInterceptors:                               List[WorkerInterceptor],
@@ -28,7 +26,7 @@ class ZWorkerFactoryOptions private (
       s"enableLoggingInReplay=$enableLoggingInReplay, " +
       s"workflowHostLocalPollThreadCount=$workflowHostLocalPollThreadCount)"
 
-  def withWorkflowHostLocalTaskQueueScheduleToStartTimeout(value: FiniteDuration): ZWorkerFactoryOptions =
+  def withWorkflowHostLocalTaskQueueScheduleToStartTimeout(value: Duration): ZWorkerFactoryOptions =
     copy(_workflowHostLocalTaskQueueScheduleToStartTimeout = Some(value))
 
   def withWorkflowCacheSize(value: Int): ZWorkerFactoryOptions =
@@ -49,7 +47,7 @@ class ZWorkerFactoryOptions private (
   def toJava: WorkerFactoryOptions = {
     val builder = WorkerFactoryOptions.newBuilder()
     workflowHostLocalTaskQueueScheduleToStartTimeout.foreach(timeout =>
-      builder.setWorkflowHostLocalTaskQueueScheduleToStartTimeout(timeout.toJava)
+      builder.setWorkflowHostLocalTaskQueueScheduleToStartTimeout(timeout.asJava)
     )
     workflowCacheSize.foreach(builder.setWorkflowCacheSize)
     maxWorkflowThreadCount.foreach(builder.setMaxWorkflowThreadCount)
@@ -60,7 +58,7 @@ class ZWorkerFactoryOptions private (
   }
 
   private def copy(
-    _workflowHostLocalTaskQueueScheduleToStartTimeout: Option[FiniteDuration] =
+    _workflowHostLocalTaskQueueScheduleToStartTimeout: Option[Duration] =
       workflowHostLocalTaskQueueScheduleToStartTimeout,
     _workflowCacheSize:                Option[Int] = workflowCacheSize,
     _maxWorkflowThreadCount:           Option[Int] = maxWorkflowThreadCount,

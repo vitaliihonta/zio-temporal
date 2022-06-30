@@ -5,9 +5,7 @@ import io.grpc.Metadata
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext
 import io.temporal.serviceclient.RpcRetryOptions
 import io.temporal.serviceclient.WorkflowServiceStubsOptions
-
-import scala.compat.java8.DurationConverters._
-import scala.concurrent.duration.FiniteDuration
+import zio._
 
 /** Represents temporal workflow service stubs options
   *
@@ -20,15 +18,15 @@ class ZWorkflowServiceStubsOptions private[zio] (
   val sslContext:                      Option[SslContext],
   val enableHttps:                     Option[Boolean],
   val enableKeepAlive:                 Option[Boolean],
-  val keepAliveTime:                   Option[FiniteDuration],
-  val keepAliveTimeout:                Option[FiniteDuration],
+  val keepAliveTime:                   Option[Duration],
+  val keepAliveTimeout:                Option[Duration],
   val keepAlivePermitWithoutStream:    Option[Boolean],
-  val rpcTimeout:                      Option[FiniteDuration],
-  val rpcLongPollTimeout:              Option[FiniteDuration],
-  val rpcQueryTimeout:                 Option[FiniteDuration],
+  val rpcTimeout:                      Option[Duration],
+  val rpcLongPollTimeout:              Option[Duration],
+  val rpcQueryTimeout:                 Option[Duration],
   val rpcRetryOptions:                 Option[RpcRetryOptions],
-  val connectionBackoffResetFrequency: Option[FiniteDuration],
-  val grpcReconnectFrequency:          Option[FiniteDuration],
+  val connectionBackoffResetFrequency: Option[Duration],
+  val grpcReconnectFrequency:          Option[Duration],
   val headers:                         Option[Metadata]) {
 
   def withChannel(value: ManagedChannel): ZWorkflowServiceStubsOptions =
@@ -43,31 +41,31 @@ class ZWorkflowServiceStubsOptions private[zio] (
   def withEnableKeepAlive(value: Boolean): ZWorkflowServiceStubsOptions =
     copy(_enableKeepAlive = Some(value))
 
-  def withKeepAliveTime(value: FiniteDuration): ZWorkflowServiceStubsOptions =
+  def withKeepAliveTime(value: Duration): ZWorkflowServiceStubsOptions =
     copy(_keepAliveTime = Some(value))
 
-  def withKeepAliveTimeout(value: FiniteDuration): ZWorkflowServiceStubsOptions =
+  def withKeepAliveTimeout(value: Duration): ZWorkflowServiceStubsOptions =
     copy(_keepAliveTimeout = Some(value))
 
   def withKeepAlivePermitWithoutStream(value: Boolean): ZWorkflowServiceStubsOptions =
     copy(_keepAlivePermitWithoutStream = Some(value))
 
-  def withRpcTimeout(value: FiniteDuration): ZWorkflowServiceStubsOptions =
+  def withRpcTimeout(value: Duration): ZWorkflowServiceStubsOptions =
     copy(_rpcTimeout = Some(value))
 
-  def withRpcLongPollTimeout(value: FiniteDuration): ZWorkflowServiceStubsOptions =
+  def withRpcLongPollTimeout(value: Duration): ZWorkflowServiceStubsOptions =
     copy(_rpcLongPollTimeout = Some(value))
 
-  def withRpcQueryTimeout(value: FiniteDuration): ZWorkflowServiceStubsOptions =
+  def withRpcQueryTimeout(value: Duration): ZWorkflowServiceStubsOptions =
     copy(_rpcQueryTimeout = Some(value))
 
   def withRpcRetryOptions(value: RpcRetryOptions): ZWorkflowServiceStubsOptions =
     copy(_rpcRetryOptions = Some(value))
 
-  def withConnectionBackoffResetFrequency(value: FiniteDuration): ZWorkflowServiceStubsOptions =
+  def withConnectionBackoffResetFrequency(value: Duration): ZWorkflowServiceStubsOptions =
     copy(_connectionBackoffResetFrequency = Some(value))
 
-  def withGrpcReconnectFrequency(value: FiniteDuration): ZWorkflowServiceStubsOptions =
+  def withGrpcReconnectFrequency(value: Duration): ZWorkflowServiceStubsOptions =
     copy(_grpcReconnectFrequency = Some(value))
 
   def withHeaders(value: Metadata): ZWorkflowServiceStubsOptions =
@@ -81,15 +79,15 @@ class ZWorkflowServiceStubsOptions private[zio] (
     sslContext.foreach(builder.setSslContext)
     enableHttps.foreach(builder.setEnableHttps)
     enableKeepAlive.foreach(builder.setEnableKeepAlive)
-    keepAliveTime.foreach(t => builder.setKeepAliveTime(t.toJava))
-    keepAliveTimeout.foreach(t => builder.setKeepAliveTimeout(t.toJava))
+    keepAliveTime.foreach(t => builder.setKeepAliveTime(t.asJava))
+    keepAliveTimeout.foreach(t => builder.setKeepAliveTimeout(t.asJava))
     keepAlivePermitWithoutStream.foreach(builder.setKeepAlivePermitWithoutStream)
-    rpcTimeout.foreach(t => builder.setRpcTimeout(t.toJava))
-    rpcLongPollTimeout.foreach(t => builder.setRpcLongPollTimeout(t.toJava))
-    rpcQueryTimeout.foreach(t => builder.setRpcQueryTimeout(t.toJava))
+    rpcTimeout.foreach(t => builder.setRpcTimeout(t.asJava))
+    rpcLongPollTimeout.foreach(t => builder.setRpcLongPollTimeout(t.asJava))
+    rpcQueryTimeout.foreach(t => builder.setRpcQueryTimeout(t.asJava))
     rpcRetryOptions.foreach(builder.setRpcRetryOptions)
-    connectionBackoffResetFrequency.foreach(t => builder.setConnectionBackoffResetFrequency(t.toJava))
-    grpcReconnectFrequency.foreach(t => builder.setGrpcReconnectFrequency(t.toJava))
+    connectionBackoffResetFrequency.foreach(t => builder.setConnectionBackoffResetFrequency(t.asJava))
+    grpcReconnectFrequency.foreach(t => builder.setGrpcReconnectFrequency(t.asJava))
     headers.foreach(builder.setHeaders)
     builder.build()
   }
@@ -100,15 +98,15 @@ class ZWorkflowServiceStubsOptions private[zio] (
     _sslContext:                      Option[SslContext] = sslContext,
     _enableHttps:                     Option[Boolean] = enableHttps,
     _enableKeepAlive:                 Option[Boolean] = enableKeepAlive,
-    _keepAliveTime:                   Option[FiniteDuration] = keepAliveTime,
-    _keepAliveTimeout:                Option[FiniteDuration] = keepAliveTimeout,
+    _keepAliveTime:                   Option[Duration] = keepAliveTime,
+    _keepAliveTimeout:                Option[Duration] = keepAliveTimeout,
     _keepAlivePermitWithoutStream:    Option[Boolean] = keepAlivePermitWithoutStream,
-    _rpcTimeout:                      Option[FiniteDuration] = rpcTimeout,
-    _rpcLongPollTimeout:              Option[FiniteDuration] = rpcLongPollTimeout,
-    _rpcQueryTimeout:                 Option[FiniteDuration] = rpcQueryTimeout,
+    _rpcTimeout:                      Option[Duration] = rpcTimeout,
+    _rpcLongPollTimeout:              Option[Duration] = rpcLongPollTimeout,
+    _rpcQueryTimeout:                 Option[Duration] = rpcQueryTimeout,
     _rpcRetryOptions:                 Option[RpcRetryOptions] = rpcRetryOptions,
-    _connectionBackoffResetFrequency: Option[FiniteDuration] = connectionBackoffResetFrequency,
-    _grpcReconnectFrequency:          Option[FiniteDuration] = grpcReconnectFrequency,
+    _connectionBackoffResetFrequency: Option[Duration] = connectionBackoffResetFrequency,
+    _grpcReconnectFrequency:          Option[Duration] = grpcReconnectFrequency,
     _headers:                         Option[Metadata] = headers
   ): ZWorkflowServiceStubsOptions =
     new ZWorkflowServiceStubsOptions(

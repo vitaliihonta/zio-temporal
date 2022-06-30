@@ -1,10 +1,9 @@
 package zio.temporal.fixture
 
+import zio._
 import zio.temporal._
 import zio.temporal.promise.ZPromise
 import zio.temporal.workflow.ZWorkflow
-
-import scala.concurrent.duration._
 
 @activity
 trait PromiseActivity {
