@@ -1,0 +1,41 @@
+syntax = "proto2";
+
+package zio.temporal.proto;
+
+import "google/protobuf/any.proto";
+
+/* Empty message which should be used as a result type
+ * for activities and workflows with no return value */
+message ZUnit {}
+
+/* Result is a scala.Either like type representing either error or some value.
+ * Untyped due to absence of generic in protocol buffers */
+message Result {
+  oneof result {
+    google.protobuf.Any error = 1;
+    google.protobuf.Any value = 2;
+  }
+}
+
+/* Optional is a scala.Option like type representing either value or null.
+ * Untyped due to absence of generic in protocol buffers */
+message Optional {
+  optional google.protobuf.Any value = 1;
+}
+
+/* A UUID, encoded in accordance with section 4.1.2 of RFC 4122. */
+message UUID {
+  required fixed64 mostSignificantBits = 1;
+  required fixed64 leastSignificantBits = 2;
+}
+
+/* A BigDecimal encoded as scale with BigInteger value */
+message BigDecimal {
+  required int32 scale = 1;
+  required BigInteger intVal = 2;
+}
+
+/* A BigInteger bytes representation */
+message BigInteger {
+  required bytes value = 1;
+}

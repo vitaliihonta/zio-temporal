@@ -2,16 +2,18 @@ package com.example.payments.impl
 
 import com.example.payments.workflows.PaymentActivity
 import com.example.transactions._
-import izumi.logstage.api.IzLogger
-import logstage.LogIO
-import ztemporal.proto.syntax._
 import zio._
-import zio.random
-import ztemporal.activity.ZActivity
-import ztemporal.activity.ZActivityOptions
-import ztemporal.proto.ZUnit
+import zio.temporal.activity.ZActivity
+import zio.temporal.activity.ZActivityOptions
+import zio.temporal.proto.ZUnit
+import zio.temporal.proto.syntax._
 
-class PaymentActivityImpl(logger: LogIO[UIO])(implicit options: ZActivityOptions) extends PaymentActivity {
+object PaymentActivityImpl {
+  val make: URLayer[ZActivityOptions[Any], PaymentActivityImpl] =
+    ZLayer.fromFunction(new PaymentActivityImpl()(_: ZActivityOptions[Any]))
+}
+
+class PaymentActivityImpl(implicit options: ZActivityOptions[Any]) extends PaymentActivity {
 
   override def proceed(transaction: ProceedTransactionCommand): Either[TransactionError, TransactionView] =
     ZActivity.run {
@@ -28,12 +30,12 @@ class PaymentActivityImpl(logger: LogIO[UIO])(implicit options: ZActivityOptions
       cancelTransactionImpl(command)
     }
 
-  private def proceedImpl(command: ProceedTransactionCommand): ZIO[ZEnv, TransactionError, TransactionView] =
+  private def proceedImpl(command: ProceedTransactionCommand): ZIO[Any, TransactionError, TransactionView] =
     for {
-      _ <- ZIO.whenM(random.nextIntBetween(1, 5).map(_ <= 2))(
+      _ <- ZIO.whenZIO(Random.nextIntBetween(1, 5).map(_ <= 2))(
              ZIO.fail(TransactionError(code = 42, message = "Failed to proceed transaction: you're unlucky"))
            )
-      id <- random.nextUUID
+      id <- Random.nextUUID
       transaction = TransactionView(
                       id = id.toProto,
                       status = TransactionStatus.InProgress,
@@ -42,16 +44,16 @@ class PaymentActivityImpl(logger: LogIO[UIO])(implicit options: ZActivityOptions
                       receiver = command.receiver,
                       amount = command.amount
                     )
-      _ <- logger.info(s"Created $transaction")
+      _ <- ZIO.logInfo(s"Created transaction=$transaction")
     } yield transaction
 
-  private def verifyConfirmationImpl(command: ConfirmTransactionCommand): ZIO[ZEnv, TransactionError, Unit] =
+  private def verifyConfirmationImpl(command: ConfirmTransactionCommand): ZIO[Any, TransactionError, Unit] =
     if (command.confirmationCode != "42")
-      logger.error(s"Failed to proceed ${command.id.fromProto -> "transaction_id"}: invalid confirmation code") *>
+      ZIO.logError(s"Failed to proceed transaction_id=${command.id.fromProto}: invalid confirmation code") *>
         ZIO.fail(TransactionError(code = 6, message = "Please contact issuer bank"))
     else
-      logger.info(s"Successfully processed ${command.id.fromProto -> "transaction_id"}")
+      ZIO.logInfo(s"Successfully processed transaction_id=${command.id.fromProto}")
 
-  private def cancelTransactionImpl(command: CancelTransactionCommand): ZIO[ZEnv, TransactionError, Unit] =
-    logger.info(s"Cancelled ${command.id.fromProto -> "transaction_id"}")
+  private def cancelTransactionImpl(command: CancelTransactionCommand): ZIO[Any, TransactionError, Unit] =
+    ZIO.logInfo(s"Cancelled transaction_id=${command.id.fromProto}")
 }

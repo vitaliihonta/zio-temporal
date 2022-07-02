@@ -7,42 +7,38 @@ object BuildConfig extends Dependencies {
   val baseLibs = Seq(
     ScalaExt.kindProjectorCompilerPlugin,
     Temporal.self,
-    Zio.self,
-    Testing.scalatest,
-    Distage.testKit
-  ) ++ Logging.test
+    Zio.self
+  )
 
-  val ztemporalCoreLibs = baseLibs ++ Seq(
+  val temporalZioCoreLibs = baseLibs ++ Seq(
     Scalapb.runtime,
     Utility.scalaJava8Compat,
     Utility.izumiReflect,
     Enumeratum.enumeratum % Optional
   )
 
-  val ztemporalTestKitLibs = baseLibs ++ Seq(
+  val temporalZioTestKitLibs = baseLibs ++ Seq(
     Temporal.testing,
     Jackson.scala
   )
 
   val testLibs = baseLibs ++ Seq(
-    Distage.core
+    Zio.test,
+    Zio.testSbt,
+    Logging.zio % Test
   )
 
-  val ztemporalScalapbLibs = baseLibs ++ Seq(
+  val temporalZioScalapbLibs = baseLibs ++ Seq(
     Scalapb.runtime,
     Scalapb.runtimeProtobuf,
     Utility.reflections,
     Enumeratum.enumeratum % Optional
   )
 
-  val ztemporalDistageLibs = baseLibs ++ Seq(
-    Distage.core,
-    Distage.config
-  )
-
   val examplesLibs = baseLibs ++ Seq(
-    Examples.logstage,
-    Examples.logstageSlf4jAdapter
+    Logging.zio,
+    Logging.zioSlf4j,
+    Logging.logback
   )
 }
 
@@ -50,13 +46,12 @@ trait Dependencies {
 
   object version {
     val temporal   = "1.12.0"
-    val zio        = "1.0.15"
-    val izumi      = "1.0.8"
+    val zio        = "2.0.0"
+    val zioLogging = "2.0.0"
     val enumeratum = "1.7.0"
   }
 
   object org {
-    val izumi    = "io.7mind.izumi"
     val beachape = "com.beachape"
     val zio      = "dev.zio"
     val temporal = "io.temporal"
@@ -72,14 +67,10 @@ trait Dependencies {
   }
 
   object Zio {
-    val self        = org.zio %% "zio"              % version.zio
-    val interopCats = org.zio %% "zio-interop-cats" % "2.5.1.1"
-  }
-
-  object Distage {
-    val core    = org.izumi %% "distage-core"              % version.izumi
-    val config  = org.izumi %% "distage-extension-config"  % version.izumi
-    val testKit = org.izumi %% "distage-testkit-scalatest" % version.izumi % Test
+    val self           = org.zio %% "zio"          % version.zio
+    val test           = org.zio %% "zio-test"     % version.zio % Test
+    val testSbt        = org.zio %% "zio-test-sbt" % version.zio % Test
+    val testFrameworks = Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   }
 
   object Enumeratum {
@@ -116,18 +107,8 @@ trait Dependencies {
   }
 
   object Logging {
-    val logstage             = org.izumi %% "logstage-core"          % version.izumi
-    val logstageSlf4jAdapter = org.izumi %% "logstage-adapter-slf4j" % version.izumi
-
-    val test = List(logstage, logstageSlf4jAdapter).map(_ % Test)
-  }
-
-  object Testing {
-    val scalatest = "org.scalatest" %% "scalatest" % "3.2.12" % Test
-  }
-
-  object Examples {
-    val logstage             = org.izumi %% "logstage-core"          % version.izumi
-    val logstageSlf4jAdapter = org.izumi %% "logstage-adapter-slf4j" % version.izumi
+    val zio      = org.zio         %% "zio-logging"       % version.zioLogging
+    val zioSlf4j = org.zio         %% "zio-logging-slf4j" % version.zioLogging
+    val logback  = "ch.qos.logback" % "logback-classic"   % "1.2.11"
   }
 }
