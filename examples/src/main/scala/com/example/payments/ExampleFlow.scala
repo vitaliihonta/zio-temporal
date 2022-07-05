@@ -43,12 +43,12 @@ class ExampleFlow(client: ZWorkflowClient) {
         _            <- initiateTransaction(paymentWorkflow)(transactionId, sender, receiver)
         _            <- ZIO.logInfo("Trxn workflow started id")
         _            <- simulateUserActivity
-        workflowStub <- client.newUntypedWorkflowStub(workflowId = transactionId.toString)
+        workflowStub <- client.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId.toString)
         currentState <- checkStatus(workflowStub)(transactionId)
         _            <- ZIO.logInfo(s"Trxn status checked $currentState")
         _            <- simulateUserActivity
         _            <- ZIO.logInfo("Going to send confirmation")
-        _            <- sendConfirmation(workflowStub, paymentWorkflow)(transactionId)
+        _            <- sendConfirmation(workflowStub)(transactionId)
         _            <- ZIO.logInfo("Confirmation sent!")
         _            <- simulateUserActivity
         _            <- (ZIO.sleep(100.millis) *> checkStatus(workflowStub)(transactionId)).repeatWhile(isNotFinished)
@@ -68,12 +68,14 @@ class ExampleFlow(client: ZWorkflowClient) {
     sender:          UUID,
     receiver:        UUID
   ) =
-    (paymentWorkflow.proceed _).start(
-      ProceedTransactionCommand(
-        id = transactionId.toProto,
-        sender = sender.toProto,
-        receiver = receiver.toProto,
-        amount = BigDecimal(9000).toProto
+    ZWorkflowStub.start(
+      paymentWorkflow.proceed(
+        ProceedTransactionCommand(
+          id = transactionId.toProto,
+          sender = sender.toProto,
+          receiver = receiver.toProto,
+          amount = BigDecimal(9000).toProto
+        )
       )
     )
 
@@ -84,16 +86,13 @@ class ExampleFlow(client: ZWorkflowClient) {
         .runEither
 
   private def sendConfirmation(
-    workflowStub:    ZWorkflowStub,
-    paymentWorkflow: ZWorkflowStub.Of[PaymentWorkflow]
-  )(transactionId:   UUID
+    workflowStub:  ZWorkflowStub.Proxy[PaymentWorkflow]
+  )(transactionId: UUID
   ) =
-    workflowStub.signal(
-      ZSignal.signal(
-        paymentWorkflow.confirmTransaction(
-          // change confirmation code to see what happens
-          ConfirmTransactionCommand(id = transactionId.toProto, confirmationCode = "42")
-        )
+    ZWorkflowStub.signal(
+      workflowStub.confirmTransaction(
+        // change confirmation code to see what happens
+        ConfirmTransactionCommand(id = transactionId.toProto, confirmationCode = "42")
       )
     )
 

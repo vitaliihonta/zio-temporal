@@ -6,41 +6,6 @@ import scala.reflect.macros.blackbox
 abstract class MacroUtils(val c: blackbox.Context) {
   import c.universe._
 
-  case class CallValidationError(methodName: Name, argumentNo: Int, expected: Symbol, actual: Tree)
-
-  case class MethodInfo(name: Name, symbol: Symbol, appliedArgs: List[Tree]) {
-    def validateCalls: List[CallValidationError] = {
-      val expectedArgs = symbol.typeSignature.paramLists.head
-      appliedArgs.zip(expectedArgs).zipWithIndex.flatMap { case ((arg, sym), idx) =>
-        if (arg.tpe =:= sym.typeSignature) None
-        else
-          Some(
-            CallValidationError(
-              methodName = name,
-              argumentNo = idx,
-              expected = sym,
-              actual = arg
-            )
-          )
-      }
-    }
-  }
-
-  case class MethodInvocation(instance: Ident, methodName: Name, args: List[Tree]) {
-    def getMethod: Option[MethodInfo] =
-      instance.tpe.baseClasses
-        .map(_.asClass.typeSignature.decl(methodName))
-        .find(_ != NoSymbol)
-        .map(MethodInfo(methodName, _, args))
-  }
-
-  def getMethodInvocation(tree: Tree): Option[MethodInvocation] =
-    tree match {
-      case Apply(Select(instance @ Ident(_), methodName), args) =>
-        Some(MethodInvocation(instance, methodName, args))
-      case _ => None
-    }
-
   def extractSelectorField(t: Tree): Option[TermName] =
     t match {
       case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: TermName}" if vd.name == idt.name =>
@@ -139,6 +104,14 @@ abstract class MacroUtils(val c: blackbox.Context) {
   def freshTermName(name: String): TermName = c.freshName(TermName(name))
 
   def error(message: String): Nothing = c.abort(c.enclosingPosition, message)
+
+  protected def getPrefixOf(tpe: Type): Tree = {
+    val prefix = c.prefix.tree
+    if (!(prefix.tpe <:< tpe)) {
+      error(s"Invalid library usage! Expected to be called from $tpe, instead got ${prefix.tpe}")
+    }
+    prefix
+  }
 
   private def debugEnabled: Boolean =
     sys.props

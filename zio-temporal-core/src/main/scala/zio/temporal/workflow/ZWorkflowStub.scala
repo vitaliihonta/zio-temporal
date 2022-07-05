@@ -9,7 +9,9 @@ import zio.temporal.internal.CanSignal
 import zio.temporal.internal.ClassTagUtils
 import zio.temporal.internal.TemporalInteraction
 import zio.temporal.internal.ZWorkflowQueryMacro
+import zio.temporal.internal.tagging.Proxies
 import zio.temporal.internal.tagging.Tagged
+import zio.temporal.signal.ZWorkflowStubProxySyntax
 
 import scala.language.experimental.macros
 import scala.reflect.ClassTag
@@ -114,7 +116,7 @@ class ZWorkflowStub private[zio] (override protected[zio] val self: WorkflowStub
     macro ZWorkflowQueryMacro.queryImpl2[Q, A, B, R]
 }
 
-object ZWorkflowStub extends Tagged {
+object ZWorkflowStub extends Proxies[ZWorkflowStub] with ZWorkflowExecutionSyntax with ZWorkflowStubProxySyntax {
 
   final implicit class Ops[A](private val self: ZWorkflowStub.Of[A]) extends AnyVal {
 

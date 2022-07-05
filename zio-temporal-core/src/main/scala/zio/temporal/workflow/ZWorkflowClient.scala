@@ -25,9 +25,11 @@ class ZWorkflowClient private[zio] (private[zio] val self: WorkflowClient) exten
     * @see
     *   [[ZWorkflowStub]]
     */
-  def newUntypedWorkflowStub(workflowId: String, runId: Option[String] = None): UIO[ZWorkflowStub] =
+  def newWorkflowStubProxy[A](workflowId: String, runId: Option[String] = None): UIO[ZWorkflowStub.Proxy[A]] =
     ZIO.succeed {
-      new ZWorkflowStub(self.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava))
+      ZWorkflowStub.Proxy[A](
+        new ZWorkflowStub(self.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava))
+      )
     }
 
   /** Invokes SignalWithStart operation.

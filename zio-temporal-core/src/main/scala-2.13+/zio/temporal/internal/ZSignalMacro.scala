@@ -1,22 +1,16 @@
 package zio.temporal.internal
 
-import io.temporal.workflow.Functions
-import izumi.reflect.Tag
 import zio.temporal._
-//import zio.temporal.signal.ZInput
 import zio.temporal.signal.ZSignal
-import zio.temporal.utils.macros.MacroUtils
-
 import scala.reflect.macros.blackbox
 
-class ZSignalMacro(override val c: blackbox.Context) extends MacroUtils(c) {
+class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
   import c.universe._
 
-  private val WorkflowInterface = typeOf[workflow]
-  private val SignalMethod      = typeOf[signalMethod]
-  private val WorkflowMethod    = typeOf[workflowMethod]
-  private val Signal            = typeOf[ZSignal.Signal].dealias
-  private val SignalWithStart   = typeOf[ZSignal.WithStart].dealias
+  private val SignalMethod = typeOf[signalMethod]
+
+  private val Signal          = typeOf[ZSignal.Signal].dealias
+  private val SignalWithStart = typeOf[ZSignal.WithStart].dealias
 
   def startImpl[A](f: Expr[A]): Tree = {
     println(f)
@@ -25,27 +19,20 @@ class ZSignalMacro(override val c: blackbox.Context) extends MacroUtils(c) {
   }
 
   def signalImpl(f: Expr[Unit]): Tree = {
-    val invocation = getMethodInvocation(f.tree).getOrElse {
-      error(s"Expected simple method invocation, got tree of class ${f.tree.getClass}: ${f.tree}")
-    }
+    val invocation = getMethodInvocation(f.tree)
 
     assertWorkflow(invocation.instance.tpe)
-
-    val method = invocation.getMethod.getOrElse {
-      error(
-        s"${invocation.instance.tpe} doesn't have a ${invocation.methodName} method. Signal method should not be extension methods!"
-      )
+    if (!(invocation.instance.tpe <:< typeOf[BaseCanSignal])) {
+      error(s".signal should be called only on ZWorkflowStub and etc.")
     }
 
-    method.validateCalls.foreach { callError =>
-      error(
-        s"Provided arguments for method ${callError.methodName} doesn't confirm to it's signature:\n" +
-          s"\tExpected: ${callError.expected} (argument #${callError.argumentNo})\n" +
-          s"\tGot: ${callError.actual} (of type ${callError.actual.tpe})"
-      )
-    }
+    val method = invocation.getMethod("Signal method should not be extension methods!")
+
     val signalName = getSignalName(method.symbol)
-    q"""new $Signal($signalName, ${invocation.args})""".debugged("Generated signal")
+
+    q"""${invocation.instance}.__zio_temporal_invokeSignal(new $Signal($signalName, ${invocation.args}))""".debugged(
+      "Generated signal"
+    )
   }
 
   def signalWithStartImpl[A](f: Expr[A]): Tree = {
@@ -126,30 +113,4 @@ class ZSignalMacro(override val c: blackbox.Context) extends MacroUtils(c) {
         signalName
       }
       .getOrElse(method.name.toString)
-
-  private def assertWorkflow(workflow: Type): Type = {
-    def errorNotWorkflow = error(s"$workflow is not a workflow!")
-    workflow match {
-      case SingleType(_, sym) =>
-        sym.typeSignature.baseClasses
-          .flatMap(sym => findAnnotation(sym, WorkflowInterface).map(_ => sym.typeSignature))
-          .headOption
-          .getOrElse(
-            errorNotWorkflow
-          )
-
-      case _ =>
-        findAnnotation(workflow.typeSymbol, WorkflowInterface)
-          .map(_ => workflow)
-          .getOrElse(errorNotWorkflow)
-    }
-  }
-
-  private def assertWorkflowMethod(workflow: Type, methodName: TermName): Unit =
-    getMethodAnnotation(workflow, methodName, WorkflowMethod)
-
-  private def getTag[A: WeakTypeTag] = {
-    val tagTpe = weakTypeOf[Tag[A]]
-    findImplicit(tagTpe, s"$tagTpe not found")
-  }
 }

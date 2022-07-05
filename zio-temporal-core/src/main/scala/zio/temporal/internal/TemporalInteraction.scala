@@ -5,9 +5,11 @@ import zio.temporal.TemporalBusinessError
 import zio.temporal.TemporalClientError
 import zio.temporal.TemporalError
 import zio.temporal.TemporalIO
+import zio.temporal.internalApi
 import java.util.concurrent.CompletableFuture
 
-private[zio] object TemporalInteraction {
+@internalApi
+object TemporalInteraction {
 
   def from[A](thunk: => A): TemporalIO[TemporalClientError, A] =
     ZIO

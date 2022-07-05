@@ -68,7 +68,7 @@ object WorkflowSpec extends ZIOSpecDefault {
                                   .withWorkflowRunTimeout(10.seconds)
                                   .build
               _            <- (signalWorkflow.echoServer _).start("ECHO")
-              workflowStub <- client.newUntypedWorkflowStub(workflowId)
+              workflowStub <- client.newWorkflowStubProxy(workflowId)
               progress <- workflowStub
                             .query0((_: SignalWorkflow).getProgress)
                             .run

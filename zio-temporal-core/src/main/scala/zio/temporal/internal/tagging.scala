@@ -20,4 +20,9 @@ private[zio] object tagging {
 
     type Ops[A]
   }
+
+  private[zio] trait Proxies[A] extends Tagged {
+    type Proxy[+T] <: T with A
+    private[zio] def Proxy[T](value: A): Proxy[T] = value.asInstanceOf[Proxy[T]]
+  }
 }
