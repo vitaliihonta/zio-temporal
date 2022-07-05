@@ -4,7 +4,7 @@ import io.temporal.client.ActivityCompletionClient
 import io.temporal.client.WorkflowClient
 import zio._
 import zio.temporal.internal.TemporalInteraction
-import zio.temporal.signal.ZInput
+//import zio.temporal.signal.ZInput
 import zio.temporal.signal.ZSignal
 import zio.temporal.TemporalClientError
 import zio.temporal.TemporalIO
@@ -38,27 +38,11 @@ class ZWorkflowClient private[zio] (private[zio] val self: WorkflowClient) exten
     *   workflowExecution of the signaled or started workflow.
     */
   def signalWithStart(
-    signal: ZSignal[Any, ZSignal.SignalWithStart]
-  ): TemporalIO[TemporalClientError, ZWorkflowExecution] =
-    signalWithStart[Any](signal)(())
-
-  /** Invokes SignalWithStart operation.
-    *
-    * @param signal
-    *   ZSignal to invoke (containing both @WorkflowMethod and @SignalMethod annotations
-    * @param input
-    *   ZSignal input
-    * @return
-    *   workflowExecution of the signaled or started workflow.
-    */
-  def signalWithStart[A](
-    signal:             ZSignal[A, ZSignal.SignalWithStart]
-  )(input:              A
-  )(implicit inputFrom: ZInput.From[A]
+    signal: ZSignal.WithStart
   ): TemporalIO[TemporalClientError, ZWorkflowExecution] =
     TemporalInteraction.from {
       val batchRequest = self.newSignalWithStartRequest()
-      signal.addRequests(inputFrom(input), batchRequest)
+      signal.addRequests(batchRequest)
       new ZWorkflowExecution(self.signalWithStart(batchRequest))
     }
 

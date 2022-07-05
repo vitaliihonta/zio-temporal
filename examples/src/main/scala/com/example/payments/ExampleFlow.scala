@@ -89,12 +89,13 @@ class ExampleFlow(client: ZWorkflowClient) {
   )(transactionId:   UUID
   ) =
     workflowStub.signal(
-      ZSignal.signal(paymentWorkflow.confirmTransaction _)
-    )(
-      zinput(
-        ConfirmTransactionCommand(id = transactionId.toProto, confirmationCode = "42")
+      ZSignal.signal(
+        paymentWorkflow.confirmTransaction(
+          // change confirmation code to see what happens
+          ConfirmTransactionCommand(id = transactionId.toProto, confirmationCode = "42")
+        )
       )
-    ) // change confirmation code to see what happens
+    )
 
   private def isNotFinished(state: TransactionView): Boolean =
     state.status.isCreated || state.status.isInProgress
