@@ -12,8 +12,10 @@ import zio.temporal.worker.ZWorkerOptions
 import zio.temporal.workflow._
 import zio.test._
 import zio.test.TestAspect._
+
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import scala.collection.mutable.ListBuffer
 
 object WorkflowSpec extends ZIOSpecDefault {
@@ -40,7 +42,7 @@ object WorkflowSpec extends ZIOSpecDefault {
                                   .withWorkflowId(UUID.randomUUID().toString)
                                   .withWorkflowRunTimeout(1.second)
                                   .build
-              result <- (sampleWorkflow.echo _).execute(sampleIn)
+              result <- ZWorkflowStub.execute(sampleWorkflow.echo(sampleIn))
             } yield assertTrue(result == sampleOut)
           }
         }
@@ -67,17 +69,14 @@ object WorkflowSpec extends ZIOSpecDefault {
                                   .withWorkflowId(workflowId)
                                   .withWorkflowRunTimeout(10.seconds)
                                   .build
-              _            <- (signalWorkflow.echoServer _).start("ECHO")
-              workflowStub <- client.newWorkflowStubProxy(workflowId)
-              progress <- workflowStub
-                            .query0((_: SignalWorkflow).getProgress)
-                            .run
-              _ <- workflowStub.signal(
-                     ZSignal.signal(signalWorkflow.echo _)
-                   )(zinput("Hello!"))
-              progress2 <- workflowStub
-                             .query0((_: SignalWorkflow).getProgress)
-                             .run
+              _            <- ZWorkflowStub.start(signalWorkflow.echoServer("ECHO"))
+              workflowStub <- client.newWorkflowStubProxy[SignalWorkflow](workflowId)
+              progress     <- ZWorkflowStub.query(workflowStub.getProgress)
+              _ <- ZWorkflowStub.signal(
+                     workflowStub.echo("Hello!")
+                   )
+              progress2 <- ZWorkflowStub
+                             .query(workflowStub.getProgress)
                              .repeatWhile(_.isEmpty)
               result <- workflowStub.result[String]
             } yield assertTrue(progress.isEmpty) &&
@@ -113,10 +112,8 @@ object WorkflowSpec extends ZIOSpecDefault {
                                   .withWorkflowId(workflowId)
                                   .withWorkflowRunTimeout(10.seconds)
                                   .build
-              result <- (signalWorkflow.transfer _).execute(
-                          TransferCommand("from", "to", expectedResult)
-                        )
-            } yield assertTrue(result.getOrElse(???) == expectedResult)
+              result <- ZWorkflowStub.execute(signalWorkflow.transfer(TransferCommand("from", "to", expectedResult)))
+            } yield assertTrue(result == expectedResult)
           }
         }
       }
@@ -158,11 +155,14 @@ object WorkflowSpec extends ZIOSpecDefault {
                                 .withWorkflowId(workflowId)
                                 .withWorkflowRunTimeout(10.seconds)
                                 .build
-              result <- (sagaWorkflow.transfer _).execute(
-                          TransferCommand(From, To, amount)
-                        )
-            } yield assertTrue(result.left.getOrElse(???) == error) &&
+              result <- ZWorkflowStub
+                          .execute(sagaWorkflow.transfer(TransferCommand(From, To, amount)))
+                          .either
+            } yield {
+              val actualError = result.left.getOrElse(???).getError.get
+              assertTrue(actualError == error) &&
               assertTrue(compensated.get())
+            }
           }
         }
       }
@@ -172,15 +172,15 @@ object WorkflowSpec extends ZIOSpecDefault {
         val taskQueue = "promise-queue"
         val client    = testEnv.workflowClient
 
-        val order = ListBuffer.empty[(String, Int)]
+        val order = new AtomicReference(ListBuffer.empty[(String, Int)])
         val fooFunc = (x: Int) => {
           println(s"foo($x)")
-          order += ("foo" -> x)
+          order.get += ("foo" -> x)
           x
         }
         val barFunc = (x: Int) => {
           println(s"bar($x)")
-          order += ("bar" -> x)
+          order.get += ("bar" -> x)
           x
         }
 
@@ -204,11 +204,11 @@ object WorkflowSpec extends ZIOSpecDefault {
                                    .withWorkflowRunTimeout(10.seconds)
                                    .build
 
-              result <- (promiseWorkflow.fooBar _).execute(x, y)
+              result <- ZWorkflowStub.execute(promiseWorkflow.fooBar(x, y))
             } yield assertTrue(result == x + y)
 
             tests.repeatN(19).map { res =>
-              val actualResult = order.toList
+              val actualResult = order.get.toList
 
               println(actualResult.toString)
 

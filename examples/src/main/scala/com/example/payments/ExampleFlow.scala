@@ -6,7 +6,6 @@ import zio.{LogAnnotation => _, _}
 import zio.logging.LogAnnotation
 import zio.logging.logContext
 import zio.temporal.proto.syntax._
-import zio.temporal.signal._
 import zio.temporal.workflow._
 
 import java.util.UUID
@@ -79,11 +78,11 @@ class ExampleFlow(client: ZWorkflowClient) {
       )
     )
 
-  private def checkStatus(workflowStub: ZWorkflowStub)(transactionId: UUID) =
+  private def checkStatus(workflowStub: ZWorkflowStub.Proxy[PaymentWorkflow])(transactionId: UUID) =
     ZIO.logInfo("Checking transaction status...") *>
-      workflowStub
-        .query0((_: PaymentWorkflow).getStatus)
-        .runEither
+      ZWorkflowStub.query(
+        workflowStub.getStatus
+      )
 
   private def sendConfirmation(
     workflowStub:  ZWorkflowStub.Proxy[PaymentWorkflow]

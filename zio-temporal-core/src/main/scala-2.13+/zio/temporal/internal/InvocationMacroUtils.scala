@@ -16,18 +16,18 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context) extends Ma
   protected case class MethodInfo(name: Name, symbol: Symbol, appliedArgs: List[Tree]) {
     validateCalls()
 
-    private def validateCalls(): Unit = {
-      val expectedArgs = symbol.typeSignature.paramLists.head
-      appliedArgs.zip(expectedArgs).zipWithIndex.foreach { case ((actual, expected), argumentNo) =>
-        if (!(actual.tpe =:= expected.typeSignature)) {
-          error(
-            s"Provided arguments for method $name doesn't confirm to it's signature:\n" +
-              s"\tExpected: $expected (argument #${argumentNo + 1})\n" +
-              s"\tGot: $actual (of type ${actual.tpe})"
-          )
+    private def validateCalls(): Unit =
+      symbol.typeSignature.paramLists.headOption.foreach { expectedArgs =>
+        appliedArgs.zip(expectedArgs).zipWithIndex.foreach { case ((actual, expected), argumentNo) =>
+          if (!(actual.tpe <:< expected.typeSignature)) {
+            error(
+              s"Provided arguments for method $name doesn't confirm to it's signature:\n" +
+                s"\tExpected: $expected (argument #${argumentNo + 1})\n" +
+                s"\tGot: $actual (of type ${actual.tpe})"
+            )
+          }
         }
       }
-    }
   }
 
   protected case class MethodInvocation(instance: Ident, methodName: Name, args: List[Tree]) {
@@ -43,6 +43,8 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context) extends Ma
 
   protected def getMethodInvocation(tree: Tree): MethodInvocation =
     tree match {
+      case Select(instance @ Ident(_), methodName) =>
+        MethodInvocation(instance, methodName, Nil)
       case Apply(Select(instance @ Ident(_), methodName), args) =>
         MethodInvocation(instance, methodName, args)
       case _ => error(error(s"Expected simple method invocation, got tree of class ${tree.getClass}: $tree"))
@@ -52,9 +54,6 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context) extends Ma
     val tagTpe = weakTypeOf[Tag[A]]
     findImplicit(tagTpe, s"$tagTpe not found")
   }
-
-  protected def assertWorkflowMethod(workflow: Type, methodName: TermName): Unit =
-    getMethodAnnotation(workflow, methodName, WorkflowMethod)
 
   protected def assertWorkflow(workflow: Type): Type = {
     def errorNotWorkflow = error(s"$workflow is not a workflow!")

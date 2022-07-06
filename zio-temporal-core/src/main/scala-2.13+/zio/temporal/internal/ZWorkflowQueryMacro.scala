@@ -1,74 +1,70 @@
 package zio.temporal.internal
 
-import io.temporal.workflow.QueryMethod
-import zio.temporal.func.ZWorkflowQuery0
-import zio.temporal.func.ZWorkflowQuery1
-import zio.temporal.func.ZWorkflowQuery2
-import zio.temporal.utils.macros.MacroUtils
+import zio.temporal.queryMethod
 import zio.temporal.workflow.ZWorkflowStub
 
 import scala.reflect.macros.blackbox
 
-class ZWorkflowQueryMacro(override val c: blackbox.Context) extends MacroUtils(c) {
+class ZWorkflowQueryMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
   import c.universe._
 
-  private val QueryMethod = typeOf[QueryMethod].dealias
+  private val QueryMethod = typeOf[queryMethod].dealias
 
-  def queryImpl0[Q: WeakTypeTag, R: WeakTypeTag](f: Expr[Q => R]): Tree = {
-    val Q = weakTypeOf[Q].dealias
-    val R = weakTypeOf[R].dealias
-
-    val methodName      = extractMethodSelector0(f.tree).getOrElse(error(s"$f is not method selector"))
-    val queryMethodName = getQueryType(Q, methodName)
-
-    val ZWorkflowQuery0 = weakTypeOf[ZWorkflowQuery0[R]]
+  def newQueryImpl[R: WeakTypeTag](f: Expr[R]): Tree = {
+    val theQuery = buildQueryInvocation(f.tree, weakTypeOf[R])
 
     q"""
-       new $ZWorkflowQuery0($currentStub, classOf[$R], $queryMethodName)
-       """ debugged s"query0[$Q, $R]"
+       _root_.zio.temporal.internal.TemporalInteraction.from {
+         $theQuery
+       }
+     """.debugged("Generated query invocation")
   }
 
-  def queryImpl1[Q: WeakTypeTag, A: WeakTypeTag, R: WeakTypeTag](f: Expr[Q => A => R]): Tree = {
-    val Q = weakTypeOf[Q].dealias
-    val A = weakTypeOf[A].dealias
-    val R = weakTypeOf[R].dealias
-
-    val methodName      = extractMethodSelector1(f.tree).getOrElse(error(s"$f is not method selector"))
-    val queryMethodName = getQueryType(Q, methodName)
-
-    val ZWorkflowQuery1 = weakTypeOf[ZWorkflowQuery1[A, R]]
+  def newQueryEitherImpl[E: WeakTypeTag, R: WeakTypeTag](f: Expr[Either[E, R]]): Tree = {
+    val theQuery = buildQueryInvocation(f.tree, weakTypeOf[Either[E, R]])
 
     q"""
-       new $ZWorkflowQuery1($currentStub, classOf[$R], $queryMethodName)
-       """ debugged s"query[$Q, $A, $R]"
+       _root_.zio.temporal.internal.TemporalInteraction.fromEither {
+         $theQuery
+       }
+     """.debugged("Generated query invocation")
   }
 
-  def queryImpl2[Q: WeakTypeTag, A: WeakTypeTag, B: WeakTypeTag, R: WeakTypeTag](f: Expr[Q => (A, B) => R]): Tree = {
-    val Q = weakTypeOf[Q].dealias
-    val A = weakTypeOf[A].dealias
-    val B = weakTypeOf[B].dealias
-    val R = weakTypeOf[R].dealias
+  private def buildQueryInvocation(f: Tree, ret: Type): Tree = {
+    val invocation = getMethodInvocation(f)
 
-    val methodName      = extractMethodSelector2(f.tree).getOrElse(error(s"$f is not method selector"))
-    val queryMethodName = getQueryType(Q, methodName)
+    assertWorkflow(invocation.instance.tpe)
 
-    val ZWorkflowQuery2 = weakTypeOf[ZWorkflowQuery2[A, B, R]]
+    val method = invocation.getMethod("Query method should not be an extension method!")
 
-    q"""
-       new $ZWorkflowQuery2($currentStub, classOf[$R], $queryMethodName)
-       """ debugged s"query[$Q, $A, $B, $R]"
+    val queryName = getQueryName(method.symbol)
+
+    queryInvocation(invocation, method, queryName, ret)
   }
 
-  private def getQueryType(workflow: Type, methodName: TermName): String =
-    getMethodAnnotation(workflow, methodName, QueryMethod).children.tail
+  private def getQueryName(method: Symbol): String =
+    getAnnotation(method, QueryMethod).children.tail
       .collectFirst { case NamedArg(_, Literal(Constant(queryName: String))) =>
         queryName
       }
-      .getOrElse(methodName.toString)
+      .getOrElse(method.name.toString)
 
-  private def currentStub: Tree =
-    if (!(c.prefix.tree.tpe <:< weakTypeOf[ZWorkflowStub]))
-      error("query should be called on ZWorkflowStub")
-    else
-      c.prefix.tree
+  private def queryInvocation(
+    invocation: MethodInvocation,
+    method:     MethodInfo,
+    queryName:  String,
+    ret:        Type
+  ): Tree = {
+    val stub = q"""${invocation.instance}.toJava"""
+    method.appliedArgs match {
+      case Nil =>
+        q"""$stub.query[$ret]($queryName, classOf[$ret])"""
+      case List(a) =>
+        q"""$stub.query[$ret]($queryName, classOf[$ret], $a.asInstanceOf[AnyRef])"""
+      case List(a, b) =>
+        q"""$stub.query[$ret]($queryName, classOf[$ret], $a.asInstanceOf[AnyRef], $b.asInstanceOf[AnyRef])"""
+      case args =>
+        sys.error(s"Query with arity ${args.size} not currently implemented. Feel free to contribute!")
+    }
+  }
 }

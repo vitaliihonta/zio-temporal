@@ -8,7 +8,7 @@ import zio.temporal.signal.ZSignal
 protected[zio] trait BaseCanSignal extends Any
 
 protected[zio] trait CanSignal[Self] extends Any with BaseCanSignal {
-  protected[zio] def self: Self
+  def toJava: Self
 
   protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit
 

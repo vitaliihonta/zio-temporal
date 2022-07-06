@@ -7,11 +7,15 @@ import zio.Cause
   * @tparam E
   *   \- possible business error type
   */
-sealed trait TemporalError[+E]
+sealed trait TemporalError[+E] {
+  def getError: Option[E]
+}
 
 /** Low-level temporal client error
   */
 case class TemporalClientError(error: Throwable) extends TemporalError[Nothing] {
+
+  override val getError: Option[Nothing] = None
 
   override def toString: String = {
     val message = s"$error cause=${error.getCause}"
@@ -26,7 +30,9 @@ case class TemporalClientError(error: Throwable) extends TemporalError[Nothing] 
   * @param error
   *   the error value
   */
-case class TemporalBusinessError[E](error: E) extends TemporalError[E]
+case class TemporalBusinessError[E](error: E) extends TemporalError[E] {
+  override val getError: Option[E] = Some(error)
+}
 
 /** Represents fatal errors that may appear in your business logic.
   *
