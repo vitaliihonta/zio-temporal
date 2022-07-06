@@ -22,7 +22,10 @@ class ZWorkflowClient private[zio] (val toJava: WorkflowClient)
     * @see
     *   [[ZWorkflowStub]]
     */
-  def newWorkflowStubProxy[A](workflowId: String, runId: Option[String] = None): UIO[ZWorkflowStub.Proxy[A]] =
+  def newWorkflowStubProxy[A: IsConcreteType](
+    workflowId: String,
+    runId:      Option[String] = None
+  ): UIO[ZWorkflowStub.Proxy[A]] =
     ZIO.succeed {
       ZWorkflowStub.Proxy[A](
         new ZWorkflowStub(toJava.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava))
@@ -42,7 +45,7 @@ class ZWorkflowClient private[zio] (val toJava: WorkflowClient)
     * @return
     *   builder instance
     */
-  def newWorkflowStub[A: ClassTag]: ZWorkflowStubBuilderTaskQueueDsl[A] =
+  def newWorkflowStub[A: ClassTag: IsConcreteType]: ZWorkflowStubBuilderTaskQueueDsl[A] =
     new ZWorkflowStubBuilderTaskQueueDsl[A](toJava, implicitly[ClassTag[A]])
 }
 
