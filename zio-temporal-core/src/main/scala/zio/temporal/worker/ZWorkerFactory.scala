@@ -71,7 +71,7 @@ object ZWorkerFactory {
       ZIO.environmentWith[ZWorkflowClient with ZWorkerFactoryOptions] { environment =>
         new ZWorkerFactory(
           WorkerFactory.newInstance(
-            environment.get[ZWorkflowClient].self,
+            environment.get[ZWorkflowClient].toJava,
             environment.get[ZWorkerFactoryOptions].toJava
           )
         )
