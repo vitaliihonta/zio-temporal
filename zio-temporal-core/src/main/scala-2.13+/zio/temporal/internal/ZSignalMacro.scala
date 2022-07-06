@@ -22,9 +22,9 @@ class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtil
     val invocation = getMethodInvocation(tree)
     val method     = invocation.getMethod("Signal method should not be an extension method!")
 
-    val addSignal = addBatchRequestTree(invocation, method, typeOf[Unit])(to = None)
+    val addSignal = addBatchRequestTree(invocation, method, typeOf[Unit])(addTo = None)
 
-    q"""new $ZSignalBuilder($addSignal, $self)""".debugged(s"Generated ${ZSignalBuilder.toString}")
+    q"""new $ZSignalBuilder($self, $addSignal)""".debugged(s"Generated ${ZSignalBuilder.toString}")
   }
 
   def signalWithStartImpl[A: WeakTypeTag](f: Expr[A]): Tree = {
@@ -32,20 +32,16 @@ class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtil
     val invocation = getMethodInvocation(tree)
     val method     = invocation.getMethod("Workflow method should not be an extension method!")
 
-    val self         = getPrefixOf(ZSignalBuilder)
     val batchRequest = freshTermName("batchRequest")
-    val addStart     = addBatchRequestTree(invocation, method, weakTypeOf[A])(to = Some(batchRequest))
-    val builder      = freshTermName("builder")
+    val addStart     = addBatchRequestTree(invocation, method, weakTypeOf[A])(addTo = Some(batchRequest))
     val javaClient   = freshTermName("javaClient")
+
+    val self      = getPrefixOf(ZSignalBuilder)
+    val batchTree = createBatchRequestTree(self, batchRequest, javaClient, addStart)
 
     q"""
       _root_.zio.temporal.internal.TemporalInteraction.from {
-        val $builder = $self
-        val $javaClient = $builder.__zio_temporal_workflowClient.toJava
-        val $batchRequest = $javaClient.newSignalWithStartRequest()
-        $builder.__zio_temporal_addSignal($batchRequest)
-        $addStart
-        new _root_.zio.temporal.ZWorkflowExecution($javaClient.signalWithStart($batchRequest))
+        $batchTree
       }
      """.debugged(s"Generated signalWithStart")
   }
@@ -67,58 +63,68 @@ class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtil
     )
   }
 
-  // TODO: refactor and handle procedures
   private def addBatchRequestTree(
     invocation: MethodInvocation,
     method:     MethodInfo,
     ret:        Type
-  )(to:         Option[TermName]
+  )(addTo:      Option[TermName]
   ): Tree = {
-    val f = q"""${invocation.instance}.${invocation.methodName.toTermName}"""
-    println(s"method=${method.name}  tree=$f")
+    val LambdaConversionResult(tree, typeAscription, typeArgs, args) = scalaLambdaToFunction(invocation, method, ret)
+
     val batchRequest = freshTermName("batchRequest")
-    method.appliedArgs match {
-      case Nil =>
-        val Proc     = tq"""io.temporal.workflow.Functions.Proc"""
-        val procCall = q"""( ( () => $f() ): $Proc )"""
-        to.fold[Tree](ifEmpty = q"""($batchRequest: $BatchRequest) => $batchRequest.add($procCall)""") { batchRequest =>
-          q""" $batchRequest.add($procCall) """
-        }
-      case List(first) =>
-        val a      = first.tpe
-        val aInput = freshTermName("a")
-        if (ret =:= typeOf[Unit]) {
-          val Proc1    = tq"""io.temporal.workflow.Functions.Proc1[$a]"""
-          val procCall = q"""( ( ($aInput: $a) => $f($aInput) ): $Proc1 )"""
-          to.fold[Tree](ifEmpty = q"""($batchRequest: $BatchRequest) => $batchRequest.add[$a]($procCall, $first)""") {
-            batchRequest =>
-              q"""$batchRequest.add[$a]($procCall, $first)"""
-          }
-        } else {
-          val Func1    = tq"""io.temporal.workflow.Functions.Func1[$a, $ret]"""
-          val funcCall = q"""( ( ($aInput: $a) => $f($aInput) ): $Func1 )"""
-          to.fold[Tree](ifEmpty =
-            q"""($batchRequest: $BatchRequest) => $batchRequest.add[$a, $ret]($funcCall, $first )"""
-          ) { batchRequest =>
-            q"""$batchRequest.add[$a, $ret]($funcCall, $first )"""
-          }
-        }
-      case List(first, second) =>
-        val a        = first.tpe
-        val b        = second.tpe
-        val aInput   = freshTermName("a")
-        val bInput   = freshTermName("b")
-        val Func2    = tq"""io.temporal.workflow.Functions.Func2[$a, $b, $ret]"""
-        val funcCall = q"""(  ( ($aInput: $a, $bInput: $b) => $f($aInput, $bInput) ): $Func2 )"""
-        to.fold[Tree](ifEmpty =
-          q"""($batchRequest: $BatchRequest) => $batchRequest.add[$a, $b, $ret]($funcCall, $first, $second)"""
-        ) { batchRequest =>
-          q"""$batchRequest.add[$a, $b, $ret]($funcCall, $first, $second)"""
-        }
-      case args =>
-        sys.error(s"Workflow execute with arity ${args.size} not currently implemented. Feel free to contribute!")
+
+    addTo.fold[Tree](ifEmpty =
+      q"""($batchRequest: $BatchRequest) => $batchRequest.add[..$typeArgs](($tree): $typeAscription, ..$args)"""
+    ) { batchRequest =>
+      q"""$batchRequest.add[..$typeArgs](($tree): $typeAscription, ..$args)"""
     }
   }
+
+  private def createBatchRequestTree(
+    self:         Tree,
+    batchRequest: TermName,
+    javaClient:   TermName,
+    addStart:     Tree
+  ): Tree =
+    self match {
+      // Try to extract AST previously generated by startWith macro.
+      // This should avoid instantiation of ZSignalBuilder in runtime by eliminating it from AST
+      case Typed(Apply(_, List(client, Function(_, Apply(TypeApply(Select(_, _), targs), args)))), tpe)
+          if tpe.tpe =:= ZSignalBuilder =>
+        c.untypecheck(
+          q"""
+           val $javaClient = $client.toJava
+           val $batchRequest = $javaClient.newSignalWithStartRequest()
+           $batchRequest.add[..$targs](..$args)
+           $addStart
+           new _root_.zio.temporal.ZWorkflowExecution($javaClient.signalWithStart($batchRequest))
+         """
+        )
+      // Produce non-optimized tree in case of mismatch
+      case _ =>
+        c.warning(
+          c.enclosingPosition,
+          s"""Wasn't able to eliminate ZSignalBuilder from the resulting AST! 
+             |Normally, it shouldn't be instantiated at runtime.
+             |Please, fill up a ticket with the following info:
+             |  1. Your scala version
+             |  2. Your library version
+             |  3. Add reproducible code example without any sensitive information
+             |  4. Fill-up the following info for debugging:
+             |     - tree class: ${self.getClass}
+             |     - tree: $self
+             |""".stripMargin
+        )
+        val builder = freshTermName("builder")
+        q"""
+          val $builder = $self
+          val $javaClient = $builder.__zio_temporal_workflowClient.toJava
+          val $batchRequest = $javaClient.newSignalWithStartRequest()
+          $builder.__zio_temporal_addSignal($batchRequest)
+          $addStart
+          new _root_.zio.temporal.ZWorkflowExecution($javaClient.signalWithStart($batchRequest))
+         """
+    }
 
   private def getSignalName(method: Symbol): String =
     getAnnotation(method, SignalMethod).children.tail

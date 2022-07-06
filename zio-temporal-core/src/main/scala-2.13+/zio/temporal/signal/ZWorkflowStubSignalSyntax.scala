@@ -29,8 +29,8 @@ trait ZWorkflowClientSignalWithStartSyntax extends Any {
 }
 
 final class ZSignalBuilder @internalApi() (
-  val __zio_temporal_addSignal:      BatchRequest => Unit,
-  val __zio_temporal_workflowClient: ZWorkflowClient) {
+  val __zio_temporal_workflowClient: ZWorkflowClient,
+  val __zio_temporal_addSignal:      BatchRequest => Unit) {
 
   /** Invokes SignalWithStart operation.
     *

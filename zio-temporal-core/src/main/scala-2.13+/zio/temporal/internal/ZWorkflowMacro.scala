@@ -73,23 +73,8 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
     method:     MethodInfo,
     ret:        Type
   ): Tree = {
-    val f = q"""${invocation.instance}.${invocation.methodName.toTermName}"""
-    method.appliedArgs match {
-      case Nil =>
-        q"""_root_.io.temporal.client.WorkflowClient.start[$ret]((() => $f()))"""
-      case List(first) =>
-        val a      = first.tpe
-        val aInput = freshTermName("a")
-        q"""_root_.io.temporal.client.WorkflowClient.start[$a, $ret]((($aInput: $a) => $f($aInput)), $first)"""
-      case List(first, second) =>
-        val a      = first.tpe
-        val b      = second.tpe
-        val aInput = freshTermName("a")
-        val bInput = freshTermName("b")
-        q"""_root_.io.temporal.client.WorkflowClient.start[$a, $b, $ret]((($aInput: $a, $bInput: $b) => $f($aInput, $aInput)), $first, $second)"""
-      case args =>
-        sys.error(s"Workflow start with arity ${args.size} not currently implemented. Feel free to contribute!")
-    }
+    val LambdaConversionResult(tree, _, typeArgs, args) = scalaLambdaToFunction(invocation, method, ret)
+    q"""_root_.io.temporal.client.WorkflowClient.start[..$typeArgs]($tree, ..$args)"""
   }
 
   private def executeInvocation(
@@ -97,25 +82,8 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
     method:     MethodInfo,
     ret:        Type
   ): Tree = {
-    val f = q"""${invocation.instance}.${invocation.methodName.toTermName}"""
-    method.appliedArgs match {
-      case Nil =>
-        q"""_root_.io.temporal.client.WorkflowClient.execute[$ret]((() => $f()))"""
-      case List(first) =>
-        val a      = first.tpe
-        val aInput = freshTermName("a")
-        val Func1  = tq"""io.temporal.workflow.Functions.Func1[$a, $ret]"""
-        q"""_root_.io.temporal.client.WorkflowClient.execute[$a, $ret]( ( ($aInput: $a) => $f($aInput) ): $Func1, $first )"""
-      case List(first, second) =>
-        val a      = first.tpe
-        val b      = second.tpe
-        val aInput = freshTermName("a")
-        val bInput = freshTermName("b")
-        val Func2  = tq"""io.temporal.workflow.Functions.Func2[$a, $b, $ret]"""
-        q"""_root_.io.temporal.client.WorkflowClient.execute[$a, $b, $ret]( ( ($aInput: $a, $bInput: $b) => $f($aInput, $bInput) ): $Func2, $first, $second)"""
-      case args =>
-        sys.error(s"Workflow execute with arity ${args.size} not currently implemented. Feel free to contribute!")
-    }
+    val LambdaConversionResult(tree, _, typeArgs, args) = scalaLambdaToFunction(invocation, method, ret)
+    q"""_root_.io.temporal.client.WorkflowClient.execute[..$typeArgs]($tree, ..$args)"""
   }
 
   private def assertWorkflowMethod(method: Symbol): Unit =
