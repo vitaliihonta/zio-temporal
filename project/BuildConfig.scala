@@ -5,7 +5,6 @@ import sbt._
 object BuildConfig extends Dependencies {
 
   val baseLibs = Seq(
-    ScalaExt.kindProjectorCompilerPlugin,
     Temporal.self,
     Zio.self
   )
@@ -13,7 +12,10 @@ object BuildConfig extends Dependencies {
   val coreLibs = baseLibs ++ Seq(
     Scalapb.runtime,
     Utility.scalaJava8Compat,
-    Utility.izumiReflect,
+    Utility.izumiReflect
+  )
+
+  val coreLibsScala2 = Seq(
     Enumeratum.enumeratum % Optional
   )
 
@@ -31,7 +33,10 @@ object BuildConfig extends Dependencies {
   val protobufLibs = baseLibs ++ Seq(
     Scalapb.runtime,
     Scalapb.runtimeProtobuf,
-    Utility.reflections,
+    Utility.reflections
+  )
+
+  val protobufScala2Libs = Seq(
     Enumeratum.enumeratum % Optional
   )
 
@@ -44,7 +49,7 @@ object BuildConfig extends Dependencies {
 
 trait Dependencies {
 
-  object version {
+  private object versions {
     val temporal   = "1.12.0"
     val zio        = "2.0.0"
     val zioLogging = "2.0.0"
@@ -58,8 +63,8 @@ trait Dependencies {
   }
 
   object Temporal {
-    val self    = org.temporal % "temporal-sdk"     % version.temporal
-    val testing = org.temporal % "temporal-testing" % version.temporal
+    val self    = org.temporal % "temporal-sdk"     % versions.temporal
+    val testing = org.temporal % "temporal-testing" % versions.temporal
   }
 
   object Jackson {
@@ -67,14 +72,14 @@ trait Dependencies {
   }
 
   object Zio {
-    val self           = org.zio %% "zio"          % version.zio
-    val test           = org.zio %% "zio-test"     % version.zio % Test
-    val testSbt        = org.zio %% "zio-test-sbt" % version.zio % Test
+    val self           = org.zio %% "zio"          % versions.zio
+    val test           = org.zio %% "zio-test"     % versions.zio % Test
+    val testSbt        = org.zio %% "zio-test-sbt" % versions.zio % Test
     val testFrameworks = Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   }
 
   object Enumeratum {
-    val enumeratum = org.beachape %% "enumeratum" % version.enumeratum
+    val enumeratum = org.beachape %% "enumeratum" % versions.enumeratum
   }
 
   object Scalapb {
@@ -99,16 +104,15 @@ trait Dependencies {
     }
   }
 
-  object ScalaExt {
-
-    val kindProjectorCompilerPlugin = compilerPlugin(
+  object Typelevel {
+    val kindProjector = compilerPlugin(
       "org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full
     )
   }
 
   object Logging {
-    val zio      = org.zio         %% "zio-logging"       % version.zioLogging
-    val zioSlf4j = org.zio         %% "zio-logging-slf4j" % version.zioLogging
+    val zio      = org.zio         %% "zio-logging"       % versions.zioLogging
+    val zioSlf4j = org.zio         %% "zio-logging-slf4j" % versions.zioLogging
     val logback  = "ch.qos.logback" % "logback-classic"   % "1.2.11"
   }
 }

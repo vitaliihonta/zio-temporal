@@ -3,7 +3,7 @@ package zio.temporal.internal
 private[zio] object tagging {
   sealed trait Tag[U] extends Any
 
-  type @@[+T, U] = T with Tag[U]
+  type @@[+T, U] = T & Tag[U]
   def tagged[T, U](value: T): T @@ U = value.asInstanceOf[T @@ U]
 
   private[zio] trait Proxies[A] {
@@ -16,7 +16,7 @@ private[zio] object tagging {
       * @tparam T
       *   compile-time view
       */
-    type Proxy[+T] <: A with T
+    type Proxy[+T] <: A & T
     private[zio] def Proxy[T](value: A): Proxy[T] = value.asInstanceOf[Proxy[T]]
 
     sealed trait Tagged

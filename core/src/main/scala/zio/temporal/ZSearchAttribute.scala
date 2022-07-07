@@ -1,12 +1,11 @@
 package zio.temporal
 
-import zio.temporal.enumeratum.EnumeratumSearchAttributes
-
 import java.time.LocalDateTime
 import java.util.UUID
 import java.{util => ju}
 import scala.annotation.implicitNotFound
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
+import scala.language.implicitConversions
 
 /** Base type for attribute value.
   *
@@ -51,7 +50,7 @@ or provide a reasonable instance of Convert[${A}] using .contramap""")
     def contramap[B](f: B => A): Convert[B]
   }
 
-  final object Convert extends EnumeratumSearchAttributes {
+  final object Convert extends EnumSearchAttributes {
     def create[A](f: A => ZSearchAttribute): Convert[A] = new ConvertImpl[A](f)
 
     implicit val string: Convert[String]          = create(new StringAttr(_))

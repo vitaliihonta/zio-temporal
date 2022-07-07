@@ -8,7 +8,7 @@ import zio.temporal.workflow._
 case class Error(msg: String)
 case class Done()
 
-@activity
+@activityInterface
 trait TransferActivity {
   def deposit(account: String, amount: BigDecimal): Either[Error, Done]
 
@@ -29,7 +29,7 @@ class TransferActivityImpl(
 
 case class TransferCommand(from: String, to: String, amount: BigDecimal)
 
-@workflow
+@workflowInterface
 trait SagaWorkflow {
 
   @workflowMethod

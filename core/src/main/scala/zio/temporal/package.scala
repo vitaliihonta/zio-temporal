@@ -10,12 +10,12 @@ import io.temporal.workflow.WorkflowMethod
 package object temporal {
 
   // Convenient aliases
-  type activity       = ActivityInterface
-  type activityMethod = ActivityMethod
-  type workflow       = WorkflowInterface
-  type queryMethod    = QueryMethod
-  type signalMethod   = SignalMethod
-  type workflowMethod = WorkflowMethod
+  type activityInterface = ActivityInterface
+  type activityMethod    = ActivityMethod
+  type workflowInterface = WorkflowInterface
+  type queryMethod       = QueryMethod
+  type signalMethod      = SignalMethod
+  type workflowMethod    = WorkflowMethod
 
   /** Alias for IO representing interaction with temporal server
     *

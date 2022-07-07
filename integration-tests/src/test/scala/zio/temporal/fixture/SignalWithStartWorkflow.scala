@@ -6,7 +6,7 @@ import zio.temporal.state.ZWorkflowState
 import zio.temporal.workflow.ZWorkflow
 import scala.annotation.tailrec
 
-@workflow
+@workflowInterface
 trait SignalWithStartWorkflow {
   @workflowMethod
   def echoServer(): Int

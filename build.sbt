@@ -1,12 +1,15 @@
-val scala213 = "2.13.8"
-val scala212 = "2.12.15"
+import BuildConfig._
 
-val allScalaVersions          = List(scala212, scala213)
+val scala212 = "2.12.15"
+val scala213 = "2.13.8"
+val scala3   = "3.1.2"
+
+val allScalaVersions          = List(scala212, scala213, scala3)
 val documentationScalaVersion = scala213
 
 ThisBuild / scalaVersion           := scala213
 ThisBuild / organization           := "dev.vhonta"
-ThisBuild / version                := "0.1.0-RC3"
+ThisBuild / version                := "0.1.0-RC4"
 ThisBuild / versionScheme          := Some("early-semver")
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 ThisBuild / sonatypeRepository     := "https://s01.oss.sonatype.org/service/local"
@@ -53,10 +56,18 @@ lazy val baseProjectSettings = Seq(
       "-language:higherKinds"
     )
     val crossVersionOptions = CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, y)) if y < 13 => Seq("-Ypartial-unification")
+      case Some((2, y)) if y < 13 => Seq("-Ypartial-unification", "-Xsource:3")
+      case Some((2, _))           => Seq("-Xsource:3")
       case _                      => Seq.empty[String]
     }
     baseOptions ++ crossVersionOptions
+  },
+  libraryDependencies ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, _)) =>
+        List(Typelevel.kindProjector)
+      case _ => Nil
+    }
   }
 )
 
@@ -122,9 +133,15 @@ lazy val core = projectMatrix
   .settings(crossCompileSettings)
   .settings(
     name := "zio-temporal-core",
-    libraryDependencies ++= BuildConfig.coreLibs ++ Seq(
-      BuildConfig.ScalaReflect.macros.value
-    )
+    libraryDependencies ++= coreLibs ++ {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, _)) =>
+          Seq(
+            ScalaReflect.macros.value
+          ) ++ coreLibsScala2
+        case _ => Nil
+      }
+    }
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
 
@@ -135,9 +152,7 @@ lazy val testkit = projectMatrix
   .settings(crossCompileSettings)
   .settings(
     name := "zio-temporal-testkit",
-    libraryDependencies ++= BuildConfig.testkitLibs ++ Seq(
-      BuildConfig.ScalaReflect.macros.value
-    )
+    libraryDependencies ++= testkitLibs
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
 
@@ -150,8 +165,8 @@ lazy val `integration-tests` = projectMatrix
   )
   .settings(baseSettings, coverageSettings, noPublishSettings, crossCompileSettings)
   .settings(
-    libraryDependencies ++= BuildConfig.testLibs,
-    testFrameworks := BuildConfig.Zio.testFrameworks
+    libraryDependencies ++= testLibs,
+    testFrameworks := Zio.testFrameworks
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
 
@@ -162,8 +177,15 @@ lazy val protobuf = projectMatrix
   .settings(crossCompileSettings)
   .settings(
     name := "zio-temporal-protobuf",
-    libraryDependencies ++= BuildConfig.protobufLibs,
-    libraryDependencies += BuildConfig.ScalaReflect.runtime.value,
+    libraryDependencies ++= protobufLibs ++ {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, _)) =>
+          Seq(
+            ScalaReflect.runtime.value
+          ) ++ protobufScala2Libs
+        case _ => Nil
+      }
+    },
     Compile / PB.targets := Seq(
       scalapb.gen(
         flatPackage = true,
@@ -184,7 +206,7 @@ lazy val examples = project
         grpc = false
       ) -> (Compile / sourceManaged).value / "scalapb"
     ),
-    libraryDependencies ++= BuildConfig.examplesLibs
+    libraryDependencies ++= examplesLibs
   )
   .dependsOn(
     core.jvm(scala213),

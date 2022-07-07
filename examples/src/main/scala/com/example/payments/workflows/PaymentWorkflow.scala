@@ -3,7 +3,7 @@ package com.example.payments.workflows
 import com.example.transactions._
 import zio.temporal._
 
-@workflow
+@workflowInterface
 trait PaymentWorkflow {
 
   @workflowMethod

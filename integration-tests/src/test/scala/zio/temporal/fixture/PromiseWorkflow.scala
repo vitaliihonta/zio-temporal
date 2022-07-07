@@ -5,14 +5,14 @@ import zio.temporal._
 import zio.temporal.promise.ZPromise
 import zio.temporal.workflow.ZWorkflow
 
-@activity
+@activityInterface
 trait PromiseActivity {
   def foo(x: Int): Int
 
   def bar(x: Int): Int
 }
 
-@workflow
+@workflowInterface
 trait PromiseWorkflow {
 
   @workflowMethod

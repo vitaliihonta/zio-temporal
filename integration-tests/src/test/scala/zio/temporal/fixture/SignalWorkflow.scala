@@ -3,7 +3,7 @@ package zio.temporal.fixture
 import zio.temporal._
 import zio.temporal.workflow.ZWorkflow
 
-@workflow
+@workflowInterface
 trait SignalWorkflow {
 
   @workflowMethod
