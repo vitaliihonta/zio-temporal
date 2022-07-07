@@ -1,4 +1,4 @@
-package zio.temporal.proto
+package zio.temporal.protobuf
 
 import com.google.protobuf.ByteString
 import com.google.protobuf.`type`.TypeProto
@@ -21,7 +21,7 @@ import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
 import java.{util => ju}
 
-/** Used to deserialize scalapb generated types */
+/** Used to deserialize protobuf generated types */
 class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadConverter {
 
   private val temporalZioPrefix = "types/zio-temporal"
@@ -116,7 +116,7 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
             ).asInstanceOf[T]
 
           case Result.Result.Empty =>
-            throw new ScalapbPayloadException(
+            throw new ProtobufPayloadException(
               s"Received Either.Result.Empty while parsing $content, expected $valueType"
             )
         }
@@ -130,7 +130,7 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
     else
       companions.getOrElse(
         typeUrl,
-        throw new ScalapbPayloadException(s"Unable to convert $content to $typeUrl")
+        throw new ProtobufPayloadException(s"Unable to convert $content to $typeUrl")
       )
 
   private def isEither(typeUrl: String): Boolean =

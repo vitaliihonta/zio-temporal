@@ -10,14 +10,14 @@ object BuildConfig extends Dependencies {
     Zio.self
   )
 
-  val temporalZioCoreLibs = baseLibs ++ Seq(
+  val coreLibs = baseLibs ++ Seq(
     Scalapb.runtime,
     Utility.scalaJava8Compat,
     Utility.izumiReflect,
     Enumeratum.enumeratum % Optional
   )
 
-  val temporalZioTestKitLibs = baseLibs ++ Seq(
+  val testkitLibs = baseLibs ++ Seq(
     Temporal.testing,
     Jackson.scala
   )
@@ -28,7 +28,7 @@ object BuildConfig extends Dependencies {
     Logging.zio % Test
   )
 
-  val temporalZioScalapbLibs = baseLibs ++ Seq(
+  val protobufLibs = baseLibs ++ Seq(
     Scalapb.runtime,
     Scalapb.runtimeProtobuf,
     Utility.reflections,

@@ -1,4 +1,4 @@
-package zio.temporal.proto
+package zio.temporal.protobuf
 
 import com.google.protobuf.ByteString
 import scalapb.GeneratedMessage
@@ -50,8 +50,8 @@ trait ProtoType[A] {
     * @return
     *   new protocol buffers type
     */
-  final def imap[B](f: A => B)(g: B => A): ProtoType.Of[B, Repr] =
-    new ProtoType.ImapType[A, Repr, B](this, f, g)
+  final def convertTo[B](f: A => B)(g: B => A): ProtoType.Of[B, Repr] =
+    new ProtoType.ConvertedType[A, Repr, B](this, f, g)
 }
 
 object ProtoType {
@@ -68,10 +68,10 @@ object ProtoType {
   implicit val unitType: ProtoType.Of[Unit, ZUnit]                        = ZUnitType
 
   implicit val instantType: ProtoType.Of[Instant, Long] =
-    longType.imap(Instant.ofEpochMilli)(_.toEpochMilli)
+    longType.convertTo(Instant.ofEpochMilli)(_.toEpochMilli)
 
   implicit val localDateTimeType: ProtoType.Of[LocalDateTime, Long] =
-    instantType.imap(_.atOffset(ZoneOffset.UTC).toLocalDateTime)(_.atOffset(ZoneOffset.UTC).toInstant)
+    instantType.convertTo(_.atOffset(ZoneOffset.UTC).toLocalDateTime)(_.atOffset(ZoneOffset.UTC).toInstant)
 
   private final object IntegerType extends IdType[Int]
   private final object LongType    extends IdType[Long]
@@ -126,7 +126,7 @@ object ProtoType {
     override def fromRepr(repr: ZUnitType.Repr): Unit = ()
   }
 
-  final class ImapType[A, Repr0, B](self: ProtoType.Of[A, Repr0], project: A => B, reverse: B => A)
+  final class ConvertedType[A, Repr0, B](self: ProtoType.Of[A, Repr0], project: A => B, reverse: B => A)
       extends ProtoType[B] {
     override type Repr = Repr0
 

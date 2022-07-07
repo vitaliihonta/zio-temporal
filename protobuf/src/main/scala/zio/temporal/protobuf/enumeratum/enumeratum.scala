@@ -1,12 +1,12 @@
-package zio.temporal.proto.enumeratum
+package zio.temporal.protobuf.enumeratum
 
 import _root_.enumeratum.Enum
 import _root_.enumeratum.EnumEntry
 import scalapb.GeneratedEnum
 import scalapb.GeneratedEnumCompanion
-import zio.temporal.proto.ProtoType
+import zio.temporal.protobuf.ProtoType
 
-final class EnumeratumEnumException[E <: EnumEntry, P <: GeneratedEnum] private[proto] (
+final class EnumeratumEnumException[E <: EnumEntry, P <: GeneratedEnum] private[protobuf] (
   enum:      Enum[E],
   entry:     E,
   companion: GeneratedEnumCompanion[P])
@@ -16,7 +16,7 @@ final class EnumeratumEnumException[E <: EnumEntry, P <: GeneratedEnum] private[
     s"Unable to convert $entry (value of $enum) to $companion, expected one of ${companion.values.mkString("[", ", ", "]")}"
 }
 
-final class EnumProtoType[P <: GeneratedEnum, E <: EnumEntry] private[proto] (
+final class EnumProtoType[P <: GeneratedEnum, E <: EnumEntry] private[protobuf] (
   companion: GeneratedEnumCompanion[P],
   enum:      Enum[E])
     extends ProtoType[E] {

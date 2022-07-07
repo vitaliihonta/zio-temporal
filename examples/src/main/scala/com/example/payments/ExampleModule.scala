@@ -3,7 +3,7 @@ package com.example.payments
 import com.example.payments.impl._
 import com.example.payments.workflows._
 import zio._
-import zio.temporal.proto.ScalapbDataConverter
+import zio.temporal.protobuf.ProtobufDataConverter
 import zio.temporal.worker.ZWorker
 import zio.temporal.worker.ZWorkerFactory
 import zio.temporal.worker.ZWorkerFactoryOptions
@@ -17,7 +17,7 @@ object ExampleModule {
 
   val clientOptions: ULayer[ZWorkflowClientOptions] = ZLayer.succeed {
     ZWorkflowClientOptions.default.withDataConverter(
-      ScalapbDataConverter.makeAutoLoad()
+      ProtobufDataConverter.makeAutoLoad()
     )
   }
 

@@ -1,4 +1,4 @@
-package zio.temporal.proto
+package zio.temporal.protobuf
 
 import zio.ZIO
 
