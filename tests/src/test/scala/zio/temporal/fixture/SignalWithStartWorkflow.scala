@@ -36,10 +36,10 @@ class SignalWithStartWorkflowImpl extends SignalWithStartWorkflow {
         if (currentState.messages.size > processed) {
           val newMessages = currentState.messages.take(currentState.messages.size - processed)
           newMessages.foreach(println)
-          ZWorkflow.sleep(200.millis)
+          ZWorkflow.sleep(100.millis)
           go(processed + newMessages.size)
         } else {
-          ZWorkflow.sleep(200.millis)
+          ZWorkflow.sleep(100.millis)
         }
       }
     }
