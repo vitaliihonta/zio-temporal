@@ -25,7 +25,7 @@ object ZActivity {
 
     ctx.doNotCompleteOnReturn()
 
-    Unsafe.unsafe { implicit unsafe =>
+    Unsafe.unsafe { implicit unsafe: Unsafe =>
       val fiber = zactivityOptions.runtime.unsafe.fork(action)
       fiber.unsafe.addObserver {
         case Exit.Failure(cause) =>
@@ -64,7 +64,7 @@ object ZActivity {
 
     ctx.doNotCompleteOnReturn()
 
-    Unsafe.unsafe { implicit unsafe =>
+    Unsafe.unsafe { implicit unsafe: Unsafe =>
       val fiber = zactivityOptions.runtime.unsafe.fork(action)
 
       fiber.unsafe.addObserver {

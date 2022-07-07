@@ -1,7 +1,7 @@
 package zio.temporal.internal
 
 import izumi.reflect.Tag
-import zio.temporal.workflow
+import zio.temporal.workflowInterface
 import zio.temporal.workflowMethod
 import scala.reflect.macros.blackbox
 
@@ -10,7 +10,7 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
     with VersionSpecificMacroUtils {
   import c.universe._
 
-  protected val WorkflowInterface = typeOf[workflow]
+  protected val WorkflowInterface = typeOf[workflowInterface]
   protected val WorkflowMethod    = typeOf[workflowMethod]
   protected val UnitType          = typeOf[Unit].dealias
 

@@ -1,10 +1,17 @@
-package zio.temporal.protobuf.enumeratum
+package zio.temporal.protobuf
 
-import _root_.enumeratum.Enum
-import _root_.enumeratum.EnumEntry
+import enumeratum.Enum
+import enumeratum.EnumEntry
 import scalapb.GeneratedEnum
 import scalapb.GeneratedEnumCompanion
-import zio.temporal.protobuf.ProtoType
+
+/** Provides a conversion between scalapb generated enums and enumeratum It's an optional dependency which won't be
+  * added to the classpath unless you use it
+  */
+object EnumProtoType {
+  def apply[P <: GeneratedEnum](companion: GeneratedEnumCompanion[P]): EnumProtoTypePartiallyApplied[P] =
+    new EnumProtoTypePartiallyApplied[P](companion)
+}
 
 final class EnumeratumEnumException[E <: EnumEntry, P <: GeneratedEnum] private[protobuf] (
   enum:      Enum[E],
@@ -39,10 +46,4 @@ final class EnumProtoTypePartiallyApplied[P <: GeneratedEnum](private val compan
 
   def apply[E <: EnumEntry](enum: Enum[E]): ProtoType.Of[E, P] =
     new EnumProtoType[P, E](companion, `enum`)
-}
-
-trait EnumeratumProtoType {
-
-  def apply[P <: GeneratedEnum](companion: GeneratedEnumCompanion[P]): EnumProtoTypePartiallyApplied[P] =
-    new EnumProtoTypePartiallyApplied[P](companion)
 }

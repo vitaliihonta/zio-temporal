@@ -119,7 +119,8 @@ object ZWorkflow {
     *   wrapped proc
     */
   def newCancellationScope[U](thunk: ZCancellationScope => U): ZCancellationScope = {
-    val scope = Workflow.newCancellationScope((scope: CancellationScope) => thunk(new ZCancellationScope(scope)))
+    val scope =
+      Workflow.newCancellationScope((scope: CancellationScope) => (thunk(new ZCancellationScope(scope)): Unit))
     new ZCancellationScope(scope)
   }
 
