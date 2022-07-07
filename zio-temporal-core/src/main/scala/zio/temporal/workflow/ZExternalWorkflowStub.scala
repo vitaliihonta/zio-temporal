@@ -2,22 +2,28 @@ package zio.temporal.workflow
 
 import io.temporal.workflow.ExternalWorkflowStub
 import zio.temporal.internal.CanSignal
-import zio.temporal.internal.tagging.Tagged
+import zio.temporal.internal.tagging.Proxies
+import zio.temporal.query.ZWorkflowStubQuerySyntax
+import zio.temporal.signal.ZWorkflowStubSignalSyntax
 
 /** Represents untyped external workflow stub
   *
   * @see
   *   [[ExternalWorkflowStub]]
   */
-class ZExternalWorkflowStub private[zio] (override protected[zio] val self: ExternalWorkflowStub)
+class ZExternalWorkflowStub private[zio] (val toJava: ExternalWorkflowStub)
     extends AnyVal
     with CanSignal[ExternalWorkflowStub] {
 
   override protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit =
-    self.signal(signalName, args: _*)
+    toJava.signal(signalName, args: _*)
 }
 
-object ZExternalWorkflowStub extends Tagged {
+object ZExternalWorkflowStub
+    extends Proxies[ZExternalWorkflowStub]
+    with ZWorkflowExecutionSyntax
+    with ZWorkflowStubSignalSyntax
+    with ZWorkflowStubQuerySyntax {
 
   final implicit class Ops[A](private val self: ZExternalWorkflowStub.Of[A]) extends AnyVal {
 

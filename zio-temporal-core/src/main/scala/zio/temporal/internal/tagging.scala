@@ -6,18 +6,30 @@ private[zio] object tagging {
   type @@[+T, U] = T with Tag[U]
   def tagged[T, U](value: T): T @@ U = value.asInstanceOf[T @@ U]
 
-  private[zio] trait Tagged {
+  private[zio] trait Proxies[A] {
+
+    /** Proxy is a compile-time view of temporal's runtime abstractions, such as Workflows.
+      * @note
+      *   Do not call methods of proxied workflows directly! It should be used only within special methods like
+      *   `ZWorkflowStub.signal`, `ZWorkflowStub.start`, `ZWorkflowStub.execute` and so on.
+      *
+      * @tparam T
+      *   compile-time view
+      */
+    type Proxy[+T] <: A with T
+    private[zio] def Proxy[T](value: A): Proxy[T] = value.asInstanceOf[Proxy[T]]
+
     sealed trait Tagged
 
     /** Tagged type
       *
-      * @tparam A
+      * @tparam T
       *   raw type
       */
-    type Of[+A] = A @@ Tagged
+    type Of[+T] = T @@ Tagged
 
-    private[zio] def Of[A](value: A): Of[A] = tagged[A, Tagged](value)
+    private[zio] def Of[T](value: T): Of[T] = tagged[T, Tagged](value)
 
-    type Ops[A]
+    type Ops[T]
   }
 }

@@ -1,4 +1,4 @@
-package zio.temporal.utils.macros
+package zio.temporal.internal
 
 import scala.reflect.macros.TypecheckException
 import scala.reflect.macros.blackbox
@@ -104,6 +104,14 @@ abstract class MacroUtils(val c: blackbox.Context) {
   def freshTermName(name: String): TermName = c.freshName(TermName(name))
 
   def error(message: String): Nothing = c.abort(c.enclosingPosition, message)
+
+  protected def getPrefixOf(tpe: Type): Tree = {
+    val prefix = c.prefix.tree
+    if (!(prefix.tpe <:< tpe)) {
+      error(s"Invalid library usage! Expected to be called from $tpe, instead got ${prefix.tpe}")
+    }
+    prefix
+  }
 
   private def debugEnabled: Boolean =
     sys.props

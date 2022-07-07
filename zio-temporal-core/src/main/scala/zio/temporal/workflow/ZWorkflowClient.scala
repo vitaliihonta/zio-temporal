@@ -3,12 +3,7 @@ package zio.temporal.workflow
 import io.temporal.client.ActivityCompletionClient
 import io.temporal.client.WorkflowClient
 import zio._
-import zio.temporal.internal.TemporalInteraction
-import zio.temporal.signal.ZInput
-import zio.temporal.signal.ZSignal
-import zio.temporal.TemporalClientError
-import zio.temporal.TemporalIO
-import zio.temporal.ZWorkflowExecution
+import zio.temporal.signal.ZWorkflowClientSignalWithStartSyntax
 import scala.compat.java8.OptionConverters._
 import scala.reflect.ClassTag
 
@@ -17,7 +12,9 @@ import scala.reflect.ClassTag
   * @see
   *   [[WorkflowClient]]
   */
-class ZWorkflowClient private[zio] (private[zio] val self: WorkflowClient) extends AnyVal {
+class ZWorkflowClient private[zio] (val toJava: WorkflowClient)
+    extends AnyVal
+    with ZWorkflowClientSignalWithStartSyntax {
 
   /** Creates workflow untyped client stub for a known execution. Use it to send signals or queries to a running
     * workflow. Do not call methods annotated with @WorkflowMethod.
@@ -25,41 +22,14 @@ class ZWorkflowClient private[zio] (private[zio] val self: WorkflowClient) exten
     * @see
     *   [[ZWorkflowStub]]
     */
-  def newUntypedWorkflowStub(workflowId: String, runId: Option[String] = None): UIO[ZWorkflowStub] =
+  def newWorkflowStubProxy[A: IsConcreteType](
+    workflowId: String,
+    runId:      Option[String] = None
+  ): UIO[ZWorkflowStub.Proxy[A]] =
     ZIO.succeed {
-      new ZWorkflowStub(self.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava))
-    }
-
-  /** Invokes SignalWithStart operation.
-    *
-    * @param signal
-    *   ZSignal to invoke (containing both @WorkflowMethod and @SignalMethod annotations
-    * @return
-    *   workflowExecution of the signaled or started workflow.
-    */
-  def signalWithStart(
-    signal: ZSignal[Any, ZSignal.SignalWithStart]
-  ): TemporalIO[TemporalClientError, ZWorkflowExecution] =
-    signalWithStart[Any](signal)(())
-
-  /** Invokes SignalWithStart operation.
-    *
-    * @param signal
-    *   ZSignal to invoke (containing both @WorkflowMethod and @SignalMethod annotations
-    * @param input
-    *   ZSignal input
-    * @return
-    *   workflowExecution of the signaled or started workflow.
-    */
-  def signalWithStart[A](
-    signal:             ZSignal[A, ZSignal.SignalWithStart]
-  )(input:              A
-  )(implicit inputFrom: ZInput.From[A]
-  ): TemporalIO[TemporalClientError, ZWorkflowExecution] =
-    TemporalInteraction.from {
-      val batchRequest = self.newSignalWithStartRequest()
-      signal.addRequests(inputFrom(input), batchRequest)
-      new ZWorkflowExecution(self.signalWithStart(batchRequest))
+      ZWorkflowStub.Proxy[A](
+        new ZWorkflowStub(toJava.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava))
+      )
     }
 
   /** Creates new ActivityCompletionClient
@@ -67,7 +37,7 @@ class ZWorkflowClient private[zio] (private[zio] val self: WorkflowClient) exten
     *   [[ActivityCompletionClient]]
     */
   def newActivityCompletionClient: UIO[ActivityCompletionClient] =
-    ZIO.blocking(ZIO.succeed(self.newActivityCompletionClient()))
+    ZIO.blocking(ZIO.succeed(toJava.newActivityCompletionClient()))
 
   /** Creates new type workflow stub builder
     * @tparam A
@@ -75,8 +45,8 @@ class ZWorkflowClient private[zio] (private[zio] val self: WorkflowClient) exten
     * @return
     *   builder instance
     */
-  def newWorkflowStub[A: ClassTag]: ZWorkflowStubBuilderTaskQueueDsl[A] =
-    new ZWorkflowStubBuilderTaskQueueDsl[A](self, implicitly[ClassTag[A]])
+  def newWorkflowStub[A: ClassTag: IsConcreteType]: ZWorkflowStubBuilderTaskQueueDsl[A] =
+    new ZWorkflowStubBuilderTaskQueueDsl[A](toJava, implicitly[ClassTag[A]])
 }
 
 object ZWorkflowClient {
