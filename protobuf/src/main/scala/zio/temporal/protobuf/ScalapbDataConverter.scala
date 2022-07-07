@@ -1,9 +1,9 @@
-package zio.temporal.proto
+package zio.temporal.protobuf
 
 import io.temporal.common.converter._
 import scalapb.GeneratedFileObject
 import zio.temporal.experimentalApi
-import zio.temporal.proto.internal.ProtoFileObjectAutoLoader
+import zio.temporal.protobuf.internal.ProtoFileObjectAutoLoader
 
 object ScalapbDataConverter {
 

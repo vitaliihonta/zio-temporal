@@ -2,7 +2,7 @@ package com.example.payments.workflows
 
 import com.example.transactions._
 import zio.temporal._
-import zio.temporal.proto.ZUnit
+import zio.temporal.protobuf.ZUnit
 
 @activity
 trait PaymentActivity {

@@ -92,10 +92,10 @@ lazy val root = project
     name := "zio-temporal-root"
   )
   .aggregate(
-    `zio-temporal-core`.projectRefs ++
-      `zio-temporal-testkit`.projectRefs ++
-      `zio-temporal-scalapb`.projectRefs ++
-      tests.projectRefs: _*
+    core.projectRefs ++
+      testkit.projectRefs ++
+      protobuf.projectRefs ++
+      `integration-tests`.projectRefs: _*
   )
   .aggregate(
     examples,
@@ -110,57 +110,59 @@ lazy val coverage = project
     publish        := {}
   )
   .aggregate(
-    `zio-temporal-core`.jvm(scala213),
-    `zio-temporal-testkit`.jvm(scala213),
-    `zio-temporal-scalapb`.jvm(scala213),
-    tests.jvm(scala213)
+    core.jvm(scala213),
+    testkit.jvm(scala213),
+    protobuf.jvm(scala213),
+    `integration-tests`.jvm(scala213)
   )
 
-lazy val `zio-temporal-core` = projectMatrix
-  .in(file("zio-temporal-core"))
+lazy val core = projectMatrix
+  .in(file("core"))
   .settings(baseLibSettings)
   .settings(crossCompileSettings)
   .settings(
-    libraryDependencies ++= BuildConfig.temporalZioCoreLibs ++ Seq(
+    name := "zio-temporal-core",
+    libraryDependencies ++= BuildConfig.coreLibs ++ Seq(
       BuildConfig.ScalaReflect.macros.value
     )
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
 
-lazy val `zio-temporal-testkit` = projectMatrix
-  .in(file("zio-temporal-testkit"))
-  .dependsOn(`zio-temporal-core`)
+lazy val testkit = projectMatrix
+  .in(file("testkit"))
+  .dependsOn(core)
   .settings(baseLibSettings)
   .settings(crossCompileSettings)
   .settings(
-    libraryDependencies ++= BuildConfig.temporalZioTestKitLibs ++ Seq(
+    name := "zio-temporal-testkit",
+    libraryDependencies ++= BuildConfig.testkitLibs ++ Seq(
       BuildConfig.ScalaReflect.macros.value
     )
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
 
-lazy val tests = projectMatrix
-  .in(file("tests"))
+lazy val `integration-tests` = projectMatrix
+  .in(file("integration-tests"))
   .dependsOn(
-    `zio-temporal-core`,
-    `zio-temporal-testkit` % "compile->compile;test->test",
-    `zio-temporal-scalapb`
+    core,
+    testkit % "compile->compile;test->test",
+    protobuf
   )
   .settings(baseSettings, coverageSettings, noPublishSettings, crossCompileSettings)
   .settings(
-    name := "tests",
     libraryDependencies ++= BuildConfig.testLibs,
     testFrameworks := BuildConfig.Zio.testFrameworks
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
 
-lazy val `zio-temporal-scalapb` = projectMatrix
-  .in(file("zio-temporal-scalapb"))
+lazy val protobuf = projectMatrix
+  .in(file("protobuf"))
   .settings(baseLibSettings)
-  .dependsOn(`zio-temporal-core`)
+  .dependsOn(core)
   .settings(crossCompileSettings)
   .settings(
-    libraryDependencies ++= BuildConfig.temporalZioScalapbLibs,
+    name := "zio-temporal-protobuf",
+    libraryDependencies ++= BuildConfig.protobufLibs,
     libraryDependencies += BuildConfig.ScalaReflect.runtime.value,
     Compile / PB.targets := Seq(
       scalapb.gen(
@@ -175,7 +177,6 @@ lazy val examples = project
   .in(file("examples"))
   .settings(baseSettings, noPublishSettings)
   .settings(
-    name         := "examples",
     scalaVersion := scala213,
     Compile / PB.targets := Seq(
       scalapb.gen(
@@ -186,7 +187,7 @@ lazy val examples = project
     libraryDependencies ++= BuildConfig.examplesLibs
   )
   .dependsOn(
-    `zio-temporal-core`.jvm(scala213),
-    `zio-temporal-testkit`.jvm(scala213),
-    `zio-temporal-scalapb`.jvm(scala213)
+    core.jvm(scala213),
+    testkit.jvm(scala213),
+    protobuf.jvm(scala213)
   )

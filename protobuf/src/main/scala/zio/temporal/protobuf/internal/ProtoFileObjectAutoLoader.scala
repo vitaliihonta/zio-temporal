@@ -1,4 +1,4 @@
-package zio.temporal.proto.internal
+package zio.temporal.protobuf.internal
 
 import org.reflections.Reflections
 import org.reflections.util.ClasspathHelper

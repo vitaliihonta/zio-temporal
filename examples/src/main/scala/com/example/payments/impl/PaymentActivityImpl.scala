@@ -5,8 +5,8 @@ import com.example.transactions._
 import zio._
 import zio.temporal.activity.ZActivity
 import zio.temporal.activity.ZActivityOptions
-import zio.temporal.proto.ZUnit
-import zio.temporal.proto.syntax._
+import zio.temporal.protobuf.ZUnit
+import zio.temporal.protobuf.syntax._
 
 object PaymentActivityImpl {
   val make: URLayer[ZActivityOptions[Any], PaymentActivityImpl] =

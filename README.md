@@ -23,8 +23,11 @@ It allows you to define and use workflows in a Scala way!
 // Core
 libraryDependencies += "dev.vhonta" %% "zio-temporal-core" % "<VERSION>"
 
-// ScalaPB integration
-libraryDependencies += "dev.vhonta" %% "zio-temporal-scalapb" % "<VERSION>"
+// Protobuf transport
+libraryDependencies += "dev.vhonta" %% "zio-temporal-protobuf" % "<VERSION>"
+
+// Testkit
+libraryDependencies += "dev.vhonta" %% "zio-temporal-testkit" % "<VERSION>"
 ```
 
 ## Examples

@@ -7,7 +7,7 @@ import zio._
 import zio.logging.LogAnnotation
 import zio.logging.logContext
 import zio.temporal._
-import zio.temporal.proto.syntax._
+import zio.temporal.protobuf.syntax._
 import zio.temporal.workflow.ZWorkflowClient
 import zio.temporal.workflow.ZWorkflowStub
 
