@@ -62,11 +62,12 @@ lazy val baseProjectSettings = Seq(
 
 val crossCompileSettings: Seq[Def.Setting[_]] = {
   def crossVersionSetting(config: Configuration) =
-    (config / unmanagedSourceDirectories) += {
+    (config / unmanagedSourceDirectories) ++= {
       val sourceDir = (config / sourceDirectory).value
       CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, n)) if n >= 13 => sourceDir / "scala-2.13+"
-        case _                       => sourceDir / "scala-2.13-"
+        case Some((3, _))            => List(sourceDir / "scala-3")
+        case Some((2, n)) if n >= 13 => List(sourceDir / "scala-2", sourceDir / "scala-2.13+")
+        case _                       => List(sourceDir / "scala-2", sourceDir / "scala-2.13-")
       }
     }
 
@@ -91,8 +92,7 @@ lazy val root = project
     name := "zio-temporal-root"
   )
   .aggregate(
-    `zio-temporal-macro-utils`.projectRefs ++
-      `zio-temporal-core`.projectRefs ++
+    `zio-temporal-core`.projectRefs ++
       `zio-temporal-testkit`.projectRefs ++
       `zio-temporal-scalapb`.projectRefs ++
       tests.projectRefs: _*
@@ -116,18 +116,8 @@ lazy val coverage = project
     tests.jvm(scala213)
   )
 
-lazy val `zio-temporal-macro-utils` = projectMatrix
-  .in(file("zio-temporal-macro-utils"))
-  .settings(baseLibSettings)
-  .settings(crossCompileSettings)
-  .settings(
-    libraryDependencies += BuildConfig.ScalaReflect.macros.value
-  )
-  .jvmPlatform(scalaVersions = allScalaVersions)
-
 lazy val `zio-temporal-core` = projectMatrix
   .in(file("zio-temporal-core"))
-  .dependsOn(`zio-temporal-macro-utils`)
   .settings(baseLibSettings)
   .settings(crossCompileSettings)
   .settings(

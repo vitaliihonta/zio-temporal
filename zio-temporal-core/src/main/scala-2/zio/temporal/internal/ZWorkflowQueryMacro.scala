@@ -44,7 +44,7 @@ class ZWorkflowQueryMacro(override val c: blackbox.Context) extends InvocationMa
 
   private def getQueryName(method: Symbol): String =
     getAnnotation(method, QueryMethod).children.tail
-      .collectFirst { case NamedArg(_, Literal(Constant(queryName: String))) =>
+      .collectFirst { case NamedArgVersionSpecific(_, Literal(Constant(queryName: String))) =>
         queryName
       }
       .getOrElse(method.name.toString)

@@ -1,4 +1,4 @@
-package zio.temporal.utils.macros
+package zio.temporal.internal
 
 import scala.reflect.macros.TypecheckException
 import scala.reflect.macros.blackbox

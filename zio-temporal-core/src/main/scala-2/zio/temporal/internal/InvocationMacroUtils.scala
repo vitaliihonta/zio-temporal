@@ -1,12 +1,13 @@
 package zio.temporal.internal
 
 import izumi.reflect.Tag
-import zio.temporal.utils.macros.MacroUtils
 import zio.temporal.workflow
 import zio.temporal.workflowMethod
 import scala.reflect.macros.blackbox
 
-abstract class InvocationMacroUtils(override val c: blackbox.Context) extends MacroUtils(c) {
+abstract class InvocationMacroUtils(override val c: blackbox.Context)
+    extends MacroUtils(c)
+    with VersionSpecificMacroUtils {
   import c.universe._
 
   protected val WorkflowInterface = typeOf[workflow]
@@ -88,22 +89,22 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context) extends Ma
         LambdaConversionResult(tree, Proc, Nil, Nil)
 
       case args @ List(first) if ret =:= UnitType =>
-        val a      = first.tpe
+        val a      = first.tpe.widen
         val aInput = freshTermName("a")
         val Proc1  = tq"""_root_.io.temporal.workflow.Functions.Proc1[$a]"""
         val tree   = q"""( ($aInput: $a) => $f($aInput) )"""
         LambdaConversionResult(tree, Proc1, List(a), args)
 
       case args @ List(first) =>
-        val a      = first.tpe
+        val a      = first.tpe.widen
         val aInput = freshTermName("a")
         val Func1  = tq"""_root_.io.temporal.workflow.Functions.Func1[$a, $ret]"""
         val tree   = q"""( ($aInput: $a) => $f($aInput) )"""
         LambdaConversionResult(tree, Func1, List(a, ret), args)
 
       case args @ List(first, second) if ret =:= UnitType =>
-        val a      = first.tpe
-        val b      = second.tpe
+        val a      = first.tpe.widen
+        val b      = second.tpe.widen
         val aInput = freshTermName("a")
         val bInput = freshTermName("b")
         val Proc2  = tq"""_root_.io.temporal.workflow.Functions.Proc2[$a, $b]"""
@@ -111,8 +112,8 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context) extends Ma
         LambdaConversionResult(tree, Proc2, List(a, b), args)
 
       case args @ List(first, second) =>
-        val a      = first.tpe
-        val b      = second.tpe
+        val a      = first.tpe.widen
+        val b      = second.tpe.widen
         val aInput = freshTermName("a")
         val bInput = freshTermName("b")
         val Func2  = tq"""_root_.io.temporal.workflow.Functions.Func2[$a, $b, $ret]"""
