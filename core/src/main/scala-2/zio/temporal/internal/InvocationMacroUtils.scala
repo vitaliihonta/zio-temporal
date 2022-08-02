@@ -48,7 +48,7 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
         MethodInvocation(instance, methodName, Nil)
       case Apply(Select(instance @ Ident(_), methodName), args) =>
         MethodInvocation(instance, methodName, args)
-      case _ => error(error(s"Expected simple method invocation, got tree of class ${tree.getClass}: $tree"))
+      case _ => error(s"Expected simple method invocation, got tree of class ${tree.getClass}: $tree")
     }
 
   protected def getTag[A: WeakTypeTag] = {
