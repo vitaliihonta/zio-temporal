@@ -3,6 +3,7 @@ package zio.temporal.workflow
 import io.temporal.workflow.ChildWorkflowStub
 import zio.temporal.internal.CanSignal
 import zio.temporal.internal.tagging.Proxies
+import zio.temporal.internalApi
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.ZWorkflowStubSignalSyntax
 
@@ -11,7 +12,7 @@ import zio.temporal.signal.ZWorkflowStubSignalSyntax
   * @see
   *   [[ChildWorkflowStub]]
   */
-class ZChildWorkflowStub private[zio] (val toJava: ChildWorkflowStub) extends AnyVal with CanSignal[ChildWorkflowStub] {
+class ZChildWorkflowStub @internalApi() (val toJava: ChildWorkflowStub) extends CanSignal[ChildWorkflowStub] {
 
   override protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit =
     toJava.signal(signalName, args: _*)

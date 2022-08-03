@@ -4,9 +4,9 @@ import zio.temporal.TemporalClientError
 import zio.temporal.TemporalIO
 import zio.temporal.internalApi
 
-protected[zio] trait BaseCanSignal extends Any
+protected[zio] trait BaseCanSignal
 
-protected[zio] trait CanSignal[Self] extends Any with BaseCanSignal {
+protected[zio] trait CanSignal[Self] extends BaseCanSignal {
   def toJava: Self
 
   protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit

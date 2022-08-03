@@ -17,7 +17,7 @@ import scala.reflect.ClassTag
   * @see
   *   [[WorkflowStub]]
   */
-class ZWorkflowStub @internalApi() (val toJava: WorkflowStub) extends AnyVal with CanSignal[WorkflowStub] {
+class ZWorkflowStub @internalApi() (val toJava: WorkflowStub) extends CanSignal[WorkflowStub] {
 
   override protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit =
     toJava.signal(signalName, args: _*)
