@@ -1,15 +1,14 @@
 package zio.temporal.workflow
 
 import io.temporal.client.WorkflowStub
-import zio.temporal.TemporalClientError
-import zio.temporal.TemporalError
-import zio.temporal.TemporalIO
+import zio.temporal.{TemporalClientError, TemporalError, TemporalIO, internalApi}
 import zio.temporal.internal.CanSignal
 import zio.temporal.internal.ClassTagUtils
 import zio.temporal.internal.TemporalInteraction
 import zio.temporal.internal.tagging.Proxies
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.ZWorkflowStubSignalSyntax
+
 import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
@@ -18,7 +17,7 @@ import scala.reflect.ClassTag
   * @see
   *   [[WorkflowStub]]
   */
-class ZWorkflowStub private[zio] (val toJava: WorkflowStub) extends AnyVal with CanSignal[WorkflowStub] {
+class ZWorkflowStub @internalApi() (val toJava: WorkflowStub) extends AnyVal with CanSignal[WorkflowStub] {
 
   override protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit =
     toJava.signal(signalName, args: _*)

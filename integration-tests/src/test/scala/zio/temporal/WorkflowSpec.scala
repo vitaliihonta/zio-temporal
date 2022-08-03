@@ -21,71 +21,87 @@ import scala.collection.mutable.ListBuffer
 object WorkflowSpec extends ZIOSpecDefault {
 
   override def spec = suite("ZWorkflow")(
-//    test("runs simple workflow") {
-//      ZIO.serviceWithZIO[ZTestWorkflowEnvironment] { testEnv =>
-//        val taskQueue = "sample-queue"
-//        val sampleIn  = "Fooo"
-//        val sampleOut = sampleIn
-//        val client    = testEnv.workflowClient
-//
-//        testEnv
-//          .newWorker(taskQueue, options = ZWorkerOptions.default)
-//          .addWorkflow[SampleWorkflowImpl]
-//          .fromClass
-//
-//        withWorkflow {
-//          testEnv.use() {
-//            for {
-//              sampleWorkflow <- client
-//                                  .newWorkflowStub[SampleWorkflow]
-//                                  .withTaskQueue(taskQueue)
-//                                  .withWorkflowId(UUID.randomUUID().toString)
-//                                  .withWorkflowRunTimeout(1.second)
-//                                  .build
-//              result <- ZWorkflowStub.execute(sampleWorkflow.echo(sampleIn))
-//            } yield assertTrue(result == sampleOut)
-//          }
-//        }
-//      }
-//    }.provideEnv,
-    test("run workflow with signals") {
+    test("runs simple workflow") {
       ZIO.serviceWithZIO[ZTestWorkflowEnvironment] { testEnv =>
-        val taskQueue = "signal-queue"
+        val taskQueue = "sample-queue"
+        val sampleIn  = "Fooo"
+        val sampleOut = sampleIn
         val client    = testEnv.workflowClient
 
         testEnv
           .newWorker(taskQueue, options = ZWorkerOptions.default)
-          .addWorkflow[SignalWorkflowImpl]
+          .addWorkflow[SampleWorkflowImpl]
           .fromClass
-
-        val workflowId = UUID.randomUUID().toString
 
         withWorkflow {
           testEnv.use() {
             for {
-              signalWorkflow <- client
-                                  .newWorkflowStub[SignalWorkflow]
+              sampleWorkflow <- client
+                                  .newWorkflowStub[SampleWorkflow]
                                   .withTaskQueue(taskQueue)
-                                  .withWorkflowId(workflowId)
-                                  .withWorkflowRunTimeout(10.seconds)
+                                  .withWorkflowId(UUID.randomUUID().toString)
+                                  .withWorkflowRunTimeout(1.second)
                                   .build
-              _            <- ZWorkflowStub.start(signalWorkflow.echoServer("ECHO"))
-              workflowStub <- client.newWorkflowStubProxy[SignalWorkflow](workflowId)
-//              progress     <- ZWorkflowStub.query(workflowStub.getProgress)
-//              _ <- ZWorkflowStub.signal(
-//                     workflowStub.echo("Hello!")
-//                   )
-//              progress2 <- ZWorkflowStub
-//                             .query(workflowStub.getProgress)
-//                             .repeatWhile(_.isEmpty)
-              result <- workflowStub.result[String]
-            } yield /*assertTrue(progress.isEmpty) &&
-              assertTrue(progress2.contains("Hello!")) &&
-              */assertTrue(result == "ECHO Hello!")
+              result <- ZWorkflowStub.execute(sampleWorkflow.echo(sampleIn))
+            } yield assertTrue(result == sampleOut)
           }
         }
       }
     }.provideEnv,
+    test("run workflow with signals") {
+      ZIO
+        .serviceWithZIO[ZTestWorkflowEnvironment] { testEnv =>
+          val taskQueue = "signal-queue"
+          val client    = testEnv.workflowClient
+
+          testEnv
+            .newWorker(taskQueue, options = ZWorkerOptions.default)
+            .addWorkflow[SignalWorkflowImpl]
+            .fromClass
+
+          val workflowId = UUID.randomUUID().toString + taskQueue
+
+          // query2: zio.temporal.internal.TemporalInteraction.from(workflowStub.toJava.query[Option[String]]("progress", classOf[Option[String]]))
+          // query3: zio.temporal.internal.TemporalInteraction.from(workflowStub.toJava.query[Option[String]]("progress", classOf[Option[String]], ))
+          withWorkflow {
+            testEnv.use() {
+              for {
+                signalWorkflow <- client
+                                    .newWorkflowStub[SignalWorkflow]
+                                    .withTaskQueue(taskQueue)
+                                    .withWorkflowId(workflowId)
+                                    .withWorkflowRunTimeout(30.seconds)
+                                    .withWorkflowTaskTimeout(30.seconds)
+                                    .build
+                _ <- ZIO.log("Before start")
+                _ <- ZIO.attempt {
+                       io.temporal.client.WorkflowClient
+                         .start[String, String]((a: String) => signalWorkflow.echoServer(a), "ECHO")
+                     }.ignore
+//                _ = ZWorkflowStub
+//                      .start(signalWorkflow.echoServer("ECHO"))
+//                      .tapBoth(e => ZIO.log(s"Got error $e"), a => ZIO.log(s"Got started $a"))
+                _            <- ZIO.log("Started")
+                workflowStub <- client.newWorkflowStubProxy[SignalWorkflow](workflowId)
+                _            <- ZIO.log("New stub created!")
+                progress     <- ZWorkflowStub.query(workflowStub.getProgress)
+                _            <- ZIO.log(s"Progress=$progress")
+                _ <- ZWorkflowStub.signal(
+                       workflowStub.echo("Hello!")
+                     )
+                progress2 <- ZWorkflowStub
+                               .query(workflowStub.getProgress)
+                               .repeatWhile(_.isEmpty)
+                _ <- ZIO.log(s"Progress2=$progress2")
+//              result <- workflowStub.result[String]
+              } yield assertTrue(progress.isEmpty) &&
+                assertTrue(progress2.contains("Hello!")) /* &&
+              assertTrue(result == "ECHO Hello!")*/
+            }
+          }
+        }
+        .tapBoth(e => ZIO.log(s"Got error $e"), a => ZIO.log(s"Got started $a"))
+    }.provideEnv
 //    test("run workflow with signal and start") {
 //      ZIO.serviceWithZIO[ZTestWorkflowEnvironment] { testEnv =>
 //        val taskQueue = "signal-with-start-queue"

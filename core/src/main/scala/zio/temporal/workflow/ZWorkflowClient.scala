@@ -4,7 +4,6 @@ import io.temporal.client.ActivityCompletionClient
 import io.temporal.client.WorkflowClient
 import zio._
 import zio.temporal.signal.ZWorkflowClientSignalWithStartSyntax
-import scala.compat.java8.OptionConverters._
 import scala.reflect.ClassTag
 
 /** Represents temporal workflow client
@@ -14,23 +13,8 @@ import scala.reflect.ClassTag
   */
 class ZWorkflowClient private[zio] (val toJava: WorkflowClient)
     extends AnyVal
-    with ZWorkflowClientSignalWithStartSyntax {
-
-  /** Creates workflow untyped client stub for a known execution. Use it to send signals or queries to a running
-    * workflow. Do not call methods annotated with @WorkflowMethod.
-    *
-    * @see
-    *   [[ZWorkflowStub]]
-    */
-  def newWorkflowStubProxy[A: IsConcreteType](
-    workflowId: String,
-    runId:      Option[String] = None
-  ): UIO[ZWorkflowStub.Proxy[A]] =
-    ZIO.succeed {
-      ZWorkflowStub.Proxy[A](
-        new ZWorkflowStub(toJava.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava))
-      )
-    }
+    with ZWorkflowClientSignalWithStartSyntax
+    with ZWorkflowStubProxySyntax {
 
   /** Creates new ActivityCompletionClient
     * @see

@@ -32,21 +32,29 @@ object ZWorkflowExecutionSyntax {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
     val invocation = macroUtils.getMethodInvocation(Expr.betaReduce(f).asTerm.underlying)
-
-    println(invocation)
-
-    val method = invocation.getMethod("Workflow method should not be extension methods!")
-
-    println(method)
-
-    val theStart = macroUtils.startInvocation(invocation, method, TypeRepr.of[A])
-    println(theStart.show)
-    ???
+    val method     = invocation.getMethod("Workflow method should not be extension methods!")
+    val theStart   = macroUtils.startInvocation(invocation, method, TypeRepr.of[A])
+    val result = '{
+      zio.temporal.internal.TemporalInteraction.from {
+        new ZWorkflowExecution(${ theStart.asExprOf[io.temporal.api.common.v1.WorkflowExecution] })
+      }
+    }
+    println(result.show)
+    result
   }
 
   def executeImpl[R: Type](f: Expr[R])(using q: Quotes): Expr[TemporalIO[TemporalClientError, R]] = {
     import q.reflect.*
-    ???
+    val macroUtils = new InvocationMacroUtils[q.type]
+    val theExecute = macroUtils.buildExecuteInvocation(Expr.betaReduce(f).asTerm.underlying, TypeRepr.of[R])
+
+    val result = '{
+      zio.temporal.internal.TemporalInteraction.fromFuture {
+        ${ theExecute.asExprOf[java.util.concurrent.CompletableFuture[R]] }
+      }
+    }
+    println(result.show)
+    result
   }
 
   def executeEitherImpl[E: Type, R: Type](

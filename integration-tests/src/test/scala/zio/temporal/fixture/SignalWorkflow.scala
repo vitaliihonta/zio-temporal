@@ -20,7 +20,9 @@ class SignalWorkflowImpl extends SignalWorkflow {
   private var message: Option[String] = None
 
   override def echoServer(prefix: String): String = {
+    println(s"[${Thread.currentThread.getName}] SignalWorkflow started!")
     ZWorkflow.awaitWhile(message.isEmpty)
+    println(s"Awaited")
     s"$prefix ${message.get}"
   }
 
@@ -29,6 +31,8 @@ class SignalWorkflowImpl extends SignalWorkflow {
     message = Some(value)
   }
 
-  override def getProgress: Option[String] =
+  override def getProgress: Option[String] = {
+    println("Getting progress...")
     message
+  }
 }

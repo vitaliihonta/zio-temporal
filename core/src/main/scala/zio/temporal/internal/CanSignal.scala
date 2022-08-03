@@ -14,6 +14,7 @@ protected[zio] trait CanSignal[Self] extends Any with BaseCanSignal {
   @internalApi
   def __zio_temporal_invokeSignal(signalName: String, args: Seq[AnyRef]): TemporalIO[TemporalClientError, Unit] =
     TemporalInteraction.from {
+      println(s"Invoking signal($signalName, args=$args)")
       signalMethod(signalName, args)
     }
 }
