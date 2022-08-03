@@ -39,6 +39,8 @@ object ZWorkflowExecutionSyntax {
 
     println(method)
 
+    val theStart = macroUtils.startInvocation(invocation, method, TypeRepr.of[A])
+    println(theStart.show)
     ???
   }
 

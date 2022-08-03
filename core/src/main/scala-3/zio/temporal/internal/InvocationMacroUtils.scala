@@ -71,18 +71,38 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
     }
   }
 
+  def startInvocation(
+    invocation: MethodInvocation,
+    method:     MethodInfo,
+    ret:        TypeRepr
+  ): Tree = {
+    val LambdaConversionResult(tree, _, typeArgs, args) = scalaLambdaToFunction(invocation, method, ret)
+    val wc = Symbol.classSymbol("io.temporal.client.WorkflowClient").companionModule
+  val wc2 = defn.RootPackage.tree.asExpr.asTerm
+  println(wc2)
+    val start = wc.methodMember("start").find(_.signature.paramSigs.size == args.size).head
+    println(start.tree.asInstanceOf[DefDef].rhs)
+    val targs = typeArgs.map(targ => TypeTree.of(using targ.asType))
+    Apply(TypeApply(start.tree.asExpr.asTerm, targs), tree :: args)
+  }
+
 // TODO: implement
   def scalaLambdaToFunction(
     invocation: MethodInvocation,
     method:     MethodInfo,
     ret:        TypeRepr
   ): LambdaConversionResult = {
-    val f = invocation.instance.select(method.symbol).asExpr
+    val f = invocation.instance.select(method.symbol)
     method.appliedArgs match {
       case args @ List(first) =>
         val aTpe = first.tpe.widen
-        val tree = '{(a: $aTpe) => $f(a)}
-        ???
+        val tpe = MethodType(List("a"))(
+          paramInfosExp = _ => List(aTpe),
+          resultTypeExp = _ => ret
+        )
+        val rhsFn = (s: Symbol, trees: List[Tree]) => Apply(f, trees.map(_.asExpr.asTerm))
+        val tree  = Lambda(method.symbol, tpe, rhsFn)
+        LambdaConversionResult(tree, TypeRepr.of[Null] /*TODO: set*/, List(aTpe, ret), args)
     }
   }
 }
