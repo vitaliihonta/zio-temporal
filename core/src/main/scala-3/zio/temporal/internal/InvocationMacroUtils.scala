@@ -56,7 +56,7 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
       }
   }
 
-  case class LambdaConversionResult(tree: Term, typeAscription: TypeRepr, typeArgs: List[TypeRepr], args: List[Term])
+  case class LambdaConversionResult(tree: Term, methodOverload: String, typeArgs: List[TypeRepr], args: List[Term])
 
   def getWorkflowType(workflow: TypeRepr): TypeRepr = {
     def errorNotWorkflow = sys.error(s"${workflow.show} is not a workflow!")
@@ -76,14 +76,22 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
     method:     MethodInfo,
     ret:        TypeRepr
   ): Tree = {
-    val LambdaConversionResult(tree, _, typeArgs, args) = scalaLambdaToFunction(invocation, method, ret)
+    val LambdaConversionResult(tree, methodOverload, typeArgs, args) = scalaLambdaToFunction(invocation, method, ret)
     val wc = Symbol.classSymbol("io.temporal.client.WorkflowClient").companionModule
-  val wc2 = defn.RootPackage.tree.asExpr.asTerm
-  println(wc2)
-    val start = wc.methodMember("start").find(_.signature.paramSigs.size == args.size).head
-    println(start.tree.asInstanceOf[DefDef].rhs)
-    val targs = typeArgs.map(targ => TypeTree.of(using targ.asType))
-    Apply(TypeApply(start.tree.asExpr.asTerm, targs), tree :: args)
+//    val wc2 = defn.RootPackage.tree.asExpr.asTerm
+    val t = Expr.betaReduce('{ import io.temporal.client.WorkflowClient }).asTerm match {
+      case Inlined(_, _, Block(List(Import(t, List(_))), _)) =>
+//        println(s"t=$t sels=$sels")
+        Select(t, Symbol.classSymbol("WorkflowClient"))
+    }
+//    println(t)
+    val start = wc
+      .methodMember("start")
+      .find(_.signature.paramSigs.contains(methodOverload))
+      .head
+    val startMethod = Select(t, start)
+    val targs       = typeArgs.map(targ => TypeTree.of(using targ.asType))
+    Apply(TypeApply(startMethod, targs), tree :: args)
   }
 
 // TODO: implement
@@ -102,7 +110,7 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
         )
         val rhsFn = (s: Symbol, trees: List[Tree]) => Apply(f, trees.map(_.asExpr.asTerm))
         val tree  = Lambda(method.symbol, tpe, rhsFn)
-        LambdaConversionResult(tree, TypeRepr.of[Null] /*TODO: set*/, List(aTpe, ret), args)
+        LambdaConversionResult(tree, "io.temporal.workflow.Functions$.Func1", List(aTpe, ret), args)
     }
   }
 }
