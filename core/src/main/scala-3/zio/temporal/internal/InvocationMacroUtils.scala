@@ -78,9 +78,6 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
 //    println(methods.map(_.signature.paramSigs))
     methods.find(_.signature.paramSigs.size == 4).head
   }
-  private val classOfTerm = '{ classOf[String] }.asTerm match {
-    case Inlined(_, _, TypeApply(idt, _)) => idt
-  }
 
   // TODO: it's a dirty hack, try to rewrite it
   private val workflowClientModule =
@@ -189,7 +186,7 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
           resultTypeExp = _ => ret
         )
         val rhsFn = (s: Symbol, trees: List[Tree]) => Apply(f, trees.map(_.asExpr.asTerm))
-        val tree  = Lambda(method.symbol.owner, tpe, rhsFn)
+        val tree  = Lambda(Symbol.spliceOwner, tpe, rhsFn)
         LambdaConversionResult(tree, "io.temporal.workflow.Functions$.Func1", List(aTpe, ret), args)
     }
   }

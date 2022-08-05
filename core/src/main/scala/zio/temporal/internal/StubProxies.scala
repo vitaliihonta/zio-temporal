@@ -18,10 +18,11 @@ private[zio] object StubProxies {
           println(s"Delegating $method call to delegate")
           method.invoke(delegate, methodArgs: _*)
         } else {
-          throw new IllegalStateException(
-            s"Proxied methods of $Proxied should not be invoked at runtime!\n" +
-              s"But invoked $method"
-          )
+          null
+//          throw new IllegalStateException(
+//            s"Proxied methods of $Proxied should not be invoked at runtime!\n" +
+//              s"But invoked $method"
+//          )
         }
     )
 

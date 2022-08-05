@@ -78,28 +78,33 @@ object WorkflowSpec extends ZIOSpecDefault {
                        io.temporal.client.WorkflowClient
                          .start[String, String]((a: String) => signalWorkflow.echoServer(a), "ECHO")
                      }.ignore
+                // TODO: still not work
 //                _ <- ZWorkflowStub
 //                       .start(signalWorkflow.echoServer("ECHO"))
 //                       .tapBoth(e => ZIO.log(s"Got error $e"), a => ZIO.log(s"Got started $a"))
                 _            <- ZIO.log("Started")
                 workflowStub <- client.newWorkflowStubProxy[SignalWorkflow](workflowId)
                 _            <- ZIO.log("New stub created!")
-//                progress     <- ZWorkflowStub.query(workflowStub.getProgress)
-//                _            <- ZIO.log(s"Progress=$progress")
+                // TODO: it seems that the generated code still contains this invocation??? (WTF)
+                progress     <- ZWorkflowStub.query(workflowStub.getProgress)
+                _            <- ZIO.log(s"Progress=$progress")
                 _ <- ZWorkflowStub.signal(
                        workflowStub.echo("Hello!")
                      )
-//                progress2 <- ZWorkflowStub
-//                               .query(workflowStub.getProgress)
-//                               .repeatWhile(_.isEmpty)
-//                _      <- ZIO.log(s"Progress2=$progress2")
+                progress2 <- ZWorkflowStub
+                               .query(workflowStub.getProgress)
+                               .repeatWhile(_.isEmpty)
+                _      <- ZIO.log(s"Progress2=$progress2")
                 result <- workflowStub.result[String]
-              } yield /*assertTrue(progress.isEmpty) &&
-                assertTrue(progress2.contains("Hello!")) &&*/
+              } yield assertTrue(progress.isEmpty) &&
+                assertTrue(progress2.contains("Hello!")) &&
                 assertTrue(result == "ECHO Hello!")
             }
           }
         }
+        .onError(e =>
+          ZIO.log(s"Fatal error ${e.dieOption.get.getMessage}") *> ZIO.succeed(e.dieOption.get.printStackTrace())
+        )
         .tapBoth(e => ZIO.log(s"Got error $e"), a => ZIO.log(s"Got started $a"))
     }.provideEnv
 //    test("run workflow with signal and start") {
