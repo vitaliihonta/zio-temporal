@@ -12,11 +12,13 @@ import zio.temporal.signal.ZWorkflowStubSignalSyntax
   * @see
   *   [[ExternalWorkflowStub]]
   */
-class ZExternalWorkflowStub @internalApi() (val toJava: ExternalWorkflowStub) extends CanSignal[ExternalWorkflowStub] {
+trait ZExternalWorkflowStub extends CanSignal[ExternalWorkflowStub] {
 
   override protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit =
     toJava.signal(signalName, args: _*)
 }
+
+final class ZExternalWorkflowStubImpl @internalApi() (val toJava: ExternalWorkflowStub) extends ZExternalWorkflowStub {}
 
 object ZExternalWorkflowStub
     extends Proxies[ZExternalWorkflowStub]
@@ -31,6 +33,6 @@ object ZExternalWorkflowStub
       * @return
       *   untyped external workflow stub
       */
-    def toStub: ZExternalWorkflowStub = new ZExternalWorkflowStub(ExternalWorkflowStub.fromTyped(self))
+    def toStub: ZExternalWorkflowStub = new ZExternalWorkflowStubImpl(ExternalWorkflowStub.fromTyped(self))
   }
 }

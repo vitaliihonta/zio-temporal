@@ -1,5 +1,7 @@
 package zio.temporal.internal
 
+import scala.reflect.ClassTag
+
 private[zio] object tagging {
   sealed trait Tag[U] extends Any
 
@@ -16,8 +18,9 @@ private[zio] object tagging {
       * @tparam T
       *   compile-time view
       */
-    type Proxy[+T] <: A & T
-    private[zio] def Proxy[T](value: A): Proxy[T] = value.asInstanceOf[Proxy[T]]
+    final type Proxy[+T] = A & T
+    private[zio] def Proxy[T: ClassTag](value: A)(implicit A: ClassTag[A]): Proxy[T] =
+      StubProxies.proxy[A, T](value)
 
     sealed trait Tagged
 

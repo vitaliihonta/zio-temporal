@@ -150,7 +150,7 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
   ): Tree = {
 //    println(invocation.instance.symbol.fieldMembers)
     val retTypeTree = TypeTree.of(using ret.asType)
-    val stub        = invocation.instance.select(invocation.instance.symbol.fieldMember("toJava"))
+    val stub        = invocation.instance.select(invocation.instance.symbol.methodMember("toJava").head)
 //    println(stub.show)
     method.appliedArgs match {
       case Nil =>

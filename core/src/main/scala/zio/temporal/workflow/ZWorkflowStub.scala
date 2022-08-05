@@ -8,16 +8,10 @@ import zio.temporal.internal.TemporalInteraction
 import zio.temporal.internal.tagging.Proxies
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.ZWorkflowStubSignalSyntax
-
 import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
-/** Represents untyped workflow stub
-  *
-  * @see
-  *   [[WorkflowStub]]
-  */
-class ZWorkflowStub @internalApi() (val toJava: WorkflowStub) extends CanSignal[WorkflowStub] {
+sealed trait ZWorkflowStub extends CanSignal[WorkflowStub] {
 
   override protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit =
     toJava.signal(signalName, args: _*)
@@ -68,6 +62,13 @@ class ZWorkflowStub @internalApi() (val toJava: WorkflowStub) extends CanSignal[
     }
 }
 
+/** Represents untyped workflow stub
+  *
+  * @see
+  *   [[WorkflowStub]]
+  */
+final class ZWorkflowStubImpl @internalApi() (val toJava: WorkflowStub) extends ZWorkflowStub
+
 object ZWorkflowStub
     extends Proxies[ZWorkflowStub]
     with ZWorkflowExecutionSyntax
@@ -81,6 +82,6 @@ object ZWorkflowStub
       * @return
       *   untyped workflow stub
       */
-    def toStub: ZWorkflowStub = new ZWorkflowStub(WorkflowStub.fromTyped(self))
+    def toStub: ZWorkflowStub = new ZWorkflowStubImpl(WorkflowStub.fromTyped(self))
   }
 }
