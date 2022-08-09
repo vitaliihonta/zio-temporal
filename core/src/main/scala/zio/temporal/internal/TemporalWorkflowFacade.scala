@@ -1,7 +1,7 @@
 package zio.temporal.internal
 
 import io.temporal.api.common.v1.WorkflowExecution
-import io.temporal.client.WorkflowClient
+import io.temporal.client.{BatchRequest, WorkflowClient}
 import io.temporal.workflow.Functions
 
 import java.util.concurrent.CompletableFuture
@@ -15,6 +15,13 @@ object TemporalWorkflowFacade {
 
   def execute[R](f: () => R): CompletableFuture[R] =
     WorkflowClient.execute[R](f: Functions.Func[R])
+
+  def addToBatchRequest(f: () => Unit): BatchRequest => Unit = { (b: BatchRequest) =>
+    addToBatchRequest(b, f)
+  }
+
+  def addToBatchRequest(b: BatchRequest, f: () => Unit): Unit =
+    b.add(f: Functions.Proc)
 
   object FunctionConverters {
     implicit def proc(f: () => Unit): Functions.Proc = new Functions.Proc {

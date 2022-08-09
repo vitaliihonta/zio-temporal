@@ -106,10 +106,10 @@ lazy val root = project
     core.projectRefs ++
       testkit.projectRefs ++
       protobuf.projectRefs ++
-      `integration-tests`.projectRefs: _*
+      `integration-tests`.projectRefs ++
+      examples.projectRefs: _*
   )
   .aggregate(
-    examples,
     coverage
   )
 
@@ -195,11 +195,10 @@ lazy val protobuf = projectMatrix
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
 
-lazy val examples = project
+lazy val examples = projectMatrix
   .in(file("examples"))
   .settings(baseSettings, noPublishSettings)
   .settings(
-    scalaVersion := scala213,
     Compile / PB.targets := Seq(
       scalapb.gen(
         flatPackage = true,
@@ -209,7 +208,8 @@ lazy val examples = project
     libraryDependencies ++= examplesLibs
   )
   .dependsOn(
-    core.jvm(scala213),
-    testkit.jvm(scala213),
-    protobuf.jvm(scala213)
+    core,
+    testkit,
+    protobuf
   )
+  .jvmPlatform(scalaVersions = List(scala213, scala3))

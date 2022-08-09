@@ -11,7 +11,7 @@ trait ZWorkflowStubQuerySyntax {
   inline def query[R](inline f: R): TemporalIO[TemporalClientError, R] =
     ${ ZWorkflowStubQuerySyntax.queryImpl[R]('f) }
 
-  inline def query[E, R](f: Either[E, R]): TemporalIO[TemporalError[E], R] =
+  inline def query[E, R](inline f: Either[E, R]): TemporalIO[TemporalError[E], R] =
     ${ ZWorkflowStubQuerySyntax.queryEitherImpl[E, R]('f) }
 }
 
@@ -34,6 +34,16 @@ object ZWorkflowStubQuerySyntax {
   )(using q: Quotes
   ): Expr[TemporalIO[TemporalError[E], R]] = {
     import q.reflect.*
-    ???
+    val macroUtils = new InvocationMacroUtils[q.type]
+    val theQuery   = macroUtils.buildQueryInvocation(Expr.betaReduce(f).asTerm.underlying, TypeRepr.of[Either[E, R]])
+    val result = '{
+      _root_.zio.temporal.internal.TemporalInteraction.fromEither[E, R] {
+        ${
+          theQuery.asExprOf[Either[E, R]]
+        }
+      }
+    }
+    println(result.show)
+    result
   }
 }

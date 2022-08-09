@@ -1,5 +1,6 @@
 package com.example.payments
 
+import com.example.transactions._
 import com.example.payments.impl._
 import com.example.payments.workflows._
 import zio._
@@ -17,7 +18,12 @@ object ExampleModule {
 
   val clientOptions: ULayer[ZWorkflowClientOptions] = ZLayer.succeed {
     ZWorkflowClientOptions.default.withDataConverter(
-      ProtobufDataConverter.makeAutoLoad()
+      // ProtobufDataConverter.makeAutoLoad()
+      ProtobufDataConverter.make(
+        List(
+          TransactionsProto
+        )
+      )
     )
   }
 

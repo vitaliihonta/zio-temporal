@@ -12,11 +12,9 @@ import java.util.concurrent.CompletableFuture
 object TemporalInteraction {
 
   def from[A](thunk: => A): TemporalIO[TemporalClientError, A] =
-    ZIO.log("Interacting with temporal...") *>
-      ZIO
-        .attempt(thunk)
-        .tapBoth(e => ZIO.log(s"Error interacting with temporal: $e"), res => ZIO.log(s"Interaction succeeded: $res"))
-        .mapError(TemporalClientError)
+    ZIO
+      .attempt(thunk)
+      .mapError(TemporalClientError)
 
   def fromEither[E, A](thunk: => Either[E, A]): TemporalIO[TemporalError[E], A] =
     ZIO

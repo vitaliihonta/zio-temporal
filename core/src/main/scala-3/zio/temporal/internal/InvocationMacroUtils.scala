@@ -80,17 +80,6 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
     methods.find(_.signature.paramSigs.size == 4).head
   }
 
-  // TODO: it's a dirty hack, try to rewrite it
-  private val workflowClientModule =
-    Expr
-      .betaReduce('{ import io.temporal.client.WorkflowClient.QUERY_TYPE_REPLAY_ONLY })
-      .asTerm match { case Inlined(_, _, Block(List(Import(t, List(_))), _)) => t }
-
-  private val temporalWorkflowFacadeModule =
-    Expr.betaReduce('{ TemporalWorkflowFacade }).asTerm.underlying
-
-  private val temporalWorkflowFacadeSymbol = temporalWorkflowFacadeModule.symbol
-
   def buildQueryInvocation(f: Term, ret: TypeRepr): Tree = {
     val invocation = getMethodInvocation(f)
 
@@ -134,41 +123,6 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
 //        sys.error(s"Query with arity ${args.size} not currently implemented. Feel free to contribute!")
     }
   }
-
-// TODO: implement more arities
-  def scalaLambdaToFunction(
-    invocation: MethodInvocation,
-    method:     MethodInfo,
-    ret:        TypeRepr
-  ): LambdaConversionResult = {
-    val f = invocation.instance.select(method.symbol)
-    method.appliedArgs match {
-      case args @ List(first) =>
-        val aTpe = first.tpe.widen
-        val tpe = MethodType(List("a"))(
-          paramInfosExp = _ => List(aTpe),
-          resultTypeExp = _ => ret
-        )
-        val rhsFn = (_: Symbol, _: List[Tree]) => Apply(f, args)
-        val tree  = Lambda(Symbol.spliceOwner, tpe, rhsFn)
-        LambdaConversionResult(tree, "io.temporal.workflow.Functions$.Func1", List(aTpe, ret), args)
-    }
-  }
-
-//  // TODO: implement more arities
-//  def scalaLambdaToStartInvocation(
-//    invocation: MethodInvocation,
-//    method:     MethodInfo,
-//    ret:        TypeRepr
-//  ): Expr[WorkflowExecution] = {
-//    val f = invocation.instance.select(method.symbol)
-//    method.appliedArgs match {
-//      case args @ List(first) =>
-//        val aTpe = first.tpe.widen
-//        val fExpr = f.asExprOf[]
-//        '{ TemporalWorkflowFacade.start($f(_), $first) }
-//    }
-//  }
 
   def getQueryName(method: Symbol): String = {
     val ann = method.getAnnotation(Symbol.classSymbol("io.temporal.workflow.QueryMethod"))

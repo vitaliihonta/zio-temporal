@@ -2,9 +2,11 @@ package zio.temporal.workflow
 
 import io.temporal.client.ActivityCompletionClient
 import io.temporal.client.WorkflowClient
-import zio._
+import zio.*
+import zio.temporal.internalApi
 import zio.temporal.signal.ZWorkflowClientSignalWithStartSyntax
-import scala.compat.java8.OptionConverters._
+
+import scala.compat.java8.OptionConverters.*
 import scala.reflect.ClassTag
 
 /** Represents temporal workflow client
@@ -12,7 +14,7 @@ import scala.reflect.ClassTag
   * @see
   *   [[WorkflowClient]]
   */
-class ZWorkflowClient private[zio] (val toJava: WorkflowClient)
+class ZWorkflowClient @internalApi() (val toJava: WorkflowClient)
     extends AnyVal
     with ZWorkflowClientSignalWithStartSyntax {
 

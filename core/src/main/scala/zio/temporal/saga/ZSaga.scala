@@ -191,7 +191,7 @@ object ZSaga {
       ZSaga.CatchAll[E0, E2, A0](base, handle(_).catchAll(f))
   }
 
-  private[zio] def runImpl[E, A](self: ZSaga[E, A])(options: ZSaga.Options): Either[E, A] = {
+  private[zio] def runImpl[E, A](self: ZSaga[E, A])(options: ZSaga.Options): Either[E, A] = try {
     val temporalSagaOptions = new Saga.Options.Builder()
       .setParallelCompensation(options.parallelCompensation)
       .setContinueWithError(options.continueWithError)
@@ -236,5 +236,14 @@ object ZSaga {
     result.left.foreach(_ => temporalSaga.compensate())
 
     result
+  } catch {
+    case e =>
+      println(s"ZSaga interpret failed! $e")
+      e.printStackTrace()
+      if (e.getCause != null) {
+        println(s"ZSaga interpret cause: ${e.getCause}")
+        e.getCause.printStackTrace()
+      }
+      throw e
   }
 }

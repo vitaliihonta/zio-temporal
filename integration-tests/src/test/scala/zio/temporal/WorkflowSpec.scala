@@ -97,60 +97,60 @@ object WorkflowSpec extends ZIOSpecDefault {
           }
         }
     }.provideEnv,
-//    test("run workflow with signal and start") {
-//      ZIO.serviceWithZIO[ZTestWorkflowEnvironment] { testEnv =>
-//        val taskQueue = "signal-with-start-queue"
-//        val client    = testEnv.workflowClient
-//
-//        testEnv
-//          .newWorker(taskQueue, options = ZWorkerOptions.default)
-//          .addWorkflow[SignalWithStartWorkflowImpl]
-//          .fromClass
-//
-//        val workflowId = UUID.randomUUID().toString
-//
-//        withWorkflow {
-//          testEnv.use() {
-//            for {
-//              signalWithStartWorkflow <- client
-//                                           .newWorkflowStub[SignalWithStartWorkflow]
-//                                           .withTaskQueue(taskQueue)
-//                                           .withWorkflowId(workflowId)
-//                                           .withWorkflowRunTimeout(10.seconds)
-//                                           .build
-//              _ <- client
-//                     .signalWith(
-//                       signalWithStartWorkflow.echo("Hello")
-//                     )
-//                     .start(signalWithStartWorkflow.echoServer())
-//              workflowStub <- client.newWorkflowStubProxy[SignalWithStartWorkflow](workflowId)
-//              initialSnapshot <- ZWorkflowStub.query(
-//                                   workflowStub.messages
-//                                 )
-//              _ <- ZWorkflowStub.signal(
-//                     workflowStub.echo("World!")
-//                   )
-//              secondSnapshot <- ZWorkflowStub.query(
-//                                  workflowStub.messages
-//                                )
-//              _ <- ZWorkflowStub.signal(
-//                     workflowStub.echo("Again...")
-//                   )
-//              thirdSnapshot <- ZWorkflowStub.query(
-//                                 workflowStub.messages
-//                               )
-//              _ <- ZWorkflowStub.signal(
-//                     workflowStub.stop()
-//                   )
-//              result <- workflowStub.result[Int]
-//            } yield assertTrue(initialSnapshot == List("Hello")) &&
-//              assertTrue(secondSnapshot == List("Hello", "World!")) &&
-//              assertTrue(thirdSnapshot == List("Hello", "World!", "Again...")) &&
-//              assertTrue(result == 3)
-//          }
-//        }
-//      }
-//    }.provideEnv,
+    test("run workflow with signal and start") {
+      ZIO.serviceWithZIO[ZTestWorkflowEnvironment] { testEnv =>
+        val taskQueue = "signal-with-start-queue"
+        val client    = testEnv.workflowClient
+
+        testEnv
+          .newWorker(taskQueue, options = ZWorkerOptions.default)
+          .addWorkflow[SignalWithStartWorkflowImpl]
+          .fromClass
+
+        val workflowId = UUID.randomUUID().toString
+
+        withWorkflow {
+          testEnv.use() {
+            for {
+              signalWithStartWorkflow <- client
+                                           .newWorkflowStub[SignalWithStartWorkflow]
+                                           .withTaskQueue(taskQueue)
+                                           .withWorkflowId(workflowId)
+                                           .withWorkflowRunTimeout(10.seconds)
+                                           .build
+              _ <- client
+                     .signalWith(
+                       signalWithStartWorkflow.echo("Hello")
+                     )
+                     .start(signalWithStartWorkflow.echoServer())
+              workflowStub <- client.newWorkflowStubProxy[SignalWithStartWorkflow](workflowId)
+              initialSnapshot <- ZWorkflowStub.query(
+                                   workflowStub.messages
+                                 )
+              _ <- ZWorkflowStub.signal(
+                     workflowStub.echo("World!")
+                   )
+              secondSnapshot <- ZWorkflowStub.query(
+                                  workflowStub.messages
+                                )
+              _ <- ZWorkflowStub.signal(
+                     workflowStub.echo("Again...")
+                   )
+              thirdSnapshot <- ZWorkflowStub.query(
+                                 workflowStub.messages
+                               )
+              _ <- ZWorkflowStub.signal(
+                     workflowStub.stop()
+                   )
+              result <- workflowStub.result[Int]
+            } yield assertTrue(initialSnapshot == List("Hello")) &&
+              assertTrue(secondSnapshot == List("Hello", "World!")) &&
+              assertTrue(thirdSnapshot == List("Hello", "World!", "Again...")) &&
+              assertTrue(result == 3)
+          }
+        }
+      }
+    }.provideEnv,
     test("run workflow with successful sagas") {
       ZIO.serviceWithZIO[ZTestWorkflowEnvironment] { testEnv =>
         val taskQueue = "saga-queue"

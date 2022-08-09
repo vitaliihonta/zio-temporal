@@ -20,13 +20,14 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
 
   private val activity = ZWorkflow
     .newActivityStub[PaymentActivity]
-    .withStartToCloseTimeout(5.seconds)
-    .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(1))
+    .withStartToCloseTimeout(10.seconds)
+    .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(3))
     .build
 
   private val state = ZWorkflowState.empty[TransactionState]
 
   override def proceed(transaction: ProceedTransactionCommand): Either[TransactionError, TransactionView] = {
+    // TODO: debug for scala3
     logger.info(s"Processing transaction=$transaction")
     state.setTo(initialState(transaction))
     val saga = for {
