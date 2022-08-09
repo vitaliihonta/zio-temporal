@@ -2,6 +2,7 @@ package zio.temporal.internal
 
 import zio.temporal.*
 import scala.quoted.*
+import io.temporal.api.common.v1.WorkflowExecution
 
 class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
   import q.reflect.*
@@ -85,47 +86,10 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
       .betaReduce('{ import io.temporal.client.WorkflowClient.QUERY_TYPE_REPLAY_ONLY })
       .asTerm match { case Inlined(_, _, Block(List(Import(t, List(_))), _)) => t }
 
-  def startInvocation(
-    invocation: MethodInvocation,
-    method:     MethodInfo,
-    ret:        TypeRepr
-  ): Tree = {
-    val LambdaConversionResult(tree, methodOverload, typeArgs, args) = scalaLambdaToFunction(invocation, method, ret)
-//    println(t)
-    val start = workflowClientSymbol
-      .methodMember("start")
-      .find(_.signature.paramSigs.contains(methodOverload))
-      .head
-    val startMethod = Select(workflowClientModule, start)
-    val targs       = typeArgs.map(targ => TypeTree.of(using targ.asType))
-    Apply(TypeApply(startMethod, targs), tree :: args)
-  }
+  private val temporalWorkflowFacadeModule =
+    Expr.betaReduce('{ TemporalWorkflowFacade }).asTerm.underlying
 
-  def executeInvocation(
-    invocation: MethodInvocation,
-    method:     MethodInfo,
-    ret:        TypeRepr
-  ): Tree = {
-    val LambdaConversionResult(tree, methodOverload, typeArgs, args) = scalaLambdaToFunction(invocation, method, ret)
-    //    println(t)
-    val execute = workflowClientSymbol
-      .methodMember("execute")
-      .find(_.signature.paramSigs.contains(methodOverload))
-      .head
-    val executeMethod = Select(workflowClientModule, execute)
-    val targs         = typeArgs.map(targ => TypeTree.of(using targ.asType))
-    Apply(TypeApply(executeMethod, targs), tree :: args)
-  }
-
-  def buildExecuteInvocation(f: Term, ret: TypeRepr): Tree = {
-    val invocation = getMethodInvocation(f)
-    val method     = invocation.getMethod("Workflow method should not be extension methods!")
-
-    // TODO: validate
-    //    assertWorkflowMethod(method.symbol)
-
-    executeInvocation(invocation, method, ret)
-  }
+  private val temporalWorkflowFacadeSymbol = temporalWorkflowFacadeModule.symbol
 
   def buildQueryInvocation(f: Term, ret: TypeRepr): Tree = {
     val invocation = getMethodInvocation(f)
@@ -185,11 +149,26 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
           paramInfosExp = _ => List(aTpe),
           resultTypeExp = _ => ret
         )
-        val rhsFn = (s: Symbol, trees: List[Tree]) => Apply(f, trees.map(_.asExpr.asTerm))
+        val rhsFn = (_: Symbol, _: List[Tree]) => Apply(f, args)
         val tree  = Lambda(Symbol.spliceOwner, tpe, rhsFn)
         LambdaConversionResult(tree, "io.temporal.workflow.Functions$.Func1", List(aTpe, ret), args)
     }
   }
+
+//  // TODO: implement more arities
+//  def scalaLambdaToStartInvocation(
+//    invocation: MethodInvocation,
+//    method:     MethodInfo,
+//    ret:        TypeRepr
+//  ): Expr[WorkflowExecution] = {
+//    val f = invocation.instance.select(method.symbol)
+//    method.appliedArgs match {
+//      case args @ List(first) =>
+//        val aTpe = first.tpe.widen
+//        val fExpr = f.asExprOf[]
+//        '{ TemporalWorkflowFacade.start($f(_), $first) }
+//    }
+//  }
 
   def getQueryName(method: Symbol): String = {
     val ann = method.getAnnotation(Symbol.classSymbol("io.temporal.workflow.QueryMethod"))

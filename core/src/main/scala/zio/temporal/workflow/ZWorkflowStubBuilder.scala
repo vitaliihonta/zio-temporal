@@ -45,6 +45,9 @@ final class ZWorkflowStubBuilder[A] private[zio] (
   def withWorkflowTaskTimeout(timeout: Duration): ZWorkflowStubBuilder[A] =
     copy(_.setWorkflowTaskTimeout(timeout.asJava))
 
+  def withWorkflowExecutionTimeout(timeout: Duration): ZWorkflowStubBuilder[A] =
+    copy(_.setWorkflowExecutionTimeout(timeout.asJava))
+
   def withRetryOptions(options: ZRetryOptions): ZWorkflowStubBuilder[A] =
     copy(_.setRetryOptions(options.toJava))
 

@@ -12,7 +12,7 @@ import scala.quoted.*
 
 // TODO: implement
 trait ZWorkflowStubSignalSyntax {
-  inline def signal(f: Unit): TemporalIO[TemporalClientError, Unit] =
+  inline def signal(inline f: Unit): TemporalIO[TemporalClientError, Unit] =
     ${ ZWorkflowStubSignalSyntax.signalImpl('f) }
 }
 

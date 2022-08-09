@@ -8,7 +8,7 @@ import scala.quoted.*
 
 // TODO: implement
 trait ZWorkflowStubQuerySyntax {
-  inline def query[R](f: R): TemporalIO[TemporalClientError, R] =
+  inline def query[R](inline f: R): TemporalIO[TemporalClientError, R] =
     ${ ZWorkflowStubQuerySyntax.queryImpl[R]('f) }
 
   inline def query[E, R](f: Either[E, R]): TemporalIO[TemporalError[E], R] =
