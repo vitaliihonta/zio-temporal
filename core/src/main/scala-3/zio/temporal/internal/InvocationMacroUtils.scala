@@ -1,14 +1,10 @@
 package zio.temporal.internal
 
 import zio.temporal.*
-
 import scala.quoted.*
-import io.temporal.api.common.v1.WorkflowExecution
-
 import scala.reflect.ClassTag
 
-// TODO replace println and throw with reporting
-class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
+class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUtils[Q] {
   import q.reflect.*
 
   private val WorkflowInterface = typeSymbolOf[workflowInterface]
@@ -42,7 +38,13 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
         .headOption
         .map(MethodInfo(methodName, _, args))
         .getOrElse(
-          sys.error(s"${instance.tpe} doesn't have a $methodName method. " + errorDetails)
+          error(
+            SharedCompileTimeMessages.methodNotFound(
+              instance.tpe.toString,
+              methodName,
+              errorDetails
+            )
+          )
         )
   }
 
@@ -53,30 +55,45 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
 
     def assertWorkflowMethod(): Unit =
       if (!symbol.hasAnnotation(WorkflowMethod)) {
-        sys.error(s"The method is not a @workflowMethod: $symbol")
+        error(SharedCompileTimeMessages.notWorkflowMethod(symbol.toString))
       }
 
     def assertSignalMethod(): Unit =
       if (!symbol.hasAnnotation(SignalMethod)) {
-        sys.error(s"The method is not a @signalMethod: $symbol")
+        error(SharedCompileTimeMessages.notSignalMethod(symbol.toString))
       }
 
     def assertQueryMethod(): Unit =
       if (!symbol.hasAnnotation(QueryMethod)) {
-        sys.error(s"The method is not a @queryMethod: $symbol")
+        error(SharedCompileTimeMessages.notQueryMethod(symbol.toString))
       }
 
     private def validateCalls(): Unit =
       symbol.paramSymss.headOption.foreach { expectedArgs =>
         appliedArgs.zip(expectedArgs).zipWithIndex.foreach { case ((actual, expected), argumentNo) =>
-          // TODO: add better error message for ClassCastException
-          val expectedType = expected.tree.asInstanceOf[ValDef].tpt.tpe
-          if (!(actual.tpe <:< expectedType)) {
-            sys.error(
-              s"Provided arguments for method $name doesn't confirm to it's signature:\n" +
-                s"\tExpected: $expected (argument #${argumentNo + 1})\n" +
-                s"\tGot: $actual (of type ${actual.tpe})"
-            )
+          expected.tree match {
+            case vd: ValDef =>
+              val expectedType = vd.tpt.tpe
+              if (!(actual.tpe <:< expectedType)) {
+                error(
+                  SharedCompileTimeMessages.methodArgumentsMismatch(
+                    name = name.toString,
+                    expected = expected.toString,
+                    argumentNo = argumentNo,
+                    actual = actual.toString,
+                    actualTpe = actual.tpe.toString
+                  )
+                )
+              }
+            case other =>
+              error(
+                SharedCompileTimeMessages.unexpectedLibraryError(
+                  s"error while validating method invocation arguments: " +
+                    s"unexpected tree in `expected arguments` symbol:\n" +
+                    s"class: ${other.getClass}\n" +
+                    s"tree: $other"
+                )
+              )
           }
         }
       }
@@ -87,11 +104,10 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
           _.filter(_.flags is Flags.HasDefault)
         )
       if (paramsWithDefault.nonEmpty) {
-        sys.error(
-          s"\nCurrently, methods with default arguments are not supported.\n" +
-            s"Found the following default arguments: ${paramsWithDefault.map(_.name).mkString(", ")}.\n" +
-            s"Temporal doesn't work well with scala's implementation of default arguments, and throws the following error at runtime:\n" +
-            s"[Just an example] java.lang.IllegalArgumentException: Missing @WorkflowMethod, @SignalMethod or @QueryMethod annotation on public default scala.Option zio.temporal.fixture.SignalWorkflow.getProgress$$default$$1()"
+        error(
+          SharedCompileTimeMessages.defaultArgumentsNotSupported(
+            paramsWithDefault.map(_.name)
+          )
         )
       }
     }
@@ -102,21 +118,15 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
       case AppliedType(_, List(wf)) =>
         val hasAnnotation = wf.typeSymbol.hasAnnotation(WorkflowInterface)
         if (!hasAnnotation) {
-          sys.error(s"${workflow.show} is not a workflow!")
+          error(SharedCompileTimeMessages.notWorkflow(workflow.show))
         }
         wf
     }
 
-  private val workflowStubSymbol = Symbol.classSymbol("io.temporal.client.WorkflowStub")
-  private val workflowStubQueryMethodSymbol = {
-    val methods = workflowStubSymbol.methodMember("query")
-    methods.find(_.signature.paramSigs.size == 4).head
-  }
-
   def buildQueryInvocation[R: Type](f: Term, ctgExpr: Expr[ClassTag[R]]): Expr[R] = {
     val invocation = getMethodInvocation(f)
 
-    val method = invocation.getMethod("Query method should not be an extension method!")
+    val method = invocation.getMethod(SharedCompileTimeMessages.qrMethodShouldntBeExtMethod)
     method.assertQueryMethod()
     val queryName = getQueryName(method.symbol)
 

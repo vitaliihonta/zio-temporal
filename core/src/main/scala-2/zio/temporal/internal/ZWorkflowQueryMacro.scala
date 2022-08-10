@@ -15,7 +15,7 @@ class ZWorkflowQueryMacro(override val c: blackbox.Context) extends InvocationMa
        _root_.zio.temporal.internal.TemporalInteraction.from {
          $theQuery
        }
-     """.debugged("Generated query invocation")
+     """.debugged(SharedCompileTimeMessages.generatedQueryInvoke)
   }
 
   def newQueryEitherImpl[E: WeakTypeTag, R: WeakTypeTag](f: Expr[Either[E, R]]): Tree = {
@@ -25,7 +25,7 @@ class ZWorkflowQueryMacro(override val c: blackbox.Context) extends InvocationMa
        _root_.zio.temporal.internal.TemporalInteraction.fromEither {
          $theQuery
        }
-     """.debugged("Generated query invocation")
+     """.debugged(SharedCompileTimeMessages.generatedQueryInvoke)
   }
 
   private def buildQueryInvocation(f: Tree, ret: Type): Tree = {
@@ -33,7 +33,7 @@ class ZWorkflowQueryMacro(override val c: blackbox.Context) extends InvocationMa
 
     assertWorkflow(invocation.instance.tpe)
 
-    val method = invocation.getMethod("Query method should not be an extension method!")
+    val method = invocation.getMethod(SharedCompileTimeMessages.qrMethodShouldntBeExtMethod)
     method.assertQueryMethod()
 
     val queryName = getQueryName(method.symbol)
@@ -55,7 +55,6 @@ class ZWorkflowQueryMacro(override val c: blackbox.Context) extends InvocationMa
     ret:        Type
   ): Tree = {
     val stub = q"""${invocation.instance}.toJava"""
-//    val args = method.appliedArgs.map[Tree](t => q"$t.asInstanceOf[AnyRef]")
     q"""_root_.zio.temporal.internal.TemporalWorkflowFacade.query[$ret]($stub, $queryName, List(..${method.appliedArgs}))"""
   }
 }

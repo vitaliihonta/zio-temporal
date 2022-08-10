@@ -20,17 +20,17 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
 
     def assertWorkflowMethod(): Unit =
       if (!hasAnnotation(symbol, WorkflowMethod)) {
-        sys.error(s"The method is not a @workflowMethod: $symbol")
+        error(SharedCompileTimeMessages.notWorkflowMethod(symbol.toString))
       }
 
     def assertSignalMethod(): Unit =
       if (!hasAnnotation(symbol, SignalMethod)) {
-        sys.error(s"The method is not a @signalMethod: $symbol")
+        error(SharedCompileTimeMessages.notSignalMethod(symbol.toString))
       }
 
     def assertQueryMethod(): Unit =
       if (!hasAnnotation(symbol, QueryMethod)) {
-        sys.error(s"The method is not a @queryMethod: $symbol")
+        error(SharedCompileTimeMessages.notQueryMethod(symbol.toString))
       }
 
     private def validateCalls(): Unit =
@@ -38,9 +38,13 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
         appliedArgs.zip(expectedArgs).zipWithIndex.foreach { case ((actual, expected), argumentNo) =>
           if (!(actual.tpe <:< expected.typeSignature)) {
             error(
-              s"Provided arguments for method $name doesn't confirm to it's signature:\n" +
-                s"\tExpected: $expected (argument #${argumentNo + 1})\n" +
-                s"\tGot: $actual (of type ${actual.tpe})"
+              SharedCompileTimeMessages.methodArgumentsMismatch(
+                name = name.toString,
+                expected = expected.toString,
+                argumentNo = argumentNo,
+                actual = actual.toString,
+                actualTpe = actual.tpe.toString
+              )
             )
           }
         }
@@ -54,10 +58,9 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
         )
       if (paramsWithDefault.nonEmpty) {
         error(
-          s"\nCurrently, methods with default arguments are not supported.\n" +
-            s"Found the following default arguments: ${paramsWithDefault.map(_.name.toString).mkString(", ")}.\n" +
-            s"Temporal doesn't work well with scala's implementation of default arguments, and throws the following error at runtime:\n" +
-            s"[Just an example] java.lang.IllegalArgumentException: Missing @WorkflowMethod, @SignalMethod or @QueryMethod annotation on public default scala.Option zio.temporal.fixture.SignalWorkflow.getProgress$$default$$1()"
+          SharedCompileTimeMessages.defaultArgumentsNotSupported(
+            paramsWithDefault.map(_.name.toString)
+          )
         )
       }
     }
@@ -71,7 +74,13 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
         .find(_ != NoSymbol)
         .map(MethodInfo(methodName, _, args))
         .getOrElse(
-          error(s"${instance.tpe} doesn't have a $methodName method. " + errorDetails)
+          error(
+            SharedCompileTimeMessages.methodNotFound(
+              instanceTpe = instance.tpe.toString,
+              methodName = methodName.toString,
+              errorDetails = errorDetails
+            )
+          )
         )
   }
 
@@ -85,16 +94,22 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
         getMethodInvocation(inner)
       case Block(List(inner), _) =>
         getMethodInvocation(inner)
-      case _ => error(s"Expected simple method invocation, got tree of class ${tree.getClass}: $tree")
+      case _ =>
+        error(
+          SharedCompileTimeMessages.expectedSimpleMethodInvocation(
+            tree.getClass,
+            tree.toString
+          )
+        )
     }
 
   protected def getTag[A: WeakTypeTag] = {
     val tagTpe = weakTypeOf[Tag[A]]
-    findImplicit(tagTpe, s"$tagTpe not found")
+    findImplicit(tagTpe, SharedCompileTimeMessages.notFound(tagTpe.toString))
   }
 
   protected def assertWorkflow(workflow: Type): Type = {
-    def errorNotWorkflow = error(s"$workflow is not a workflow!")
+    def errorNotWorkflow = error(SharedCompileTimeMessages.notWorkflow(workflow.toString))
     workflow match {
       case SingleType(_, sym) =>
         sym.typeSignature.baseClasses

@@ -13,7 +13,7 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
 
     assertWorkflow(invocation.instance.tpe)
 
-    val method = invocation.getMethod("Workflow method should not be extension methods!")
+    val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
 
     q"""
@@ -22,7 +22,7 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
           _root_.zio.temporal.internal.TemporalWorkflowFacade.start(() => $f)
         )
       } 
-     """.debugged("Generated workflow method start")
+     """.debugged(SharedCompileTimeMessages.generatedWorkflowStart)
   }
 
   def executeImpl[R: WeakTypeTag](f: Expr[R]): Tree = {
@@ -32,7 +32,7 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
       _root_.zio.temporal.internal.TemporalInteraction.fromFuture {
         $theExecute
       } 
-     """.debugged("Generated workflow method start")
+     """.debugged(SharedCompileTimeMessages.generatedWorkflowExecute)
   }
 
   def executeEitherImpl[E: WeakTypeTag, R: WeakTypeTag](f: Expr[Either[E, R]]): Tree = {
@@ -42,25 +42,33 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
       _root_.zio.temporal.internal.TemporalInteraction.fromFutureEither {
         $theExecute
       } 
-     """.debugged("Generated workflow method start")
+     """.debugged(SharedCompileTimeMessages.generatedWorkflowExecute)
   }
 
-  def asyncImpl[R: WeakTypeTag](f: Expr[R]): Tree =
+  def asyncImpl[R: WeakTypeTag](f: Expr[R]): Tree = {
+    val invocation = getMethodInvocation(f.tree)
+    val method     = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
+    method.assertWorkflowMethod()
     q"""
        _root_.zio.temporal.promise.ZPromise.fromEither(Right($f))
-     """.debugged("Generated workflow start async")
+     """.debugged(SharedCompileTimeMessages.generatedWorkflowStartAsync)
+  }
 
-  def asyncEitherImpl[E: WeakTypeTag, R: WeakTypeTag](f: Expr[Either[E, R]]): Tree =
+  def asyncEitherImpl[E: WeakTypeTag, R: WeakTypeTag](f: Expr[Either[E, R]]): Tree = {
+    val invocation = getMethodInvocation(f.tree)
+    val method     = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
+    method.assertWorkflowMethod()
     q"""
        new _root_.zio.temporal.promise.ZPromise.fromEither($f)
-     """.debugged("Generated workflow start async")
+     """.debugged(SharedCompileTimeMessages.generatedWorkflowStartAsync)
+  }
 
   private def buildExecuteInvocation(f: Tree): Tree = {
     val invocation = getMethodInvocation(f)
 
     assertWorkflow(invocation.instance.tpe)
 
-    val method = invocation.getMethod("Workflow method should not be extension methods!")
+    val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
 
     q"""_root_.zio.temporal.internal.TemporalWorkflowFacade.execute(() => $f)"""

@@ -4,11 +4,10 @@ import io.temporal.client.BatchRequest
 import zio.temporal.TemporalClientError
 import zio.temporal.TemporalIO
 import zio.temporal.ZWorkflowExecution
-import zio.temporal.internal.{InvocationMacroUtils, TemporalWorkflowFacade}
 import zio.temporal.internalApi
 import zio.temporal.workflow.ZWorkflowClient
-
 import scala.quoted.*
+import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
 
 trait ZWorkflowStubSignalSyntax {
   inline def signal(inline f: Unit): TemporalIO[TemporalClientError, Unit] =
@@ -25,7 +24,7 @@ trait ZWorkflowClientSignalWithStartSyntax { self: ZWorkflowClient =>
     *   the builder
     */
   inline def signalWith(inline f: Unit): ZSignalBuilder =
-    ${ ZWorkflowStubSignalSyntax.signalWithImpl('self, 'f) }
+    ${ ZWorkflowStubSignalSyntax.signalWithStartBuilderImpl('self, 'f) }
 }
 
 final class ZSignalBuilder @internalApi() (
@@ -47,14 +46,16 @@ object ZWorkflowStubSignalSyntax {
   def signalImpl(f: Expr[Unit])(using q: Quotes): Expr[TemporalIO[TemporalClientError, Unit]] = {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
-    val invocation = macroUtils.getMethodInvocation(macroUtils.betaReduceExpression(f).asTerm)
-    val method     = invocation.getMethod("Signal method should not be an extension method!")
+    import macroUtils.*
+    val invocation = getMethodInvocation(betaReduceExpression(f).asTerm)
+    val method     = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
 
     method.assertSignalMethod()
-    val signalName = macroUtils.getSignalName(method.symbol)
+    val signalName = getSignalName(method.symbol)
 
-    val theMethod =
-      invocation.instance.select(invocation.instance.symbol.methodMember("__zio_temporal_invokeSignal").head)
+    val theMethod = invocation.instance
+      .select(invocation.instance.symbol.methodMember("__zio_temporal_invokeSignal").head)
+
     val invokeTree =
       Apply(
         theMethod,
@@ -63,22 +64,23 @@ object ZWorkflowStubSignalSyntax {
           Expr.ofList(invocation.args.map(_.asExprOf[AnyRef])).asTerm
         )
       )
-    val result = invokeTree.asExprOf[TemporalIO[TemporalClientError, Unit]]
-    println(result.show)
-    result
+
+    invokeTree
+      .asExprOf[TemporalIO[TemporalClientError, Unit]]
+      .debugged(SharedCompileTimeMessages.generatedSignal)
   }
 
-  def signalWithImpl(self: Expr[ZWorkflowClient], f: Expr[Unit])(using q: Quotes): Expr[ZSignalBuilder] = {
+  def signalWithStartBuilderImpl(self: Expr[ZWorkflowClient], f: Expr[Unit])(using q: Quotes): Expr[ZSignalBuilder] = {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
-    val fTree      = macroUtils.betaReduceExpression(f)
-    val invocation = macroUtils.getMethodInvocation(fTree.asTerm)
-    val method     = invocation.getMethod("Signal method should not be an extension method!")
+    import macroUtils.*
+    val fTree      = betaReduceExpression(f)
+    val invocation = getMethodInvocation(fTree.asTerm)
+    val method     = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     method.assertSignalMethod()
 
-    val result = '{ new ZSignalBuilder($self, TemporalWorkflowFacade.addToBatchRequest(() => $fTree)) }
-    println(result.show)
-    result
+    '{ new ZSignalBuilder($self, TemporalWorkflowFacade.addToBatchRequest(() => $fTree)) }
+      .debugged(SharedCompileTimeMessages.generatedZSignalBuilder)
   }
 
   def signalWithStartImpl[A: Type](
@@ -88,8 +90,9 @@ object ZWorkflowStubSignalSyntax {
   ): Expr[TemporalIO[TemporalClientError, ZWorkflowExecution]] = {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
-    val fTree      = macroUtils.betaReduceExpression(f)
-    val invocation = macroUtils.getMethodInvocation(fTree.asTerm)
+    import macroUtils.*
+    val fTree      = betaReduceExpression(f)
+    val invocation = getMethodInvocation(fTree.asTerm)
     val method     = invocation.getMethod("Workflow method should not be an extension method!")
 
     method.assertWorkflowMethod()
@@ -103,12 +106,10 @@ object ZWorkflowStubSignalSyntax {
       new ZWorkflowExecution(javaClient.signalWithStart(batchRequest))
     }
 
-    val result = '{
+    '{
       zio.temporal.internal.TemporalInteraction.from {
         $batchRequestTree
       }
-    }
-    println(result.show)
-    result
+    }.debugged(SharedCompileTimeMessages.generatedSignalWithStart)
   }
 }

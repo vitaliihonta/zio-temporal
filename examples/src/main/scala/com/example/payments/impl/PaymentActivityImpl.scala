@@ -15,13 +15,10 @@ object PaymentActivityImpl {
 
 class PaymentActivityImpl(implicit options: ZActivityOptions[Any]) extends PaymentActivity {
 
-  override def proceed(transaction: ProceedTransactionCommand): Either[TransactionError, TransactionView] = {
-    val r = ZActivity.run {
+  override def proceed(transaction: ProceedTransactionCommand): Either[TransactionError, TransactionView] =
+    ZActivity.run {
       proceedImpl(transaction)
     }
-    println(s"Run the activity method! $r")
-    r
-  }
 
   override def verifyConfirmation(command: ConfirmTransactionCommand): Either[TransactionError, ZUnit] =
     ZActivity.run {

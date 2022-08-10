@@ -18,18 +18,19 @@ class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtil
     val self = getPrefixOf(ZWorkflowClient)
 
     val invocation = getMethodInvocation(tree)
-    val method     = invocation.getMethod("Signal method should not be an extension method!")
+    val method     = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     method.assertSignalMethod()
 
     val addSignal = addBatchRequestTree(tree)(addTo = None)
 
-    q"""new $ZSignalBuilder($self, $addSignal)""".debugged(s"Generated ${ZSignalBuilder.toString}")
+    q"""new $ZSignalBuilder($self, $addSignal)"""
+      .debugged(SharedCompileTimeMessages.generatedZSignalBuilder)
   }
 
   def signalWithStartImpl[A: WeakTypeTag](f: Expr[A]): Tree = {
     val tree       = f.tree
     val invocation = getMethodInvocation(tree)
-    val method     = invocation.getMethod("Workflow method should not be an extension method!")
+    val method     = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
 
     val batchRequest = freshTermName("batchRequest")
@@ -43,24 +44,20 @@ class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtil
       _root_.zio.temporal.internal.TemporalInteraction.from {
         $batchTree
       }
-     """.debugged(s"Generated signalWithStart")
+     """.debugged(SharedCompileTimeMessages.generatedSignalWithStart)
   }
 
   def signalImpl(f: Expr[Unit]): Tree = {
     val tree       = f.tree
     val invocation = getMethodInvocation(tree)
     assertWorkflow(invocation.instance.tpe)
-    if (!(invocation.instance.tpe <:< typeOf[BaseCanSignal])) {
-      error(s".signal should be called only on ZWorkflowStub and etc.")
-    }
 
-    val method = invocation.getMethod("Signal method should not be an extension method!")
+    val method = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     method.assertSignalMethod()
     val signalName = getSignalName(method.symbol)
 
-    q"""${invocation.instance}.__zio_temporal_invokeSignal($signalName, ${invocation.args})""".debugged(
-      "Generated signal"
-    )
+    q"""${invocation.instance}.__zio_temporal_invokeSignal($signalName, ${invocation.args})"""
+      .debugged(SharedCompileTimeMessages.generatedSignal)
   }
 
   private def addBatchRequestTree(
@@ -99,16 +96,10 @@ class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtil
       case _ =>
         c.warning(
           c.enclosingPosition,
-          s"""Wasn't able to eliminate ZSignalBuilder from the resulting AST! 
-             |Normally, it shouldn't be instantiated at runtime.
-             |Please, fill up a ticket with the following info:
-             |  1. Your scala version
-             |  2. Your library version
-             |  3. Add reproducible code example without any sensitive information
-             |  4. Fill-up the following info for debugging:
-             |     - tree class: ${self.getClass}
-             |     - tree: $self
-             |""".stripMargin
+          SharedCompileTimeMessages.zsignalBuildNotExtracted(
+            self.getClass,
+            self.toString
+          )
         )
         val builder = freshTermName("builder")
         q"""
