@@ -12,7 +12,7 @@ import zio.temporal.signal.ZWorkflowStubSignalSyntax
   * @see
   *   [[ExternalWorkflowStub]]
   */
-trait ZExternalWorkflowStub extends CanSignal[ExternalWorkflowStub] {
+sealed trait ZExternalWorkflowStub extends CanSignal[ExternalWorkflowStub] {
 
   override protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit =
     toJava.signal(signalName, args: _*)

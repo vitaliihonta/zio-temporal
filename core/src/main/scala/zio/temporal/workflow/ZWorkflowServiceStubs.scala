@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 
 /** Initializes and holds gRPC blocking and future stubs.
   */
-class ZWorkflowServiceStubs private[zio] (private[zio] val self: WorkflowServiceStubs) extends AnyVal {
+final class ZWorkflowServiceStubs private[zio] (private[zio] val self: WorkflowServiceStubs) {
 
   /** Allows to run arbitrary effect ensuring a shutdown on effect completion.
     *

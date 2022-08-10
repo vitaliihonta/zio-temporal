@@ -7,7 +7,7 @@ import zio.temporal.promise.ZPromise
   * [[ZWorkflow.newDetachedCancellationScope]]. Supports explicit cancelling of the code a cancellation scope wraps. The
   * code in the CancellationScope has to be executed using [[run]] method.
   */
-class ZCancellationScope private[zio] (val toJava: CancellationScope) extends AnyVal {
+final class ZCancellationScope private[zio] (val toJava: CancellationScope) {
 
   /** Cancels the scope as well as all its children */
   def cancel(): Unit = toJava.cancel()
