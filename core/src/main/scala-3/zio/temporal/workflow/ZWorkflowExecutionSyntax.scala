@@ -9,7 +9,6 @@ import zio.temporal.promise.ZPromise
 
 import scala.quoted.*
 
-// TODO: implement
 trait ZWorkflowExecutionSyntax {
   inline def start[A](inline f: A): TemporalIO[TemporalClientError, ZWorkflowExecution] =
     ${ ZWorkflowExecutionSyntax.startImpl[A]('f) }
@@ -33,7 +32,7 @@ object ZWorkflowExecutionSyntax {
 //    val macroUtils = new InvocationMacroUtils[q.type]
 //    val invocation = macroUtils.getMethodInvocation(Expr.betaReduce(f).asTerm.underlying)
 //    val method     = invocation.getMethod("Workflow method should not be extension methods!")
-    // TODO: validate
+    // TODO: validate method is a workflow method
     val fTree = Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
     val result = '{
       zio.temporal.internal.TemporalInteraction.from {
@@ -49,7 +48,7 @@ object ZWorkflowExecutionSyntax {
 //    val macroUtils = new InvocationMacroUtils[q.type]
 //    val theExecute = macroUtils.buildExecuteInvocation(Expr.betaReduce(f).asTerm.underlying, TypeRepr.of[R])
 
-    // TODO: validate
+    // TODO: validate method is a workflow method
     val fTree = Expr.betaReduce(f).asTerm.underlying.asExprOf[R]
     val result = '{
       zio.temporal.internal.TemporalInteraction.fromFuture {
@@ -68,7 +67,7 @@ object ZWorkflowExecutionSyntax {
     //    val macroUtils = new InvocationMacroUtils[q.type]
     //    val theExecute = macroUtils.buildExecuteInvocation(Expr.betaReduce(f).asTerm.underlying, TypeRepr.of[R])
 
-    // TODO: validate
+    // TODO: validate method is a workflow method
     val fTree = Expr.betaReduce(f).asTerm.underlying.asExprOf[Either[E, R]]
     val result = '{
       zio.temporal.internal.TemporalInteraction.fromFutureEither {
@@ -79,11 +78,13 @@ object ZWorkflowExecutionSyntax {
     result
   }
 
+  // TODO: implement
   def asyncImpl[R: Type](f: Expr[R])(using q: Quotes): Expr[ZPromise[Nothing, R]] = {
     import q.reflect.*
     ???
   }
 
+  // TODO: implement
   def asyncEitherImpl[E: Type, R: Type](f: Expr[Either[E, R]])(using q: Quotes): Expr[ZPromise[E, R]] = {
     import q.reflect.*
     ???

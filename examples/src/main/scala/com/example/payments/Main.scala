@@ -11,18 +11,18 @@ import zio.temporal.activity.ZActivityOptions
 
 object Main extends ZIOAppDefault {
   override def run: ZIO[ZIOAppArgs with Scope, Any, Any] = {
-    val program = for {
-      workerFactory <- ZIO.service[ZWorkerFactory]
-      startFiber    <- workerFactory.start.fork
-      flow          <- ZIO.service[ExampleFlow]
-      _ <- ZIO
-             .serviceWithZIO[ZWorkflowServiceStubs] { stubs =>
-               stubs.use() {
-                 flow.proceedPayment()
-               }
-             }
-      _ <- startFiber.join *> workerFactory.shutdownNow
-    } yield ()
+    val program =
+      ZIO.service[ZWorkerFactory].flatMap { workerFactory =>
+        workerFactory.use {
+          for {
+            flow  <- ZIO.service[ExampleFlow]
+            stubs <- ZIO.service[ZWorkflowServiceStubs]
+            _ <- stubs.use() {
+                   flow.proceedPayment()
+                 }
+          } yield ()
+        }
+      }
 
     program
       .provide(

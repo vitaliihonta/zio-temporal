@@ -86,6 +86,7 @@ object ZWorkflowStubSignalSyntax {
 
 //    val method = invocation.getMethod("Signal method should not be an extension method!")
 
+    // TODO validate this is a signal method
     val fTree = Expr.betaReduce(f).asTerm.underlying.asExprOf[Unit]
 
     val result = '{ new ZSignalBuilder($self, TemporalWorkflowFacade.addToBatchRequest(() => $fTree)) }
@@ -100,6 +101,7 @@ object ZWorkflowStubSignalSyntax {
   ): Expr[TemporalIO[TemporalClientError, ZWorkflowExecution]] = {
     import q.reflect.*
 
+    // TODO validate this is a workflow method
     val fTree = Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
 
     val batchRequestTree = '{

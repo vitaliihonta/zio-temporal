@@ -19,16 +19,9 @@ trait SignalWorkflow {
 class SignalWorkflowImpl extends SignalWorkflow {
   private var message: Option[String] = None
 
-  override def echoServer(prefix: String): String = try {
-    println(s"[${Thread.currentThread.getName}] SignalWorkflow started!")
+  override def echoServer(prefix: String): String = {
     ZWorkflow.awaitWhile(message.isEmpty)
-    println(s"Awaited")
     s"$prefix ${message.get}"
-  } catch {
-    case e: Throwable =>
-      println(s"Error running workflow: $e")
-      e.printStackTrace()
-      throw e
   }
 
   override def echo(value: String): Unit = {

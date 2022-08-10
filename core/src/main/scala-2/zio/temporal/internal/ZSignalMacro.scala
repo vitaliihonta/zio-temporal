@@ -6,6 +6,7 @@ import zio.temporal.signal.ZSignalBuilder
 import zio.temporal.workflow.ZWorkflowClient
 import scala.reflect.macros.blackbox
 
+// TODO: Simplify it as in Scala 3
 class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
   import c.universe._
 

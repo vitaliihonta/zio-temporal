@@ -4,6 +4,7 @@ import zio.temporal.*
 import scala.quoted.*
 import io.temporal.api.common.v1.WorkflowExecution
 
+// TODO replace println and throw with reporting
 class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
   import q.reflect.*
 

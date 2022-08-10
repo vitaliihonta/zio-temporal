@@ -5,7 +5,7 @@ package zio.temporal.state
   * @tparam A
   *   the state value
   */
-class ZWorkflowState[A] private[zio] (private var underlying: Option[A]) {
+case class ZWorkflowState[A] private[zio] (private var underlying: Option[A]) {
 
   /** Replaces the state value
     *

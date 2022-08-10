@@ -3,6 +3,7 @@ package zio.temporal.internal
 import scala.reflect.macros.blackbox
 import zio.temporal.ZWorkflowExecution
 
+// TODO: Simplify it as in Scala 3
 class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
   import c.universe._
 

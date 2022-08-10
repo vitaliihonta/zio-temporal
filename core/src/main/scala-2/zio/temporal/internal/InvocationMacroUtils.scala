@@ -5,6 +5,7 @@ import zio.temporal.workflowInterface
 import zio.temporal.workflowMethod
 import scala.reflect.macros.blackbox
 
+// TODO: Simplify it as in Scala 3
 abstract class InvocationMacroUtils(override val c: blackbox.Context)
     extends MacroUtils(c)
     with VersionSpecificMacroUtils {

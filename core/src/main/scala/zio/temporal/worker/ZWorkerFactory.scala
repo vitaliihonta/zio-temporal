@@ -11,6 +11,22 @@ import zio.temporal.workflow.ZWorkflowClient
   */
 class ZWorkerFactory private (private val self: WorkerFactory) extends AnyVal {
 
+  /** Allows to run arbitrary effect ensuring a shutdown on effect completion.
+    *
+    * Shutdown will be initiated when effect either completes successfully or fails (with error or defect) The effect
+    * will return after shutdown completed
+    *
+    * @param thunk
+    *   the effect to run
+    */
+  def use[R, E, A](thunk: ZIO[R, E, A]): ZIO[R, E, A] =
+    for {
+      startFiber <- start.fork
+      result <- thunk.onExit { _ =>
+                  startFiber.join *> shutdownNow
+                }
+    } yield result
+
   /** Starts all the workers created by this factory.
     */
   def start: UIO[Unit] =

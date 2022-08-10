@@ -6,7 +6,6 @@ import zio.temporal.TemporalIO
 import zio.temporal.internal.InvocationMacroUtils
 import scala.quoted.*
 
-// TODO: implement
 trait ZWorkflowStubQuerySyntax {
   inline def query[R](inline f: R): TemporalIO[TemporalClientError, R] =
     ${ ZWorkflowStubQuerySyntax.queryImpl[R]('f) }

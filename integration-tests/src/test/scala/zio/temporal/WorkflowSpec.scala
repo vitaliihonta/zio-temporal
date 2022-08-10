@@ -19,6 +19,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import scala.collection.mutable.ListBuffer
 
+// TODO: add test cases for:
+// - Activity which uses ZIO
+// - Child workflows
+// - Async invocations
 object WorkflowSpec extends ZIOSpecDefault {
 
   override def spec = suite("ZWorkflow")(
