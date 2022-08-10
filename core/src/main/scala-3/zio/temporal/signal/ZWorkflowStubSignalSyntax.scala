@@ -10,14 +10,12 @@ import zio.temporal.workflow.ZWorkflowClient
 
 import scala.quoted.*
 
-// TODO: implement
 trait ZWorkflowStubSignalSyntax {
   inline def signal(inline f: Unit): TemporalIO[TemporalClientError, Unit] =
     ${ ZWorkflowStubSignalSyntax.signalImpl('f) }
 }
 
-// TODO: implement
-trait ZWorkflowClientSignalWithStartSyntax extends Any { self: ZWorkflowClient =>
+trait ZWorkflowClientSignalWithStartSyntax { self: ZWorkflowClient =>
 
   /** Creates builder for SignalWithStart operation.
     *
@@ -30,7 +28,6 @@ trait ZWorkflowClientSignalWithStartSyntax extends Any { self: ZWorkflowClient =
     ${ ZWorkflowStubSignalSyntax.signalWithImpl('self, 'f) }
 }
 
-// TODO: implement
 final class ZSignalBuilder @internalApi() (
   val __zio_temporal_workflowClient: ZWorkflowClient,
   val __zio_temporal_addSignal:      BatchRequest => Unit) { self =>
@@ -50,14 +47,10 @@ object ZWorkflowStubSignalSyntax {
   def signalImpl(f: Expr[Unit])(using q: Quotes): Expr[TemporalIO[TemporalClientError, Unit]] = {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
-    val invocation = macroUtils.getMethodInvocation(Expr.betaReduce(f).asTerm.underlying)
-//    assertWorkflow(invocation.instance.tpe)
-//    if (!(invocation.instance.tpe <:< typeOf[BaseCanSignal])) {
-//      error(s".signal should be called only on ZWorkflowStub and etc.")
-//    }
+    val invocation = macroUtils.getMethodInvocation(macroUtils.betaReduceExpression(f).asTerm)
+    val method     = invocation.getMethod("Signal method should not be an extension method!")
 
-    val method = invocation.getMethod("Signal method should not be an extension method!")
-
+    method.assertSignalMethod()
     val signalName = macroUtils.getSignalName(method.symbol)
 
     val theMethod =
@@ -77,17 +70,11 @@ object ZWorkflowStubSignalSyntax {
 
   def signalWithImpl(self: Expr[ZWorkflowClient], f: Expr[Unit])(using q: Quotes): Expr[ZSignalBuilder] = {
     import q.reflect.*
-//    val macroUtils = new InvocationMacroUtils[q.type]
-//    val invocation = macroUtils.getMethodInvocation(Expr.betaReduce(f).asTerm.underlying)
-    //    assertWorkflow(invocation.instance.tpe)
-    //    if (!(invocation.instance.tpe <:< typeOf[BaseCanSignal])) {
-    //      error(s".signal should be called only on ZWorkflowStub and etc.")
-    //    }
-
-//    val method = invocation.getMethod("Signal method should not be an extension method!")
-
-    // TODO validate this is a signal method
-    val fTree = Expr.betaReduce(f).asTerm.underlying.asExprOf[Unit]
+    val macroUtils = new InvocationMacroUtils[q.type]
+    val fTree      = macroUtils.betaReduceExpression(f)
+    val invocation = macroUtils.getMethodInvocation(fTree.asTerm)
+    val method     = invocation.getMethod("Signal method should not be an extension method!")
+    method.assertSignalMethod()
 
     val result = '{ new ZSignalBuilder($self, TemporalWorkflowFacade.addToBatchRequest(() => $fTree)) }
     println(result.show)
@@ -100,9 +87,12 @@ object ZWorkflowStubSignalSyntax {
   )(using q: Quotes
   ): Expr[TemporalIO[TemporalClientError, ZWorkflowExecution]] = {
     import q.reflect.*
+    val macroUtils = new InvocationMacroUtils[q.type]
+    val fTree      = macroUtils.betaReduceExpression(f)
+    val invocation = macroUtils.getMethodInvocation(fTree.asTerm)
+    val method     = invocation.getMethod("Workflow method should not be an extension method!")
 
-    // TODO validate this is a workflow method
-    val fTree = Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
+    method.assertWorkflowMethod()
 
     val batchRequestTree = '{
       val javaClient   = $self.__zio_temporal_workflowClient.toJava

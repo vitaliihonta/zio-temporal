@@ -29,11 +29,12 @@ trait ZWorkflowExecutionSyntax {
 object ZWorkflowExecutionSyntax {
   def startImpl[A: Type](f: Expr[A])(using q: Quotes): Expr[TemporalIO[TemporalClientError, ZWorkflowExecution]] = {
     import q.reflect.*
-//    val macroUtils = new InvocationMacroUtils[q.type]
-//    val invocation = macroUtils.getMethodInvocation(Expr.betaReduce(f).asTerm.underlying)
-//    val method     = invocation.getMethod("Workflow method should not be extension methods!")
-    // TODO: validate method is a workflow method
-    val fTree = Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
+    val macroUtils = new InvocationMacroUtils[q.type]
+    val fTree      = macroUtils.betaReduceExpression(f)
+    val invocation = macroUtils.getMethodInvocation(fTree.asTerm)
+    val method     = invocation.getMethod("Workflow method should not be extension methods!")
+    method.assertWorkflowMethod()
+
     val result = '{
       zio.temporal.internal.TemporalInteraction.from {
         new ZWorkflowExecution(TemporalWorkflowFacade.start(() => $fTree))
@@ -45,11 +46,12 @@ object ZWorkflowExecutionSyntax {
 
   def executeImpl[R: Type](f: Expr[R])(using q: Quotes): Expr[TemporalIO[TemporalClientError, R]] = {
     import q.reflect.*
-//    val macroUtils = new InvocationMacroUtils[q.type]
-//    val theExecute = macroUtils.buildExecuteInvocation(Expr.betaReduce(f).asTerm.underlying, TypeRepr.of[R])
+    val macroUtils = new InvocationMacroUtils[q.type]
+    val fTree      = macroUtils.betaReduceExpression(f)
+    val invocation = macroUtils.getMethodInvocation(fTree.asTerm)
+    val method     = invocation.getMethod("Workflow method should not be extension methods!")
+    method.assertWorkflowMethod()
 
-    // TODO: validate method is a workflow method
-    val fTree = Expr.betaReduce(f).asTerm.underlying.asExprOf[R]
     val result = '{
       zio.temporal.internal.TemporalInteraction.fromFuture {
         TemporalWorkflowFacade.execute(() => $fTree)
@@ -64,11 +66,12 @@ object ZWorkflowExecutionSyntax {
   )(using q: Quotes
   ): Expr[TemporalIO[TemporalError[E], R]] = {
     import q.reflect.*
-    //    val macroUtils = new InvocationMacroUtils[q.type]
-    //    val theExecute = macroUtils.buildExecuteInvocation(Expr.betaReduce(f).asTerm.underlying, TypeRepr.of[R])
+    val macroUtils = new InvocationMacroUtils[q.type]
+    val fTree      = macroUtils.betaReduceExpression(f)
+    val invocation = macroUtils.getMethodInvocation(fTree.asTerm)
+    val method     = invocation.getMethod("Workflow method should not be extension methods!")
+    method.assertWorkflowMethod()
 
-    // TODO: validate method is a workflow method
-    val fTree = Expr.betaReduce(f).asTerm.underlying.asExprOf[Either[E, R]]
     val result = '{
       zio.temporal.internal.TemporalInteraction.fromFutureEither {
         TemporalWorkflowFacade.execute(() => $fTree)
@@ -78,15 +81,29 @@ object ZWorkflowExecutionSyntax {
     result
   }
 
-  // TODO: implement
   def asyncImpl[R: Type](f: Expr[R])(using q: Quotes): Expr[ZPromise[Nothing, R]] = {
     import q.reflect.*
-    ???
+    val macroUtils = new InvocationMacroUtils[q.type]
+    val fTree      = macroUtils.betaReduceExpression(f)
+    val invocation = macroUtils.getMethodInvocation(fTree.asTerm)
+    val method     = invocation.getMethod("Workflow method should not be extension methods!")
+    method.assertWorkflowMethod()
+
+    val result = '{ ZPromise.fromEither(Right($fTree)) }
+    println(result.show)
+    result
   }
 
-  // TODO: implement
   def asyncEitherImpl[E: Type, R: Type](f: Expr[Either[E, R]])(using q: Quotes): Expr[ZPromise[E, R]] = {
     import q.reflect.*
-    ???
+    val macroUtils = new InvocationMacroUtils[q.type]
+    val fTree      = macroUtils.betaReduceExpression(f)
+    val invocation = macroUtils.getMethodInvocation(fTree.asTerm)
+    val method     = invocation.getMethod("Workflow method should not be extension methods!")
+    method.assertWorkflowMethod()
+
+    val result = '{ ZPromise.fromEither($fTree) }
+    println(result.show)
+    result
   }
 }

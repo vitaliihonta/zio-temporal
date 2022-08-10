@@ -27,7 +27,8 @@ object BuildConfig extends Dependencies {
   val testLibs = baseLibs ++ Seq(
     Zio.test,
     Zio.testSbt,
-    Logging.zio % Test
+    Logging.zio % Test,
+    Testing.scalatest
   )
 
   val protobufLibs = baseLibs ++ Seq(
@@ -114,5 +115,9 @@ trait Dependencies {
     val zio      = org.zio         %% "zio-logging"       % versions.zioLogging
     val zioSlf4j = org.zio         %% "zio-logging-slf4j" % versions.zioLogging
     val logback  = "ch.qos.logback" % "logback-classic"   % "1.2.11"
+  }
+
+  object Testing {
+    val scalatest = "org.scalatest" %% "scalatest" % "3.2.12" % Test
   }
 }

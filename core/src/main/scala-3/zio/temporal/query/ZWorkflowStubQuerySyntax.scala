@@ -18,7 +18,7 @@ object ZWorkflowStubQuerySyntax {
   def queryImpl[R: Type](f: Expr[R])(using q: Quotes): Expr[TemporalIO[TemporalClientError, R]] = {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
-    val theQuery   = macroUtils.buildQueryInvocation(Expr.betaReduce(f).asTerm.underlying, TypeRepr.of[R])
+    val theQuery   = macroUtils.buildQueryInvocation(macroUtils.betaReduceExpression(f).asTerm, TypeRepr.of[R])
     val result = '{
       _root_.zio.temporal.internal.TemporalInteraction.from[R] {
         ${ theQuery.asExprOf[R] }
@@ -34,7 +34,7 @@ object ZWorkflowStubQuerySyntax {
   ): Expr[TemporalIO[TemporalError[E], R]] = {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
-    val theQuery   = macroUtils.buildQueryInvocation(Expr.betaReduce(f).asTerm.underlying, TypeRepr.of[Either[E, R]])
+    val theQuery = macroUtils.buildQueryInvocation(macroUtils.betaReduceExpression(f).asTerm, TypeRepr.of[Either[E, R]])
     val result = '{
       _root_.zio.temporal.internal.TemporalInteraction.fromEither[E, R] {
         ${

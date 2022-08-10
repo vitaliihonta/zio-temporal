@@ -27,7 +27,6 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
   private val state = ZWorkflowState.empty[TransactionState]
 
   override def proceed(transaction: ProceedTransactionCommand): Either[TransactionError, TransactionView] = {
-    // TODO: debug for scala3
     logger.info(s"Processing transaction=$transaction")
     state.setTo(initialState(transaction))
     val saga = for {

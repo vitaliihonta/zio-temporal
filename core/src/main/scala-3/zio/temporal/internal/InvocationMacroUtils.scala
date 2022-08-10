@@ -8,25 +8,32 @@ import io.temporal.api.common.v1.WorkflowExecution
 class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
   import q.reflect.*
 
-  private val WorkflowInterface = TypeRepr.of[workflowInterface].typeSymbol
+  private val WorkflowInterface = typeSymbolOf[workflowInterface]
+  private val WorkflowMethod    = typeSymbolOf[workflowMethod]
+  private val QueryMethod       = typeSymbolOf[queryMethod]
+  private val SignalMethod      = typeSymbolOf[signalMethod]
+
+  def betaReduceExpression[A: Type](f: Expr[A]): Expr[A] =
+    Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
 
   def getMethodInvocation(tree: Term): MethodInvocation =
     tree match {
-      case Select(instance @ Ident(_), methodName) =>
+      case Select(instance, methodName) =>
         MethodInvocation(instance, methodName, Nil)
-      case Apply(Select(instance @ Ident(_), methodName), args) =>
+      case Apply(Select(instance, methodName), args) =>
         MethodInvocation(instance, methodName, args)
+      case TypeApply(inner, _) =>
+        getMethodInvocation(inner)
+      case Block(List(inner: Term), _) =>
+        getMethodInvocation(inner)
       case _ => sys.error(s"Expected simple method invocation, got tree of class ${tree.getClass}: $tree")
     }
 
-  case class MethodInvocation(instance: Ident, methodName: String, args: List[Term]) {
+  case class MethodInvocation(instance: Term, methodName: String, args: List[Term]) {
+    // Asserts that this is a WorkflowInterface
     val workflowType = getWorkflowType(instance.tpe.widen)
 
-//    println(workflowType.typeSymbol.methodMembers)
-
     def getMethod(errorDetails: => String): MethodInfo =
-//      println(instance.tpe.typeSymbol.methodMembers)
-//      println(instance.tpe.widen.baseClasses)
       workflowType.typeSymbol
         .methodMember(methodName)
         .headOption
@@ -40,10 +47,23 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
 
     validateCalls()
 
+    def assertWorkflowMethod(): Unit =
+      if (!symbol.hasAnnotation(WorkflowMethod)) {
+        sys.error(s"The method is not a @workflowMethod: $symbol")
+      }
+
+    def assertSignalMethod(): Unit =
+      if (!symbol.hasAnnotation(SignalMethod)) {
+        sys.error(s"The method is not a @signalMethod: $symbol")
+      }
+
+    def assertQueryMethod(): Unit =
+      if (!symbol.hasAnnotation(QueryMethod)) {
+        sys.error(s"The method is not a @queryMethod: $symbol")
+      }
+
     private def validateCalls(): Unit =
       symbol.paramSymss.headOption.foreach { expectedArgs =>
-//        println(s"expectedArgs=${expectedArgs.map(_.tree)}")
-//        println(s"appliedArgs=$appliedArgs")
         appliedArgs.zip(expectedArgs).zipWithIndex.foreach { case ((actual, expected), argumentNo) =>
           // TODO: add better error message for ClassCastException
           val expectedType = expected.tree.asInstanceOf[ValDef].tpt.tpe
@@ -58,54 +78,43 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
       }
   }
 
-  case class LambdaConversionResult(tree: Term, methodOverload: String, typeArgs: List[TypeRepr], args: List[Term])
-
-  def getWorkflowType(workflow: TypeRepr): TypeRepr = {
-    def errorNotWorkflow = sys.error(s"${workflow.show} is not a workflow!")
-
-//    println(workflow.getClass)
+  def getWorkflowType(workflow: TypeRepr): TypeRepr =
     workflow match {
-      case AppliedType(tc, List(wf)) =>
+      case AppliedType(_, List(wf)) =>
         val hasAnnotation = wf.typeSymbol.hasAnnotation(WorkflowInterface)
-//        println(s"has=$hasAnnotation")
-        if (!hasAnnotation) errorNotWorkflow
+        if (!hasAnnotation) {
+          sys.error(s"${workflow.show} is not a workflow!")
+        }
         wf
     }
-  }
 
-  private val workflowClientSymbol = Symbol.classSymbol("io.temporal.client.WorkflowClient").companionModule
-  private val workflowStubSymbol   = Symbol.classSymbol("io.temporal.client.WorkflowStub")
+  private val workflowStubSymbol = Symbol.classSymbol("io.temporal.client.WorkflowStub")
   private val workflowStubQueryMethodSymbol = {
     val methods = workflowStubSymbol.methodMember("query")
-//    println(methods.map(_.signature.paramSigs))
     methods.find(_.signature.paramSigs.size == 4).head
   }
 
   def buildQueryInvocation(f: Term, ret: TypeRepr): Tree = {
     val invocation = getMethodInvocation(f)
 
-//    assertWorkflow(invocation.instance.tpe)
-
     val method = invocation.getMethod("Query method should not be an extension method!")
-
+    method.assertQueryMethod()
     val queryName = getQueryName(method.symbol)
 
     queryInvocation(invocation, method, queryName, ret)
   }
 
+  // TODO: more arity
   def queryInvocation(
     invocation: MethodInvocation,
     method:     MethodInfo,
     queryName:  String,
     ret:        TypeRepr
   ): Tree = {
-//    println(invocation.instance.symbol.fieldMembers)
     val retTypeTree = TypeTree.of(using ret.asType)
     val stub        = invocation.instance.select(invocation.instance.symbol.methodMember("toJava").head)
-//    println(stub.show)
     method.appliedArgs match {
       case Nil =>
-//        println(workflowStubQueryMethodSymbol.signature)
         val t = Apply(
           TypeApply(Select(stub, workflowStubQueryMethodSymbol), List(retTypeTree)),
           List(
@@ -126,7 +135,7 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
   }
 
   def getQueryName(method: Symbol): String = {
-    val ann = method.getAnnotation(Symbol.classSymbol("io.temporal.workflow.QueryMethod"))
+    val ann = method.getAnnotation(QueryMethod)
     ann match {
       case Some(Apply(Select(New(_), _), List(NamedArg(_, Literal(StringConstant(name)))))) =>
         name
@@ -135,11 +144,14 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
   }
 
   def getSignalName(method: Symbol): String = {
-    val ann = method.getAnnotation(Symbol.classSymbol("io.temporal.workflow.SignalMethod"))
+    val ann = method.getAnnotation(SignalMethod)
     ann match {
       case Some(Apply(Select(New(_), _), List(NamedArg(_, Literal(StringConstant(name)))))) =>
         name
       case _ => method.name
     }
   }
+
+  private def typeSymbolOf[A: Type]: Symbol =
+    TypeRepr.of[A].dealias.typeSymbol
 }

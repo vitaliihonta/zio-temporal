@@ -166,7 +166,7 @@ lazy val `integration-tests` = projectMatrix
   .settings(baseSettings, coverageSettings, noPublishSettings, crossCompileSettings)
   .settings(
     libraryDependencies ++= testLibs,
-    testFrameworks := Zio.testFrameworks
+    testFrameworks ++= Zio.testFrameworks
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
 

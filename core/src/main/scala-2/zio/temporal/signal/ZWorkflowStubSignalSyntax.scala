@@ -15,7 +15,7 @@ trait ZWorkflowStubSignalSyntax {
     macro ZSignalMacro.signalImpl
 }
 
-trait ZWorkflowClientSignalWithStartSyntax extends Any {
+trait ZWorkflowClientSignalWithStartSyntax {
 
   /** Creates builder for SignalWithStart operation.
     *

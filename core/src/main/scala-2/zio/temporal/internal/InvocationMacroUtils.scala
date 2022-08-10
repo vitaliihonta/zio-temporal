@@ -17,7 +17,6 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
 
   protected case class MethodInfo(name: Name, symbol: Symbol, appliedArgs: List[Tree]) {
     validateCalls()
-
     private def validateCalls(): Unit =
       symbol.typeSignature.paramLists.headOption.foreach { expectedArgs =>
         appliedArgs.zip(expectedArgs).zipWithIndex.foreach { case ((actual, expected), argumentNo) =>
