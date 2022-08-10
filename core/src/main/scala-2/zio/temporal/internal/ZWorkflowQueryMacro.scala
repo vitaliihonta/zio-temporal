@@ -55,15 +55,7 @@ class ZWorkflowQueryMacro(override val c: blackbox.Context) extends InvocationMa
     ret:        Type
   ): Tree = {
     val stub = q"""${invocation.instance}.toJava"""
-    method.appliedArgs match {
-      case Nil =>
-        q"""$stub.query[$ret]($queryName, classOf[$ret])"""
-      case List(a) =>
-        q"""$stub.query[$ret]($queryName, classOf[$ret], $a.asInstanceOf[AnyRef])"""
-      case List(a, b) =>
-        q"""$stub.query[$ret]($queryName, classOf[$ret], $a.asInstanceOf[AnyRef], $b.asInstanceOf[AnyRef])"""
-      case args =>
-        sys.error(s"Query with arity ${args.size} not currently implemented. Feel free to contribute!")
-    }
+//    val args = method.appliedArgs.map[Tree](t => q"$t.asInstanceOf[AnyRef]")
+    q"""_root_.zio.temporal.internal.TemporalWorkflowFacade.query[$ret]($stub, $queryName, List(..${method.appliedArgs}))"""
   }
 }

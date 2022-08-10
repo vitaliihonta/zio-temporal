@@ -16,6 +16,7 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
 
   protected case class MethodInfo(name: Name, symbol: Symbol, appliedArgs: List[Tree]) {
     validateCalls()
+    validateNoDefaultArgs()
 
     def assertWorkflowMethod(): Unit =
       if (!hasAnnotation(symbol, WorkflowMethod)) {
@@ -44,6 +45,22 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
           }
         }
       }
+
+    private def validateNoDefaultArgs(): Unit = {
+      val paramsWithDefault = symbol.asMethod.paramLists
+        .flatMap(
+          _.map(_.asTerm)
+            .filter(_.isParamWithDefault)
+        )
+      if (paramsWithDefault.nonEmpty) {
+        error(
+          s"\nCurrently, methods with default arguments are not supported.\n" +
+            s"Found the following default arguments: ${paramsWithDefault.map(_.name.toString).mkString(", ")}.\n" +
+            s"Temporal doesn't work well with scala's implementation of default arguments, and throws the following error at runtime:\n" +
+            s"[Just an example] java.lang.IllegalArgumentException: Missing @WorkflowMethod, @SignalMethod or @QueryMethod annotation on public default scala.Option zio.temporal.fixture.SignalWorkflow.getProgress$$default$$1()"
+        )
+      }
+    }
   }
 
   protected case class MethodInvocation(instance: Tree, methodName: Name, args: List[Tree]) {

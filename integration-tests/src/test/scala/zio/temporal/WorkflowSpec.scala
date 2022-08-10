@@ -81,20 +81,23 @@ object WorkflowSpec extends ZIOSpecDefault {
                 _ <- ZWorkflowStub
                        .start(signalWorkflow.echoServer("ECHO"))
                        .tapBoth(e => ZIO.log(s"Got error $e"), a => ZIO.log(s"Got started $a"))
-                _            <- ZIO.log("Started")
-                workflowStub <- client.newWorkflowStubProxy[SignalWorkflow](workflowId)
-                _            <- ZIO.log("New stub created!")
-                progress     <- ZWorkflowStub.query(workflowStub.getProgress)
-                _            <- ZIO.log(s"Progress=$progress")
+                _               <- ZIO.log("Started")
+                workflowStub    <- client.newWorkflowStubProxy[SignalWorkflow](workflowId)
+                _               <- ZIO.log("New stub created!")
+                progress        <- ZWorkflowStub.query(workflowStub.getProgress(default = None))
+                _               <- ZIO.log(s"Progress=$progress")
+                progressDefault <- ZWorkflowStub.query(workflowStub.getProgress(default = Some("default")))
+                _               <- ZIO.log(s"Progress_default=$progressDefault")
                 _ <- ZWorkflowStub.signal(
                        workflowStub.echo("Hello!")
                      )
                 progress2 <- ZWorkflowStub
-                               .query(workflowStub.getProgress)
+                               .query(workflowStub.getProgress(default = None))
                                .repeatWhile(_.isEmpty)
                 _      <- ZIO.log(s"Progress2=$progress2")
                 result <- workflowStub.result[String]
               } yield assertTrue(progress.isEmpty) &&
+                assertTrue(progressDefault.contains("default")) &&
                 assertTrue(progress2.contains("Hello!")) &&
                 assertTrue(result == "ECHO Hello!")
             }

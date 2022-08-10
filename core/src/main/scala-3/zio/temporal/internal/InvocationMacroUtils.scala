@@ -1,8 +1,11 @@
 package zio.temporal.internal
 
 import zio.temporal.*
+
 import scala.quoted.*
 import io.temporal.api.common.v1.WorkflowExecution
+
+import scala.reflect.ClassTag
 
 // TODO replace println and throw with reporting
 class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
@@ -46,6 +49,7 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
   case class MethodInfo(name: String, symbol: Symbol, appliedArgs: List[Term]) {
 
     validateCalls()
+    validateNoDefaultArgs()
 
     def assertWorkflowMethod(): Unit =
       if (!symbol.hasAnnotation(WorkflowMethod)) {
@@ -76,6 +80,21 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
           }
         }
       }
+
+    private def validateNoDefaultArgs(): Unit = {
+      val paramsWithDefault = symbol.paramSymss
+        .flatMap(
+          _.filter(_.flags is Flags.HasDefault)
+        )
+      if (paramsWithDefault.nonEmpty) {
+        sys.error(
+          s"\nCurrently, methods with default arguments are not supported.\n" +
+            s"Found the following default arguments: ${paramsWithDefault.map(_.name).mkString(", ")}.\n" +
+            s"Temporal doesn't work well with scala's implementation of default arguments, and throws the following error at runtime:\n" +
+            s"[Just an example] java.lang.IllegalArgumentException: Missing @WorkflowMethod, @SignalMethod or @QueryMethod annotation on public default scala.Option zio.temporal.fixture.SignalWorkflow.getProgress$$default$$1()"
+        )
+      }
+    }
   }
 
   def getWorkflowType(workflow: TypeRepr): TypeRepr =
@@ -94,44 +113,31 @@ class InvocationMacroUtils[Q <: Quotes](using val q: Q) {
     methods.find(_.signature.paramSigs.size == 4).head
   }
 
-  def buildQueryInvocation(f: Term, ret: TypeRepr): Tree = {
+  def buildQueryInvocation[R: Type](f: Term, ctgExpr: Expr[ClassTag[R]]): Expr[R] = {
     val invocation = getMethodInvocation(f)
 
     val method = invocation.getMethod("Query method should not be an extension method!")
     method.assertQueryMethod()
     val queryName = getQueryName(method.symbol)
 
-    queryInvocation(invocation, method, queryName, ret)
+    queryInvocation(invocation, method, queryName, ctgExpr)
   }
 
-  // TODO: more arity
-  def queryInvocation(
+  def queryInvocation[R: Type](
     invocation: MethodInvocation,
     method:     MethodInfo,
     queryName:  String,
-    ret:        TypeRepr
-  ): Tree = {
-    val retTypeTree = TypeTree.of(using ret.asType)
-    val stub        = invocation.instance.select(invocation.instance.symbol.methodMember("toJava").head)
-    method.appliedArgs match {
-      case Nil =>
-        val t = Apply(
-          TypeApply(Select(stub, workflowStubQueryMethodSymbol), List(retTypeTree)),
-          List(
-            Literal(StringConstant(queryName)),
-            Literal(ClassOfConstant(ret)),
-            Expr.ofSeq(Nil).asTerm
-          )
-        )
-        t
-//        q"""$stub.query[$ret]($queryName, classOf[$ret])"""
-//      case List(a) =>
-//        q"""$stub.query[$ret]($queryName, classOf[$ret], $a.asInstanceOf[AnyRef])"""
-//      case List(a, b) =>
-//        q"""$stub.query[$ret]($queryName, classOf[$ret], $a.asInstanceOf[AnyRef], $b.asInstanceOf[AnyRef])"""
-//      case args =>
-//        sys.error(s"Query with arity ${args.size} not currently implemented. Feel free to contribute!")
-    }
+    ctgExpr:    Expr[ClassTag[R]]
+  ): Expr[R] = {
+    val stub = invocation.instance
+      .select(invocation.instance.symbol.methodMember("toJava").head)
+      .asExprOf[io.temporal.client.WorkflowStub]
+
+    val castedArgs = Expr.ofList(
+      method.appliedArgs.map(_.asExprOf[AnyRef])
+    )
+
+    '{ TemporalWorkflowFacade.query[R]($stub, ${ Expr(queryName) }, $castedArgs)($ctgExpr) }
   }
 
   def getQueryName(method: Symbol): String = {

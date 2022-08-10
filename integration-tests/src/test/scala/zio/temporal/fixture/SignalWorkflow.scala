@@ -10,7 +10,7 @@ trait SignalWorkflow {
   def echoServer(prefix: String): String
 
   @queryMethod(name = "progress")
-  def getProgress: Option[String]
+  def getProgress(default: Option[String]): Option[String]
 
   @signalMethod
   def echo(value: String): Unit
@@ -29,8 +29,8 @@ class SignalWorkflowImpl extends SignalWorkflow {
     message = Some(value)
   }
 
-  override def getProgress: Option[String] = {
-    println("Getting progress...")
-    message
+  override def getProgress(default: Option[String]): Option[String] = {
+    println(s"Getting progress default=$default...")
+    message.orElse(default)
   }
 }

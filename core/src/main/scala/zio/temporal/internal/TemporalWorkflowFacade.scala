@@ -1,11 +1,12 @@
 package zio.temporal.internal
 
 import io.temporal.api.common.v1.WorkflowExecution
-import io.temporal.client.{BatchRequest, WorkflowClient}
+import io.temporal.client.{BatchRequest, WorkflowClient, WorkflowStub}
 import io.temporal.workflow.Functions
 
 import java.util.concurrent.CompletableFuture
 import scala.language.implicitConversions
+import scala.reflect.ClassTag
 
 object TemporalWorkflowFacade {
   import FunctionConverters.*
@@ -22,6 +23,9 @@ object TemporalWorkflowFacade {
 
   def addToBatchRequest(b: BatchRequest, f: () => Unit): Unit =
     b.add(f: Functions.Proc)
+
+  def query[R](stub: WorkflowStub, name: String, args: List[AnyRef])(implicit ctg: ClassTag[R]): R =
+    stub.query[R](name, ClassTagUtils.classOf[R], args: _*)
 
   object FunctionConverters {
     implicit def proc(f: () => Unit): Functions.Proc = new Functions.Proc {
