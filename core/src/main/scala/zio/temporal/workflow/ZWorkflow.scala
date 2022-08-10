@@ -119,7 +119,8 @@ object ZWorkflow {
     *   wrapped proc
     */
   def newCancellationScope[U](thunk: ZCancellationScope => U): ZCancellationScope = {
-    val scope = Workflow.newCancellationScope((scope: CancellationScope) => thunk(new ZCancellationScope(scope)))
+    val scope =
+      Workflow.newCancellationScope((scope: CancellationScope) => (thunk(new ZCancellationScope(scope)): Unit))
     new ZCancellationScope(scope)
   }
 
@@ -238,9 +239,9 @@ object ZWorkflow {
     * @return
     *   external workflow stub
     */
-  def newExternalWorkflowStubProxy[A: IsConcreteType](workflowId: String): ZExternalWorkflowStub.Proxy[A] =
+  def newExternalWorkflowStubProxy[A: ClassTag: IsConcreteType](workflowId: String): ZExternalWorkflowStub.Proxy[A] =
     ZExternalWorkflowStub.Proxy(
-      new ZExternalWorkflowStub(Workflow.newUntypedExternalWorkflowStub(workflowId))
+      new ZExternalWorkflowStubImpl(Workflow.newUntypedExternalWorkflowStub(workflowId))
     )
 
   /** Creates untyped client stub that can be used to communicate to an existing workflow execution.
@@ -250,10 +251,10 @@ object ZWorkflow {
     * @return
     *   external workflow stub
     */
-  def newExternalWorkflowStubProxy[A: IsConcreteType](
+  def newExternalWorkflowStubProxy[A: ClassTag: IsConcreteType](
     workflowExecution: ZWorkflowExecution
   ): ZExternalWorkflowStub.Proxy[A] =
     ZExternalWorkflowStub.Proxy[A](
-      new ZExternalWorkflowStub(Workflow.newUntypedExternalWorkflowStub(workflowExecution.toJava))
+      new ZExternalWorkflowStubImpl(Workflow.newUntypedExternalWorkflowStub(workflowExecution.toJava))
     )
 }

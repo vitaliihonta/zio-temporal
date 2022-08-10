@@ -6,14 +6,12 @@ import org.reflections.util.ConfigurationBuilder
 import org.slf4j.LoggerFactory
 import scalapb.GeneratedFileObject
 import zio.temporal.experimentalApi
-
-import scala.jdk.CollectionConverters._
-import scala.reflect.runtime.universe._
-import scala.util.Try
+import scala.jdk.CollectionConverters.*
 
 @experimentalApi
 object ProtoFileObjectAutoLoader {
-  private val logger = LoggerFactory.getLogger(getClass)
+  private val logger           = LoggerFactory.getLogger(getClass)
+  private val scalaModuleField = "MODULE$"
 
   def loadFromClassPath(
     classLoader:     ClassLoader,
@@ -28,20 +26,7 @@ object ProtoFileObjectAutoLoader {
 
     val loadedSubTypes = reflections.getSubTypesOf(classOf[GeneratedFileObject]).asScala.toList
     logger.trace(s"Found subtypes of GeneratedFileObject: ${loadedSubTypes.mkString("[", ",", "]")}")
-    val mirror = runtimeMirror(classLoader)
-    val results = loadedSubTypes.flatMap { cls =>
-      val clsSymbol = mirror.classSymbol(cls)
-      if (!clsSymbol.isModuleClass) None
-      else {
-        val moduleSymbol = clsSymbol.owner.info.decl(clsSymbol.name.toTermName).asModule
-        Try {
-          mirror
-            .reflectModule(moduleSymbol)
-            .instance
-            .asInstanceOf[GeneratedFileObject]
-        }.toOption
-      }
-    }
+    val results = loadedSubTypes.map(getGeneratedObjectInstance)
     logger.info(
       s"Loaded ${results.size} GeneratedFileObject(s): ${results.map(showGeneratedFileObject).mkString("[", ",", "]")}"
     )
@@ -117,6 +102,12 @@ object ProtoFileObjectAutoLoader {
 
   def packagePrefixToDirPrefix(pkg: String): String =
     pkg.replace(".", "/") + "/"
+
+  private def getGeneratedObjectInstance(cls: Class[_ <: GeneratedFileObject]): GeneratedFileObject =
+    cls
+      .getDeclaredField(scalaModuleField)
+      .get(null)
+      .asInstanceOf[GeneratedFileObject]
 
   private def showGeneratedFileObject(f: GeneratedFileObject): String =
     s"GeneratedFileObject(class=${f.getClass.getName}, file=${f.scalaDescriptor.fullName})"

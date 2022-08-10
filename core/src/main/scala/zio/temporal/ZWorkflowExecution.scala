@@ -6,7 +6,7 @@ import io.temporal.api.common.v1.WorkflowExecution
   * @see
   *   [[WorkflowExecution]]
   */
-class ZWorkflowExecution @internalApi() (val toJava: WorkflowExecution) extends AnyVal {
+final class ZWorkflowExecution @internalApi() (val toJava: WorkflowExecution) {
   def workflowId: String     = toJava.getWorkflowId
   def runId: String          = toJava.getRunId
   def isInitialized: Boolean = toJava.isInitialized

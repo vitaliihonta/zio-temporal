@@ -2,7 +2,7 @@ package zio.temporal.fixture
 
 import zio.temporal._
 
-@workflow
+@workflowInterface
 trait SampleWorkflow {
 
   @workflowMethod

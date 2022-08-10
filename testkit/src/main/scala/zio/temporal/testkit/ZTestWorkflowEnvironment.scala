@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
   * @see
   *   [[TestWorkflowEnvironment]]
   */
-class ZTestWorkflowEnvironment private[zio] (private val self: TestWorkflowEnvironment) extends AnyVal {
+class ZTestWorkflowEnvironment private[zio] (val toJava: TestWorkflowEnvironment) {
 
   /** Creates a new Worker instance that is connected to the in-memory test Temporal service.
     *
@@ -30,13 +30,13 @@ class ZTestWorkflowEnvironment private[zio] (private val self: TestWorkflowEnvir
     *   task queue to poll.
     */
   def newWorker(taskQueue: String, options: ZWorkerOptions = ZWorkerOptions.default) =
-    new ZWorker(self.newWorker(taskQueue, options.toJava), workflows = Nil, activities = Nil)
+    new ZWorker(toJava.newWorker(taskQueue, options.toJava), workflows = Nil, activities = Nil)
 
   /** Creates a WorkflowClient that is connected to the in-memory test Temporal service. */
-  def workflowClient = new ZWorkflowClient(self.getWorkflowClient)
+  def workflowClient = new ZWorkflowClient(toJava.getWorkflowClient)
 
   /** Returns the in-memory test Temporal service that is owned by this. */
-  def workflowService = new ZWorkflowServiceStubs(self.getWorkflowServiceStubs)
+  def workflowService = new ZWorkflowServiceStubs(toJava.getWorkflowServiceStubs)
 
   /** Allows to run arbitrary effect ensuring a shutdown on effect completion.
     *
@@ -64,7 +64,7 @@ class ZTestWorkflowEnvironment private[zio] (private val self: TestWorkflowEnvir
 
   /** Start all workers created by this test environment. */
   def start: UIO[Unit] =
-    ZIO.blocking(ZIO.succeed(self.start()))
+    ZIO.blocking(ZIO.succeed(toJava.start()))
 
   /** Initiates an orderly shutdown in which polls are stopped and already received workflow and activity tasks are
     * executed.
@@ -73,7 +73,7 @@ class ZTestWorkflowEnvironment private[zio] (private val self: TestWorkflowEnvir
     *   [[TestWorkflowEnvironment#shutdown]]
     */
   def shutdown: UIO[Unit] =
-    ZIO.blocking(ZIO.succeed(self.shutdown()))
+    ZIO.blocking(ZIO.succeed(toJava.shutdown()))
 
   /** Initiates an orderly shutdown in which polls are stopped and already received workflow and activity tasks are
     * attempted to be stopped. This implementation cancels tasks via Thread.interrupt(), so any task that fails to
@@ -83,7 +83,7 @@ class ZTestWorkflowEnvironment private[zio] (private val self: TestWorkflowEnvir
     *   [[TestWorkflowEnvironment#shutdownNow]]
     */
   def shutdownNow: UIO[Unit] =
-    ZIO.blocking(ZIO.succeed(self.shutdownNow()))
+    ZIO.blocking(ZIO.succeed(toJava.shutdownNow()))
 
   /** Blocks until all tasks have completed execution after a shutdown request, or the timeout occurs, or the current
     * thread is interrupted, whichever happens first.
@@ -97,7 +97,7 @@ class ZTestWorkflowEnvironment private[zio] (private val self: TestWorkflowEnvir
     ZIO
       .blocking {
         ZIO.succeed(
-          self.awaitTermination(options.pollTimeout.toNanos, TimeUnit.NANOSECONDS)
+          toJava.awaitTermination(options.pollTimeout.toNanos, TimeUnit.NANOSECONDS)
         )
       }
       .repeat(Schedule.recurUntil((_: Unit) => true) && Schedule.fixed(options.pollDelay))

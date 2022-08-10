@@ -9,7 +9,7 @@ import scala.jdk.CollectionConverters._
   * @see
   *   [[WorkflowInfo]]
   */
-class ZWorkflowInfo private[zio] (val toJava: WorkflowInfo) extends AnyVal {
+final class ZWorkflowInfo private[zio] (val toJava: WorkflowInfo) {
   def namespace: String    = toJava.getNamespace
   def workflowId: String   = toJava.getWorkflowId
   def runId: String        = toJava.getRunId

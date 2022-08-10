@@ -3,7 +3,6 @@ package zio.temporal.protobuf
 import com.google.protobuf.ByteString
 import scalapb.GeneratedMessage
 import scalapb.GeneratedSealedOneof
-
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset

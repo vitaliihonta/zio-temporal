@@ -9,12 +9,28 @@ import zio.temporal.workflow.ZWorkflowClient
   * @see
   *   [[WorkerFactory]]
   */
-class ZWorkerFactory private (private val self: WorkerFactory) extends AnyVal {
+final class ZWorkerFactory private (val toJava: WorkerFactory) {
+
+  /** Allows to run arbitrary effect ensuring a shutdown on effect completion.
+    *
+    * Shutdown will be initiated when effect either completes successfully or fails (with error or defect) The effect
+    * will return after shutdown completed
+    *
+    * @param thunk
+    *   the effect to run
+    */
+  def use[R, E, A](thunk: ZIO[R, E, A]): ZIO[R, E, A] =
+    for {
+      startFiber <- start.fork
+      result <- thunk.onExit { _ =>
+                  startFiber.join *> shutdownNow
+                }
+    } yield result
 
   /** Starts all the workers created by this factory.
     */
   def start: UIO[Unit] =
-    ZIO.blocking(ZIO.succeed(self.start()))
+    ZIO.blocking(ZIO.succeed(toJava.start()))
 
   /** Initiates an orderly shutdown in which polls are stopped and already received workflow and activity tasks are
     * executed.
@@ -23,7 +39,7 @@ class ZWorkerFactory private (private val self: WorkerFactory) extends AnyVal {
     *   [[WorkerFactory#shutdown]]
     */
   def shutdown: UIO[Unit] =
-    ZIO.blocking(ZIO.succeed(self.shutdown()))
+    ZIO.blocking(ZIO.succeed(toJava.shutdown()))
 
   /** Initiates an orderly shutdown in which polls are stopped and already received workflow and activity tasks are
     * attempted to be stopped. This implementation cancels tasks via Thread.interrupt(), so any task that fails to
@@ -33,7 +49,7 @@ class ZWorkerFactory private (private val self: WorkerFactory) extends AnyVal {
     *   [[WorkerFactory#shutdownNow]]
     */
   def shutdownNow: UIO[Unit] =
-    ZIO.blocking(ZIO.succeed(self.shutdownNow()))
+    ZIO.blocking(ZIO.succeed(toJava.shutdownNow()))
 
   /** Creates worker that connects to an instance of the Temporal Service. It uses the namespace configured at the
     * Factory level. New workers cannot be created after the start() has been called
@@ -48,7 +64,7 @@ class ZWorkerFactory private (private val self: WorkerFactory) extends AnyVal {
     *   ZWorker
     */
   def newWorker(taskQueue: String, options: ZWorkerOptions = ZWorkerOptions.default): UIO[ZWorker] =
-    ZIO.succeed(new ZWorker(self.newWorker(taskQueue, options.toJava), Nil, Nil))
+    ZIO.succeed(new ZWorker(toJava.newWorker(taskQueue, options.toJava), Nil, Nil))
 
 }
 

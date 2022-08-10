@@ -13,9 +13,10 @@ It allows you to define and use workflows in a Scala way!
 
 1. **zio-temporal-core** - ZIO integration and basic wrappers that bring type safety to your workflows.  
    Allows you to use arbitrary ZIO code in your activities
-2. **zio-temporal-scalapb** - integration with [ScalaPB](https://scalapb.github.io/) which allows you to
+2. **zio-temporal-protobuf** - integration with [ScalaPB](https://scalapb.github.io/) which allows you to
    use [Protobuf](https://developers.google.com/protocol-buffers)  
    as a transport layer protocol for communication with Temporal cluster
+3. **zio-temporal-testkit** - wrappers for `temporal-testkit` module which allows to test your workflows locally in unit tests. 
 
 ## Installation
 

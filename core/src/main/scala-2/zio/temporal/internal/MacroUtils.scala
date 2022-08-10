@@ -74,6 +74,9 @@ abstract class MacroUtils(val c: blackbox.Context) {
         None
     }
 
+  def hasAnnotation(sym: Symbol, annotationType: Type): Boolean =
+    findAnnotation(sym, annotationType).nonEmpty
+
   def findAnnotation(sym: Symbol, annotationType: Type): Option[Tree] =
     sym.annotations
       .collectFirst {

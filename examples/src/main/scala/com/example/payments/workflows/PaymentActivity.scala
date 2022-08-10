@@ -4,7 +4,7 @@ import com.example.transactions._
 import zio.temporal._
 import zio.temporal.protobuf.ZUnit
 
-@activity
+@activityInterface
 trait PaymentActivity {
 
   def proceed(transaction: ProceedTransactionCommand): Either[TransactionError, TransactionView]

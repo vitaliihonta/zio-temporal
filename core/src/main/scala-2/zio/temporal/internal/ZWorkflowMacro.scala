@@ -13,79 +13,64 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
 
     assertWorkflow(invocation.instance.tpe)
 
-    val method = invocation.getMethod("Workflow method should not be extension methods!")
-
-    assertWorkflowMethod(method.symbol)
-    val theStart = startInvocation(invocation, method, weakTypeOf[A])
+    val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
+    method.assertWorkflowMethod()
 
     q"""
       _root_.zio.temporal.internal.TemporalInteraction.from {
         new $ZWorkflowExecution(
-          $theStart
+          _root_.zio.temporal.internal.TemporalWorkflowFacade.start(() => $f)
         )
       } 
-     """.debugged("Generated workflow method start")
+     """.debugged(SharedCompileTimeMessages.generatedWorkflowStart)
   }
 
   def executeImpl[R: WeakTypeTag](f: Expr[R]): Tree = {
-    val theExecute = buildExecuteInvocation(f.tree, weakTypeOf[R])
+    val theExecute = buildExecuteInvocation(f.tree)
 
     q"""
       _root_.zio.temporal.internal.TemporalInteraction.fromFuture {
         $theExecute
       } 
-     """.debugged("Generated workflow method start")
+     """.debugged(SharedCompileTimeMessages.generatedWorkflowExecute)
   }
 
   def executeEitherImpl[E: WeakTypeTag, R: WeakTypeTag](f: Expr[Either[E, R]]): Tree = {
-    val theExecute = buildExecuteInvocation(f.tree, weakTypeOf[Either[E, R]])
+    val theExecute = buildExecuteInvocation(f.tree)
 
     q"""
       _root_.zio.temporal.internal.TemporalInteraction.fromFutureEither {
         $theExecute
       } 
-     """.debugged("Generated workflow method start")
+     """.debugged(SharedCompileTimeMessages.generatedWorkflowExecute)
   }
 
-  def asyncImpl[R: WeakTypeTag](f: Expr[R]): Tree =
+  def asyncImpl[R: WeakTypeTag](f: Expr[R]): Tree = {
+    val invocation = getMethodInvocation(f.tree)
+    val method     = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
+    method.assertWorkflowMethod()
     q"""
        _root_.zio.temporal.promise.ZPromise.fromEither(Right($f))
-     """.debugged("Generated workflow start async")
+     """.debugged(SharedCompileTimeMessages.generatedWorkflowStartAsync)
+  }
 
-  def asyncEitherImpl[E: WeakTypeTag, R: WeakTypeTag](f: Expr[Either[E, R]]): Tree =
+  def asyncEitherImpl[E: WeakTypeTag, R: WeakTypeTag](f: Expr[Either[E, R]]): Tree = {
+    val invocation = getMethodInvocation(f.tree)
+    val method     = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
+    method.assertWorkflowMethod()
     q"""
        new _root_.zio.temporal.promise.ZPromise.fromEither($f)
-     """.debugged("Generated workflow start async")
+     """.debugged(SharedCompileTimeMessages.generatedWorkflowStartAsync)
+  }
 
-  private def buildExecuteInvocation(f: Tree, ret: Type): Tree = {
+  private def buildExecuteInvocation(f: Tree): Tree = {
     val invocation = getMethodInvocation(f)
 
     assertWorkflow(invocation.instance.tpe)
 
-    val method = invocation.getMethod("Workflow method should not be extension methods!")
+    val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
+    method.assertWorkflowMethod()
 
-    assertWorkflowMethod(method.symbol)
-    executeInvocation(invocation, method, ret)
+    q"""_root_.zio.temporal.internal.TemporalWorkflowFacade.execute(() => $f)"""
   }
-
-  private def startInvocation(
-    invocation: MethodInvocation,
-    method:     MethodInfo,
-    ret:        Type
-  ): Tree = {
-    val LambdaConversionResult(tree, _, typeArgs, args) = scalaLambdaToFunction(invocation, method, ret)
-    q"""_root_.io.temporal.client.WorkflowClient.start[..$typeArgs]($tree, ..$args)"""
-  }
-
-  private def executeInvocation(
-    invocation: MethodInvocation,
-    method:     MethodInfo,
-    ret:        Type
-  ): Tree = {
-    val LambdaConversionResult(tree, _, typeArgs, args) = scalaLambdaToFunction(invocation, method, ret)
-    q"""_root_.io.temporal.client.WorkflowClient.execute[..$typeArgs]($tree, ..$args)"""
-  }
-
-  private def assertWorkflowMethod(method: Symbol): Unit =
-    getAnnotation(method, WorkflowMethod)
 }

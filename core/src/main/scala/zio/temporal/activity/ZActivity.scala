@@ -1,8 +1,9 @@
 package zio.temporal.activity
 
 import io.temporal.activity.Activity
-import zio._
+import zio.*
 import zio.temporal.ZActivityFatalError
+import zio.temporal.internal.ZioUnsafeFacade
 
 /** Executed arbitrary effects within an activity implementation asynchronously completing the activity
   */
@@ -25,22 +26,21 @@ object ZActivity {
 
     ctx.doNotCompleteOnReturn()
 
-    Unsafe.unsafe { implicit unsafe =>
-      val fiber = zactivityOptions.runtime.unsafe.fork(action)
-      fiber.unsafe.addObserver {
-        case Exit.Failure(cause) =>
-          zactivityOptions.activityCompletionClient.completeExceptionally(
-            taskToken,
-            Activity.wrap(ZActivityFatalError(cause))
-          )
-
-        case Exit.Success(value) =>
-          zactivityOptions.activityCompletionClient.complete[A](
-            taskToken,
-            value
-          )
-      }
-    }
+    ZioUnsafeFacade.unsafeRunAsyncURIO[R, A](
+      zactivityOptions.runtime,
+      action
+    )(
+      onFailure = cause =>
+        zactivityOptions.activityCompletionClient.completeExceptionally(
+          taskToken,
+          Activity.wrap(ZActivityFatalError(cause))
+        ),
+      onSuccess = value =>
+        zactivityOptions.activityCompletionClient.complete[A](
+          taskToken,
+          value
+        )
+    )
 
     null.asInstanceOf[A]
   }
@@ -64,29 +64,26 @@ object ZActivity {
 
     ctx.doNotCompleteOnReturn()
 
-    Unsafe.unsafe { implicit unsafe =>
-      val fiber = zactivityOptions.runtime.unsafe.fork(action)
-
-      fiber.unsafe.addObserver {
-        case Exit.Failure(cause) if cause.dieOption.nonEmpty | cause.failureOption.isEmpty =>
-          zactivityOptions.activityCompletionClient.completeExceptionally(
-            taskToken,
-            Activity.wrap(ZActivityFatalError(cause))
-          )
-
-        case Exit.Failure(cause) =>
-          zactivityOptions.activityCompletionClient.complete[Either[E, A]](
-            taskToken,
-            Left(cause.failureOption.get)
-          )
-
-        case Exit.Success(value) =>
-          zactivityOptions.activityCompletionClient.complete[Either[E, A]](
-            taskToken,
-            Right(value)
-          )
-      }
-    }
+    ZioUnsafeFacade.unsafeRunAsyncZIO[R, E, A](
+      zactivityOptions.runtime,
+      action
+    )(
+      onDie = cause =>
+        zactivityOptions.activityCompletionClient.completeExceptionally(
+          taskToken,
+          Activity.wrap(ZActivityFatalError(cause))
+        ),
+      onFailure = error =>
+        zactivityOptions.activityCompletionClient.complete[Either[E, A]](
+          taskToken,
+          Left(error)
+        ),
+      onSuccess = value =>
+        zactivityOptions.activityCompletionClient.complete[Either[E, A]](
+          taskToken,
+          Right(value)
+        )
+    )
 
     null.asInstanceOf[Either[E, A]]
   }

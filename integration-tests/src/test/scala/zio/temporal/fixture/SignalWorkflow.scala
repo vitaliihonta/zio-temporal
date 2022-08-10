@@ -3,14 +3,14 @@ package zio.temporal.fixture
 import zio.temporal._
 import zio.temporal.workflow.ZWorkflow
 
-@workflow
+@workflowInterface
 trait SignalWorkflow {
 
   @workflowMethod
   def echoServer(prefix: String): String
 
   @queryMethod(name = "progress")
-  def getProgress: Option[String]
+  def getProgress(default: Option[String]): Option[String]
 
   @signalMethod
   def echo(value: String): Unit
@@ -29,6 +29,8 @@ class SignalWorkflowImpl extends SignalWorkflow {
     message = Some(value)
   }
 
-  override def getProgress: Option[String] =
-    message
+  override def getProgress(default: Option[String]): Option[String] = {
+    println(s"Getting progress default=$default...")
+    message.orElse(default)
+  }
 }
