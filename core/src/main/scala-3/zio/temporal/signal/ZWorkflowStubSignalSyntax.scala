@@ -94,6 +94,7 @@ object ZWorkflowStubSignalSyntax {
 
     method.assertWorkflowMethod()
 
+    // TODO: try to deconstruct self so that ZSignalBuilder won't be allocated
     val batchRequestTree = '{
       val javaClient   = $self.__zio_temporal_workflowClient.toJava
       val batchRequest = javaClient.newSignalWithStartRequest()

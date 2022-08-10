@@ -5,11 +5,8 @@ import zio.temporal.workflow.ZWorkflowStub
 
 import scala.reflect.macros.blackbox
 
-// TODO: Simplify it as in Scala 3
 class ZWorkflowQueryMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
   import c.universe._
-
-  private val QueryMethod = typeOf[queryMethod].dealias
 
   def newQueryImpl[R: WeakTypeTag](f: Expr[R]): Tree = {
     val theQuery = buildQueryInvocation(f.tree, weakTypeOf[R])
@@ -37,6 +34,7 @@ class ZWorkflowQueryMacro(override val c: blackbox.Context) extends InvocationMa
     assertWorkflow(invocation.instance.tpe)
 
     val method = invocation.getMethod("Query method should not be an extension method!")
+    method.assertQueryMethod()
 
     val queryName = getQueryName(method.symbol)
 

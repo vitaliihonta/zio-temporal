@@ -45,7 +45,7 @@ object WorkflowSpec extends ZIOSpecDefault {
                                   .newWorkflowStub[SampleWorkflow]
                                   .withTaskQueue(taskQueue)
                                   .withWorkflowId(UUID.randomUUID().toString)
-                                  .withWorkflowRunTimeout(1.second)
+                                  .withWorkflowRunTimeout(10.second)
                                   .build
               result <- ZWorkflowStub.execute(sampleWorkflow.echo(sampleIn))
             } yield assertTrue(result == sampleOut)
