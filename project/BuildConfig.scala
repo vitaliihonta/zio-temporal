@@ -34,7 +34,8 @@ object BuildConfig extends Dependencies {
   val protobufLibs = baseLibs ++ Seq(
     Scalapb.runtime,
     Scalapb.runtimeProtobuf,
-    Utility.reflections
+    Utility.reflections,
+    Testing.scalatest
   )
 
   val protobufScala2Libs = Seq(
@@ -69,7 +70,7 @@ trait Dependencies {
   }
 
   object Jackson {
-    val scala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.1"
+    val scala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.3"
   }
 
   object Zio {
@@ -95,13 +96,8 @@ trait Dependencies {
   }
 
   object ScalaReflect {
-
     val macros = Def.setting {
       "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided
-    }
-
-    val runtime = Def.setting {
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value
     }
   }
 

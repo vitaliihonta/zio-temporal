@@ -18,12 +18,7 @@ object ExampleModule {
 
   val clientOptions: ULayer[ZWorkflowClientOptions] = ZLayer.succeed {
     ZWorkflowClientOptions.default.withDataConverter(
-      // ProtobufDataConverter.makeAutoLoad()
-      ProtobufDataConverter.make(
-        List(
-          TransactionsProto
-        )
-      )
+      ProtobufDataConverter.makeAutoLoad()
     )
   }
 

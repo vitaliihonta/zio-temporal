@@ -166,7 +166,13 @@ lazy val `integration-tests` = projectMatrix
   .settings(baseSettings, coverageSettings, noPublishSettings, crossCompileSettings)
   .settings(
     libraryDependencies ++= testLibs,
-    testFrameworks ++= Zio.testFrameworks
+    testFrameworks ++= Zio.testFrameworks,
+    Compile / PB.targets := Seq(
+      scalapb.gen(
+        flatPackage = true,
+        grpc = false
+      ) -> (Compile / sourceManaged).value / "scalapb"
+    )
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
 
@@ -179,11 +185,8 @@ lazy val protobuf = projectMatrix
     name := "zio-temporal-protobuf",
     libraryDependencies ++= protobufLibs ++ {
       CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, _)) =>
-          Seq(
-            ScalaReflect.runtime.value
-          ) ++ protobufScala2Libs
-        case _ => Nil
+        case Some((2, _)) => protobufScala2Libs
+        case _            => Nil
       }
     },
     Compile / PB.targets := Seq(

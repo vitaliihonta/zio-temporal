@@ -10,7 +10,8 @@ import scala.jdk.CollectionConverters.*
 
 @experimentalApi
 object ProtoFileObjectAutoLoader {
-  private val logger = LoggerFactory.getLogger(getClass)
+  private val logger           = LoggerFactory.getLogger(getClass)
+  private val scalaModuleField = "MODULE$"
 
   def loadFromClassPath(
     classLoader:     ClassLoader,
@@ -25,7 +26,7 @@ object ProtoFileObjectAutoLoader {
 
     val loadedSubTypes = reflections.getSubTypesOf(classOf[GeneratedFileObject]).asScala.toList
     logger.trace(s"Found subtypes of GeneratedFileObject: ${loadedSubTypes.mkString("[", ",", "]")}")
-    val results = GeneratedFileObjectsReflection.reflect(loadedSubTypes, classLoader)
+    val results = loadedSubTypes.map(getGeneratedObjectInstance)
     logger.info(
       s"Loaded ${results.size} GeneratedFileObject(s): ${results.map(showGeneratedFileObject).mkString("[", ",", "]")}"
     )
@@ -101,6 +102,12 @@ object ProtoFileObjectAutoLoader {
 
   def packagePrefixToDirPrefix(pkg: String): String =
     pkg.replace(".", "/") + "/"
+
+  private def getGeneratedObjectInstance(cls: Class[_ <: GeneratedFileObject]): GeneratedFileObject =
+    cls
+      .getDeclaredField(scalaModuleField)
+      .get(null)
+      .asInstanceOf[GeneratedFileObject]
 
   private def showGeneratedFileObject(f: GeneratedFileObject): String =
     s"GeneratedFileObject(class=${f.getClass.getName}, file=${f.scalaDescriptor.fullName})"
