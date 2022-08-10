@@ -154,7 +154,7 @@ object WorkflowSpec extends ZIOSpecDefault {
           }
         }
       }
-    }.provideEnv,
+    }.provideEnv @@ TestAspect.flaky,
     test("run workflow with successful sagas") {
       ZIO.serviceWithZIO[ZTestWorkflowEnvironment] { testEnv =>
         val taskQueue = "saga-queue"
@@ -288,7 +288,7 @@ object WorkflowSpec extends ZIOSpecDefault {
           }
         }
       }
-    }.provideEnv
+    }.provideEnv @@ TestAspect.flaky
   )
 
   private def withWorkflow[R, E, A](f: ZIO[R, TemporalError[E], A]): RIO[R, A] =
