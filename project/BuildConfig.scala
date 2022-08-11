@@ -32,6 +32,10 @@ object BuildConfig extends Dependencies {
     Testing.scalatest
   )
 
+  val testLibsScala2 = Seq(
+    Enumeratum.enumeratum % Test
+  )
+
   val protobufLibs = baseLibs ++ Seq(
     Scalapb.runtime,
     Scalapb.runtimeProtobuf,

@@ -1,17 +1,24 @@
 package zio.temporal.protobuf
 
-import org.scalatest.wordspec.AnyWordSpec
 import com.example.testing.Color
+import org.scalatest.wordspec.AnyWordSpec
+import enumeratum.{Enum, EnumEntry}
 
 object EnumProtoTypeSpec {
-  enum Color {
-    case Red, Green, Blue, ScalaInvalid
-  }
+  sealed trait Color extends EnumEntry
 
+  object Color extends Enum[Color] {
+    case object Red          extends Color
+    case object Green        extends Color
+    case object Blue         extends Color
+    case object ScalaInvalid extends Color
+
+    override val values = findValues
+  }
 }
 
 class EnumProtoTypeSpec extends AnyWordSpec {
-  private val enumProto = EnumProtoType(Color).to[EnumProtoTypeSpec.Color]
+  private val enumProto = EnumProtoType(Color).to(EnumProtoTypeSpec.Color)
 
   "EnumProtoType" should {
     "convert scala3 enum to protobuf correctly" in {

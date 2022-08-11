@@ -9,6 +9,9 @@ class MacroUtils[Q <: Quotes](using val q: Q) {
 
   def error(message: String): Nothing = report.errorAndAbort(message)
 
+  def companionObjectOf(tpe: TypeRepr): Ref =
+    Ref(Symbol.requiredModule(tpe.show))
+
   extension [A](self: Expr[A])
     def debugged(msg: String): Expr[A] = {
       if (debugEnabled) {

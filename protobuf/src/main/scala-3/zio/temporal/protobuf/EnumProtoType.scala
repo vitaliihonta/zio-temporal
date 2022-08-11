@@ -5,16 +5,15 @@ import scalapb.{GeneratedEnum, GeneratedEnumCompanion}
 import scala.quoted.*
 import zio.temporal.internal.MacroUtils
 
-// TODO: implement
 object EnumProtoType {
   def apply[P <: GeneratedEnum](companion: GeneratedEnumCompanion[P]): EnumProtoTypePartiallyApplied[P] =
     new EnumProtoTypePartiallyApplied[P](companion)
 }
 
-final class EnumeratumEnumException[P <: GeneratedEnum] private[protobuf] (
+final class EnumeratumEnumException private[protobuf] (
   scalaEnumClass: String,
   entry:          String,
-  companion:      GeneratedEnumCompanion[P])
+  companion:      GeneratedEnumCompanion[_])
     extends RuntimeException {
 
   override def getMessage: String =
@@ -33,7 +32,7 @@ final class EnumProtoType[P <: GeneratedEnum, E <: Enum](
     companion
       .fromName(value.toString)
       .getOrElse(
-        throw new EnumeratumEnumException[P](
+        throw new EnumeratumEnumException(
           enumName,
           value.toString,
           companion
@@ -41,7 +40,11 @@ final class EnumProtoType[P <: GeneratedEnum, E <: Enum](
       )
 
   override def fromRepr(repr: P): E =
-    valueOfFunction(repr.name)
+    try valueOfFunction(repr.name)
+    catch {
+      case _: IllegalArgumentException =>
+        throw new NoSuchElementException(s"$repr is not a member of enum $enumName")
+    }
 }
 
 final class EnumProtoTypePartiallyApplied[P <: GeneratedEnum](private val companion: GeneratedEnumCompanion[P])
@@ -59,21 +62,33 @@ object EnumProtoTypePartiallyApplied {
     import q.reflect.*
     val macroUtils = new MacroUtils[q.type]
     import macroUtils.*
-    val tpe                = TypeRepr.of[E]
-    val enumName           = tpe.show
-    val enumClassSym       = tpe.classSymbol.getOrElse(error(s"$enumName is not a enum!"))
-    val companionObjectSym = enumClassSym.companionClass
-    val companionObject    = companionObjectSym.tree.asExpr.asTerm
-    val valueOfSym         = companionObjectSym.methodMember("valueOf").head
+    val tpe          = TypeRepr.of[E]
+    val enumName     = tpe.show
+    val enumClassSym = tpe.classSymbol.getOrElse(error(s"$enumName is not a enum!"))
 
-    // TODO: implement properly
-    val parse = Select(companionObject, valueOfSym).asExprOf[String => E]
+    val valueOfSym = enumClassSym.companionClass
+      .methodMember("valueOf")
+      .headOption
+      .getOrElse(error(s"$enumName companion object doesn't have valueOf method"))
+
+    val parse = Lambda(
+      Symbol.spliceOwner,
+      MethodType(
+        List("v")
+      )(
+        _ => List(TypeRepr.of[String]),
+        _ => tpe
+      ),
+      (_, params) => Apply(companionObjectOf(tpe).select(valueOfSym), params.map(_.asExpr.asTerm))
+    ).asExprOf[String => E]
 
     '{
       new EnumProtoType[P, E](
         $companion,
-        ${ Expr(enumName) },
-        (v: String) => $parse(v)
+        ${
+          Expr(enumName)
+        },
+        $parse
       )
     }.debugged("Generated EnumProtoType")
   }

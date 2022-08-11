@@ -165,7 +165,12 @@ lazy val `integration-tests` = projectMatrix
   )
   .settings(baseSettings, coverageSettings, noPublishSettings, crossCompileSettings)
   .settings(
-    libraryDependencies ++= testLibs,
+    libraryDependencies ++= testLibs ++ {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, _)) => testLibsScala2
+        case _            => Nil
+      }
+    },
     testFrameworks ++= Zio.testFrameworks,
     Compile / PB.targets := Seq(
       scalapb.gen(
