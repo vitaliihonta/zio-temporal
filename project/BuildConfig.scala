@@ -12,7 +12,8 @@ object BuildConfig extends Dependencies {
   val coreLibs = baseLibs ++ Seq(
     Scalapb.runtime,
     Utility.scalaJava8Compat,
-    Utility.izumiReflect
+    Utility.izumiReflect,
+    Testing.scalatest
   )
 
   val coreLibsScala2 = Seq(
@@ -29,6 +30,10 @@ object BuildConfig extends Dependencies {
     Zio.testSbt,
     Logging.zio % Test,
     Testing.scalatest
+  )
+
+  val testLibsScala2 = Seq(
+    Enumeratum.enumeratum % Test
   )
 
   val protobufLibs = baseLibs ++ Seq(

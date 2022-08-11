@@ -13,10 +13,10 @@ object EnumProtoType {
     new EnumProtoTypePartiallyApplied[P](companion)
 }
 
-final class EnumeratumEnumException[E <: EnumEntry, P <: GeneratedEnum] private[protobuf] (
-  enum:      Enum[E],
-  entry:     E,
-  companion: GeneratedEnumCompanion[P])
+final class EnumeratumEnumException private[protobuf] (
+  enum:      Enum[_],
+  entry:     AnyRef,
+  companion: GeneratedEnumCompanion[_])
     extends RuntimeException {
 
   override def getMessage: String =
@@ -34,7 +34,7 @@ final class EnumProtoType[P <: GeneratedEnum, E <: EnumEntry] private[protobuf] 
     companion
       .fromName(value.entryName)
       .getOrElse(
-        throw new EnumeratumEnumException[E, P](enum, value, companion)
+        throw new EnumeratumEnumException(enum, value, companion)
       )
 
   override def fromRepr(repr: P): E =
@@ -44,6 +44,6 @@ final class EnumProtoType[P <: GeneratedEnum, E <: EnumEntry] private[protobuf] 
 final class EnumProtoTypePartiallyApplied[P <: GeneratedEnum](private val companion: GeneratedEnumCompanion[P])
     extends AnyVal {
 
-  def apply[E <: EnumEntry](enum: Enum[E]): ProtoType.Of[E, P] =
+  def to[E <: EnumEntry](enum: Enum[E]): ProtoType.Of[E, P] =
     new EnumProtoType[P, E](companion, `enum`)
 }
