@@ -3,4 +3,12 @@
 target/
 version
 .sbt/
-docs/
+
+# Website ignores
+website/build/
+website/node_modules/
+website/.docusaurus
+yarn.lock
+package-lock.json
+website/variables.js
+website/static/api
