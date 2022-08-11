@@ -12,7 +12,8 @@ object BuildConfig extends Dependencies {
   val coreLibs = baseLibs ++ Seq(
     Scalapb.runtime,
     Utility.scalaJava8Compat,
-    Utility.izumiReflect
+    Utility.izumiReflect,
+    Testing.scalatest
   )
 
   val coreLibsScala2 = Seq(

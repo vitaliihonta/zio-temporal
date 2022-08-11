@@ -5,3 +5,9 @@ package com.example.testing;
 message TestingMessage {
   required string test = 1;
 }
+
+enum Color {
+  Red = 0;
+  Green = 1;
+  Blue = 2;
+}

@@ -15,6 +15,8 @@ import scala.language.implicitConversions
   */
 sealed trait ZSearchAttribute {
   private[zio] def attributeValue: Any
+
+  override def toString: String = attributeValue.toString
 }
 
 object ZSearchAttribute {

@@ -44,6 +44,6 @@ final class EnumProtoType[P <: GeneratedEnum, E <: EnumEntry] private[protobuf] 
 final class EnumProtoTypePartiallyApplied[P <: GeneratedEnum](private val companion: GeneratedEnumCompanion[P])
     extends AnyVal {
 
-  def apply[E <: EnumEntry](enum: Enum[E]): ProtoType.Of[E, P] =
+  def to[E <: EnumEntry](enum: Enum[E]): ProtoType.Of[E, P] =
     new EnumProtoType[P, E](companion, `enum`)
 }
