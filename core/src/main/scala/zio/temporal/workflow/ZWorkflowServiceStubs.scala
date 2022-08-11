@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 
 /** Initializes and holds gRPC blocking and future stubs.
   */
-final class ZWorkflowServiceStubs private[zio] (private[zio] val self: WorkflowServiceStubs) {
+final class ZWorkflowServiceStubs private[zio] (val toJava: WorkflowServiceStubs) {
 
   /** Allows to run arbitrary effect ensuring a shutdown on effect completion.
     *
@@ -33,7 +33,7 @@ final class ZWorkflowServiceStubs private[zio] (private[zio] val self: WorkflowS
   def shutdown: UIO[Unit] =
     ZIO.blocking(
       ZIO.succeed(
-        self.shutdown()
+        toJava.shutdown()
       )
     )
 
@@ -42,7 +42,7 @@ final class ZWorkflowServiceStubs private[zio] (private[zio] val self: WorkflowS
   def shutdownNow: UIO[Unit] =
     ZIO.blocking(
       ZIO.succeed(
-        self.shutdownNow()
+        toJava.shutdownNow()
       )
     )
 
@@ -59,7 +59,7 @@ final class ZWorkflowServiceStubs private[zio] (private[zio] val self: WorkflowS
     ZIO
       .blocking {
         ZIO.succeed(
-          self.awaitTermination(options.pollTimeout.toNanos, TimeUnit.NANOSECONDS)
+          toJava.awaitTermination(options.pollTimeout.toNanos, TimeUnit.NANOSECONDS)
         )
       }
       .repeat(Schedule.recurUntil[Boolean](identity) && Schedule.fixed(options.pollDelay))

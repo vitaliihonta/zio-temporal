@@ -56,7 +56,7 @@ object ZWorkflowClient {
           ZIO.succeed {
             new ZWorkflowClient(
               WorkflowClient.newInstance(
-                environment.get[ZWorkflowServiceStubs].self,
+                environment.get[ZWorkflowServiceStubs].toJava,
                 environment.get[ZWorkflowClientOptions].toJava
               )
             )

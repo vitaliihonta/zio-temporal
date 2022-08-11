@@ -1,7 +1,8 @@
 {
   "docs": {
     "Getting started": [
-      "core/overview"
+      "core/overview",
+      "core/workflows"
     ]
   }
 }

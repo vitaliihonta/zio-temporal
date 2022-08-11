@@ -9,7 +9,7 @@ import zio.temporal.workflow.ZWorkflowClient
   * @see
   *   [[WorkerFactory]]
   */
-final class ZWorkerFactory private (val toJava: WorkerFactory) {
+final class ZWorkerFactory private[zio] (val toJava: WorkerFactory) {
 
   /** Allows to run arbitrary effect ensuring a shutdown on effect completion.
     *
@@ -21,9 +21,9 @@ final class ZWorkerFactory private (val toJava: WorkerFactory) {
     */
   def use[R, E, A](thunk: ZIO[R, E, A]): ZIO[R, E, A] =
     for {
-      startFiber <- start.fork
+      _ <- start
       result <- thunk.onExit { _ =>
-                  startFiber.join *> shutdownNow
+                  shutdownNow
                 }
     } yield result
 
