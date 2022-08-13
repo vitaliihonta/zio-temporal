@@ -2,7 +2,19 @@
   "docs": {
     "Getting started": [
       "core/overview",
-      "core/workflows"
+      "core/workflows",
+      "core/activities"
+    ],
+    "Protobuf": [
+      "protobuf/overview",
+      "protobuf/usage"
+    ],
+    "Resilience": [
+      "resilience/retries",
+      "resilience/sagas"
+    ],
+    "Testing": [
+      "testing/overview"
     ]
   }
 }

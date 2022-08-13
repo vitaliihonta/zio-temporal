@@ -9,7 +9,7 @@ import zio.temporal.protobuf.ZUnit
 import zio.temporal.protobuf.syntax._
 
 object PaymentActivityImpl {
-  val make: URLayer[ZActivityOptions[Any], PaymentActivityImpl] =
+  val make: URLayer[ZActivityOptions[Any], PaymentActivity] =
     ZLayer.fromFunction(new PaymentActivityImpl()(_: ZActivityOptions[Any]))
 }
 
