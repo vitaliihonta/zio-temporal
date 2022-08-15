@@ -1,11 +1,6 @@
 package zio.temporal.state
 
-/** Helper instance representing workflow state. Can be either uninitialized or containing value
-  *
-  * @tparam A
-  *   the state value
-  */
-final case class ZWorkflowState[A] private[zio] (private var underlying: Option[A]) {
+sealed trait ZWorkflowState[A] {
 
   /** Replaces the state value
     *
@@ -14,10 +9,7 @@ final case class ZWorkflowState[A] private[zio] (private var underlying: Option[
     * @return
     *   this state updated
     */
-  def setTo(value: A): this.type = {
-    underlying = Some(value)
-    this
-  }
+  def setTo(value: A): this.type
 
   /** Updates the state value
     *
@@ -26,10 +18,7 @@ final case class ZWorkflowState[A] private[zio] (private var underlying: Option[
     * @return
     *   this state updated
     */
-  def update(f: A => A): this.type = {
-    underlying = underlying.map(f)
-    this
-  }
+  def update(f: A => A): this.type
 
   /** Updates the state when the predicate holds
     *
@@ -59,10 +48,7 @@ final case class ZWorkflowState[A] private[zio] (private var underlying: Option[
     * @return
     *   this state updated
     */
-  def updateWhen(pf: PartialFunction[A, A]): this.type = {
-    underlying = underlying.collect(pf)
-    this
-  }
+  def updateWhen(pf: PartialFunction[A, A]): this.type
 
   /** Takes a snapshot of the state or throws an error
     *
@@ -74,11 +60,11 @@ final case class ZWorkflowState[A] private[zio] (private var underlying: Option[
 
   /** Returns true if this State is initialized '''and''' the predicate $p returns true when applied to this state
     * value. Otherwise, returns false.
+    *
     * @param p
     *   the predicate to test
     */
-  def exists(p: A => Boolean): Boolean =
-    underlying.exists(p)
+  def exists(p: A => Boolean): Boolean
 
   /** Returns true if this state is uninitialized '''or''' the predicate p returns true when applied to this state
     * value.
@@ -86,8 +72,7 @@ final case class ZWorkflowState[A] private[zio] (private var underlying: Option[
     * @param p
     *   the predicate to test
     */
-  def forall(p: A => Boolean): Boolean =
-    underlying.forall(p)
+  def forall(p: A => Boolean): Boolean
 
   /** Takes a snapshot of the state applying a function to it ors throw an error
     *
@@ -106,15 +91,17 @@ final case class ZWorkflowState[A] private[zio] (private var underlying: Option[
     * @return
     *   the state or default value
     */
-  def snapshotOrElse(default: => A): A = underlying.getOrElse(default)
+  def snapshotOrElse(default: => A): A
 
   /** Converts this state to [[Option]]
+    *
     * @return
     *   the state value or [[None]]
     */
-  def toOption: Option[A] = underlying
+  def toOption: Option[A]
 
   /** Converts this state to [[Either]]
+    *
     * @tparam E
     *   error type
     * @param left
@@ -122,7 +109,7 @@ final case class ZWorkflowState[A] private[zio] (private var underlying: Option[
     * @return
     *   the state value or [[Left]]
     */
-  def toEither[E](left: => E): Either[E, A] = underlying.toRight(left)
+  def toEither[E](left: => E): Either[E, A]
 }
 
 object ZWorkflowState {
@@ -136,7 +123,7 @@ object ZWorkflowState {
     * @return
     *   the state
     */
-  def make[A](value: A): ZWorkflowState[A] = new ZWorkflowState[A](Some(value))
+  def make[A](value: A): ZWorkflowState.Required[A] = new ZWorkflowState.Required[A](value)
 
   /** Creates an uninitialized state
     *
@@ -145,5 +132,176 @@ object ZWorkflowState {
     * @return
     *   uninitialized state
     */
-  def empty[A]: ZWorkflowState[A] = new ZWorkflowState[A](None)
+  def empty[A]: ZWorkflowState.Optional[A] = new ZWorkflowState.Optional[A](None)
+
+  final case class Optional[A] private[zio] (private var underlying: Option[A]) extends ZWorkflowState[A] {
+
+    /** Replaces the state value
+      *
+      * @param value
+      *   new state value
+      * @return
+      *   this state updated
+      */
+    override def setTo(value: A): this.type = {
+      underlying = Some(value)
+      this
+    }
+
+    /** Updates the state value
+      *
+      * @param f
+      *   updating function
+      * @return
+      *   this state updated
+      */
+    override def update(f: A => A): this.type = {
+      underlying = underlying.map(f)
+      this
+    }
+
+    /** Updates the state when partial function matches
+      *
+      * @param pf
+      *   updating function
+      * @return
+      *   this state updated
+      */
+    override def updateWhen(pf: PartialFunction[A, A]): this.type = {
+      underlying = underlying.map(value => pf.applyOrElse[A, A](value, identity[A]))
+      this
+    }
+
+    /** Returns true if this State is initialized '''and''' the predicate $p returns true when applied to this state
+      * value. Otherwise, returns false.
+      *
+      * @param p
+      *   the predicate to test
+      */
+    override def exists(p: A => Boolean): Boolean =
+      underlying.exists(p)
+
+    /** Returns true if this state is uninitialized '''or''' the predicate p returns true when applied to this state
+      * value.
+      *
+      * @param p
+      *   the predicate to test
+      */
+    override def forall(p: A => Boolean): Boolean =
+      underlying.forall(p)
+
+    /** Takes a snapshot of the state or returns the provided default value
+      *
+      * @param default
+      *   the default value
+      * @return
+      *   the state or default value
+      */
+    override def snapshotOrElse(default: => A): A =
+      underlying.getOrElse(default)
+
+    /** Converts this state to [[Option]]
+      *
+      * @return
+      *   the state value or [[None]]
+      */
+    override def toOption: Option[A] =
+      underlying
+
+    /** Converts this state to [[Either]]
+      *
+      * @tparam E
+      *   error type
+      * @param left
+      *   error value which will be used when state is not initialized
+      * @return
+      *   the state value or [[Left]]
+      */
+    override def toEither[E](left: => E): Either[E, A] =
+      underlying.toRight(left)
+  }
+
+  final case class Required[A] private[zio] (private var underlying: A) extends ZWorkflowState[A] {
+
+    /** Replaces the state value
+      *
+      * @param value
+      *   new state value
+      * @return
+      *   this state updated
+      */
+    override def setTo(value: A): this.type = {
+      underlying = value
+      this
+    }
+
+    /** Updates the state value
+      *
+      * @param f
+      *   updating function
+      * @return
+      *   this state updated
+      */
+    override def update(f: A => A): this.type = {
+      underlying = f(underlying)
+      this
+    }
+
+    /** Updates the state when partial function matches
+      *
+      * @param pf
+      *   updating function
+      * @return
+      *   this state updated
+      */
+    override def updateWhen(pf: PartialFunction[A, A]): this.type = {
+      pf.applyOrElse[A, A](underlying, identity[A])
+      this
+    }
+
+    /** Returns true if this State is initialized '''and''' the predicate $p returns true when applied to this state
+      * value. Otherwise, returns false.
+      *
+      * @param p
+      *   the predicate to test
+      */
+    override def exists(p: A => Boolean): Boolean =
+      p(underlying)
+
+    /** Returns true if this state is uninitialized '''or''' the predicate p returns true when applied to this state
+      * value.
+      *
+      * @param p
+      *   the predicate to test
+      */
+    override def forall(p: A => Boolean): Boolean =
+      p(underlying)
+
+    /** Takes a snapshot of the state or returns the provided default value
+      *
+      * @param default
+      *   the default value
+      * @return
+      *   the state or default value
+      */
+    override def snapshotOrElse(default: => A): A = underlying
+
+    /** Converts this state to [[Option]]
+      *
+      * @return
+      *   the state value or [[None]]
+      */
+    override def toOption: Option[A] = Some(underlying)
+
+    /** Converts this state to [[Either]]
+      *
+      * @tparam E
+      *   error type
+      * @param left
+      *   error value which will be used when state is not initialized
+      * @return
+      *   the state value or [[Left]]
+      */
+    override def toEither[E](left: => E): Either[E, A] = Right(underlying)
+  }
 }

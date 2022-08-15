@@ -26,12 +26,12 @@ object ExampleModule {
     ZWorkerFactoryOptions.default
   }
 
-  val worker: URLayer[PaymentActivityImpl with ZWorkerFactory, Unit] =
+  val worker: URLayer[PaymentActivity with ZWorkerFactory, Unit] =
     ZLayer.fromZIO {
       ZIO.serviceWithZIO[ZWorkerFactory] { workerFactory =>
         for {
           worker       <- workerFactory.newWorker("payments")
-          activityImpl <- ZIO.service[PaymentActivityImpl]
+          activityImpl <- ZIO.service[PaymentActivity]
           _ = worker.addActivityImplementation(activityImpl)
           _ = worker.addWorkflow[PaymentWorkflow](new PaymentWorkflowImpl)
         } yield ()

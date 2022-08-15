@@ -1,7 +1,26 @@
 {
   "docs": {
     "Getting started": [
-      "core/overview"
+      "core/overview",
+      "core/workflows",
+      "core/activities"
+    ],
+    "Workflows": [
+      "workflows/state",
+      "workflows/queries",
+      "workflows/signals",
+      "workflows/child-workflows"
+    ],
+    "Resilience": [
+      "resilience/retries",
+      "resilience/sagas"
+    ],
+    "Protobuf": [
+      "protobuf/overview",
+      "protobuf/usage"
+    ],
+    "Testing": [
+      "testing/overview"
     ]
   }
 }

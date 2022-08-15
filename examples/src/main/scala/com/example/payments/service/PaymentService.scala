@@ -47,6 +47,11 @@ class TemporalPaymentService(client: ZWorkflowClient) extends PaymentService {
                                .newWorkflowStub[PaymentWorkflow]
                                .withTaskQueue("payments")
                                .withWorkflowId(transactionId.toString)
+                               .withWorkflowExecutionTimeout(5.minutes)
+                               .withWorkflowRunTimeout(10.seconds)
+                               .withRetryOptions(
+                                 ZRetryOptions.default.withMaximumAttempts(5)
+                               )
                                .build
           _ <- ZIO.logInfo("Going to trigger workflow")
           _ <- ZWorkflowStub.start(

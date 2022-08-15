@@ -117,7 +117,7 @@ lazy val docs = project
     mdocSettings,
     noPublishSettings,
     scalaVersion := scala213,
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= examplesLibs ++ Seq(
       Enumeratum.enumeratum
     )
   )
