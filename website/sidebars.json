@@ -5,13 +5,19 @@
       "core/workflows",
       "core/activities"
     ],
-    "Protobuf": [
-      "protobuf/overview",
-      "protobuf/usage"
+    "Workflows": [
+      "workflows/state",
+      "workflows/queries",
+      "workflows/signals",
+      "workflows/child-workflows"
     ],
     "Resilience": [
       "resilience/retries",
       "resilience/sagas"
+    ],
+    "Protobuf": [
+      "protobuf/overview",
+      "protobuf/usage"
     ],
     "Testing": [
       "testing/overview"

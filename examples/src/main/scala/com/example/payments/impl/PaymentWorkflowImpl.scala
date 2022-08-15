@@ -21,7 +21,7 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
   private val activity = ZWorkflow
     .newActivityStub[PaymentActivity]
     .withStartToCloseTimeout(10.seconds)
-//    .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(3))
+    .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(3))
     .build
 
   private val state = ZWorkflowState.empty[TransactionState]
