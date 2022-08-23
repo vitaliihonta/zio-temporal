@@ -23,7 +23,7 @@ class ZWorker private[zio] (
   /** Allows to add workflow to this worker
     */
   def addWorkflow[I]: ZWorker.AddWorkflowDsl[I] =
-    new ZWorker.AddWorkflowDsl[I](this)
+    new ZWorker.AddWorkflowDsl[I](this) // TODO: validate that it's a concrete class
 
   /** Registers activity implementation objects with a worker. An implementation object can implement one or more
     * activity types.

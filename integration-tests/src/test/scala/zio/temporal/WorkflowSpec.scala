@@ -1,6 +1,7 @@
 package zio.temporal
 
 import zio.*
+import zio.temporal.activity.ZActivityOptions
 import zio.temporal.fixture.Done
 import zio.temporal.fixture.SagaWorkflow
 import zio.temporal.fixture.SagaWorkflowImpl
@@ -19,15 +20,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import scala.collection.mutable.ListBuffer
 
-// TODO: add test cases for:
-// - Activity which uses ZIO
-// - Child workflows
-// - Async invocations
 object WorkflowSpec extends ZIOSpecDefault {
 
   override def spec = suite("ZWorkflow")(
     test("runs simple workflow") {
-      ZIO.serviceWithZIO[ZTestWorkflowEnvironment] { testEnv =>
+      ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
         val taskQueue = "sample-queue"
         val sampleIn  = "Fooo"
         val sampleOut = sampleIn
@@ -53,9 +50,36 @@ object WorkflowSpec extends ZIOSpecDefault {
         }
       }
     }.provideEnv,
+    test("runs child workflows") {
+      ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
+        val taskQueue = "child-queue"
+        val client    = testEnv.workflowClient
+
+        testEnv
+          .newWorker(taskQueue, options = ZWorkerOptions.default)
+          .addWorkflow[GreetingWorkflowImpl]
+          .fromClass
+          .addWorkflow[GreetingChildImpl]
+          .fromClass
+
+        withWorkflow {
+          testEnv.use() {
+            for {
+              greetingWorkflow <- client
+                                    .newWorkflowStub[GreetingWorkflow]
+                                    .withTaskQueue(taskQueue)
+                                    .withWorkflowId(UUID.randomUUID().toString)
+                                    .withWorkflowRunTimeout(10.second)
+                                    .build
+              result <- ZWorkflowStub.execute(greetingWorkflow.getGreeting("Vitalii"))
+            } yield assertTrue(result == "Hello Vitalii!")
+          }
+        }
+      }
+    }.provideEnv,
     test("run workflow with signals") {
       ZIO
-        .serviceWithZIO[ZTestWorkflowEnvironment] { testEnv =>
+        .serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
           val taskQueue = "signal-queue"
           val client    = testEnv.workflowClient
 
@@ -80,7 +104,6 @@ object WorkflowSpec extends ZIOSpecDefault {
                 _ <- ZIO.log("Before start")
                 _ <- ZWorkflowStub
                        .start(signalWorkflow.echoServer("ECHO"))
-                       .tapBoth(e => ZIO.log(s"Got error $e"), a => ZIO.log(s"Got started $a"))
                 _               <- ZIO.log("Started")
                 workflowStub    <- client.newWorkflowStubProxy[SignalWorkflow](workflowId)
                 _               <- ZIO.log("New stub created!")
@@ -104,8 +127,46 @@ object WorkflowSpec extends ZIOSpecDefault {
           }
         }
     }.provideEnv,
+    test("run workflow with ZIO") {
+      ZIO
+        .serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
+          val taskQueue = "zio-queue"
+          val client    = testEnv.workflowClient
+          import testEnv.activityOptions
+
+          testEnv
+            .newWorker(taskQueue, options = ZWorkerOptions.default)
+            .addWorkflow[ZioWorkflowImpl]
+            .fromClass
+            .addActivityImplementation(new ZioActivityImpl())
+
+          val workflowId = UUID.randomUUID().toString + taskQueue
+
+          withWorkflow {
+            testEnv.use() {
+              for {
+                zioWorkflow <- client
+                                 .newWorkflowStub[ZioWorkflow]
+                                 .withTaskQueue(taskQueue)
+                                 .withWorkflowId(workflowId)
+                                 .withWorkflowRunTimeout(30.seconds)
+                                 .withWorkflowTaskTimeout(30.seconds)
+                                 .withWorkflowExecutionTimeout(30.seconds)
+                                 .build
+                _ <- ZWorkflowStub
+                       .start(zioWorkflow.echo("HELLO THERE"))
+                workflowStub <- client.newWorkflowStubProxy[ZioWorkflow](workflowId)
+                _ <- ZWorkflowStub.signal(
+                       workflowStub.complete()
+                     )
+                result <- workflowStub.result[String]
+              } yield assertTrue(result == "Echoed HELLO THERE")
+            }
+          }
+        }
+    }.provideEnv,
     test("run workflow with signal and start") {
-      ZIO.serviceWithZIO[ZTestWorkflowEnvironment] { testEnv =>
+      ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
         val taskQueue = "signal-with-start-queue"
         val client    = testEnv.workflowClient
 
@@ -159,7 +220,7 @@ object WorkflowSpec extends ZIOSpecDefault {
       }
     }.provideEnv @@ TestAspect.flaky,
     test("run workflow with successful sagas") {
-      ZIO.serviceWithZIO[ZTestWorkflowEnvironment] { testEnv =>
+      ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
         val taskQueue = "saga-queue"
         val client    = testEnv.workflowClient
 
@@ -191,7 +252,7 @@ object WorkflowSpec extends ZIOSpecDefault {
       }
     }.provideEnv,
     test("run workflow with saga compensations") {
-      ZIO.serviceWithZIO[ZTestWorkflowEnvironment] { testEnv =>
+      ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
         val taskQueue = "saga-queue"
         val client    = testEnv.workflowClient
         val From      = "from"
@@ -240,7 +301,7 @@ object WorkflowSpec extends ZIOSpecDefault {
       }
     }.provideEnv,
     test("run workflow with promise") {
-      ZIO.serviceWithZIO[ZTestWorkflowEnvironment] { testEnv =>
+      ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
         val taskQueue = "promise-queue"
         val client    = testEnv.workflowClient
 
@@ -297,11 +358,11 @@ object WorkflowSpec extends ZIOSpecDefault {
   private def withWorkflow[R, E, A](f: ZIO[R, TemporalError[E], A]): RIO[R, A] =
     f.mapError(e => new RuntimeException(s"IO failed with $e"))
 
-  private implicit class ProvidedTestkit[E, A](thunk: Spec[ZTestWorkflowEnvironment, E]) {
+  private implicit class ProvidedTestkit[E, A](thunk: Spec[ZTestWorkflowEnvironment[Any], E]) {
     def provideEnv: Spec[Any, E] =
       thunk.provide(
         ZLayer.succeed(ZTestEnvironmentOptions.default),
-        ZTestWorkflowEnvironment.make
+        ZTestWorkflowEnvironment.make[Any]
       )
   }
 }

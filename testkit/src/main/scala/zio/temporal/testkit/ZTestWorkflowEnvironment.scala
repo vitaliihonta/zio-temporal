@@ -1,8 +1,9 @@
 package zio.temporal.testkit
 
 import io.temporal.testing.TestWorkflowEnvironment
-import zio._
+import zio.*
 import zio.temporal.ZAwaitTerminationOptions
+import zio.temporal.activity.ZActivityOptions
 import zio.temporal.worker.ZWorker
 import zio.temporal.worker.ZWorkerOptions
 import zio.temporal.workflow.ZWorkflowClient
@@ -22,7 +23,7 @@ import java.util.concurrent.TimeUnit
   * @see
   *   [[TestWorkflowEnvironment]]
   */
-class ZTestWorkflowEnvironment private[zio] (val toJava: TestWorkflowEnvironment) {
+class ZTestWorkflowEnvironment[R] private[zio] (val toJava: TestWorkflowEnvironment, runtime: zio.Runtime[R]) {
 
   /** Creates a new Worker instance that is connected to the in-memory test Temporal service.
     *
@@ -33,10 +34,13 @@ class ZTestWorkflowEnvironment private[zio] (val toJava: TestWorkflowEnvironment
     new ZWorker(toJava.newWorker(taskQueue, options.toJava), workflows = Nil, activities = Nil)
 
   /** Creates a WorkflowClient that is connected to the in-memory test Temporal service. */
-  def workflowClient = new ZWorkflowClient(toJava.getWorkflowClient)
+  lazy val workflowClient = new ZWorkflowClient(toJava.getWorkflowClient)
 
   /** Returns the in-memory test Temporal service that is owned by this. */
-  def workflowService = new ZWorkflowServiceStubs(toJava.getWorkflowServiceStubs)
+  lazy val workflowService = new ZWorkflowServiceStubs(toJava.getWorkflowServiceStubs)
+
+  implicit lazy val activityOptions: ZActivityOptions[R] =
+    new ZActivityOptions[R](runtime, workflowClient.toJava.newActivityCompletionClient())
 
   /** Allows to run arbitrary effect ensuring a shutdown on effect completion.
     *
@@ -51,13 +55,14 @@ class ZTestWorkflowEnvironment private[zio] (val toJava: TestWorkflowEnvironment
   )(thunk:   ZIO[R, E, A]
   ): ZIO[R, E, A] =
     for {
-      started    <- start.fork
-      awaitFiber <- awaitTermination(options).fork
+      started <- start.fork
       result <- thunk.onExit { _ =>
                   workflowService.shutdownNow.fork.zipWith(shutdownNow.fork) { (stubsShutdown, thisShutdown) =>
-                    Fiber.joinAll(
-                      List(stubsShutdown, thisShutdown, awaitFiber, started)
-                    )
+                    awaitTermination(options).fork.flatMap { awaitFiber =>
+                      Fiber.joinAll(
+                        List(stubsShutdown, thisShutdown, awaitFiber, started)
+                      )
+                    }
                   }
                 }
     } yield result
@@ -113,16 +118,17 @@ object ZTestWorkflowEnvironment {
     * @return
     *   managed instance of test environment
     */
-  val make: URLayer[ZTestEnvironmentOptions, ZTestWorkflowEnvironment] =
-    ZLayer.scoped {
-      ZIO.environmentWithZIO[ZTestEnvironmentOptions] { environment =>
-        ZIO.acquireRelease(
-          ZIO.blocking(
-            ZIO.succeed(
-              new ZTestWorkflowEnvironment(TestWorkflowEnvironment.newInstance(environment.get.toJava))
+  def make[R: Tag]: URLayer[R with ZTestEnvironmentOptions, ZTestWorkflowEnvironment[R]] =
+    ZLayer.scoped[R with ZTestEnvironmentOptions] {
+      ZIO.runtime[R with ZTestEnvironmentOptions].flatMap { runtime =>
+        ZIO.blocking(
+          ZIO.succeed(
+            new ZTestWorkflowEnvironment[R](
+              TestWorkflowEnvironment.newInstance(runtime.environment.get[ZTestEnvironmentOptions].toJava),
+              runtime
             )
           )
-        )(_.shutdownNow)
+        )
       }
     }
 }

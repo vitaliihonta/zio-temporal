@@ -9,6 +9,16 @@ sealed trait ZWorkflowState[A] {
     * @return
     *   this state updated
     */
+  def :=(value: A): this.type =
+    setTo(value)
+
+  /** Replaces the state value
+    *
+    * @param value
+    *   new state value
+    * @return
+    *   this state updated
+    */
   def setTo(value: A): this.type
 
   /** Updates the state value
@@ -171,6 +181,21 @@ object ZWorkflowState {
       underlying = underlying.map(value => pf.applyOrElse[A, A](value, identity[A]))
       this
     }
+
+    /** Checks whenever the state is initialized.
+      *
+      * @return
+      *   true if not initialized
+      */
+    def isEmpty: Boolean =
+      underlying.isEmpty
+
+    /** Checks whenever the state is initialized.
+      *
+      * @return
+      *   true if initialized
+      */
+    def nonEmpty: Boolean = !isEmpty
 
     /** Returns true if this State is initialized '''and''' the predicate $p returns true when applied to this state
       * value. Otherwise, returns false.
