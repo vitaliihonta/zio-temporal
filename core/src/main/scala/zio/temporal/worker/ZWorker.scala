@@ -88,7 +88,7 @@ object ZWorker {
       *   [[Worker#addWorkflowImplementationFactory]]
       */
     def from[A <: I](f: => A)(implicit ctg: ClassTag[I]): ZWorker =
-      factory(ClassTagUtils.classOf[I], () => f)
+      from(ClassTagUtils.classOf[I], () => f)
 
     /** Configures a factory to use when an instance of a workflow implementation is created. The only valid use for
       * this method is unit testing, specifically to instantiate mocks that implement child workflows. An example of
@@ -101,7 +101,7 @@ object ZWorker {
       * @see
       *   [[Worker#addWorkflowImplementationFactory]]
       */
-    def factory(cls: Class[I], f: () => I): ZWorker = {
+    def from(cls: Class[I], f: () => I): ZWorker = {
       worker.self.addWorkflowImplementationFactory[I](cls, () => f())
       new ZWorker(worker.self, cls :: worker.workflows, worker.activities)
     }

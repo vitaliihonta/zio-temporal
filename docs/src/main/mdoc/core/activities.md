@@ -139,7 +139,7 @@ val worker: URLayer[BookingActivity with ZWorkerFactory, Unit] =
         worker       <- workerFactory.newWorker("booking")
         activityImpl <- ZIO.service[BookingActivity]
         _ = worker.addActivityImplementation(activityImpl)
-        _ = worker.addWorkflow[BookingWorkflow](new BookingWorkflowImpl)
+        _ = worker.addWorkflow[BookingWorkflow].from(new BookingWorkflowImpl)
       } yield ()
     }
   }

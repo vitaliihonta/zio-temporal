@@ -109,7 +109,7 @@ val worker: URLayer[ZWorkerFactory, Unit] = ZLayer.fromZIO {
   ZIO.serviceWithZIO[ZWorkerFactory] { workerFactory =>
     for {
       worker <- workerFactory.newWorker("sample-worker")
-      _ = worker.addWorkflow[EchoWorkflow](new EchoWorkflowImpl)
+      _ = worker.addWorkflow[EchoWorkflow].from(new EchoWorkflowImpl)
     } yield ()
   }
 }

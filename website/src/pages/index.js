@@ -19,14 +19,14 @@ const features = [
     title: 'Robust',
     content: [
       "Most typical errors are handled by the library at compile time.",
-      "No more exceptions in runtime!"
+      "No more runtime exceptions!"
     ]
   },
   {
     title: 'ZIO-native',
     content: [
       "Use your favorite library with Temporal!",
-      "Running ZIO code inside your workflows is now easy"
+      "Running ZIO code inside your workflows never been that easy!"
     ]
   },
 ];
@@ -36,25 +36,41 @@ import zio.temporal._
 import zio.temporal.workflow._
 import zio.temporal.protobuf.syntax._
 
-for {
-  _ <- updateLogContext(transactionId)
-  paymentWorkflow <- client
-                       .newWorkflowStub[PaymentWorkflow]
-                       .withTaskQueue("payments")
-                       .withWorkflowId(transactionId.toString)
-                       .build
-  _ <- ZIO.logInfo("Going to trigger workflow")
-  _ <- ZWorkflowStub.start(
-         paymentWorkflow.proceed(
-           ProceedTransactionCommand(
-             id = transactionId.toProto,
-             sender = sender.toProto,
-             receiver = receiver.toProto,
-             amount = BigDecimal(9000).toProto
+def proceedTransaction(sender: UUID, receiver: UUID, amount: BigDecimal) =
+  for {
+    transactionId <- ZIO.randomWith(_.nextUUID)
+    paymentWorkflow <- client
+                         .newWorkflowStub[PaymentWorkflow]
+                         .withTaskQueue("payments")
+                         .withWorkflowId(transactionId.toString)
+                         .build
+    _ <- ZWorkflowStub.start(
+           paymentWorkflow.proceed(
+             ProceedTransactionCommand(
+               id = transactionId.toProto,
+               sender = sender.toProto,
+               receiver = receiver.toProto,
+               amount = amount.toProto
+             )
            )
          )
-       )
-} yield transactionId
+  } yield transactionId
+
+def confirmTransaction(transactionId: UUID, confirmationCode: String) =
+  for {
+    paymentWorkflow <- client.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId.toString)
+    status <- ZWorkflowStub.query(
+                paymentWorkflow.getStatus
+              )
+    _ <- ZIO.when(status.status.isFailed) {
+           ZIO.fail(TemporalError(s"Cannot confirm transaction, it's already failed: ${status.description}"))
+         }
+    _ <- ZWorkflowStub.signal(
+           paymentWorkflow.confirmTransaction(
+             ConfirmTransactionCommand(id = transactionId.toProto, confirmationCode)
+           )
+         )
+  } yield ()
 `
 
 export default function Home() {
@@ -111,7 +127,7 @@ export default function Home() {
           <div className="row">
             <div className="col col--10 col--offset-1">
               <h2>Get started easily</h2>
-              <p>Here is an example of how simple it is to work with Temporal workflows.</p>
+              <p>Here is an example of how simple it is to run and interact with Temporal workflows.</p>
               <br />
               <CodeBlock className={clsx("language-scala", styles.exampleCodeBlock)}>
                 {exampleCode}
