@@ -7,6 +7,7 @@ import scala.reflect.ClassTag
 class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUtils[Q] {
   import q.reflect.*
 
+  private val ActivityInterface = typeSymbolOf[activityInterface]
   private val WorkflowInterface = typeSymbolOf[workflowInterface]
   private val WorkflowMethod    = typeSymbolOf[workflowMethod]
   private val QueryMethod       = typeSymbolOf[queryMethod]
@@ -114,13 +115,46 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   }
 
   def getWorkflowType(workflow: TypeRepr): TypeRepr =
-    workflow match {
-      case AppliedType(_, List(wf)) =>
-        val hasAnnotation = wf.typeSymbol.hasAnnotation(WorkflowInterface)
-        if (!hasAnnotation) {
-          error(SharedCompileTimeMessages.notWorkflow(workflow.show))
-        }
-        wf
+    findWorkflowType(workflow).getOrElse(error(SharedCompileTimeMessages.notWorkflow(workflow.show)))
+
+  def findWorkflowType(workflow: TypeRepr): Option[TypeRepr] = {
+    val tpe = workflow match {
+      case AppliedType(_, List(wf)) => wf
+      case _                        => workflow
+    }
+    if (!isWorkflow(tpe.typeSymbol)) None
+    else Some(tpe)
+  }
+
+  def findActivityType(activity: TypeRepr): Option[TypeRepr] = {
+    val tpe = activity match {
+      case AppliedType(_, List(act)) => act
+      case _                         => activity
+    }
+    if (!isActivity(tpe.typeSymbol)) None
+    else Some(tpe)
+  }
+
+  def isWorkflow(sym: Symbol): Boolean =
+    sym.hasAnnotation(WorkflowInterface)
+
+  def extendsWorkflow(tpe: TypeRepr): Boolean =
+    findWorkflowType(tpe).isDefined || tpe.baseClasses.exists(isWorkflow)
+
+  def assertExtendsWorkflow(workflow: TypeRepr): Unit =
+    if (!extendsWorkflow(workflow)) {
+      error(SharedCompileTimeMessages.notWorkflow(workflow.show))
+    }
+
+  def isActivity(sym: Symbol): Boolean =
+    sym.hasAnnotation(ActivityInterface)
+
+  def extendsActivity(tpe: TypeRepr): Boolean =
+    findActivityType(tpe).isDefined || tpe.baseClasses.exists(isActivity)
+
+  def assertExtendsActivity(activity: TypeRepr): Unit =
+    if (!extendsActivity(activity)) {
+      error(SharedCompileTimeMessages.notActivity(activity.show))
     }
 
   def buildQueryInvocation[R: Type](f: Term, ctgExpr: Expr[ClassTag[R]]): Expr[R] = {

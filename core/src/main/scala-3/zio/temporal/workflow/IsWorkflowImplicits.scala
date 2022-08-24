@@ -1,5 +1,6 @@
 package zio.temporal.workflow
 
+import zio.temporal.internal.InvocationMacroUtils
 import scala.quoted.*
 
 trait IsWorkflowImplicits {
@@ -8,7 +9,10 @@ trait IsWorkflowImplicits {
 }
 
 object IsWorkflowImplicits {
-  // TODO: implement properly
-  def impl[A: Type](using q: Quotes): Expr[IsWorkflow[A]] =
+  def impl[A: Type](using q: Quotes): Expr[IsWorkflow[A]] = {
+    import q.reflect.*
+    val macroUtils = new InvocationMacroUtils[q.type]
+    macroUtils.assertExtendsWorkflow(TypeRepr.of[A])
     '{ IsWorkflow.__zio_temporal_IsWorkflowInstance.asInstanceOf[IsWorkflow[A]] }
+  }
 }

@@ -1,5 +1,6 @@
 package zio.temporal.activity
 
+import zio.temporal.internal.InvocationMacroUtils
 import scala.quoted.*
 
 trait IsActivityImplicits {
@@ -8,7 +9,10 @@ trait IsActivityImplicits {
 }
 
 object IsActivityImplicits {
-  // TODO: implement properly
-  def impl[A: Type](using q: Quotes): Expr[IsActivity[A]] =
+  def impl[A: Type](using q: Quotes): Expr[IsActivity[A]] = {
+    import q.reflect.*
+    val macroUtils = new InvocationMacroUtils[q.type]
+    macroUtils.assertExtendsActivity(TypeRepr.of[A])
     '{ IsActivity.__zio_temporal_IsActivityInstance.asInstanceOf[IsActivity[A]] }
+  }
 }

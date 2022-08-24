@@ -17,7 +17,7 @@ private[zio] object IsConcreteClassImplicits {
       assertConcreteClass(weakTypeOf[A].dealias)
 
       reify {
-        IsConcreteClass.__zio_temporal_IsConcreateClassInstance.asInstanceOf[IsConcreteClass[A]]
+        IsConcreteClass.__zio_temporal_IsConcreteClassInstance.asInstanceOf[IsConcreteClass[A]]
       }
     }
   }

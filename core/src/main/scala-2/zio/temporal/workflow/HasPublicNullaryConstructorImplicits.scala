@@ -1,7 +1,6 @@
 package zio.temporal.workflow
 
 import zio.temporal.internal.{MacroUtils, SharedCompileTimeMessages}
-
 import scala.reflect.macros.blackbox
 import scala.language.experimental.macros
 
