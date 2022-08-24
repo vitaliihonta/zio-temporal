@@ -38,7 +38,7 @@ class MacroUtils[Q <: Quotes](using val q: Q) {
       self
     }
 
-  private def debugEnabled: Boolean =
+  private lazy val debugEnabled: Boolean =
     sys.props
       .get("zio.temporal.debug.macro")
       .flatMap(str => scala.util.Try(str.toBoolean).toOption)
