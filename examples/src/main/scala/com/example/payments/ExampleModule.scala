@@ -33,7 +33,7 @@ object ExampleModule {
           worker       <- workerFactory.newWorker("payments")
           activityImpl <- ZIO.service[PaymentActivity]
           _ = worker.addActivityImplementation(activityImpl)
-          _ = worker.addWorkflow[PaymentWorkflow](new PaymentWorkflowImpl)
+          _ = worker.addWorkflow[PaymentWorkflow].from(new PaymentWorkflowImpl)
         } yield ()
       }
     }

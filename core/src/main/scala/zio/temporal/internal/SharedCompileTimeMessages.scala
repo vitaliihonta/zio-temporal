@@ -35,6 +35,9 @@ object SharedCompileTimeMessages {
   def notWorkflow(what: String): String =
     s"$what is not a workflow!"
 
+  def notActivity(what: String): String =
+    s"$what is not an activity!"
+
   def notWorkflowMethod(what: String): String =
     s"The method is not a @workflowMethod: $what"
 
@@ -86,4 +89,10 @@ object SharedCompileTimeMessages {
     s"Unexpected library error! This should not normally happen.\n" +
       s"Please, fill up an issue on the GitHub." +
       s"\n$details"
+
+  def isNotConcreteClass(tpe: String): String =
+    s"$tpe should be a concrete (non-abstract) class"
+
+  def shouldHavePublicNullaryConstructor(tpe: String): String =
+    s"$tpe should have a public zero-argument constructor"
 }

@@ -1,8 +1,11 @@
 package zio.temporal.worker
 
-import zio._
+import zio.*
 import zio.temporal.internal.ClassTagUtils
 import io.temporal.worker.Worker
+import zio.temporal.activity.IsActivity
+import zio.temporal.workflow.{HasPublicNullaryConstructor, IsConcreteClass, IsWorkflow}
+
 import scala.reflect.ClassTag
 
 /** Hosts activity and workflow implementations. Uses long poll to receive activity and workflow tasks and processes
@@ -22,8 +25,8 @@ class ZWorker private[zio] (
 
   /** Allows to add workflow to this worker
     */
-  def addWorkflow[I]: ZWorker.AddWorkflowDsl[I] =
-    new ZWorker.AddWorkflowDsl[I](this) // TODO: validate that it's a concrete class
+  def addWorkflow[I: IsWorkflow]: ZWorker.AddWorkflowDsl[I] =
+    new ZWorker.AddWorkflowDsl[I](this)
 
   /** Registers activity implementation objects with a worker. An implementation object can implement one or more
     * activity types.
@@ -31,7 +34,7 @@ class ZWorker private[zio] (
     * @see
     *   [[Worker#registerActivitiesImplementations]]
     */
-  def addActivityImplementation[A <: AnyRef](activity: A): ZWorker = {
+  def addActivityImplementation[A <: AnyRef: IsActivity](activity: A): ZWorker = {
     val cls = activity.getClass
     self.registerActivitiesImplementations(activity)
     new ZWorker(self, workflows, cls :: activities)
@@ -49,7 +52,11 @@ object ZWorker {
       * @see
       *   [[Worker#registerWorkflowImplementationTypes]]
       */
-    def fromClass(implicit ctg: ClassTag[I]): ZWorker =
+    def fromClass(
+      implicit ctg:                ClassTag[I],
+      isConcreteClass:             IsConcreteClass[I],
+      hasPublicNullaryConstructor: HasPublicNullaryConstructor[I]
+    ): ZWorker =
       fromClass(ClassTagUtils.classOf[I])
 
     /** Registers workflow implementation classes with a worker. Can be called multiple times to add more types.
@@ -58,7 +65,11 @@ object ZWorker {
       * @see
       *   [[Worker#registerWorkflowImplementationTypes]]
       */
-    def fromClass(cls: Class[I]): ZWorker = {
+    def fromClass(
+      cls:                         Class[I]
+    )(implicit isConcreteClass:    IsConcreteClass[I],
+      hasPublicNullaryConstructor: HasPublicNullaryConstructor[I]
+    ): ZWorker = {
       worker.self.registerWorkflowImplementationTypes(cls)
       new ZWorker(worker.self, cls :: worker.workflows, worker.activities)
     }
@@ -69,15 +80,15 @@ object ZWorker {
       *
       * @tparam A
       *   workflow interface implementation
-      * @param factory
+      * @param f
       *   should create a workflow implementation
       * @param ctg
       *   workflow interface class tag
       * @see
       *   [[Worker#addWorkflowImplementationFactory]]
       */
-    def apply[A <: I](factory: => A)(implicit ctg: ClassTag[I]): ZWorker =
-      apply(ClassTagUtils.classOf[I], () => factory)
+    def from[A <: I](f: => A)(implicit ctg: ClassTag[I]): ZWorker =
+      factory(ClassTagUtils.classOf[I], () => f)
 
     /** Configures a factory to use when an instance of a workflow implementation is created. The only valid use for
       * this method is unit testing, specifically to instantiate mocks that implement child workflows. An example of
@@ -85,13 +96,13 @@ object ZWorker {
       *
       * @param cls
       *   workflow interface class
-      * @param factory
+      * @param f
       *   should create a workflow implementation
       * @see
       *   [[Worker#addWorkflowImplementationFactory]]
       */
-    def apply(cls: Class[I], factory: () => I): ZWorker = {
-      worker.self.addWorkflowImplementationFactory[I](cls, () => factory())
+    def factory(cls: Class[I], f: () => I): ZWorker = {
+      worker.self.addWorkflowImplementationFactory[I](cls, () => f())
       new ZWorker(worker.self, cls :: worker.workflows, worker.activities)
     }
   }

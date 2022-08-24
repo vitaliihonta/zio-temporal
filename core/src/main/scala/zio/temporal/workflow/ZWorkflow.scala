@@ -2,16 +2,16 @@ package zio.temporal.workflow
 
 import io.temporal.workflow.CancellationScope
 import io.temporal.workflow.Workflow
-import zio.temporal.activity.ZActivityStubBuilderInitial
-import zio.temporal.activity.ZLocalActivityStubBuilderInitial
+import zio.temporal.activity.{IsActivity, ZActivityStubBuilderInitial, ZLocalActivityStubBuilderInitial}
 import zio.temporal.internal.ClassTagUtils
 import zio.temporal.ZCurrentTimeMillis
 import zio.temporal.ZSearchAttribute
 import zio.temporal.ZWorkflowExecution
 import zio.temporal.ZWorkflowInfo
-import zio._
+import zio.*
+
 import java.util.UUID
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 import scala.reflect.ClassTag
 
 object ZWorkflow {
@@ -179,7 +179,7 @@ object ZWorkflow {
     * @return
     *   activity stub builder
     */
-  def newActivityStub[A: ClassTag: IsConcreteType] =
+  def newActivityStub[A: ClassTag: IsActivity] =
     new ZActivityStubBuilderInitial[A](ClassTagUtils.classTagOf[A])
 
   /** Creates a builder of client stub to local activities that implement given interface.
@@ -189,7 +189,7 @@ object ZWorkflow {
     * @return
     *   local activity stub builder
     */
-  def newLocalActivityStub[A: ClassTag: IsConcreteType]: ZLocalActivityStubBuilderInitial[A] =
+  def newLocalActivityStub[A: ClassTag: IsActivity]: ZLocalActivityStubBuilderInitial[A] =
     new ZLocalActivityStubBuilderInitial[A](ClassTagUtils.classTagOf[A])
 
   /** Creates a builder of client stub that can be used to start a child workflow that implements given interface.
@@ -199,7 +199,7 @@ object ZWorkflow {
     * @return
     *   child workflow stub builder
     */
-  def newChildWorkflowStub[A: ClassTag: IsConcreteType]: ZChildWorkflowStubBuilder[A] =
+  def newChildWorkflowStub[A: ClassTag: IsWorkflow]: ZChildWorkflowStubBuilder[A] =
     new ZChildWorkflowStubBuilder[A](identity)
 
   /** Creates client stub that can be used to communicate to an existing workflow execution.
@@ -211,7 +211,9 @@ object ZWorkflow {
     * @return
     *   external workflow stub
     */
-  def newExternalWorkflowStub[A: ClassTag: IsConcreteType](workflowId: String): ZExternalWorkflowStub.Of[A] =
+  def newExternalWorkflowStub[A: ClassTag: IsWorkflow](
+    workflowId: String
+  ): ZExternalWorkflowStub.Of[A] =
     ZExternalWorkflowStub.Of(
       Workflow.newExternalWorkflowStub[A](ClassTagUtils.classOf[A], workflowId)
     )
@@ -225,7 +227,7 @@ object ZWorkflow {
     * @return
     *   external workflow stub
     */
-  def newExternalWorkflowStub[A: ClassTag: IsConcreteType](
+  def newExternalWorkflowStub[A: ClassTag: IsWorkflow](
     workflowExecution: ZWorkflowExecution
   ): ZExternalWorkflowStub.Of[A] =
     ZExternalWorkflowStub.Of(
@@ -239,7 +241,9 @@ object ZWorkflow {
     * @return
     *   external workflow stub
     */
-  def newExternalWorkflowStubProxy[A: ClassTag: IsConcreteType](workflowId: String): ZExternalWorkflowStub.Proxy[A] =
+  def newExternalWorkflowStubProxy[A: ClassTag: IsWorkflow](
+    workflowId: String
+  ): ZExternalWorkflowStub.Proxy[A] =
     ZExternalWorkflowStub.Proxy(
       new ZExternalWorkflowStubImpl(Workflow.newUntypedExternalWorkflowStub(workflowId))
     )
@@ -251,7 +255,7 @@ object ZWorkflow {
     * @return
     *   external workflow stub
     */
-  def newExternalWorkflowStubProxy[A: ClassTag: IsConcreteType](
+  def newExternalWorkflowStubProxy[A: ClassTag: IsWorkflow](
     workflowExecution: ZWorkflowExecution
   ): ZExternalWorkflowStub.Proxy[A] =
     ZExternalWorkflowStub.Proxy[A](

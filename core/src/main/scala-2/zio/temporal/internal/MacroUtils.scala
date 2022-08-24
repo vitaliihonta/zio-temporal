@@ -108,6 +108,20 @@ abstract class MacroUtils(val c: blackbox.Context) {
 
   def error(message: String): Nothing = c.abort(c.enclosingPosition, message)
 
+  def isConcreteClass(tpe: Type): Boolean =
+    tpe.typeSymbol.isClass && !tpe.typeSymbol.asClass.isTrait && !tpe.typeSymbol.asClass.isAbstract
+
+  def assertConcreteClass(tpe: Type): Unit =
+    if (!isConcreteClass(tpe)) {
+      error(SharedCompileTimeMessages.isNotConcreteClass(tpe.toString))
+    }
+
+  def hasPublicNullaryConstructor(tpe: Type): Boolean = {
+    assertConcreteClass(tpe)
+    tpe.decls
+      .exists(m => m.isConstructor && m.asMethod.paramLists.flatten.isEmpty && m.isPublic)
+  }
+
   protected def getPrefixOf(tpe: Type): Tree = {
     val prefix = c.prefix.tree
     if (!(prefix.tpe <:< tpe)) {

@@ -9,6 +9,7 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
     with VersionSpecificMacroUtils {
   import c.universe._
 
+  protected val ActivityInterface = typeOf[activityInterface].dealias
   protected val WorkflowInterface = typeOf[workflowInterface].dealias
   protected val WorkflowMethod    = typeOf[workflowMethod].dealias
   protected val QueryMethod       = typeOf[queryMethod].dealias
@@ -109,20 +110,51 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
   }
 
   protected def assertWorkflow(workflow: Type): Type = {
-    def errorNotWorkflow = error(SharedCompileTimeMessages.notWorkflow(workflow.toString))
-    workflow match {
+    if (!isWorkflow(workflow)) {
+      error(SharedCompileTimeMessages.notWorkflow(workflow.toString))
+    }
+    workflow
+  }
+
+  protected def assertExtendsWorkflow(workflow: Type): Type = {
+    if (!extendsWorkflow(workflow)) {
+      error(SharedCompileTimeMessages.notWorkflow(workflow.toString))
+    }
+    workflow
+  }
+
+  protected def assertExtendsActivity(workflow: Type): Unit =
+    if (!extendsActivity(workflow)) {
+      error(SharedCompileTimeMessages.notActivity(workflow.toString))
+    }
+
+  protected def isWorkflow(tpe: Type): Boolean =
+    tpe match {
       case SingleType(_, sym) =>
         sym.typeSignature.baseClasses
           .flatMap(sym => findAnnotation(sym, WorkflowInterface).map(_ => sym.typeSignature))
           .headOption
-          .getOrElse(
-            errorNotWorkflow
-          )
+          .nonEmpty
 
       case _ =>
-        findAnnotation(workflow.typeSymbol, WorkflowInterface)
-          .map(_ => workflow)
-          .getOrElse(errorNotWorkflow)
+        hasAnnotation(tpe.typeSymbol, WorkflowInterface)
     }
-  }
+
+  protected def extendsWorkflow(tpe: Type): Boolean =
+    isWorkflow(tpe) || tpe.baseClasses.exists(sym => isWorkflow(sym.typeSignature))
+
+  protected def isActivity(tpe: Type): Boolean =
+    tpe match {
+      case SingleType(_, sym) =>
+        sym.typeSignature.baseClasses
+          .flatMap(sym => findAnnotation(sym, ActivityInterface).map(_ => sym.typeSignature))
+          .headOption
+          .nonEmpty
+
+      case _ =>
+        hasAnnotation(tpe.typeSymbol, ActivityInterface)
+    }
+
+  protected def extendsActivity(tpe: Type): Boolean =
+    isActivity(tpe) || tpe.baseClasses.exists(sym => isActivity(sym.typeSignature))
 }
