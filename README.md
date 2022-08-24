@@ -1,4 +1,4 @@
-[![zio-temporal-core Scala version support](https://index.scala-lang.org/vitaliihonta/zio-temporal/zio-temporal-core/latest-by-scala-version.svg?platform=jvm)](https://index.scala-lang.org/vitaliihonta/zio-temporal/zio-temporal-core)
+[![zio-temporal-core Scala version support](https://index.scala-lang.org/vitaliihonta/zio-temporal/zio-temporal-core/latest-by-scala-version.svg?platform=jvm&dummy=true)](https://index.scala-lang.org/vitaliihonta/zio-temporal/zio-temporal-core)
 ![Build status](https://github.com/vitaliihonta/zio-temporal/actions/workflows/publish.yaml/badge.svg)
 
 # ZIO Temporal
