@@ -1,7 +1,5 @@
 package zio.temporal.protobuf
 
-import zio.ZIO
-
 object syntax {
 
   final implicit class ToProtoTypeSyntax[A](private val self: A) extends AnyVal {
@@ -17,7 +15,4 @@ object syntax {
     def fromProto[B](implicit protoType: ProtoType.Of[B, A]): B =
       protoType.fromRepr(self)
   }
-
-  implicit def zioZUnitConversion[R, E](self: ZIO[R, E, Unit]): ZIO[R, E, ZUnit] =
-    self.as(ZUnit())
 }
