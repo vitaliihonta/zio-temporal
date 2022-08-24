@@ -57,10 +57,10 @@ class TemporalPaymentService(client: ZWorkflowClient) extends PaymentService {
           _ <- ZWorkflowStub.start(
                  paymentWorkflow.proceed(
                    ProceedTransactionCommand(
-                     id = transactionId.toProto,
-                     sender = sender.toProto,
-                     receiver = receiver.toProto,
-                     amount = BigDecimal(9000).toProto
+                     id = transactionId,
+                     sender = sender,
+                     receiver = receiver,
+                     amount = BigDecimal(9000)
                    )
                  )
                )
@@ -100,7 +100,7 @@ class TemporalPaymentService(client: ZWorkflowClient) extends PaymentService {
              }
         _ <- ZWorkflowStub.signal(
                workflowStub.confirmTransaction(
-                 ConfirmTransactionCommand(id = transactionId.toProto, confirmationCode)
+                 ConfirmTransactionCommand(id = transactionId, confirmationCode)
                )
              )
         _ <- ZIO.logInfo("Confirmation sent!")

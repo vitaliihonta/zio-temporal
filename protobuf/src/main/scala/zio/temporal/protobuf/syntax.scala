@@ -15,4 +15,7 @@ object syntax {
     def fromProto[B](implicit protoType: ProtoType.Of[B, A]): B =
       protoType.fromRepr(self)
   }
+
+  implicit def protoTypeConversion[A, B](value: A)(implicit protoType: ProtoType.Of[A, B]): B =
+    protoType.repr(value)
 }

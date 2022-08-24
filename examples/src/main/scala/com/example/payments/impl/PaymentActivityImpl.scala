@@ -36,7 +36,7 @@ class PaymentActivityImpl(implicit options: ZActivityOptions[Any]) extends Payme
            )
       id <- Random.nextUUID
       transaction = TransactionView(
-                      id = id.toProto,
+                      id = id,
                       status = TransactionStatus.InProgress,
                       description = "In progress",
                       sender = command.sender,

@@ -47,10 +47,10 @@ def proceedTransaction(sender: UUID, receiver: UUID, amount: BigDecimal) =
     _ <- ZWorkflowStub.start(
            paymentWorkflow.proceed(
              ProceedTransactionCommand(
-               id = transactionId.toProto,
-               sender = sender.toProto,
-               receiver = receiver.toProto,
-               amount = amount.toProto
+               id = transactionId,
+               sender = sender,
+               receiver = receiver,
+               amount = amount
              )
            )
          )
@@ -67,7 +67,7 @@ def confirmTransaction(transactionId: UUID, confirmationCode: String) =
          }
     _ <- ZWorkflowStub.signal(
            paymentWorkflow.confirmTransaction(
-             ConfirmTransactionCommand(id = transactionId.toProto, confirmationCode)
+             ConfirmTransactionCommand(id = transactionId, confirmationCode)
            )
          )
   } yield ()
