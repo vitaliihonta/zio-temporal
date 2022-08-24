@@ -5,7 +5,6 @@ import com.example.transactions._
 import zio._
 import zio.temporal.activity.ZActivity
 import zio.temporal.activity.ZActivityOptions
-import zio.temporal.protobuf.ZUnit
 import zio.temporal.protobuf.syntax._
 
 object PaymentActivityImpl {
@@ -20,12 +19,12 @@ class PaymentActivityImpl(implicit options: ZActivityOptions[Any]) extends Payme
       proceedImpl(transaction)
     }
 
-  override def verifyConfirmation(command: ConfirmTransactionCommand): Either[TransactionError, ZUnit] =
+  override def verifyConfirmation(command: ConfirmTransactionCommand): Either[TransactionError, Unit] =
     ZActivity.run {
       verifyConfirmationImpl(command)
     }
 
-  override def cancelTransaction(command: CancelTransactionCommand): Either[TransactionError, ZUnit] =
+  override def cancelTransaction(command: CancelTransactionCommand): Unit =
     ZActivity.run {
       cancelTransactionImpl(command)
     }
@@ -37,7 +36,7 @@ class PaymentActivityImpl(implicit options: ZActivityOptions[Any]) extends Payme
            )
       id <- Random.nextUUID
       transaction = TransactionView(
-                      id = id.toProto,
+                      id = id,
                       status = TransactionStatus.InProgress,
                       description = "In progress",
                       sender = command.sender,
@@ -54,6 +53,6 @@ class PaymentActivityImpl(implicit options: ZActivityOptions[Any]) extends Payme
     else
       ZIO.logInfo(s"Successfully processed transaction_id=${command.id.fromProto}")
 
-  private def cancelTransactionImpl(command: CancelTransactionCommand): ZIO[Any, TransactionError, Unit] =
+  private def cancelTransactionImpl(command: CancelTransactionCommand): UIO[Unit] =
     ZIO.logInfo(s"Cancelled transaction_id=${command.id.fromProto}")
 }

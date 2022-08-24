@@ -23,9 +23,6 @@ object SharedCompileTimeMessages {
   val generatedWorkflowStartAsync: String =
     "Generated workflow start async"
 
-  val generatedZSignalBuilder: String =
-    "Generated ZSignalBuilder"
-
   val generatedSignal: String =
     "Generated signal"
 

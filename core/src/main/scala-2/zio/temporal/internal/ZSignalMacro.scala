@@ -24,7 +24,6 @@ class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtil
     val addSignal = addBatchRequestTree(tree)(addTo = None)
 
     q"""new $ZSignalBuilder($self, $addSignal)"""
-      .debugged(SharedCompileTimeMessages.generatedZSignalBuilder)
   }
 
   def signalWithStartImpl[A: WeakTypeTag](f: Expr[A]): Tree = {

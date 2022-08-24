@@ -56,12 +56,21 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
 
   override def toData(value: scala.Any): ju.Optional[Payload] =
     value match {
+      case _: scala.runtime.BoxedUnit =>
+        ju.Optional.of(writeUnit())
+      case scala.Right(unit) if unit.isInstanceOf[scala.runtime.BoxedUnit] =>
+        ju.Optional.of(writeRight(ZUnit()))
 
       case scala.Right(value) if value.isInstanceOf[GeneratedMessage] =>
         ju.Optional.of(writeRight(value.asInstanceOf[GeneratedMessage]))
 
       case scala.Left(error) if error.isInstanceOf[GeneratedMessage] =>
         ju.Optional.of(writeLeft(error.asInstanceOf[GeneratedMessage]))
+
+      case opt: Option[_] if opt.forall(_.isInstanceOf[scala.runtime.BoxedUnit]) =>
+        ju.Optional.of(
+          writeOption(opt.map(_ => ZUnit()))
+        )
 
       case opt: Option[_] if opt.forall(_.isInstanceOf[GeneratedMessage]) =>
         ju.Optional.of(
@@ -90,6 +99,9 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
   private def writeOption(opt: Option[GeneratedMessage]): Payload =
     writeGeneratedMessage(Optional.of(opt.map(value => Any.pack(value, temporalZioPrefix))))
 
+  private def writeUnit(): Payload =
+    writeGeneratedMessage(ZUnit())
+
   override def fromData[T](content: Payload, valueClass: Class[T], valueType: Type): T =
     getCompanion(content, dropTemporalZioPrefix(valueType.getTypeName))
       .parseFrom(content.getData.newCodedInput()) match {
@@ -105,15 +117,20 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
       case result: Result =>
         result.result match {
           case Result.Result.Error(error) =>
-            Left(
-              getCompanion(content, dropTemporalZioPrefix(error.typeUrl))
-                .parseFrom(error.value.newCodedInput())
-            ).asInstanceOf[T]
+            val decoded = getCompanion(content, dropTemporalZioPrefix(error.typeUrl))
+              .parseFrom(error.value.newCodedInput())
+
+            val result = if (decoded.isInstanceOf[ZUnit]) () else decoded
+
+            Left(result).asInstanceOf[T]
 
           case Result.Result.Value(value) =>
-            Right(
-              getCompanion(content, dropTemporalZioPrefix(value.typeUrl)).parseFrom(value.value.newCodedInput())
-            ).asInstanceOf[T]
+            val decoded = getCompanion(content, dropTemporalZioPrefix(value.typeUrl))
+              .parseFrom(value.value.newCodedInput())
+
+            val result = if (decoded.isInstanceOf[ZUnit]) () else decoded
+
+            Right(result).asInstanceOf[T]
 
           case Result.Result.Empty =>
             throw new ProtobufPayloadException(
@@ -121,7 +138,8 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
             )
         }
 
-      case value => value.asInstanceOf[T]
+      case _: ZUnit => ().asInstanceOf[T]
+      case value    => value.asInstanceOf[T]
     }
 
   private def getCompanion(content: Payload, typeUrl: String): GeneratedMessageCompanion[GeneratedMessage] =
