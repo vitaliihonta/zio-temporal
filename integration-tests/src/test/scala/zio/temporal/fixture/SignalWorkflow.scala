@@ -1,6 +1,7 @@
 package zio.temporal.fixture
 
-import zio.temporal._
+import zio.temporal.*
+import zio.temporal.state.ZWorkflowState
 import zio.temporal.workflow.ZWorkflow
 
 @workflowInterface
@@ -17,20 +18,20 @@ trait SignalWorkflow {
 }
 
 class SignalWorkflowImpl extends SignalWorkflow {
-  private var message: Option[String] = None
+  private val message = ZWorkflowState.empty[String]
 
   override def echoServer(prefix: String): String = {
     ZWorkflow.awaitWhile(message.isEmpty)
-    s"$prefix ${message.get}"
+    s"$prefix ${message.snapshot}"
   }
 
   override def echo(value: String): Unit = {
     println(s"echo($value)")
-    message = Some(value)
+    message := value
   }
 
   override def getProgress(default: Option[String]): Option[String] = {
     println(s"Getting progress default=$default...")
-    message.orElse(default)
+    message.toOption.orElse(default)
   }
 }

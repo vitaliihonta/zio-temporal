@@ -21,6 +21,30 @@ sealed trait ZWorkflowState[A] {
     */
   def setTo(value: A): this.type
 
+  /** Updates the state when the predicate holds
+    *
+    * @param p
+    *   the condition
+    * @param value
+    *   possible new state value
+    * @return
+    *   this state updated
+    */
+  def setToIf(p: Boolean)(value: => A): this.type =
+    updateIf(p)(_ => value)
+
+  /** Updates the state unless the predicate holds
+    *
+    * @param p
+    *   the condition
+    * @param value
+    *   possible new state value
+    * @return
+    *   this state updated
+    */
+  def setToUnless(p: Boolean)(value: => A): this.type =
+    setToIf(!p)(value)
+
   /** Updates the state value
     *
     * @param f
@@ -32,6 +56,8 @@ sealed trait ZWorkflowState[A] {
 
   /** Updates the state when the predicate holds
     *
+    * @param p
+    *   the condition
     * @param f
     *   updating function
     * @return
@@ -43,6 +69,8 @@ sealed trait ZWorkflowState[A] {
 
   /** Updates the state unless the predicate holds
     *
+    * @param p
+    *   the condition
     * @param f
     *   updating function
     * @return
@@ -67,6 +95,26 @@ sealed trait ZWorkflowState[A] {
     */
   @throws[NoSuchElementException]
   def snapshot: A = snapshotOrElse(throw new NoSuchElementException("State was not initialized"))
+
+  /** Returns true if this State is initialized '''and''' the equals to the provided value. Otherwise, returns false.
+    *
+    * @param that
+    *   value to check with
+    * @return
+    *   whenever they're equal
+    */
+  def =:=(that: A): Boolean =
+    exists(_ == that)
+
+  /** Returns true if this State is initialized '''and''' the equals to the provided value. Otherwise, returns false.
+    *
+    * @param that
+    *   value to check with
+    * @return
+    *   whenever they're equal
+    */
+  def =!=(that: A): Boolean =
+    exists(_ != that)
 
   /** Returns true if this State is initialized '''and''' the predicate $p returns true when applied to this state
     * value. Otherwise, returns false.

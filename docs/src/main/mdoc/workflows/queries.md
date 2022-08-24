@@ -9,6 +9,7 @@ Let's start from some basic imports that will be required for the whole demonstr
 import zio._
 import zio.temporal._
 import zio.temporal.worker._
+import zio.temporal.state._
 import zio.temporal.workflow._
 import zio.temporal.activity._
 
@@ -63,19 +64,19 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
     .withStartToCloseTimeout(10.seconds)
     .build
     
-  private var paymentState: PaymentState = PaymentState.Initial 
+  private val paymentState = ZWorkflowState.make[PaymentState](PaymentState.Initial)
   
-  override def getPaymentState(): PaymentState = paymentState
+  override def getPaymentState(): PaymentState = paymentState.snapshot
   
   override def proceed(amount: BigDecimal, from: String, to: String): Unit = {
     paymentActivity.debit(amount, from)
-    paymentState = PaymentState.Debited
+    paymentState := PaymentState.Debited
     
     // Let's add a pause here to emulate long-running workflow 
     ZWorkflow.sleep(5.seconds)
     
     paymentActivity.credit(amount, to)
-    paymentState = PaymentState.Credited
+    paymentState := PaymentState.Credited
   }
 }
 ```

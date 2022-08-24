@@ -63,7 +63,7 @@ def confirmTransaction(transactionId: UUID, confirmationCode: String) =
                 paymentWorkflow.getStatus
               )
     _ <- ZIO.when(status.status.isFailed) {
-           ZIO.fail(TemporalError(s"Cannot confirm transaction, it's already failed: ${status.description}"))
+           ZIO.fail(TemporalError(s"Cannot confirm transaction, it's already failed: ${"$"}{status.description}"))
          }
     _ <- ZWorkflowStub.signal(
            paymentWorkflow.confirmTransaction(
