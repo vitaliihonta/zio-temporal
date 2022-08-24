@@ -1,6 +1,8 @@
 # Workflow state
+
 Temporal allows your workflows to be stateful.  
-Basically, it means that you could store the workflow state inside a plain Scala variable in the workflow implementation.
+Basically, it means that you could store the workflow state inside a plain Scala variable in the workflow
+implementation.
 
 ## Using workflow state
 
@@ -10,6 +12,7 @@ Let's start from some basic imports that will be required for the whole demonstr
 import zio._
 import zio.temporal._
 import zio.temporal.worker._
+import zio.temporal.state._
 import zio.temporal.workflow._
 import zio.temporal.activity._
 
@@ -35,7 +38,8 @@ trait PaymentWorkflow {
 }
 ```
 
-While implementing `PaymentWorkflow`, we may be interested in the current payment state: is it on `debit` or `credit` step?
+While implementing `PaymentWorkflow`, we may be interested in the current payment state: is it on `debit` or `credit`
+step?
 Let's model it using the following enum:
 
 ```scala mdoc
@@ -56,16 +60,62 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
     .withStartToCloseTimeout(10.seconds)
     .build
     
-  private var paymentState: PaymentState = PaymentState.Initial 
+  private val paymentState = ZWorkflowState.make[PaymentState](PaymentState.Initial)
   
   override def proceed(amount: BigDecimal, from: String, to: String): Unit = {
     paymentActivity.debit(amount, from)
-    paymentState = PaymentState.Debited
+    paymentState := PaymentState.Debited
     paymentActivity.credit(amount, to)
-    paymentState = PaymentState.Credited
+    paymentState := PaymentState.Credited
   }
 }
 ```
 
-## Managing complex state with ZWorkflowState
-TBD
+While it's allowed to use plain Scala `var`, it's recommended to use `ZWorkflowState` instead.  
+First, it allows to deal with uninitialized state (aka null):
+
+#### Uninitialized state
+```scala mdoc:silent
+val missingState = ZWorkflowState.empty[PaymentState]
+```
+
+#### Check whenever the state is initialized
+```scala mdoc
+missingState.isEmpty
+```
+
+Second, it provides a lot of handy methods for dealing with mutable state:
+
+#### Set the state
+```scala mdoc:silent
+missingState := PaymentState.Initial
+```
+```scala mdoc
+missingState.snapshot
+```
+
+#### Update the state on certain conditions
+```scala mdoc:silent
+def condition: Boolean = true
+missingState.setToIf(condition)(PaymentState.Debited)
+```
+```scala mdoc
+missingState.snapshot
+```
+
+#### Update using partial functions
+```scala mdoc:silent
+missingState.updateWhen {
+  case PaymentState.Debited => PaymentState.Credited
+}
+```
+```scala mdoc
+missingState.snapshot
+```
+
+#### Equality checks:
+```scala mdoc
+missingState =:= PaymentState.Credited
+
+missingState =!= PaymentState.Debited
+```

@@ -14,7 +14,7 @@ It allows you to run workflows in the Scala way!
 
 ## Installation
 
-```sbt
+```scala
 // Core
 libraryDependencies += "@ORGANIZATION@" %% "zio-temporal-core" % "@VERSION@"
 

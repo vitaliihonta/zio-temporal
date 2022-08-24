@@ -28,7 +28,7 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
 
   override def proceed(transaction: ProceedTransactionCommand): Either[TransactionError, TransactionView] = {
     logger.info(s"Processing transaction=$transaction")
-    state.setTo(initialState(transaction))
+    state := initialState(transaction)
     val saga = for {
       created <- proceedTransaction(transaction)
       _ = logger.info(s"Initiated transaction=$created")
@@ -120,8 +120,10 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
   private def waitForConfirmation(): ZSaga[Nothing, Unit] =
     ZSaga.succeed {
       ZWorkflow.awaitWhile(
-        state.snapshotOf(_.transaction.status) == TransactionStatus.InProgress &&
-          state.snapshotOf(_.confirmation).isEmpty
+        state.exists(state =>
+          state.transaction.status == TransactionStatus.InProgress &&
+            state.confirmation.isEmpty
+        )
       )
     }
 }
