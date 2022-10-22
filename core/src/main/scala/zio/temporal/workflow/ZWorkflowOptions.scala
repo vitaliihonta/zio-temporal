@@ -13,50 +13,51 @@ import scala.jdk.CollectionConverters._
   * @see
   *   [[WorkflowOptions]]
   */
-class ZWorkflowOptions private[zio] (
-  val workflowIdReusePolicy:    Option[WorkflowIdReusePolicy],
-  val workflowRunTimeout:       Option[Duration],
-  val workflowExecutionTimeout: Option[Duration],
-  val retryOptions:             Option[ZRetryOptions],
-  val cronSchedule:             Option[String],
-  val memo:                     Map[String, AnyRef],
-  val searchAttributes:         Map[String, ZSearchAttribute],
-  val contextPropagators:       List[ContextPropagator]) {
-
-  override def toString: String =
-    s"ZWorkflowOptions(" +
-      s"workflowIdReusePolicy=$workflowIdReusePolicy, " +
-      s"workflowRunTimeout=$workflowRunTimeout, " +
-      s"workflowExecutionTimeout=$workflowExecutionTimeout, " +
-      s"retryOptions=$retryOptions, " +
-      s"cronSchedule=$cronSchedule, " +
-      s"memo=$memo, " +
-      s"searchAttributes=$searchAttributes, " +
-      s"contextPropagators=$contextPropagators)"
+case class ZWorkflowOptions private[zio] (
+  workflowIdReusePolicy:                Option[WorkflowIdReusePolicy],
+  workflowRunTimeout:                   Option[Duration],
+  workflowExecutionTimeout:             Option[Duration],
+  retryOptions:                         Option[ZRetryOptions],
+  cronSchedule:                         Option[String],
+  memo:                                 Map[String, AnyRef],
+  searchAttributes:                     Map[String, ZSearchAttribute],
+  contextPropagators:                   List[ContextPropagator],
+  private val javaOptionsCustomization: WorkflowOptions.Builder => WorkflowOptions.Builder) {
 
   def withWorkflowIdReusePolicy(value: WorkflowIdReusePolicy): ZWorkflowOptions =
-    copy(_workflowIdReusePolicy = Some(value))
+    copy(workflowIdReusePolicy = Some(value))
 
   def withWorkflowRunTimeout(value: Duration): ZWorkflowOptions =
-    copy(_workflowRunTimeout = Some(value))
+    copy(workflowRunTimeout = Some(value))
 
   def withWorkflowExecutionTimeout(value: Duration): ZWorkflowOptions =
-    copy(_workflowExecutionTimeout = Some(value))
+    copy(workflowExecutionTimeout = Some(value))
 
   def withRetryOptions(value: ZRetryOptions): ZWorkflowOptions =
-    copy(_retryOptions = Some(value))
+    copy(retryOptions = Some(value))
 
   def withCronSchedule(value: String): ZWorkflowOptions =
-    copy(_cronSchedule = Some(value))
+    copy(cronSchedule = Some(value))
 
   def withMemo(values: (String, AnyRef)*): ZWorkflowOptions =
-    copy(_memo = values.toMap)
+    copy(memo = values.toMap)
 
   def withSearchAttributes(values: (String, ZSearchAttribute)*): ZWorkflowOptions =
-    copy(_searchAttributes = values.toMap)
+    copy(searchAttributes = values.toMap)
 
   def withContextPropagators(values: ContextPropagator*): ZWorkflowOptions =
-    copy(_contextPropagators = values.toList)
+    copy(contextPropagators = values.toList)
+
+  /** Allows to specify options directly on the java SDK's [[WorkerOptions]]. Use it in case an appropriate `withXXX`
+    * method is missing
+    *
+    * @note
+    *   the options specified via this method take precedence over those specified via other methods.
+    */
+  def transformJavaOptions(
+    f: WorkflowOptions.Builder => WorkflowOptions.Builder
+  ): ZWorkflowOptions =
+    copy(javaOptionsCustomization = f)
 
   def toJava(workflowId: String): WorkflowOptions = {
     val builder = WorkflowOptions.newBuilder().setWorkflowId(workflowId)
@@ -71,29 +72,8 @@ class ZWorkflowOptions private[zio] (
     builder.setSearchAttributes(searchAttributes)
     builder.setContextPropagators(contextPropagators.asJava)
 
-    builder.build()
+    javaOptionsCustomization(builder).build()
   }
-
-  private def copy(
-    _workflowIdReusePolicy:    Option[WorkflowIdReusePolicy] = workflowIdReusePolicy,
-    _workflowRunTimeout:       Option[Duration] = workflowRunTimeout,
-    _workflowExecutionTimeout: Option[Duration] = workflowExecutionTimeout,
-    _retryOptions:             Option[ZRetryOptions] = retryOptions,
-    _cronSchedule:             Option[String] = cronSchedule,
-    _memo:                     Map[String, AnyRef] = memo,
-    _searchAttributes:         Map[String, ZSearchAttribute] = searchAttributes,
-    _contextPropagators:       List[ContextPropagator] = contextPropagators
-  ): ZWorkflowOptions =
-    new ZWorkflowOptions(
-      _workflowIdReusePolicy,
-      _workflowRunTimeout,
-      _workflowExecutionTimeout,
-      _retryOptions,
-      _cronSchedule,
-      _memo,
-      _searchAttributes,
-      _contextPropagators
-    )
 }
 
 object ZWorkflowOptions {
@@ -106,6 +86,7 @@ object ZWorkflowOptions {
     cronSchedule = None,
     memo = Map.empty,
     searchAttributes = Map.empty,
-    contextPropagators = Nil
+    contextPropagators = Nil,
+    javaOptionsCustomization = identity
   )
 }

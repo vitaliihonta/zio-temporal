@@ -4,15 +4,13 @@ import zio._
 
 /** Represents options for [[zio.temporal.workflow.ZWorkflowServiceStubs.awaitTermination]] method
   */
-class ZAwaitTerminationOptions private[zio] (val pollTimeout: Duration, val pollDelay: Duration) {
+case class ZAwaitTerminationOptions private[zio] (pollTimeout: Duration, pollDelay: Duration) {
 
   def withPollTimeout(timeout: Duration): ZAwaitTerminationOptions =
     new ZAwaitTerminationOptions(timeout, pollDelay)
 
   def withPollDelay(delay: Duration): ZAwaitTerminationOptions =
     new ZAwaitTerminationOptions(pollTimeout, delay)
-
-  override def toString: String = s"ZAwaitTerminationOptions(pollTimeout=$pollTimeout, pollDelay=$pollDelay)"
 }
 
 object ZAwaitTerminationOptions {
