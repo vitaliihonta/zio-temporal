@@ -88,6 +88,16 @@ class ZActivityStubBuilder[A] private[zio] (
   def withCancellationType(cancellationType: ActivityCancellationType): ZActivityStubBuilder[A] =
     copy(_.setCancellationType(cancellationType))
 
+  /** Allows to specify options directly on the java SDK's [[ActivityOptions]]. Use it in case an appropriate `withXXX`
+    * method is missing
+    *
+    * @note
+    *   the options specified via this method take precedence over those specified via other methods.
+    */
+  def transformJavaOptions(
+    f: ActivityOptions.Builder => ActivityOptions.Builder
+  ): ZActivityStubBuilder[A] = copy(f)
+
   /** Builds ActivityStub
     * @return
     *   activity stub

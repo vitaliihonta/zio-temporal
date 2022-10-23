@@ -8,35 +8,39 @@ import io.temporal.common.RetryOptions
   * @see
   *   [[RetryOptions]]
   */
-class ZRetryOptions private[zio] (
-  val maximumAttempts:    Option[Int],
-  val initialInterval:    Option[Duration],
-  val backoffCoefficient: Option[Double],
-  val maximumInterval:    Option[Duration],
-  val doNotRetry:         Seq[String]) {
-
-  override def toString: String =
-    s"ZRetryOptions(" +
-      s"maximumAttempts=$maximumAttempts, " +
-      s"initialInterval=$initialInterval, " +
-      s"backoffCoefficient=$backoffCoefficient, " +
-      s"maximumInterval=$maximumInterval, " +
-      s"doNotRetry=$doNotRetry)"
+case class ZRetryOptions private[zio] (
+  maximumAttempts:                      Option[Int],
+  initialInterval:                      Option[Duration],
+  backoffCoefficient:                   Option[Double],
+  maximumInterval:                      Option[Duration],
+  doNotRetry:                           Seq[String],
+  private val javaOptionsCustomization: RetryOptions.Builder => RetryOptions.Builder) {
 
   def withMaximumAttempts(attempts: Int): ZRetryOptions =
-    copy(_maximumAttempts = Some(attempts))
+    copy(maximumAttempts = Some(attempts))
 
   def withInitialInterval(interval: Duration): ZRetryOptions =
-    copy(_initialInterval = Some(interval))
+    copy(initialInterval = Some(interval))
 
   def withBackoffCoefficient(backoffCoefficient: Double): ZRetryOptions =
-    copy(_backoffCoefficient = Some(backoffCoefficient))
+    copy(backoffCoefficient = Some(backoffCoefficient))
 
   def withMaximumInterval(maximumInterval: Duration): ZRetryOptions =
-    copy(_maximumInterval = Some(maximumInterval))
+    copy(maximumInterval = Some(maximumInterval))
 
   def withDoNotRetry(types: String*): ZRetryOptions =
-    copy(_doNotRetry = types)
+    copy(doNotRetry = types)
+
+  /** Allows to specify options directly on the java SDK's [[RetryOptions]]. Use it in case an appropriate `withXXX`
+    * method is missing
+    *
+    * @note
+    *   the options specified via this method take precedence over those specified via other methods.
+    */
+  def transformJavaOptions(
+    f: RetryOptions.Builder => RetryOptions.Builder
+  ): ZRetryOptions =
+    copy(javaOptionsCustomization = f)
 
   def toJava: RetryOptions = {
     val builder = RetryOptions
@@ -55,18 +59,8 @@ class ZRetryOptions private[zio] (
     maximumInterval
       .foreach(maximumInterval => builder.setMaximumInterval(maximumInterval.asJava))
 
-    builder.build()
+    javaOptionsCustomization(builder).build()
   }
-
-  private def copy(
-    _maximumAttempts:    Option[Int] = maximumAttempts,
-    _initialInterval:    Option[Duration] = initialInterval,
-    _backoffCoefficient: Option[Double] = backoffCoefficient,
-    _maximumInterval:    Option[Duration] = maximumInterval,
-    _doNotRetry:         Seq[String] = doNotRetry
-  ): ZRetryOptions =
-    new ZRetryOptions(_maximumAttempts, _initialInterval, _backoffCoefficient, _maximumInterval, _doNotRetry)
-
 }
 
 object ZRetryOptions {
@@ -78,6 +72,7 @@ object ZRetryOptions {
     initialInterval = None,
     backoffCoefficient = None,
     maximumInterval = None,
-    doNotRetry = Seq.empty
+    doNotRetry = Seq.empty,
+    javaOptionsCustomization = identity
   )
 }

@@ -13,7 +13,7 @@ import zio.temporal.workflow.ZWorkflowServiceStubsOptions
 
 object ExampleModule {
   val stubOptions: ULayer[ZWorkflowServiceStubsOptions] = ZLayer.succeed {
-    ZWorkflowServiceStubsOptions.DefaultLocalDocker
+    ZWorkflowServiceStubsOptions.default
   }
 
   val clientOptions: ULayer[ZWorkflowClientOptions] = ZLayer.succeed {

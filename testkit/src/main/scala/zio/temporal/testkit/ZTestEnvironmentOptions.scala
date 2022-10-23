@@ -12,35 +12,39 @@ import zio.temporal.workflow.ZWorkflowClientOptions
   * @see
   *   [[TestEnvironmentOptions]]
   */
-class ZTestEnvironmentOptions private (
-  workerFactoryOptions:  ZWorkerFactoryOptions,
-  workflowClientOptions: ZWorkflowClientOptions,
-  metricsScope:          Option[Scope],
-  useExternalService:    Option[Boolean],
-  target:                Option[String]) {
-
-  override def toString: String =
-    s"ZTestEnvironmentOptions(" +
-      s"workerFactoryOptions=$workerFactoryOptions, " +
-      s"workflowClientOptions=$workflowClientOptions, " +
-      s"metricsScope=$metricsScope, " +
-      s"useExternalService=$useExternalService, " +
-      s"target=$target)"
+case class ZTestEnvironmentOptions private[zio] (
+  workerFactoryOptions:                 ZWorkerFactoryOptions,
+  workflowClientOptions:                ZWorkflowClientOptions,
+  metricsScope:                         Option[Scope],
+  useExternalService:                   Option[Boolean],
+  target:                               Option[String],
+  private val javaOptionsCustomization: TestEnvironmentOptions.Builder => TestEnvironmentOptions.Builder) {
 
   def withWorkerFactoryOptions(value: ZWorkerFactoryOptions): ZTestEnvironmentOptions =
-    copy(_workerFactoryOptions = value)
+    copy(workerFactoryOptions = value)
 
   def withWorkflowClientOptions(value: ZWorkflowClientOptions): ZTestEnvironmentOptions =
-    copy(_workflowClientOptions = value)
+    copy(workflowClientOptions = value)
 
   def withMetricsScope(value: Scope): ZTestEnvironmentOptions =
-    copy(_metricsScope = Some(value))
+    copy(metricsScope = Some(value))
 
   def withUseExternalService(value: Boolean): ZTestEnvironmentOptions =
-    copy(_useExternalService = Some(value))
+    copy(useExternalService = Some(value))
 
   def withTarget(value: String): ZTestEnvironmentOptions =
-    copy(_target = Some(value))
+    copy(target = Some(value))
+
+  /** Allows to specify options directly on the java SDK's [[TestEnvironmentOptions]]. Use it in case an appropriate
+    * `withXXX` method is missing
+    *
+    * @note
+    *   the options specified via this method take precedence over those specified via other methods.
+    */
+  def transformJavaOptions(
+    f: TestEnvironmentOptions.Builder => TestEnvironmentOptions.Builder
+  ): ZTestEnvironmentOptions =
+    copy(javaOptionsCustomization = f)
 
   def toJava: TestEnvironmentOptions = {
     val builder = TestEnvironmentOptions.newBuilder()
@@ -51,23 +55,8 @@ class ZTestEnvironmentOptions private (
     useExternalService.foreach(builder.setUseExternalService)
     target.foreach(builder.setTarget)
 
-    builder.build()
+    javaOptionsCustomization(builder).build()
   }
-
-  private def copy(
-    _workerFactoryOptions:  ZWorkerFactoryOptions = workerFactoryOptions,
-    _workflowClientOptions: ZWorkflowClientOptions = workflowClientOptions,
-    _metricsScope:          Option[Scope] = metricsScope,
-    _useExternalService:    Option[Boolean] = useExternalService,
-    _target:                Option[String] = target
-  ): ZTestEnvironmentOptions =
-    new ZTestEnvironmentOptions(
-      _workerFactoryOptions,
-      _workflowClientOptions,
-      _metricsScope,
-      _useExternalService,
-      _target
-    )
 }
 
 object ZTestEnvironmentOptions {
@@ -92,6 +81,7 @@ object ZTestEnvironmentOptions {
     ),
     metricsScope = None,
     useExternalService = None,
-    target = None
+    target = None,
+    javaOptionsCustomization = identity
   )
 }
