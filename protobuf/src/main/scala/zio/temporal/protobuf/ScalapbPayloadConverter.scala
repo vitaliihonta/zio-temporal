@@ -19,7 +19,7 @@ import scalapb.options.ScalapbProto
 
 import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
-import java.util as ju
+import java.{util => ju}
 
 /** Used to deserialize protobuf generated types */
 class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadConverter {
