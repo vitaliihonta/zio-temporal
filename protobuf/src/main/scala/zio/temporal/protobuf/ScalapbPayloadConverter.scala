@@ -11,7 +11,7 @@ import com.google.protobuf.struct.StructProto
 import com.google.protobuf.timestamp.TimestampProto
 import com.google.protobuf.wrappers.WrappersProto
 import io.temporal.api.common.v1.Payload
-import io.temporal.common.converter.PayloadConverter
+import io.temporal.common.converter.{EncodingKeys, PayloadConverter}
 import scalapb.GeneratedFileObject
 import scalapb.GeneratedMessage
 import scalapb.GeneratedMessageCompanion
@@ -43,15 +43,19 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
     ZioTemporalProto
   )
 
+  private def nestedCompanions(
+    cmp: GeneratedMessageCompanion[_ <: GeneratedMessage]
+  ): Seq[GeneratedMessageCompanion[_ <: GeneratedMessage]] =
+    cmp.nestedMessagesCompanions.flatMap(nested => Seq(nested) ++ nestedCompanions(nested))
+
   private val companions = (stdFiles ++ files)
-    .flatMap(_.messagesCompanions)
+    .flatMap(_.messagesCompanions.flatMap(cmp => Seq(cmp) ++ nestedCompanions(cmp)))
     .map { companion =>
       companion.scalaDescriptor.fullName -> widen(companion)
     }
     .toMap
 
   override val getEncodingType: String = "binary/protobuf"
-  private val encodingMetaKey          = "encoding"
   private val encodingMetaValue        = ByteString.copyFrom(getEncodingType, StandardCharsets.UTF_8)
 
   override def toData(value: scala.Any): ju.Optional[Payload] =
@@ -86,7 +90,10 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
   private def writeGeneratedMessage(msg: GeneratedMessage): Payload =
     Payload
       .newBuilder()
-      .putMetadata(encodingMetaKey, encodingMetaValue)
+      .putMetadata(EncodingKeys.METADATA_ENCODING_KEY, encodingMetaValue)
+      .putMetadata(EncodingKeys.METADATA_MESSAGE_TYPE_KEY,
+                   ByteString.copyFrom(msg.companion.scalaDescriptor.fullName, StandardCharsets.UTF_8)
+      )
       .setData(msg.toByteString)
       .build()
 
@@ -103,7 +110,7 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
     writeGeneratedMessage(ZUnit())
 
   override def fromData[T](content: Payload, valueClass: Class[T], valueType: Type): T =
-    getCompanion(content, dropTemporalZioPrefix(valueType.getTypeName))
+    getCompanion(content, content.getMetadataOrThrow(EncodingKeys.METADATA_MESSAGE_TYPE_KEY).toStringUtf8)
       .parseFrom(content.getData.newCodedInput()) match {
       case optional: Optional =>
         optional.value match {
