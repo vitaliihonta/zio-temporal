@@ -13,45 +13,47 @@ import scala.jdk.CollectionConverters._
   * @see
   *   [[WorkflowClientOptions]]
   */
-class ZWorkflowClientOptions private[zio] (
-  val namespace:            Option[String],
-  val dataConverter:        Option[DataConverter],
-  val interceptors:         List[WorkflowClientInterceptor],
-  val identity:             Option[String],
-  val binaryChecksum:       Option[String],
-  val contextPropagators:   List[ContextPropagator],
-  val queryRejectCondition: Option[QueryRejectCondition]) {
-
-  override def toString: String =
-    s"ZWorkflowClientOptions(" +
-      s"namespace=$namespace, " +
-      s"dataConverter=$dataConverter, " +
-      s"interceptors=$interceptors, " +
-      s"identity=$identity, " +
-      s"binaryChecksum=$binaryChecksum, " +
-      s"contextPropagators=$contextPropagators, " +
-      s"queryRejectCondition=$queryRejectCondition)"
+case class ZWorkflowClientOptions private[zio] (
+  namespace:                            Option[String],
+  dataConverter:                        Option[DataConverter],
+  interceptors:                         List[WorkflowClientInterceptor],
+  identity:                             Option[String],
+  binaryChecksum:                       Option[String],
+  contextPropagators:                   List[ContextPropagator],
+  queryRejectCondition:                 Option[QueryRejectCondition],
+  private val javaOptionsCustomization: WorkflowClientOptions.Builder => WorkflowClientOptions.Builder) {
 
   def withNamespace(value: String): ZWorkflowClientOptions =
-    copy(_namespace = Some(value))
+    copy(namespace = Some(value))
 
   def withDataConverter(value: DataConverter): ZWorkflowClientOptions =
-    copy(_dataConverter = Some(value))
+    copy(dataConverter = Some(value))
 
   def withInterceptors(value: WorkflowClientInterceptor*): ZWorkflowClientOptions =
-    copy(_interceptors = value.toList)
+    copy(interceptors = value.toList)
 
   def withIdentity(value: String): ZWorkflowClientOptions =
-    copy(_identity = Some(value))
+    copy(identity = Some(value))
 
   def withBinaryChecksum(value: String): ZWorkflowClientOptions =
-    copy(_binaryChecksum = Some(value))
+    copy(binaryChecksum = Some(value))
 
   def withContextPropagators(value: ContextPropagator*): ZWorkflowClientOptions =
-    copy(_contextPropagators = value.toList)
+    copy(contextPropagators = value.toList)
 
   def withQueryRejectCondition(value: QueryRejectCondition): ZWorkflowClientOptions =
-    copy(_queryRejectCondition = Some(value))
+    copy(queryRejectCondition = Some(value))
+
+  /** Allows to specify options directly on the java SDK's [[WorkflowClientOptions]]. Use it in case an appropriate
+    * `withXXX` method is missing
+    *
+    * @note
+    *   the options specified via this method take precedence over those specified via other methods.
+    */
+  def transformJavaOptions(
+    f: WorkflowClientOptions.Builder => WorkflowClientOptions.Builder
+  ): ZWorkflowClientOptions =
+    copy(javaOptionsCustomization = f)
 
   def toJava: WorkflowClientOptions = {
     val builder = WorkflowClientOptions.newBuilder()
@@ -64,27 +66,8 @@ class ZWorkflowClientOptions private[zio] (
     builder.setContextPropagators(contextPropagators.asJava)
     queryRejectCondition.foreach(builder.setQueryRejectCondition)
 
-    builder.build()
+    javaOptionsCustomization(builder).build()
   }
-
-  private def copy(
-    _namespace:            Option[String] = namespace,
-    _dataConverter:        Option[DataConverter] = dataConverter,
-    _interceptors:         List[WorkflowClientInterceptor] = interceptors,
-    _identity:             Option[String] = identity,
-    _binaryChecksum:       Option[String] = binaryChecksum,
-    _contextPropagators:   List[ContextPropagator] = contextPropagators,
-    _queryRejectCondition: Option[QueryRejectCondition] = queryRejectCondition
-  ): ZWorkflowClientOptions =
-    new ZWorkflowClientOptions(
-      _namespace,
-      _dataConverter,
-      _interceptors,
-      _identity,
-      _binaryChecksum,
-      _contextPropagators,
-      _queryRejectCondition
-    )
 }
 
 object ZWorkflowClientOptions {
@@ -96,6 +79,7 @@ object ZWorkflowClientOptions {
     identity = None,
     binaryChecksum = None,
     contextPropagators = Nil,
-    queryRejectCondition = None
+    queryRejectCondition = None,
+    javaOptionsCustomization = identity
   )
 }

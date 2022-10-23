@@ -9,40 +9,43 @@ import zio._
   * @see
   *   [[WorkerFactoryOptions]]
   */
-class ZWorkerFactoryOptions private (
+case class ZWorkerFactoryOptions private[zio] (
   workflowHostLocalTaskQueueScheduleToStartTimeout: Option[Duration],
   workflowCacheSize:                                Option[Int],
   maxWorkflowThreadCount:                           Option[Int],
   workerInterceptors:                               List[WorkerInterceptor],
   enableLoggingInReplay:                            Option[Boolean],
-  workflowHostLocalPollThreadCount:                 Option[Int]) {
-
-  override def toString: String =
-    s"ZWorkerFactoryOptions(" +
-      s"workflowHostLocalTaskQueueScheduleToStartTimeout=$workflowHostLocalTaskQueueScheduleToStartTimeout, " +
-      s"workflowCacheSize=$workflowCacheSize, " +
-      s"maxWorkflowThreadCount=$maxWorkflowThreadCount, " +
-      s"workerInterceptors=$workerInterceptors, " +
-      s"enableLoggingInReplay=$enableLoggingInReplay, " +
-      s"workflowHostLocalPollThreadCount=$workflowHostLocalPollThreadCount)"
+  workflowHostLocalPollThreadCount:                 Option[Int],
+  private val javaOptionsCustomization:             WorkerFactoryOptions.Builder => WorkerFactoryOptions.Builder) {
 
   def withWorkflowHostLocalTaskQueueScheduleToStartTimeout(value: Duration): ZWorkerFactoryOptions =
-    copy(_workflowHostLocalTaskQueueScheduleToStartTimeout = Some(value))
+    copy(workflowHostLocalTaskQueueScheduleToStartTimeout = Some(value))
 
   def withWorkflowCacheSize(value: Int): ZWorkerFactoryOptions =
-    copy(_workflowCacheSize = Some(value))
+    copy(workflowCacheSize = Some(value))
 
   def withMaxWorkflowThreadCount(value: Int): ZWorkerFactoryOptions =
-    copy(_maxWorkflowThreadCount = Some(value))
+    copy(maxWorkflowThreadCount = Some(value))
 
   def withWorkerInterceptors(value: WorkerInterceptor*): ZWorkerFactoryOptions =
-    copy(_workerInterceptors = value.toList)
+    copy(workerInterceptors = value.toList)
 
   def withEnableLoggingInReplay(value: Boolean): ZWorkerFactoryOptions =
-    copy(_enableLoggingInReplay = Some(value))
+    copy(enableLoggingInReplay = Some(value))
 
   def withWorkflowHostLocalPollThreadCount(value: Int): ZWorkerFactoryOptions =
-    copy(_workflowHostLocalPollThreadCount = Some(value))
+    copy(workflowHostLocalPollThreadCount = Some(value))
+
+  /** Allows to specify options directly on the java SDK's [[WorkerFactoryOptions]]. Use it in case an appropriate
+    * `withXXX` method is missing
+    *
+    * @note
+    *   the options specified via this method take precedence over those specified via other methods.
+    */
+  def transformJavaOptions(
+    f: WorkerFactoryOptions.Builder => WorkerFactoryOptions.Builder
+  ): ZWorkerFactoryOptions =
+    copy(javaOptionsCustomization = f)
 
   def toJava: WorkerFactoryOptions = {
     val builder = WorkerFactoryOptions.newBuilder()
@@ -54,26 +57,8 @@ class ZWorkerFactoryOptions private (
     builder.setWorkerInterceptors(workerInterceptors: _*)
     enableLoggingInReplay.foreach(builder.setEnableLoggingInReplay)
     workflowHostLocalPollThreadCount.foreach(builder.setWorkflowHostLocalPollThreadCount)
-    builder.build()
+    javaOptionsCustomization(builder).build()
   }
-
-  private def copy(
-    _workflowHostLocalTaskQueueScheduleToStartTimeout: Option[Duration] =
-      workflowHostLocalTaskQueueScheduleToStartTimeout,
-    _workflowCacheSize:                Option[Int] = workflowCacheSize,
-    _maxWorkflowThreadCount:           Option[Int] = maxWorkflowThreadCount,
-    _workerInterceptors:               List[WorkerInterceptor] = workerInterceptors,
-    _enableLoggingInReplay:            Option[Boolean] = enableLoggingInReplay,
-    _workflowHostLocalPollThreadCount: Option[Int] = workflowHostLocalPollThreadCount
-  ) =
-    new ZWorkerFactoryOptions(
-      _workflowHostLocalTaskQueueScheduleToStartTimeout,
-      _workflowCacheSize,
-      _maxWorkflowThreadCount,
-      _workerInterceptors,
-      _enableLoggingInReplay,
-      _workflowHostLocalPollThreadCount
-    )
 }
 
 object ZWorkerFactoryOptions {
@@ -84,6 +69,7 @@ object ZWorkerFactoryOptions {
     maxWorkflowThreadCount = None,
     workerInterceptors = Nil,
     enableLoggingInReplay = None,
-    workflowHostLocalPollThreadCount = None
+    workflowHostLocalPollThreadCount = None,
+    javaOptionsCustomization = identity
   )
 }

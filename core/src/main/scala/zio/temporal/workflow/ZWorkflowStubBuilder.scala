@@ -51,6 +51,16 @@ final class ZWorkflowStubBuilder[A] private[zio] (
   def withRetryOptions(options: ZRetryOptions): ZWorkflowStubBuilder[A] =
     copy(_.setRetryOptions(options.toJava))
 
+  /** Allows to specify options directly on the java SDK's [[WorkflowOptions]]. Use it in case an appropriate `withXXX`
+    * method is missing
+    *
+    * @note
+    *   the options specified via this method take precedence over those specified via other methods.
+    */
+  def transformJavaOptions(
+    f: WorkflowOptions.Builder => WorkflowOptions.Builder
+  ): ZWorkflowStubBuilder[A] = copy(f)
+
   /** Builds typed ZWorkflowStub
     * @return
     *   typed workflow stub

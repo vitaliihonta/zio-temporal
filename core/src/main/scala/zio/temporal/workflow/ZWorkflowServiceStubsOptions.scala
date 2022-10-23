@@ -13,21 +13,22 @@ import zio._
   *   [[WorkflowServiceStubsOptions]]
   */
 case class ZWorkflowServiceStubsOptions private[zio] (
-  serverUrl:                       String,
-  channel:                         Option[ManagedChannel],
-  sslContext:                      Option[SslContext],
-  enableHttps:                     Option[Boolean],
-  enableKeepAlive:                 Option[Boolean],
-  keepAliveTime:                   Option[Duration],
-  keepAliveTimeout:                Option[Duration],
-  keepAlivePermitWithoutStream:    Option[Boolean],
-  rpcTimeout:                      Option[Duration],
-  rpcLongPollTimeout:              Option[Duration],
-  rpcQueryTimeout:                 Option[Duration],
-  rpcRetryOptions:                 Option[RpcRetryOptions],
-  connectionBackoffResetFrequency: Option[Duration],
-  grpcReconnectFrequency:          Option[Duration],
-  headers:                         Option[Metadata]) {
+  serverUrl:                            String,
+  channel:                              Option[ManagedChannel],
+  sslContext:                           Option[SslContext],
+  enableHttps:                          Option[Boolean],
+  enableKeepAlive:                      Option[Boolean],
+  keepAliveTime:                        Option[Duration],
+  keepAliveTimeout:                     Option[Duration],
+  keepAlivePermitWithoutStream:         Option[Boolean],
+  rpcTimeout:                           Option[Duration],
+  rpcLongPollTimeout:                   Option[Duration],
+  rpcQueryTimeout:                      Option[Duration],
+  rpcRetryOptions:                      Option[RpcRetryOptions],
+  connectionBackoffResetFrequency:      Option[Duration],
+  grpcReconnectFrequency:               Option[Duration],
+  headers:                              Option[Metadata],
+  private val javaOptionsCustomization: WorkflowServiceStubsOptions.Builder => WorkflowServiceStubsOptions.Builder) {
 
   def withServiceUrl(value: String): ZWorkflowServiceStubsOptions =
     copy(serverUrl = value)
@@ -74,6 +75,17 @@ case class ZWorkflowServiceStubsOptions private[zio] (
   def withHeaders(value: Metadata): ZWorkflowServiceStubsOptions =
     copy(headers = Some(value))
 
+  /** Allows to specify options directly on the java SDK's [[WorkflowServiceStubsOptions]]. Use it in case an
+    * appropriate `withXXX` method is missing
+    *
+    * @note
+    *   the options specified via this method take precedence over those specified via other methods.
+    */
+  def transformJavaOptions(
+    f: WorkflowServiceStubsOptions.Builder => WorkflowServiceStubsOptions.Builder
+  ): ZWorkflowServiceStubsOptions =
+    copy(javaOptionsCustomization = f)
+
   def toJava: WorkflowServiceStubsOptions = {
     val builder = WorkflowServiceStubsOptions.newBuilder()
 
@@ -92,7 +104,7 @@ case class ZWorkflowServiceStubsOptions private[zio] (
     connectionBackoffResetFrequency.foreach(t => builder.setConnectionBackoffResetFrequency(t.asJava))
     grpcReconnectFrequency.foreach(t => builder.setGrpcReconnectFrequency(t.asJava))
     headers.foreach(builder.setHeaders)
-    builder.build()
+    javaOptionsCustomization(builder).build()
   }
 }
 
@@ -113,6 +125,7 @@ object ZWorkflowServiceStubsOptions {
     rpcRetryOptions = None,
     connectionBackoffResetFrequency = None,
     grpcReconnectFrequency = None,
-    headers = None
+    headers = None,
+    javaOptionsCustomization = identity
   )
 }
