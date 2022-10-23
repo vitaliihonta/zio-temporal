@@ -36,6 +36,17 @@ case class ZWorkerFactoryOptions private[zio] (
   def withWorkflowHostLocalPollThreadCount(value: Int): ZWorkerFactoryOptions =
     copy(workflowHostLocalPollThreadCount = Some(value))
 
+  /** Allows to specify options directly on the java SDK's [[WorkerFactoryOptions]]. Use it in case an appropriate
+    * `withXXX` method is missing
+    *
+    * @note
+    *   the options specified via this method take precedence over those specified via other methods.
+    */
+  def transformJavaOptions(
+    f: WorkerFactoryOptions.Builder => WorkerFactoryOptions.Builder
+  ): ZWorkerFactoryOptions =
+    copy(javaOptionsCustomization = f)
+
   def toJava: WorkerFactoryOptions = {
     val builder = WorkerFactoryOptions.newBuilder()
     workflowHostLocalTaskQueueScheduleToStartTimeout.foreach(timeout =>

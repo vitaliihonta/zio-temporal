@@ -44,8 +44,8 @@ case class ZWorkflowClientOptions private[zio] (
   def withQueryRejectCondition(value: QueryRejectCondition): ZWorkflowClientOptions =
     copy(queryRejectCondition = Some(value))
 
-  /** Allows to specify options directly on the java SDK's [[WorkerOptions]]. Use it in case an appropriate `withXXX`
-    * method is missing
+  /** Allows to specify options directly on the java SDK's [[WorkflowClientOptions]]. Use it in case an appropriate
+    * `withXXX` method is missing
     *
     * @note
     *   the options specified via this method take precedence over those specified via other methods.

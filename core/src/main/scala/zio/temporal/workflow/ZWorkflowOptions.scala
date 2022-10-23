@@ -48,7 +48,7 @@ case class ZWorkflowOptions private[zio] (
   def withContextPropagators(values: ContextPropagator*): ZWorkflowOptions =
     copy(contextPropagators = values.toList)
 
-  /** Allows to specify options directly on the java SDK's [[WorkerOptions]]. Use it in case an appropriate `withXXX`
+  /** Allows to specify options directly on the java SDK's [[WorkflowOptions]]. Use it in case an appropriate `withXXX`
     * method is missing
     *
     * @note
