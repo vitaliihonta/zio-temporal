@@ -43,7 +43,9 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
     ZioTemporalProto
   )
 
-  private def nestedCompanions(cmp: GeneratedMessageCompanion[_ <: GeneratedMessage]): Seq[GeneratedMessageCompanion[_ <: GeneratedMessage]] =
+  private def nestedCompanions(
+    cmp: GeneratedMessageCompanion[_ <: GeneratedMessage]
+  ): Seq[GeneratedMessageCompanion[_ <: GeneratedMessage]] =
     cmp.nestedMessagesCompanions.flatMap(nested => Seq(nested) ++ nestedCompanions(nested))
 
   private val companions = (stdFiles ++ files)
@@ -54,7 +56,7 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
     .toMap
 
   override val getEncodingType: String = "binary/protobuf"
-  private val encodingMetaValue = ByteString.copyFrom(getEncodingType, StandardCharsets.UTF_8)
+  private val encodingMetaValue        = ByteString.copyFrom(getEncodingType, StandardCharsets.UTF_8)
 
   override def toData(value: scala.Any): ju.Optional[Payload] =
     value match {
@@ -89,7 +91,9 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
     Payload
       .newBuilder()
       .putMetadata(EncodingKeys.METADATA_ENCODING_KEY, encodingMetaValue)
-      .putMetadata(EncodingKeys.METADATA_MESSAGE_TYPE_KEY, ByteString.copyFrom(msg.companion.scalaDescriptor.fullName, StandardCharsets.UTF_8))
+      .putMetadata(EncodingKeys.METADATA_MESSAGE_TYPE_KEY,
+                   ByteString.copyFrom(msg.companion.scalaDescriptor.fullName, StandardCharsets.UTF_8)
+      )
       .setData(msg.toByteString)
       .build()
 
