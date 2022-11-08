@@ -33,7 +33,10 @@ object ZActivity {
       onFailure = cause =>
         zactivityOptions.activityCompletionClient.completeExceptionally(
           taskToken,
-          Activity.wrap(ZActivityFatalError(cause))
+          cause.defects match {
+            case (head: Exception) :: _ => head
+            case _                      => Activity.wrap(ZActivityFatalError(cause))
+          }
         ),
       onSuccess = value =>
         zactivityOptions.activityCompletionClient.complete[A](
@@ -71,7 +74,10 @@ object ZActivity {
       onDie = cause =>
         zactivityOptions.activityCompletionClient.completeExceptionally(
           taskToken,
-          Activity.wrap(ZActivityFatalError(cause))
+          cause.defects match {
+            case (head: Exception) :: _ => head
+            case _                      => Activity.wrap(ZActivityFatalError(cause))
+          }
         ),
       onFailure = error =>
         zactivityOptions.activityCompletionClient.complete[Either[E, A]](
