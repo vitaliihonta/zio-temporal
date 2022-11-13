@@ -33,10 +33,7 @@ object ZActivity {
       onFailure = cause =>
         zactivityOptions.activityCompletionClient.completeExceptionally(
           taskToken,
-          cause.defects match {
-            case (head: Exception) :: _ => head
-            case _                      => Activity.wrap(ZActivityFatalError(cause))
-          }
+          wrapCauseIntoException(cause)
         ),
       onSuccess = value =>
         zactivityOptions.activityCompletionClient.complete[A](
@@ -74,10 +71,7 @@ object ZActivity {
       onDie = cause =>
         zactivityOptions.activityCompletionClient.completeExceptionally(
           taskToken,
-          cause.defects match {
-            case (head: Exception) :: _ => head
-            case _                      => Activity.wrap(ZActivityFatalError(cause))
-          }
+          wrapCauseIntoException(cause)
         ),
       onFailure = error =>
         zactivityOptions.activityCompletionClient.complete[Either[E, A]](
@@ -93,4 +87,11 @@ object ZActivity {
 
     null.asInstanceOf[Either[E, A]]
   }
+
+  private def wrapCauseIntoException(cause: Cause[_]): Exception =
+    cause.defects match {
+      /*Propagate temporal's non-retryable exceptions*/
+      case (head: Exception) :: _ => head
+      case _                      => Activity.wrap(ZActivityFatalError(cause))
+    }
 }
