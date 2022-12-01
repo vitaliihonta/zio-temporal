@@ -5,6 +5,10 @@ It allows you to run workflows in the Scala way!
 
 [TL;DR intro about Temporal workflow](https://youtu.be/2HjnQlnA5eY)
 
+Example projects using `zio-temporal`:
+- [Simple payments](https://github.com/vitaliihonta/zio-temporal/tree/main/examples)
+- [Functional Scala 2022: Cryptocurrency exchange](https://github.com/vitaliihonta/func-scala-2022-zio-temporal)
+
 <head>
   <meta charset="UTF-8" />
   <meta name="author" content="Vitalii Honta" />
