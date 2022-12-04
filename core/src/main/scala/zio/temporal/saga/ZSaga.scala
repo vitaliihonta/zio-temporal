@@ -30,6 +30,12 @@ sealed trait ZSaga[+E, +A] { self =>
   final def run(options: ZSaga.Options = ZSaga.Options.default): Either[E, A] =
     ZSaga.runImpl(self)(options)
 
+  final def runOrThrow(options: ZSaga.Options = ZSaga.Options.default)(implicit ev: E <:< Throwable): A =
+    run(options) match {
+      case Right(value) => value
+      case Left(error)  => throw ev(error)
+    }
+
   def swap: ZSaga[A, E] = ZSaga.Swap(this)
 
   def map[B](f: A => B): ZSaga[E, B] =
@@ -78,6 +84,11 @@ object ZSaga {
   def succeed[A](value: A): ZSaga[Nothing, A] =
     ZSaga.Succeed(value)
 
+  /** Creates a completed [[ZSaga]] with [[Unit]] result.
+    */
+  val unit: ZSaga[Nothing, Unit] =
+    succeed(())
+
   /** Creates immediately failed [[ZSaga]] instance
     * @tparam E
     *   error type
@@ -102,6 +113,10 @@ object ZSaga {
   def fromEither[E, A](thunk: => Either[E, A]): ZSaga[E, A] =
     ZSaga.FromEither(() => thunk)
 
+  @deprecated("Use attempt instead", since = "0.1.0-RC6")
+  def effect[A](thunk: => A): ZSaga[Throwable, A] =
+    attempt[A](thunk)
+
   /** Suspends side effect execution within [[ZSaga]]
     * @tparam A
     *   value type
@@ -110,11 +125,34 @@ object ZSaga {
     * @return
     *   suspended [[ZSaga]]
     */
-  def effect[A](thunk: => A): ZSaga[Throwable, A] =
+  def attempt[A](thunk: => A): ZSaga[Throwable, A] =
     fromEither(Try(thunk).toEither)
 
+  /** Creates a saga which will run a compensation if the main action fails.
+    *
+    * @tparam E
+    *   typed error
+    * @tparam A
+    *   action result
+    * @param exec
+    *   the main action
+    * @param compensate
+    *   the compensation which will run in case the main action returns Left
+    */
   def make[E, A](exec: => Either[E, A])(compensate: => Unit): ZSaga[E, A] =
     ZSaga.Compensation[E, A](() => compensate, ZSaga.FromEither(() => exec))
+
+  /** Creates a saga which will run a compensation if the main action fails.
+    *
+    * @tparam A
+    *   action result
+    * @param exec
+    *   the main action
+    * @param compensate
+    *   the compensation which will run in case the main action throw an Exception
+    */
+  def makeAttempt[A](exec: => A)(compensate: => Unit): ZSaga[Throwable, A] =
+    ZSaga.Compensation[Throwable, A](() => compensate, attempt(exec))
 
   def foreach[E, A, B](in: Option[A])(f: A => ZSaga[E, B]): ZSaga[E, Option[B]] =
     in.fold[ZSaga[E, Option[B]]](succeed(None))(f(_).map(Some(_)))

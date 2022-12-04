@@ -300,6 +300,93 @@ object WorkflowSpec extends ZIOSpecDefault {
         }
       }
     }.provideEnv,
+    test("run workflow with successful sagas (activities throws)") {
+      ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
+        val taskQueue = "saga-exceptional-queue"
+        val client    = testEnv.workflowClient
+
+        val successFunc = (_: String, _: BigDecimal) => Done()
+
+        val expectedResult = BigDecimal(5.0)
+
+        testEnv
+          .newWorker(taskQueue, options = ZWorkerOptions.default)
+          .addWorkflow[SagaExceptionalWorkflowImpl]
+          .fromClass
+          .addActivityImplementation(new TransferExceptionalActivityImpl(successFunc, successFunc))
+
+        val workflowId = UUID.randomUUID().toString
+
+        withWorkflow {
+          testEnv.use() {
+            for {
+              signalWorkflow <- client
+                                  .newWorkflowStub[SagaExceptionalWorkflow]
+                                  .withTaskQueue(taskQueue)
+                                  .withWorkflowId(workflowId)
+                                  .withWorkflowRunTimeout(10.seconds)
+                                  .build
+              result <- ZWorkflowStub.execute(signalWorkflow.transfer(TransferCommand("from", "to", expectedResult)))
+            } yield assertTrue(result == expectedResult)
+          }
+        }
+      }
+    }.provideEnv,
+    test("run workflow with saga compensations (activities throw)") {
+      ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
+        val taskQueue = "saga-exceptional-queue"
+        val client    = testEnv.workflowClient
+        val From      = "from"
+        val To        = "to"
+
+        val compensated  = new AtomicBoolean(false)
+        val withdrawFunc = (_: String, _: BigDecimal) => Done()
+        class SagaTestException extends Exception("Saga test exception")
+        val depositFunc: (String, BigDecimal) => Done = {
+          case (From, _) =>
+            compensated.set(true)
+            Done()
+          case _ =>
+            throw new SagaTestException
+        }
+
+        val amount = BigDecimal(5.0)
+
+        testEnv
+          .newWorker(taskQueue, options = ZWorkerOptions.default)
+          .addWorkflow[SagaExceptionalWorkflowImpl]
+          .fromClass
+          .addActivityImplementation(new TransferExceptionalActivityImpl(depositFunc, withdrawFunc))
+
+        val workflowId = UUID.randomUUID().toString
+
+        withWorkflow {
+          testEnv.use() {
+            for {
+              sagaWorkflow <- client
+                                .newWorkflowStub[SagaExceptionalWorkflow]
+                                .withTaskQueue(taskQueue)
+                                .withWorkflowId(workflowId)
+                                .withWorkflowRunTimeout(10.seconds)
+                                .build
+              result <- ZWorkflowStub
+                          .execute(sagaWorkflow.transfer(TransferCommand(From, To, amount)))
+                          .either
+            } yield {
+              val actualError = result.left.getOrElse(???)
+              assertTrue(actualError.isInstanceOf[TemporalClientError]) &&
+              assertTrue(
+                actualError
+                  .asInstanceOf[TemporalClientError]
+                  .error
+                  .isInstanceOf[io.temporal.client.WorkflowFailedException]
+              ) &&
+              assertTrue(compensated.get())
+            }
+          }
+        }
+      }
+    }.provideEnv,
     test("run workflow with promise") {
       ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
         val taskQueue = "promise-queue"
