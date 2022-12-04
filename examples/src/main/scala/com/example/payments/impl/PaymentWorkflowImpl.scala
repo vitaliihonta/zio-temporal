@@ -96,7 +96,7 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
   private def verifyConfirmation(confirmation: ConfirmTransactionCommand): ZSaga[TransactionError, Unit] =
     ZSaga
       .make(activity.verifyConfirmation(confirmation))(compensate = cancelTransaction())
-      .map(_ => finalizeTransaction())
+      .as(finalizeTransaction())
       .unit
 
   private def failTransaction(description: String): ZSaga[Nothing, Unit] =
