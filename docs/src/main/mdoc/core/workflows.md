@@ -119,6 +119,8 @@ Important notes:
 
 - You need a `ZWorkerFactory` instance to create a worker. You should either access it via ZIO environment or have it
   already created somewhere
+- You must specify the **task queue** when creating a worker (`echo-queue` in this case).
+- Make sure that worker uses the same **task queue** as the client code  
 - In `worker.addWorkflow` method you provide the specific workflow interface you run in this worker
 - It's required to provide the workflow implementation instance there.
 - Create the workflow implementation **only inside** the `addWorkflow` method, otherwise an exception will be thrown.
