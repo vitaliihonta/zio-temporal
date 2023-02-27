@@ -108,7 +108,7 @@ Using the Workflow client, it's now possible to create a Worker factory, which i
 val worker: URLayer[ZWorkerFactory, Unit] = ZLayer.fromZIO {
   ZIO.serviceWithZIO[ZWorkerFactory] { workerFactory =>
     for {
-      worker <- workerFactory.newWorker("sample-worker")
+      worker <- workerFactory.newWorker("echo-queue")
       _ = worker.addWorkflow[EchoWorkflow].from(new EchoWorkflowImpl)
     } yield ()
   }
