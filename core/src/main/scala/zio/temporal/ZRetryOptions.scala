@@ -38,11 +38,11 @@ case class ZRetryOptions private[zio] (
   def withMaximumInterval(maximumInterval: Duration): ZRetryOptions =
     copy(maximumInterval = Some(maximumInterval))
 
-  /**
-   * List of application failures types to not retry.
-   *
-   * @see [[RetryOptions.Builder#setDoNotRetry]]
-   */
+  /** List of application failures types to not retry.
+    *
+    * @see
+    *   [[RetryOptions.Builder#setDoNotRetry]]
+    */
   def withDoNotRetry(types: String*): ZRetryOptions =
     copy(doNotRetry = types)
 
