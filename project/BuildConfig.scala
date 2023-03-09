@@ -75,7 +75,7 @@ trait Dependencies {
   }
 
   object Jackson {
-    val scala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.3"
+    val scala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.2"
   }
 
   object Zio {
