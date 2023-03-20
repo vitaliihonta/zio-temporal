@@ -9,7 +9,7 @@ val documentationScalaVersion = scala213
 
 ThisBuild / scalaVersion           := scala213
 ThisBuild / organization           := "dev.vhonta"
-ThisBuild / version                := "0.1.0-RC7"
+ThisBuild / version                := "0.2.0-RC1"
 ThisBuild / versionScheme          := Some("early-semver")
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 ThisBuild / sonatypeRepository     := "https://s01.oss.sonatype.org/service/local"
