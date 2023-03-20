@@ -3,6 +3,11 @@
 target/
 version
 .sbt/
+project/.bloop
+project/metals.sbt
+project/project
+.bloop
+.metals
 
 # Website ignores
 website/build/

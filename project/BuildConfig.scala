@@ -57,7 +57,7 @@ object BuildConfig extends Dependencies {
 trait Dependencies {
 
   private object versions {
-    val temporal   = "1.14.0"
+    val temporal   = "1.18.2"
     val zio        = "2.0.0"
     val zioLogging = "2.0.0"
     val enumeratum = "1.7.0"
@@ -75,7 +75,7 @@ trait Dependencies {
   }
 
   object Jackson {
-    val scala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.3"
+    val scala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.2"
   }
 
   object Zio {
