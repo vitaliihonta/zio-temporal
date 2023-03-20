@@ -16,18 +16,33 @@ case class ZRetryOptions private[zio] (
   doNotRetry:                           Seq[String],
   private val javaOptionsCustomization: RetryOptions.Builder => RetryOptions.Builder) {
 
+  /** When exceeded the amount of attempts, stop. Even if expiration time is not reached. Default is unlimited.
+    */
   def withMaximumAttempts(attempts: Int): ZRetryOptions =
     copy(maximumAttempts = Some(attempts))
 
+  /** Interval of the first retry. If coefficient is 1.0 then it is used for all retries. Required.
+    */
   def withInitialInterval(interval: Duration): ZRetryOptions =
     copy(initialInterval = Some(interval))
 
+  /** Coefficient used to calculate the next retry interval. The next retry interval is previous interval multiplied by
+    * this coefficient. Must be 1 or larger. Default is 2.0.
+    */
   def withBackoffCoefficient(backoffCoefficient: Double): ZRetryOptions =
     copy(backoffCoefficient = Some(backoffCoefficient))
 
+  /** Maximum interval between retries. Exponential backoff leads to interval increase. This value is the cap of the
+    * increase. Default is 100x of initial interval. Can't be less than [[initialInterval]]
+    */
   def withMaximumInterval(maximumInterval: Duration): ZRetryOptions =
     copy(maximumInterval = Some(maximumInterval))
 
+  /** List of application failures types to not retry.
+    *
+    * @see
+    *   [[RetryOptions.Builder#setDoNotRetry]]
+    */
   def withDoNotRetry(types: String*): ZRetryOptions =
     copy(doNotRetry = types)
 
