@@ -37,7 +37,7 @@ object Main extends ZIOAppDefault {
         ZActivityOptions.default,
         ZWorkflowServiceStubs.make,
         ZWorkerFactory.make,
-        SLF4J.slf4j(LogLevel.Debug)
+        SLF4J.slf4j
       )
   }
 }
