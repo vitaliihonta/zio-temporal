@@ -7,6 +7,7 @@ import zio.temporal.worker.*
 import zio.temporal.workflow.*
 import zio.logging.backend.SLF4J
 import zio.temporal.json.JacksonDataConverter
+
 object Main extends ZIOAppDefault {
   val TaskQueue = "math"
   override def run: ZIO[ZIOAppArgs with Scope, Any, Any] = {
