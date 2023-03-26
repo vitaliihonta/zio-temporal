@@ -1,17 +1,31 @@
 package com.example.payments.impl
 
-import com.example.payments.workflows.PaymentActivity
-import com.example.payments.workflows.PaymentWorkflow
-import com.example.transactions._
-import zio._
-import zio.temporal._
-import zio.temporal.saga._
+import com.example.payments.workflows.{InvalidConfirmationCodeError, PaymentActivity, PaymentWorkflow}
+import com.example.transactions.*
+import zio.*
+import zio.temporal.*
+import zio.temporal.saga.*
 import zio.temporal.state.ZWorkflowState
 import zio.temporal.workflow.ZWorkflow
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
+import zio.temporal.failure.{ActivityFailure, ApplicationFailure}
 
-case class TransactionState(transaction: TransactionView, confirmation: Option[ConfirmTransactionCommand])
+case class TransactionState(
+  transaction:  TransactionView,
+  confirmation: Option[ConfirmTransactionCommand],
+  error:        Option[Throwable]) {
+
+  def result: Either[TransactionError, TransactionView] = {
+    val InvalidConfirmationCodeError = nameOf[InvalidConfirmationCodeError]
+    error.toLeft(transaction).left.map {
+      case ActivityFailure.Cause(ApplicationFailure(InvalidConfirmationCodeError, _, _, _)) =>
+        TransactionError(code = 1, message = "Contact issuer bank")
+      case _ =>
+        TransactionError(code = 2, message = "Contact support")
+    }
+  }
+}
 
 class PaymentWorkflowImpl extends PaymentWorkflow {
 
@@ -21,7 +35,11 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
   private val activity = ZWorkflow
     .newActivityStub[PaymentActivity]
     .withStartToCloseTimeout(10.seconds)
-    .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(3))
+    .withRetryOptions(
+      ZRetryOptions.default
+        .withMaximumAttempts(3)
+        .withDoNotRetry(nameOf[InvalidConfirmationCodeError])
+    )
     .build
 
   private val state = ZWorkflowState.empty[TransactionState]
@@ -42,22 +60,25 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
 
     val result = saga.run()
     result.left.foreach { error =>
-      failTransaction(error.message)
-      logger.error(s"Transaction failed code=${error.code} message=${error.message}")
+      failTransaction(error)
+      logger.error(s"Transaction failed", error)
     }
-    result
+    getStatusImpl
   }
 
   override def getStatus: Either[TransactionError, TransactionView] =
-    state
-      .toEither(TransactionError(code = 1, message = "Transaction not initialized"))
-      .map(_.transaction)
+    getStatusImpl
 
   override def confirmTransaction(command: ConfirmTransactionCommand): Unit =
     state.updateWhen {
       case state if state.transaction.status.isInProgress =>
         state.copy(confirmation = Some(command))
     }
+
+  private def getStatusImpl: Either[TransactionError, TransactionView] =
+    state
+      .toEither(TransactionError(code = 1, message = "Transaction not initialized"))
+      .flatMap(_.result)
 
   private def initialState(command: ProceedTransactionCommand): TransactionState =
     TransactionState(
@@ -69,10 +90,11 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
         receiver = command.receiver,
         amount = command.amount
       ),
-      confirmation = None
+      confirmation = None,
+      error = None
     )
 
-  private def proceedTransaction(command: ProceedTransactionCommand): ZSaga[TransactionError, TransactionView] =
+  private def proceedTransaction(command: ProceedTransactionCommand): ZSaga[TransactionView] =
     ZSaga.make(activity.proceed(command))(
       compensate = cancelTransaction()
     )
@@ -82,29 +104,26 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
       activity.cancelTransaction(CancelTransactionCommand(id = state.transaction.id))
     }
 
-  private def handleConfirmation(): ZSaga[TransactionError, Unit] = {
-    val currentState = state.snapshot
-    if (currentState.transaction.status.isFailed)
-      ZSaga.fail(TransactionError(code = -1, message = "Transaction failed"))
-    else
-      currentState.confirmation match {
-        case Some(confirmation) => verifyConfirmation(confirmation)
-        case None               => ZSaga.fail(TransactionError(code = 500, message = "Invalid transaction state"))
-      }
+  private def handleConfirmation(): ZSaga[Unit] = {
+    state.snapshotOf(_.confirmation) match {
+      case Some(confirmation) => verifyConfirmation(confirmation)
+      case None               => ZSaga.fail(new Exception("Invalid transaction state, it shouldn't happen"))
+    }
   }
 
-  private def verifyConfirmation(confirmation: ConfirmTransactionCommand): ZSaga[TransactionError, Unit] =
+  private def verifyConfirmation(confirmation: ConfirmTransactionCommand): ZSaga[Unit] =
     ZSaga
       .make(activity.verifyConfirmation(confirmation))(compensate = cancelTransaction())
       .as(finalizeTransaction())
       .unit
 
-  private def failTransaction(description: String): ZSaga[Nothing, Unit] =
-    ZSaga.succeed {
-      state.updateWhen {
-        case trxn: TransactionState if trxn.transaction.status.isCreated | trxn.transaction.status.isInProgress =>
-          trxn.copy(transaction = trxn.transaction.copy(status = TransactionStatus.Failed, description = description))
-      }
+  private def failTransaction(error: Throwable): Unit =
+    state.updateWhen {
+      case trxn: TransactionState if trxn.transaction.status.isCreated | trxn.transaction.status.isInProgress =>
+        trxn.copy(
+          transaction = trxn.transaction.copy(status = TransactionStatus.Failed, description = "Transaction failed"),
+          error = Some(error)
+        )
     }
 
   private def finalizeTransaction(): Unit =
@@ -112,12 +131,12 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
       s.copy(transaction = s.transaction.copy(status = TransactionStatus.Succeeded, description = "Processed"))
     )
 
-  private def updateStateWith(transaction: TransactionView): ZSaga[Nothing, Unit] =
+  private def updateStateWith(transaction: TransactionView): ZSaga[Unit] =
     ZSaga.succeed {
       state.update(_.copy(transaction = transaction))
     }
 
-  private def waitForConfirmation(): ZSaga[Nothing, Unit] =
+  private def waitForConfirmation(): ZSaga[Unit] =
     ZSaga.succeed {
       ZWorkflow.awaitWhile(
         state.exists(state =>

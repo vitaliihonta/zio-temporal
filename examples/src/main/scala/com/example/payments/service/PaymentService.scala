@@ -74,6 +74,9 @@ class TemporalPaymentService(client: ZWorkflowClient) extends PaymentService {
         _            <- updateLogContext(transactionId)
         workflowStub <- client.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId.toString)
         _            <- ZIO.logInfo("Checking transaction status...")
+        // TODO: Investigate why it throws sometimes
+        // timestamp=2023-03-26T21:02:13.647Z level=ERROR thread=#zio-fiber-4 message="Error processing transaction: PaymentError(io.temporal.client.WorkflowQueryException: workflowId='4bbbb382-1a3e-4d19-9372-a791e2f23a47', runId='} cause=io.grpc.StatusRuntimeException: INVALID_ARGUMENT:
+        // java.lang.IllegalArgumentException: Unknown query type: getStatus, knownTypes=[]
         view <- ZWorkflowStub.query(
                   workflowStub.getStatus
                 )

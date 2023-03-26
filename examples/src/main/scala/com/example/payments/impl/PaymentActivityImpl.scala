@@ -1,11 +1,11 @@
 package com.example.payments.impl
 
-import com.example.payments.workflows.PaymentActivity
-import com.example.transactions._
-import zio._
+import com.example.payments.workflows.{BankError, BankIsDownError, InvalidConfirmationCodeError, PaymentActivity}
+import com.example.transactions.*
+import zio.*
 import zio.temporal.activity.ZActivity
 import zio.temporal.activity.ZActivityOptions
-import zio.temporal.protobuf.syntax._
+import zio.temporal.protobuf.syntax.*
 
 object PaymentActivityImpl {
   val make: URLayer[ZActivityOptions[Any], PaymentActivity] =
@@ -14,12 +14,12 @@ object PaymentActivityImpl {
 
 class PaymentActivityImpl(implicit options: ZActivityOptions[Any]) extends PaymentActivity {
 
-  override def proceed(transaction: ProceedTransactionCommand): Either[TransactionError, TransactionView] =
+  override def proceed(transaction: ProceedTransactionCommand): TransactionView =
     ZActivity.run {
       proceedImpl(transaction)
     }
 
-  override def verifyConfirmation(command: ConfirmTransactionCommand): Either[TransactionError, Unit] =
+  override def verifyConfirmation(command: ConfirmTransactionCommand): Unit =
     ZActivity.run {
       verifyConfirmationImpl(command)
     }
@@ -29,10 +29,11 @@ class PaymentActivityImpl(implicit options: ZActivityOptions[Any]) extends Payme
       cancelTransactionImpl(command)
     }
 
-  private def proceedImpl(command: ProceedTransactionCommand): ZIO[Any, TransactionError, TransactionView] =
+  private def proceedImpl(command: ProceedTransactionCommand): ZIO[Any, BankError, TransactionView] =
     for {
+      _ <- ZIO.logInfo(s"Proceeding transaction=$command")
       _ <- ZIO.whenZIO(Random.nextIntBetween(1, 5).map(_ <= 2))(
-             ZIO.fail(TransactionError(code = 42, message = "Failed to proceed transaction: you're unlucky"))
+             ZIO.fail(BankIsDownError())
            )
       id <- Random.nextUUID
       transaction = TransactionView(
@@ -46,10 +47,10 @@ class PaymentActivityImpl(implicit options: ZActivityOptions[Any]) extends Payme
       _ <- ZIO.logInfo(s"Created transaction=$transaction")
     } yield transaction
 
-  private def verifyConfirmationImpl(command: ConfirmTransactionCommand): ZIO[Any, TransactionError, Unit] =
+  private def verifyConfirmationImpl(command: ConfirmTransactionCommand): ZIO[Any, BankError, Unit] =
     if (command.confirmationCode != "42")
       ZIO.logError(s"Failed to proceed transaction_id=${command.id.fromProto}: invalid confirmation code") *>
-        ZIO.fail(TransactionError(code = 6, message = "Please contact issuer bank"))
+        ZIO.fail(InvalidConfirmationCodeError())
     else
       ZIO.logInfo(s"Successfully processed transaction_id=${command.id.fromProto}")
 
