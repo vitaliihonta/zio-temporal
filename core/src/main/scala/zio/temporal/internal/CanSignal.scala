@@ -1,6 +1,5 @@
 package zio.temporal.internal
 
-import zio.temporal.TemporalClientError
 import zio.temporal.TemporalIO
 import zio.temporal.internalApi
 
@@ -14,7 +13,7 @@ trait CanSignal[Self] extends BaseCanSignal {
   protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit
 
   @internalApi
-  def __zio_temporal_invokeSignal(signalName: String, args: Seq[AnyRef]): TemporalIO[TemporalClientError, Unit] =
+  def __zio_temporal_invokeSignal(signalName: String, args: Seq[AnyRef]): TemporalIO[Unit] =
     TemporalInteraction.from {
       signalMethod(signalName, args)
     }

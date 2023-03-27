@@ -18,16 +18,6 @@ class ZWorkflowQueryMacro(override val c: blackbox.Context) extends InvocationMa
      """.debugged(SharedCompileTimeMessages.generatedQueryInvoke)
   }
 
-  def newQueryEitherImpl[E: WeakTypeTag, R: WeakTypeTag](f: Expr[Either[E, R]]): Tree = {
-    val theQuery = buildQueryInvocation(f.tree, weakTypeOf[Either[E, R]])
-
-    q"""
-       _root_.zio.temporal.internal.TemporalInteraction.fromEither {
-         $theQuery
-       }
-     """.debugged(SharedCompileTimeMessages.generatedQueryInvoke)
-  }
-
   private def buildQueryInvocation(f: Tree, ret: Type): Tree = {
     val invocation = getMethodInvocation(f)
 

@@ -2,6 +2,8 @@ package zio
 
 import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityMethod
+import io.temporal.client.WorkflowException
+import io.temporal.failure.TemporalException
 import io.temporal.workflow.QueryMethod
 import io.temporal.workflow.SignalMethod
 import io.temporal.workflow.WorkflowInterface
@@ -27,7 +29,7 @@ package object temporal {
     * @tparam A
     *   the value type
     */
-  final type TemporalIO[+E <: TemporalError[_], +A] = ZIO[Any, E, A]
+  final type TemporalIO[+A] = ZIO[Any, WorkflowException, A]
 
   /** Retrieves class name of a given type. Useful when specifying 'doNotRetry' errors in retry policies.
     * @see

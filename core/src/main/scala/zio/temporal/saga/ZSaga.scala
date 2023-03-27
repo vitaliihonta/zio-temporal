@@ -55,6 +55,11 @@ sealed trait ZSaga[+A] { self =>
     self.flatMap(a => that.map(f(a, _)))
 }
 
+/** TODO: add
+  *   - fromEither
+  *   - fromTry
+  *   - compensation (in order to only add compensation)
+  */
 object ZSaga {
   final case class Options(parallelCompensation: Boolean = false, continueWithError: Boolean = false)
 

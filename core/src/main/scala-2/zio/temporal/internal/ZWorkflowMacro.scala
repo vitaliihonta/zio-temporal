@@ -35,31 +35,12 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
      """.debugged(SharedCompileTimeMessages.generatedWorkflowExecute)
   }
 
-  def executeEitherImpl[E: WeakTypeTag, R: WeakTypeTag](f: Expr[Either[E, R]]): Tree = {
-    val theExecute = buildExecuteInvocation(f.tree)
-
-    q"""
-      _root_.zio.temporal.internal.TemporalInteraction.fromFutureEither {
-        $theExecute
-      } 
-     """.debugged(SharedCompileTimeMessages.generatedWorkflowExecute)
-  }
-
   def asyncImpl[R: WeakTypeTag](f: Expr[R]): Tree = {
     val invocation = getMethodInvocation(f.tree)
     val method     = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
     q"""
-       _root_.zio.temporal.promise.ZPromise.fromEither(Right($f))
-     """.debugged(SharedCompileTimeMessages.generatedWorkflowStartAsync)
-  }
-
-  def asyncEitherImpl[E: WeakTypeTag, R: WeakTypeTag](f: Expr[Either[E, R]]): Tree = {
-    val invocation = getMethodInvocation(f.tree)
-    val method     = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
-    method.assertWorkflowMethod()
-    q"""
-       new _root_.zio.temporal.promise.ZPromise.fromEither($f)
+       _root_.zio.temporal.promise.ZAsync.attempt($f)
      """.debugged(SharedCompileTimeMessages.generatedWorkflowStartAsync)
   }
 

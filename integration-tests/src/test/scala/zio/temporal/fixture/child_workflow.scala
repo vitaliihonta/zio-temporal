@@ -24,7 +24,7 @@ class GreetingWorkflowImpl extends GreetingWorkflow {
     println("Invoking child workflow...")
     val greetingPromise = ZWorkflowStub.async(child.composeGreeting("Hello", name))
     println("Child workflow started!")
-    greetingPromise.run.value
+    greetingPromise.run.getOrThrow
   }
 }
 

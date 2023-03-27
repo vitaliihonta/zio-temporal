@@ -2,7 +2,6 @@ package zio.temporal.signal
 
 import io.temporal.client.BatchRequest
 import zio.temporal.internal.ZSignalMacro
-import zio.temporal.TemporalClientError
 import zio.temporal.TemporalIO
 import zio.temporal.ZWorkflowExecution
 import zio.temporal.internalApi
@@ -11,7 +10,7 @@ import scala.language.experimental.macros
 import scala.language.implicitConversions
 
 trait ZWorkflowStubSignalSyntax {
-  def signal(f: Unit): TemporalIO[TemporalClientError, Unit] =
+  def signal(f: Unit): TemporalIO[Unit] =
     macro ZSignalMacro.signalImpl
 }
 
@@ -39,6 +38,6 @@ final class ZSignalBuilder @internalApi() (
     * @return
     *   workflowExecution of the started and signaled workflow.
     */
-  def start[A](f: A): TemporalIO[TemporalClientError, ZWorkflowExecution] =
+  def start[A](f: A): TemporalIO[ZWorkflowExecution] =
     macro ZSignalMacro.signalWithStartImpl[A]
 }
