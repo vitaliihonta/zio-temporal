@@ -6,7 +6,8 @@ object BuildConfig extends Dependencies {
 
   val baseLibs = Seq(
     Temporal.self,
-    Zio.self
+    Zio.self,
+    Jackson.scala
   )
 
   val coreLibs = baseLibs ++ Seq(

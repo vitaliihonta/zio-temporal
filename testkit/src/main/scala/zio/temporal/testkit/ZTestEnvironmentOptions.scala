@@ -63,22 +63,7 @@ object ZTestEnvironmentOptions {
 
   val default: ZTestEnvironmentOptions = new ZTestEnvironmentOptions(
     workerFactoryOptions = ZWorkerFactoryOptions.default,
-    workflowClientOptions = ZWorkflowClientOptions.default.withDataConverter(
-      new DefaultDataConverter(
-        // order matters!
-        Seq(
-          new NullPayloadConverter(),
-          new ByteArrayPayloadConverter(),
-          new ProtobufJsonPayloadConverter(),
-          new JacksonJsonPayloadConverter(
-            JsonMapper
-              .builder()
-              .addModule(DefaultScalaModule)
-              .build()
-          )
-        ): _*
-      )
-    ),
+    workflowClientOptions = ZWorkflowClientOptions.default,
     metricsScope = None,
     useExternalService = None,
     target = None,

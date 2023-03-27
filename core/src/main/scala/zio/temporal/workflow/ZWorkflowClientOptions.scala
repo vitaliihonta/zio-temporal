@@ -1,9 +1,11 @@
 package zio.temporal.workflow
 
+import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import io.temporal.api.enums.v1.QueryRejectCondition
 import io.temporal.client.WorkflowClientOptions
 import io.temporal.common.context.ContextPropagator
-import io.temporal.common.converter.DataConverter
+import io.temporal.common.converter._
 import io.temporal.common.interceptors.WorkflowClientInterceptor
 
 import scala.jdk.CollectionConverters._
@@ -72,9 +74,24 @@ case class ZWorkflowClientOptions private[zio] (
 
 object ZWorkflowClientOptions {
 
+  val defaultDataConverter: DefaultDataConverter = new DefaultDataConverter(
+    // order matters!
+    Seq(
+      new NullPayloadConverter(),
+      new ByteArrayPayloadConverter(),
+      new ProtobufJsonPayloadConverter(),
+      new JacksonJsonPayloadConverter(
+        JsonMapper
+          .builder()
+          .addModule(DefaultScalaModule)
+          .build()
+      )
+    ): _*
+  )
+
   val default: ZWorkflowClientOptions = new ZWorkflowClientOptions(
     namespace = None,
-    dataConverter = None,
+    dataConverter = Some(defaultDataConverter),
     interceptors = Nil,
     identity = None,
     binaryChecksum = None,
