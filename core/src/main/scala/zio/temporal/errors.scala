@@ -41,17 +41,3 @@ case class TemporalBusinessError[E](error: E) extends TemporalError[E] {
 
   override def message: String = error.toString
 }
-
-/** Represents fatal errors that may appear in your business logic.
-  *
-  * It's thrown when [[zio.ZIO.die]] and co. was triggered
-  * @param error
-  *   captured [[Cause]]
-  */
-case class ZActivityFatalError(error: Cause[_]) extends RuntimeException {
-
-  override def getMessage: String = {
-    val failure = error.dieOption.map(_.toString).getOrElse("unknown")
-    s"Fatal error running temporal activity: $failure"
-  }
-}

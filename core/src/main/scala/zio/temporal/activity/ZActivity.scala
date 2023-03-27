@@ -2,14 +2,13 @@ package zio.temporal.activity
 
 import io.temporal.activity.Activity
 import zio.*
-import zio.temporal.ZActivityFatalError
 import zio.temporal.internal.ZioUnsafeFacade
 
 /** Executed arbitrary effects within an activity implementation asynchronously completing the activity
   */
 object ZActivity {
 
-  /** Runs provided unexceptional effect completing this activity with the effect result.
+  /** Runs provided effect completing this activity with the effect result.
     *
     * @tparam A
     *   effect result type
@@ -20,45 +19,37 @@ object ZActivity {
     * @return
     *   result of executing the action
     */
-  def run[R, A](action: URIO[R, A])(implicit zactivityOptions: ZActivityOptions[R]): A = {
-    val ctx       = Activity.getExecutionContext
-    val taskToken = ctx.getTaskToken
-
-    ctx.doNotCompleteOnReturn()
-
-    ZioUnsafeFacade.unsafeRunAsyncURIO[R, A](
-      zactivityOptions.runtime,
-      action
-    )(
-      onFailure = cause =>
-        zactivityOptions.activityCompletionClient.completeExceptionally(
-          taskToken,
-          wrapCauseIntoException(cause)
-        ),
-      onSuccess = value =>
-        zactivityOptions.activityCompletionClient.complete[A](
-          taskToken,
-          value
-        )
-    )
-
-    null.asInstanceOf[A]
-  }
+  def run[R, A](action: RIO[R, A])(implicit zactivityOptions: ZActivityOptions[R]): A =
+    runImpl(action)(Activity.wrap)
 
   /** Runs provided effect completing this activity with the effect result.
     *
     * @tparam E
     *   effect error type
+    *
     * @tparam A
     *   effect result type
     * @param action
     *   the effect
     * @param zactivityOptions
     *   options required to run the action
+    * @param toApplicationFailure
+    *   a converter from a typed error into [[io.temporal.failure.ApplicationFailure]]
     * @return
     *   result of executing the action
     */
-  def run[R, E, A](action: ZIO[R, E, A])(implicit zactivityOptions: ZActivityOptions[R]): Either[E, A] = {
+  def run[R, E, A](
+    action:                    ZIO[R, E, A]
+  )(implicit zactivityOptions: ZActivityOptions[R],
+    toApplicationFailure:      ToApplicationFailure[E]
+  ): A =
+    runImpl(action)(toApplicationFailure.wrap)
+
+  private def runImpl[R, E, A](
+    action:                    ZIO[R, E, A]
+  )(convertError:              E => Exception
+  )(implicit zactivityOptions: ZActivityOptions[R]
+  ): A = {
     val ctx       = Activity.getExecutionContext
     val taskToken = ctx.getTaskToken
 
@@ -71,27 +62,20 @@ object ZActivity {
       onDie = cause =>
         zactivityOptions.activityCompletionClient.completeExceptionally(
           taskToken,
-          wrapCauseIntoException(cause)
+          Activity.wrap(cause)
         ),
       onFailure = error =>
-        zactivityOptions.activityCompletionClient.complete[Either[E, A]](
+        zactivityOptions.activityCompletionClient.completeExceptionally(
           taskToken,
-          Left(error)
+          convertError(error)
         ),
       onSuccess = value =>
-        zactivityOptions.activityCompletionClient.complete[Either[E, A]](
+        zactivityOptions.activityCompletionClient.complete(
           taskToken,
-          Right(value)
+          value
         )
     )
 
-    null.asInstanceOf[Either[E, A]]
+    null.asInstanceOf[A]
   }
-
-  private def wrapCauseIntoException(cause: Cause[_]): Exception =
-    cause.defects match {
-      /*Propagate temporal's non-retryable exceptions*/
-      case (head: Exception) :: _ => head
-      case _                      => Activity.wrap(ZActivityFatalError(cause))
-    }
 }

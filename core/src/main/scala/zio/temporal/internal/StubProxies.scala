@@ -18,7 +18,7 @@ private[zio] object StubProxies {
       Array(Delegate, Proxied),
       (proxy, method, methodArgs) =>
         if (method.getDeclaringClass.isAssignableFrom(Delegate)) {
-          logger.debug(s"Delegating $method call to delegate")
+          logger.trace(s"Delegating $method call to delegate")
           method.invoke(delegate, methodArgs: _*)
         } else {
           logger.warn(s"Stub $method called, usually this shouldn't happen")

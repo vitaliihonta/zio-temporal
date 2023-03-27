@@ -6,6 +6,9 @@ import io.temporal.workflow.QueryMethod
 import io.temporal.workflow.SignalMethod
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
+import zio.temporal.internal.ClassTagUtils
+
+import scala.reflect.ClassTag
 
 package object temporal {
 
@@ -25,4 +28,10 @@ package object temporal {
     *   the value type
     */
   final type TemporalIO[+E <: TemporalError[_], +A] = ZIO[Any, E, A]
+
+  /** Retrieves class name of a given type. Useful when specifying 'doNotRetry' errors in retry policies.
+    * @see
+    *   [[ZRetryOptions.withDoNotRetry]]
+    */
+  def nameOf[A: ClassTag]: String = ClassTagUtils.classOf[A].getName
 }
