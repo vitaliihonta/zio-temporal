@@ -13,19 +13,7 @@ import zio.temporal.failure.{ActivityFailure, ApplicationFailure}
 
 case class TransactionState(
   transaction:  TransactionView,
-  confirmation: Option[ConfirmTransactionCommand],
-  error:        Option[Throwable]) {
-
-  def result: Either[TransactionError, TransactionView] = {
-    val InvalidConfirmationCodeError = nameOf[InvalidConfirmationCodeError]
-    error.toLeft(transaction).left.map {
-      case ActivityFailure.Cause(ApplicationFailure(InvalidConfirmationCodeError, _, _, _)) =>
-        TransactionError(code = 1, message = "Contact issuer bank")
-      case _ =>
-        TransactionError(code = 2, message = "Contact support")
-    }
-  }
-}
+  confirmation: Option[ConfirmTransactionCommand]) {}
 
 class PaymentWorkflowImpl extends PaymentWorkflow {
 
@@ -44,7 +32,7 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
 
   private val state = ZWorkflowState.empty[TransactionState]
 
-  override def proceed(transaction: ProceedTransactionCommand): Either[TransactionError, TransactionView] = {
+  override def proceed(transaction: ProceedTransactionCommand): TransactionView = {
     logger.info(s"Processing transaction=$transaction")
     state := initialState(transaction)
     val saga = for {
@@ -63,11 +51,11 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
       failTransaction(error)
       logger.error(s"Transaction failed", error)
     }
-    getStatusImpl
+    state.snapshot.transaction
   }
 
-  override def getStatus: Either[TransactionError, TransactionView] =
-    getStatusImpl
+  override def isFinished(): Boolean =
+    state.exists(s => s.transaction.status.isFailed || s.transaction.status.isSucceeded)
 
   override def confirmTransaction(command: ConfirmTransactionCommand): Unit =
     state.updateWhen {
@@ -75,23 +63,17 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
         state.copy(confirmation = Some(command))
     }
 
-  private def getStatusImpl: Either[TransactionError, TransactionView] =
-    state
-      .toEither(TransactionError(code = 1, message = "Transaction not initialized"))
-      .flatMap(_.result)
-
   private def initialState(command: ProceedTransactionCommand): TransactionState =
     TransactionState(
       transaction = TransactionView(
         id = command.id,
         status = TransactionStatus.Created,
-        description = "created",
+        description = "Created",
         sender = command.sender,
         receiver = command.receiver,
         amount = command.amount
       ),
-      confirmation = None,
-      error = None
+      confirmation = None
     )
 
   private def proceedTransaction(command: ProceedTransactionCommand): ZSaga[TransactionView] =
@@ -118,12 +100,17 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
       .unit
 
   private def failTransaction(error: Throwable): Unit =
-    state.updateWhen {
-      case trxn: TransactionState if trxn.transaction.status.isCreated | trxn.transaction.status.isInProgress =>
-        trxn.copy(
-          transaction = trxn.transaction.copy(status = TransactionStatus.Failed, description = "Transaction failed"),
-          error = Some(error)
-        )
+    state.update { trxn =>
+      val InvalidConfirmationCodeError = nameOf[InvalidConfirmationCodeError]
+      val description = error match {
+        case ActivityFailure.Cause(ApplicationFailure(InvalidConfirmationCodeError, _, _, _)) =>
+          "Contact issuer bank"
+        case _ =>
+          "Contact support"
+      }
+      trxn.copy(
+        transaction = trxn.transaction.copy(status = TransactionStatus.Failed, description = description)
+      )
     }
 
   private def finalizeTransaction(): Unit =

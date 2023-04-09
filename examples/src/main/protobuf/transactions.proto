@@ -35,8 +35,3 @@ message TransactionView {
   required zio.temporal.protobuf.UUID receiver = 5;
   required zio.temporal.protobuf.BigDecimal amount = 6;
 }
-
-message TransactionError {
-  required int32 code = 1;
-  required string message = 2;
-}

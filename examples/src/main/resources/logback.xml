@@ -11,6 +11,7 @@
     <logger name="io.grpc.netty" level="warn"/>
     <logger name="io.temporal" level="info"/>
     <logger name="io.temporal.internal.worker.Poller" level="error"/>
+    <logger name="zio.temporal.internal.ZioUnsafeFacade" level="info"/>
 
     <root level="debug">
         <appender-ref ref="STDOUT"/>

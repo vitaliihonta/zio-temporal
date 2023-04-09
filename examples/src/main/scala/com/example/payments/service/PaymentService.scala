@@ -14,21 +14,19 @@ import zio.temporal.workflow.ZWorkflowStub
 case class PaymentError(details: String)
 
 case class Transaction(
-  id:     UUID,
-  status: TransactionStatus) {
-
-  def isFinished: Boolean = status.isSucceeded || status.isFailed
-}
+  id:          UUID,
+  status:      TransactionStatus,
+  description: String)
 
 object Transaction {
   def fromView(view: TransactionView): Transaction =
-    Transaction(view.id.fromProto[UUID], view.status)
+    Transaction(view.id.fromProto[UUID], view.status, view.description)
 }
 
 trait PaymentService {
   def createPayment(sender: UUID, receiver: UUID, amount: BigDecimal): IO[PaymentError, UUID]
 
-  def getStatus(transactionId: UUID): IO[PaymentError, Transaction]
+  def getStateIfFinished(transactionId: UUID): IO[PaymentError, Option[Transaction]]
 
   def confirmPayment(transactionId: UUID, confirmationCode: String): IO[PaymentError, Unit]
 }
@@ -68,25 +66,19 @@ class TemporalPaymentService(client: ZWorkflowClient) extends PaymentService {
       }
     }
 
-  override def getStatus(transactionId: UUID): IO[PaymentError, Transaction] =
+  override def getStateIfFinished(transactionId: UUID): IO[PaymentError, Option[Transaction]] =
     withErrorHandling {
       for {
         _            <- updateLogContext(transactionId)
         workflowStub <- client.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId.toString)
-        _            <- ZIO.logInfo("Checking transaction status...")
-        // TODO: Investigate why it throws sometimes
-        // timestamp=2023-03-26T21:02:13.647Z level=ERROR thread=#zio-fiber-4 message="Error processing transaction: PaymentError(io.temporal.client.WorkflowQueryException: workflowId='4bbbb382-1a3e-4d19-9372-a791e2f23a47', runId='} cause=io.grpc.StatusRuntimeException: INVALID_ARGUMENT:
-        // java.lang.IllegalArgumentException: Unknown query type: getStatus, knownTypes=[]
-        view <- ZWorkflowStub.query(
-                  workflowStub.getStatus
-                )
-        trxn = Transaction.fromView(view)
-        result <- if (!trxn.isFinished) ZIO.succeed(trxn)
-                  else
-                    workflowStub
-                      .resultEither[TransactionError, TransactionView]
-                      .map(Transaction.fromView)
-      } yield result
+        _            <- ZIO.logInfo("Checking if transaction is finished...")
+        isFinished <- ZWorkflowStub.query(
+                        workflowStub.isFinished()
+                      )
+        maybeTransaction <- ZIO.when(isFinished) {
+                              workflowStub.result[TransactionView]
+                            }
+      } yield maybeTransaction.map(Transaction.fromView)
     }
 
   override def confirmPayment(transactionId: UUID, confirmationCode: String): IO[PaymentError, Unit] =
@@ -95,24 +87,22 @@ class TemporalPaymentService(client: ZWorkflowClient) extends PaymentService {
         _            <- updateLogContext(transactionId)
         workflowStub <- client.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId.toString)
         _            <- ZIO.logInfo("Going to send confirmation")
-        status <- ZWorkflowStub.query(
-                    workflowStub.getStatus
-                  )
-        _ <- ZIO.when(status.status.isFailed) {
-               ZIO.fail(TemporalError(s"Cannot confirm transaction, it's already failed: ${status.description}"))
+        isFinished <- ZWorkflowStub.query(
+                        workflowStub.isFinished()
+                      )
+        _ <- ZIO.unless(isFinished) {
+               ZWorkflowStub.signal(
+                 workflowStub.confirmTransaction(
+                   ConfirmTransactionCommand(id = transactionId, confirmationCode)
+                 )
+               ) *> ZIO.logInfo("Confirmation sent!")
              }
-        _ <- ZWorkflowStub.signal(
-               workflowStub.confirmTransaction(
-                 ConfirmTransactionCommand(id = transactionId, confirmationCode)
-               )
-             )
-        _ <- ZIO.logInfo("Confirmation sent!")
       } yield ()
     }
 
-  private def withErrorHandling[R, E, A](thunk: ZIO[R, TemporalError[E], A]): ZIO[R, PaymentError, A] =
-    thunk.mapError { temporalError =>
-      PaymentError(temporalError.message)
+  private def withErrorHandling[R, A](thunk: TemporalRIO[R, A]): ZIO[R, PaymentError, A] =
+    thunk.mapError { workflowException =>
+      PaymentError(workflowException.getMessage)
     }
 
   private def updateLogContext(transactionId: UUID): UIO[Unit] =

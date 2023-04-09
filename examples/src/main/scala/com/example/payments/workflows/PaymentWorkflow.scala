@@ -7,10 +7,10 @@ import zio.temporal._
 trait PaymentWorkflow {
 
   @workflowMethod
-  def proceed(transaction: ProceedTransactionCommand): Either[TransactionError, TransactionView]
+  def proceed(transaction: ProceedTransactionCommand): TransactionView
 
   @queryMethod
-  def getStatus: Either[TransactionError, TransactionView]
+  def isFinished(): Boolean
 
   @signalMethod
   def confirmTransaction(command: ConfirmTransactionCommand): Unit

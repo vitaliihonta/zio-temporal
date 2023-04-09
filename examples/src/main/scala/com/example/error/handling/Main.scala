@@ -10,6 +10,10 @@ import zio.temporal.json.JacksonDataConverter
 
 object Main extends ZIOAppDefault {
   val TaskQueue = "math"
+
+  override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
+    Runtime.removeDefaultLoggers ++ SLF4J.slf4j
+
   override def run: ZIO[ZIOAppArgs with Scope, Any, Any] = {
     val registerWorkflows = ZIO.serviceWithZIO[ZWorkerFactory] { workerFactory =>
       for {
@@ -61,8 +65,7 @@ object Main extends ZIOAppDefault {
         ZWorkflowClient.make,
         ZActivityOptions.default,
         ZWorkflowServiceStubs.make,
-        ZWorkerFactory.make,
-        SLF4J.slf4j
+        ZWorkerFactory.make
       )
   }
 }
