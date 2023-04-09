@@ -6,6 +6,7 @@ import zio.BuildFrom
 
 import scala.collection.mutable
 import scala.util.Try
+import scala.util.control.NoStackTrace
 
 /** Implements the logic to execute compensation operations that is often required in Saga applications. The following
   * is a skeleton to show of how it is supposed to be used in workflow code:
@@ -55,17 +56,24 @@ sealed trait ZSaga[+A] { self =>
     self.flatMap(a => that.map(f(a, _)))
 }
 
-/** TODO: add
-  *   - fromEither
-  *   - fromTry
-  *   - compensation (in order to only add compensation)
-  */
 object ZSaga {
   final case class Options(parallelCompensation: Boolean = false, continueWithError: Boolean = false)
 
   object Options {
     val default: Options = Options()
   }
+
+  /** Creates a saga which will run a compensation if the main action fails.
+    *
+    * @tparam A
+    *   action result
+    * @param exec
+    *   the main action
+    * @param compensate
+    *   the compensation which will run in case the saga fails
+    */
+  def make[A](exec: => A)(compensate: => Unit): ZSaga[A] =
+    ZSaga.Compensation[A](() => compensate, ZSaga.Attempt(() => exec))
 
   /** Creates immediately completed [[ZSaga]] instance which won't fail
     * @tparam A
@@ -77,6 +85,14 @@ object ZSaga {
     */
   def succeed[A](value: A): ZSaga[A] =
     ZSaga.Succeed(value)
+
+  /** Adds a compensation to the current saga
+    *
+    * @param compensate
+    *   the compensation which will run in case the saga fails
+    */
+  def compensation(compensate: => Unit): ZSaga[Unit] =
+    ZSaga.Compensation[Unit](() => compensate, ZSaga.unit)
 
   /** Creates a completed [[ZSaga]] with [[Unit]] result.
     */
@@ -103,19 +119,25 @@ object ZSaga {
   def attempt[A](thunk: => A): ZSaga[A] =
     ZSaga.Attempt(() => thunk)
 
-  /** Creates a saga which will run a compensation if the main action fails.
+  /** Creates immediately completed [[ZSaga]] instance from scala's [[Try]]
     *
-    * @tparam E
-    *   typed error
-    * @tparam A
-    *   action result
-    * @param exec
-    *   the main action
-    * @param compensate
-    *   the compensation which will run in case the main action returns Left
+    * @param value
+    *   scala Try value
+    * @return
+    *   failed [[ZSaga]]
     */
-  def make[A](exec: => A)(compensate: => Unit): ZSaga[A] =
-    ZSaga.Compensation[A](() => compensate, ZSaga.Attempt(() => exec))
+  def fromTry[A](value: Try[A]): ZSaga[A] =
+    value.fold(ZSaga.Failed(_), ZSaga.Succeed(_))
+
+  /** Creates immediately completed [[ZSaga]] instance from scala's [[Either]]
+    *
+    * @param value
+    *   scala Either value
+    * @return
+    *   failed [[ZSaga]]
+    */
+  def fromEither[A](value: Either[Throwable, A]): ZSaga[A] =
+    value.fold(ZSaga.Failed(_), ZSaga.Succeed(_))
 
   def foreach[A, B](in: Option[A])(f: A => ZSaga[B]): ZSaga[Option[B]] =
     in.fold[ZSaga[Option[B]]](succeed(None))(f(_).map(Some(_)))
@@ -128,6 +150,7 @@ object ZSaga {
     in.foldLeft[ZSaga[mutable.Builder[B, Collection[B]]]](succeed(bf(in)))((io, a) => io.zipWith(f(a))(_ += _))
       .map(_.result())
 
+  // Internal
   final case class Attempt[A] private[zio] (thunk: () => A) extends ZSaga[A]
 
   final case class Succeed[A] private[zio] (value: A) extends ZSaga[A] {
@@ -168,7 +191,7 @@ object ZSaga {
       ZSaga.CatchAll[A0](base, handle(_).catchAll(f))
   }
 
-  private[zio] def runImpl[E, A](self: ZSaga[A])(options: ZSaga.Options): Either[Throwable, A] = {
+  private[zio] def runImpl[A](self: ZSaga[A])(options: ZSaga.Options): Either[Throwable, A] = {
     val temporalSagaOptions = new Saga.Options.Builder()
       .setParallelCompensation(options.parallelCompensation)
       .setContinueWithError(options.continueWithError)
@@ -176,7 +199,7 @@ object ZSaga {
 
     val temporalSaga = new Saga(temporalSagaOptions)
 
-    def interpret[E0, A0](saga: ZSaga[A0]): Either[Throwable, A0] =
+    def interpret[A0](saga: ZSaga[A0]): Either[Throwable, A0] =
       saga match {
         case succeed: Succeed[A0] => Right(succeed.value)
         case failed: Failed       => Left(failed.error)

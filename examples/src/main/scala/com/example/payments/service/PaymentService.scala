@@ -26,7 +26,7 @@ object Transaction {
 trait PaymentService {
   def createPayment(sender: UUID, receiver: UUID, amount: BigDecimal): IO[PaymentError, UUID]
 
-  def getStateIfFinished(transactionId: UUID): IO[PaymentError, Option[Transaction]]
+  def getState(transactionId: UUID): IO[PaymentError, Option[Transaction]]
 
   def confirmPayment(transactionId: UUID, confirmationCode: String): IO[PaymentError, Unit]
 }
@@ -45,8 +45,10 @@ class TemporalPaymentService(client: ZWorkflowClient) extends PaymentService {
                                .newWorkflowStub[PaymentWorkflow]
                                .withTaskQueue("payments")
                                .withWorkflowId(transactionId.toString)
-                               .withWorkflowExecutionTimeout(5.minutes)
-                               .withWorkflowRunTimeout(10.seconds)
+                               .withWorkflowExecutionTimeout(6.minutes)
+                               // Avoid setting runTimeout < timeout in ZWorkflow.awaitWhile
+                               // Otherwise, you'll get a creepy error
+                               .withWorkflowRunTimeout(1.minute)
                                .withRetryOptions(
                                  ZRetryOptions.default.withMaximumAttempts(5)
                                )
@@ -66,18 +68,21 @@ class TemporalPaymentService(client: ZWorkflowClient) extends PaymentService {
       }
     }
 
-  override def getStateIfFinished(transactionId: UUID): IO[PaymentError, Option[Transaction]] =
+  override def getState(transactionId: UUID): IO[PaymentError, Option[Transaction]] =
     withErrorHandling {
       for {
         _            <- updateLogContext(transactionId)
         workflowStub <- client.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId.toString)
         _            <- ZIO.logInfo("Checking if transaction is finished...")
-        isFinished <- ZWorkflowStub.query(
-                        workflowStub.isFinished()
-                      )
-        maybeTransaction <- ZIO.when(isFinished) {
+        maybeTransaction <- ZIO.whenZIO(
+                              ZWorkflowStub.query(
+                                workflowStub.isFinished()
+                              )
+                            ) {
                               workflowStub.result[TransactionView]
                             }
+        // Another option is to wait for result with a timeout
+        // maybeTransaction <- workflowStub.result[TransactionView](2.seconds)
       } yield maybeTransaction.map(Transaction.fromView)
     }
 
@@ -102,7 +107,7 @@ class TemporalPaymentService(client: ZWorkflowClient) extends PaymentService {
 
   private def withErrorHandling[R, A](thunk: TemporalRIO[R, A]): ZIO[R, PaymentError, A] =
     thunk.mapError { workflowException =>
-      PaymentError(workflowException.getMessage)
+      PaymentError(workflowException.toString)
     }
 
   private def updateLogContext(transactionId: UUID): UIO[Unit] =

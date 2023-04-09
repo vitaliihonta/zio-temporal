@@ -24,12 +24,20 @@ package object temporal {
 
   /** Alias for IO representing interaction with temporal server
     *
-    * @tparam E
-    *   ZIO Temporal error type
     * @tparam A
     *   the value type
     */
   final type TemporalIO[+A] = ZIO[Any, WorkflowException, A]
+
+  /** Alias for IO representing interaction with temporal server
+    *
+    * @tparam R
+    *   environment type
+    *
+    * @tparam A
+    *   the value type
+    */
+  final type TemporalRIO[-R, +A] = ZIO[R, WorkflowException, A]
 
   /** Retrieves class name of a given type. Useful when specifying 'doNotRetry' errors in retry policies.
     * @see

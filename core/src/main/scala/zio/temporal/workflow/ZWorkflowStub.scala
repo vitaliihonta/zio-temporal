@@ -1,5 +1,6 @@
 package zio.temporal.workflow
 
+import zio.Duration
 import io.temporal.client.WorkflowStub
 import zio.temporal.{TemporalIO, internalApi}
 import zio.temporal.internal.CanSignal
@@ -8,12 +9,11 @@ import zio.temporal.internal.TemporalInteraction
 import zio.temporal.internal.tagging.Proxies
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.ZWorkflowStubSignalSyntax
+import java.util.concurrent.TimeUnit
+import scala.concurrent.TimeoutException
 import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
-/** TODO: add
-  *   - result(timeout: Duration)
-  */
 sealed trait ZWorkflowStub extends CanSignal[WorkflowStub] {
 
   override protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit =
@@ -29,6 +29,11 @@ sealed trait ZWorkflowStub extends CanSignal[WorkflowStub] {
   def result[V: ClassTag]: TemporalIO[V] =
     TemporalInteraction.fromFuture {
       toJava.getResultAsync(ClassTagUtils.classOf[V])
+    }
+
+  def result[V: ClassTag](timeout: Duration): TemporalIO[Option[V]] =
+    TemporalInteraction.fromFutureTimeout {
+      toJava.getResultAsync(timeout.toNanos, TimeUnit.NANOSECONDS, ClassTagUtils.classOf[V])
     }
 
   /** Cancels workflow execution

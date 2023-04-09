@@ -33,15 +33,17 @@ class ExampleFlow(paymentService: PaymentService) {
     (
       ZIO.sleep(2.seconds) *>
         ZIO.logInfo("Checking transaction status...") *>
-        paymentService.getStateIfFinished(transactionId)
+        paymentService.getState(transactionId)
     ).repeatWhile(_.isEmpty)
       .map(_.get)
 
   private def userActivity(transactionId: UUID): IO[PaymentError, Unit] =
     for {
       _ <- simulateUserActivity
-      // Try to change the confirmation code to see what happens
-      _ <- paymentService.confirmPayment(transactionId, confirmationCode = "41")
+      // Options to play with to see what happens:
+      // 1. Try to change the confirmation code
+      // 2. Try to comment the confirmPayment invocation
+      // _ <- paymentService.confirmPayment(transactionId, confirmationCode = "42")
     } yield ()
 
   private def simulateUserActivity: UIO[Unit] =

@@ -13,7 +13,7 @@
     <logger name="io.temporal.internal.worker.Poller" level="error"/>
     <logger name="zio.temporal.internal.ZioUnsafeFacade" level="info"/>
 
-    <root level="debug">
+    <root level="info">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

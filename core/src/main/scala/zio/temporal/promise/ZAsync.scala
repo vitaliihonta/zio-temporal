@@ -3,7 +3,6 @@ package zio.temporal.promise
 import io.temporal.failure.CanceledFailure
 import io.temporal.workflow.{Async, Functions, Promise}
 import zio.*
-import zio.temporal.ZCanceledFailure
 import java.util.concurrent.TimeUnit
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.mutable
@@ -80,8 +79,8 @@ object ZAsync {
   case class Failure(error: Throwable) extends Result[NoEffects, Nothing] {
     override def getOrThrow: Nothing = throw error
   }
-  case class Cancelled(failure: ZCanceledFailure) extends Result[Cancel, Nothing] {
-    override def getOrThrow: Nothing = throw failure.toJava
+  case class Cancelled(failure: CanceledFailure) extends Result[Cancel, Nothing] {
+    override def getOrThrow: Nothing = throw failure
   }
   case class TimedOut(failure: TimeoutException) extends Result[Timeout, Nothing] {
     override def getOrThrow: Nothing = throw failure
@@ -206,7 +205,7 @@ object ZAsync {
       Try(underlying.cancellableGet())
         .fold[ZAsync.Result[Cancel, A]](
           {
-            case e: CanceledFailure => ZAsync.Cancelled(new ZCanceledFailure(e))
+            case e: CanceledFailure => ZAsync.Cancelled(e)
             case error              => ZAsync.Failure(error)
           },
           ZAsync.Success(_)
@@ -216,7 +215,7 @@ object ZAsync {
       Try(underlying.cancellableGet(timeout.toNanos, TimeUnit.NANOSECONDS))
         .fold[ZAsync.Result[Cancel with Timeout, A]](
           {
-            case e: CanceledFailure        => ZAsync.Cancelled(new ZCanceledFailure(e))
+            case e: CanceledFailure        => ZAsync.Cancelled(e)
             case timeout: TimeoutException => ZAsync.TimedOut(timeout)
             case error                     => ZAsync.Failure(error)
           },
@@ -256,7 +255,7 @@ object ZAsync {
 
     final implicit class AllEffectsOps[A](private val self: Result[Cancel with Timeout, A]) extends AnyVal {
 
-      def foldAll[B](onTimeout: => B)(cancelled: ZCanceledFailure => B, failed: Throwable => B, succeeded: A => B): B =
+      def foldAll[B](onTimeout: => B)(cancelled: CanceledFailure => B, failed: Throwable => B, succeeded: A => B): B =
         self match {
           case Success(value)     => succeeded(value)
           case Failure(error)     => failed(error)
@@ -267,7 +266,7 @@ object ZAsync {
 
     final implicit class CancellableOps[A](private val self: Result[Cancel, A]) extends AnyVal {
 
-      def foldCancel[B](cancelled: ZCanceledFailure => B, failed: Throwable => B, succeeded: A => B): B =
+      def foldCancel[B](cancelled: CanceledFailure => B, failed: Throwable => B, succeeded: A => B): B =
         self match {
           case Success(value)     => succeeded(value)
           case Failure(error)     => failed(error)

@@ -2,6 +2,7 @@ package com.example.payments.impl
 
 import com.example.payments.workflows.{InvalidConfirmationCodeError, PaymentActivity, PaymentWorkflow}
 import com.example.transactions.*
+import io.temporal.failure.CanceledFailure
 import zio.*
 import zio.temporal.*
 import zio.temporal.saga.*
@@ -10,10 +11,14 @@ import zio.temporal.workflow.ZWorkflow
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import zio.temporal.failure.{ActivityFailure, ApplicationFailure}
+import scala.concurrent.TimeoutException
+import scala.util.control.NoStackTrace
 
 case class TransactionState(
   transaction:  TransactionView,
   confirmation: Option[ConfirmTransactionCommand]) {}
+
+private[impl] case object ConfirmationTimeout extends Exception("Confirmation timeout") with NoStackTrace
 
 class PaymentWorkflowImpl extends PaymentWorkflow {
 
@@ -25,7 +30,7 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
     .withStartToCloseTimeout(10.seconds)
     .withRetryOptions(
       ZRetryOptions.default
-        .withMaximumAttempts(3)
+        .withMaximumAttempts(5)
         .withDoNotRetry(nameOf[InvalidConfirmationCodeError])
     )
     .build
@@ -105,6 +110,9 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
       val description = error match {
         case ActivityFailure.Cause(ApplicationFailure(InvalidConfirmationCodeError, _, _, _)) =>
           "Contact issuer bank"
+        // Confirmation timed out
+        case ConfirmationTimeout =>
+          ConfirmationTimeout.getMessage
         case _ =>
           "Contact support"
       }
@@ -123,13 +131,17 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
       state.update(_.copy(transaction = transaction))
     }
 
-  private def waitForConfirmation(): ZSaga[Unit] =
-    ZSaga.succeed {
-      ZWorkflow.awaitWhile(
-        state.exists(state =>
-          state.transaction.status == TransactionStatus.InProgress &&
-            state.confirmation.isEmpty
-        )
+  private def waitForConfirmation(): ZSaga[Unit] = {
+    val confirmed = ZWorkflow.awaitWhile(40.seconds /*Confirmation timeout*/ )(
+      state.exists(state =>
+        state.transaction.status == TransactionStatus.InProgress &&
+          state.confirmation.isEmpty
       )
+    )
+    if (!confirmed) {
+      ZSaga.fail(ConfirmationTimeout)
+    } else {
+      ZSaga.unit
     }
+  }
 }
