@@ -1,13 +1,16 @@
 package zio.temporal.workflow
 
+import zio.Duration
 import io.temporal.client.WorkflowStub
-import zio.temporal.{TemporalClientError, TemporalError, TemporalIO, internalApi}
+import zio.temporal.{TemporalIO, internalApi}
 import zio.temporal.internal.CanSignal
 import zio.temporal.internal.ClassTagUtils
 import zio.temporal.internal.TemporalInteraction
 import zio.temporal.internal.tagging.Proxies
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.ZWorkflowStubSignalSyntax
+import java.util.concurrent.TimeUnit
+import scala.concurrent.TimeoutException
 import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
@@ -23,28 +26,19 @@ sealed trait ZWorkflowStub extends CanSignal[WorkflowStub] {
     * @return
     *   either interaction error or the workflow result
     */
-  def result[V: ClassTag]: TemporalIO[TemporalClientError, V] =
+  def result[V: ClassTag]: TemporalIO[V] =
     TemporalInteraction.fromFuture {
       toJava.getResultAsync(ClassTagUtils.classOf[V])
     }
 
-  /** Fetches workflow result
-    *
-    * @tparam V
-    *   expected workflow result type
-    * @tparam E
-    *   expected workflow business error type
-    * @return
-    *   either error or the workflow result
-    */
-  def resultEither[E: ClassTag, V: ClassTag]: TemporalIO[TemporalError[E], V] =
-    TemporalInteraction.fromFutureEither {
-      toJava.getResultAsync(ClassTagUtils.classOf[Either[E, V]])
+  def result[V: ClassTag](timeout: Duration): TemporalIO[Option[V]] =
+    TemporalInteraction.fromFutureTimeout {
+      toJava.getResultAsync(timeout.toNanos, TimeUnit.NANOSECONDS, ClassTagUtils.classOf[V])
     }
 
   /** Cancels workflow execution
     */
-  def cancel: TemporalIO[TemporalClientError, Unit] =
+  def cancel: TemporalIO[Unit] =
     TemporalInteraction.from {
       toJava.cancel()
     }
@@ -56,7 +50,7 @@ sealed trait ZWorkflowStub extends CanSignal[WorkflowStub] {
     * @param details
     *   additional information
     */
-  def terminate(reason: String, details: Any*): TemporalIO[TemporalClientError, Unit] =
+  def terminate(reason: String, details: Any*): TemporalIO[Unit] =
     TemporalInteraction.from {
       toJava.terminate(reason, (details.asInstanceOf[Seq[AnyRef]]): _*)
     }

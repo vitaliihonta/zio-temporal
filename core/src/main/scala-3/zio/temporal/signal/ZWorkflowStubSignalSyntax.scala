@@ -1,7 +1,6 @@
 package zio.temporal.signal
 
 import io.temporal.client.BatchRequest
-import zio.temporal.TemporalClientError
 import zio.temporal.TemporalIO
 import zio.temporal.ZWorkflowExecution
 import zio.temporal.internalApi
@@ -10,7 +9,7 @@ import scala.quoted.*
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
 
 trait ZWorkflowStubSignalSyntax {
-  inline def signal(inline f: Unit): TemporalIO[TemporalClientError, Unit] =
+  inline def signal(inline f: Unit): TemporalIO[Unit] =
     ${ ZWorkflowStubSignalSyntax.signalImpl('f) }
 }
 
@@ -38,7 +37,7 @@ final class ZSignalBuilder @internalApi() (
     * @return
     *   workflowExecution of the started and signaled workflow.
     */
-  inline def start[A](inline f: A): TemporalIO[TemporalClientError, ZWorkflowExecution] =
+  inline def start[A](inline f: A): TemporalIO[ZWorkflowExecution] =
     ${ ZWorkflowStubSignalSyntax.signalWithStartImpl[A]('self, 'f) }
 }
 
@@ -48,7 +47,7 @@ object ZWorkflowStubSignalSyntax {
   private val Init                       = "<init>"
   private val AddToBatchRequest          = "addToBatchRequest"
 
-  def signalImpl(f: Expr[Unit])(using q: Quotes): Expr[TemporalIO[TemporalClientError, Unit]] = {
+  def signalImpl(f: Expr[Unit])(using q: Quotes): Expr[TemporalIO[Unit]] = {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
@@ -71,7 +70,7 @@ object ZWorkflowStubSignalSyntax {
       )
 
     invokeTree
-      .asExprOf[TemporalIO[TemporalClientError, Unit]]
+      .asExprOf[TemporalIO[Unit]]
       .debugged(SharedCompileTimeMessages.generatedSignal)
   }
 
@@ -91,7 +90,7 @@ object ZWorkflowStubSignalSyntax {
     self:    Expr[ZSignalBuilder],
     f:       Expr[A]
   )(using q: Quotes
-  ): Expr[TemporalIO[TemporalClientError, ZWorkflowExecution]] = {
+  ): Expr[TemporalIO[ZWorkflowExecution]] = {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*

@@ -10,6 +10,9 @@ import zio.logging.backend.SLF4J
 import zio.temporal.activity.ZActivityOptions
 
 object Main extends ZIOAppDefault {
+  override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
+    Runtime.removeDefaultLoggers ++ SLF4J.slf4j
+
   override def run: ZIO[ZIOAppArgs with Scope, Any, Any] = {
     val program =
       ZIO.service[ZWorkerFactory].flatMap { workerFactory =>
@@ -36,8 +39,7 @@ object Main extends ZIOAppDefault {
         ExampleFlow.make,
         ZActivityOptions.default,
         ZWorkflowServiceStubs.make,
-        ZWorkerFactory.make,
-        SLF4J.slf4j(LogLevel.Debug)
+        ZWorkerFactory.make
       )
   }
 }

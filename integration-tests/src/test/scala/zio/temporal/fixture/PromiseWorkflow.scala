@@ -2,7 +2,7 @@ package zio.temporal.fixture
 
 import zio._
 import zio.temporal._
-import zio.temporal.promise.ZPromise
+import zio.temporal.promise.ZAsync
 import zio.temporal.workflow.ZWorkflow
 
 @activityInterface
@@ -34,14 +34,14 @@ class PromiseWorkflowImpl extends PromiseWorkflow {
     .build
 
   override def fooBar(x: Int, y: Int): Int = {
-    val first  = ZPromise.fromEither(Right(activity.foo(x)))
-    val second = ZPromise.fromEither(Right(activity.bar(y)))
+    val first  = ZAsync.attempt(activity.foo(x))
+    val second = ZAsync.attempt(activity.bar(y))
 
     val result = for {
       x <- first
       y <- second
     } yield x + y
 
-    result.run.value
+    result.run.getOrThrow
   }
 }

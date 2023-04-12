@@ -11,13 +11,14 @@ object BuildConfig extends Dependencies {
   )
 
   val coreLibs = baseLibs ++ Seq(
-    Scalapb.runtime,
     Utility.scalaJava8Compat,
+    Jackson.scala % Optional,
     Utility.izumiReflect,
     Testing.scalatest
   )
 
   val coreLibsScala2 = Seq(
+    Utility.collectionsCompat,
     Enumeratum.enumeratum % Optional
   )
 
@@ -96,9 +97,10 @@ trait Dependencies {
   }
 
   object Utility {
-    val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
-    val izumiReflect     = org.zio                  %% "izumi-reflect"      % "2.2.5" // the same one used in ZIO
-    val reflections      = "org.reflections"         % "reflections"        % "0.10.2"
+    val scalaJava8Compat  = "org.scala-lang.modules" %% "scala-java8-compat"      % "1.0.2"
+    val collectionsCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.9.0"
+    val izumiReflect      = org.zio                  %% "izumi-reflect"           % "2.2.5" // the same one used in ZIO
+    val reflections       = "org.reflections"         % "reflections"             % "0.10.2"
   }
 
   object ScalaReflect {

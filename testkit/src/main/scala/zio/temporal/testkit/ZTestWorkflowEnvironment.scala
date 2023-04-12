@@ -50,7 +50,7 @@ class ZTestWorkflowEnvironment[R] private[zio] (val toJava: TestWorkflowEnvironm
     * @param options
     *   await options with polling interval and poll delay
     */
-  def use[R, E, A](
+  def use[E, A](
     options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.testDefault
   )(thunk:   ZIO[R, E, A]
   ): ZIO[R, E, A] =

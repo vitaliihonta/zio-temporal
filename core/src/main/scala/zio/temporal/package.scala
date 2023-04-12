@@ -2,10 +2,15 @@ package zio
 
 import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityMethod
+import io.temporal.client.WorkflowException
+import io.temporal.failure.TemporalException
 import io.temporal.workflow.QueryMethod
 import io.temporal.workflow.SignalMethod
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
+import zio.temporal.internal.ClassTagUtils
+
+import scala.reflect.ClassTag
 
 package object temporal {
 
@@ -19,10 +24,24 @@ package object temporal {
 
   /** Alias for IO representing interaction with temporal server
     *
-    * @tparam E
-    *   ZIO Temporal error type
     * @tparam A
     *   the value type
     */
-  final type TemporalIO[+E <: TemporalError[_], +A] = ZIO[Any, E, A]
+  final type TemporalIO[+A] = ZIO[Any, WorkflowException, A]
+
+  /** Alias for IO representing interaction with temporal server
+    *
+    * @tparam R
+    *   environment type
+    *
+    * @tparam A
+    *   the value type
+    */
+  final type TemporalRIO[-R, +A] = ZIO[R, WorkflowException, A]
+
+  /** Retrieves class name of a given type. Useful when specifying 'doNotRetry' errors in retry policies.
+    * @see
+    *   [[ZRetryOptions.withDoNotRetry]]
+    */
+  def nameOf[A: ClassTag]: String = ClassTagUtils.classOf[A].getName
 }

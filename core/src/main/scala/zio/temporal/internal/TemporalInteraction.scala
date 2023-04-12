@@ -1,33 +1,32 @@
 package zio.temporal.internal
 
+import io.temporal.client.WorkflowException
 import zio.ZIO
-import zio.temporal.TemporalBusinessError
-import zio.temporal.TemporalClientError
-import zio.temporal.TemporalError
 import zio.temporal.TemporalIO
 import zio.temporal.internalApi
+
 import java.util.concurrent.CompletableFuture
+import scala.concurrent.TimeoutException
 
 @internalApi
 object TemporalInteraction {
 
-  def from[A](thunk: => A): TemporalIO[TemporalClientError, A] =
+  def from[A](thunk: => A): TemporalIO[A] =
     ZIO
       .attempt(thunk)
-      .mapError(TemporalClientError)
+      .refineToOrDie[WorkflowException]
 
-  def fromEither[E, A](thunk: => Either[E, A]): TemporalIO[TemporalError[E], A] =
-    ZIO
-      .attempt(thunk)
-      .mapError(TemporalClientError)
-      .flatMap(ZIO.fromEither(_).mapError(TemporalBusinessError(_)))
-
-  def fromFuture[A](future: => CompletableFuture[A]): TemporalIO[TemporalClientError, A] =
+  def fromFuture[A](future: => CompletableFuture[A]): TemporalIO[A] =
     ZIO
       .fromFutureJava(future)
-      .mapError(TemporalClientError)
+      .refineToOrDie[WorkflowException]
 
-  def fromFutureEither[E, A](future: => CompletableFuture[Either[E, A]]): TemporalIO[TemporalError[E], A] =
-    fromFuture(future)
-      .flatMap(ZIO.fromEither(_).mapError(TemporalBusinessError(_)))
+  def fromFutureTimeout[A](future: => CompletableFuture[A]): TemporalIO[Option[A]] =
+    ZIO
+      .fromFutureJava(future)
+      .map(Option(_))
+      .catchSome { case _: TimeoutException =>
+        ZIO.none
+      }
+      .refineToOrDie[WorkflowException]
 }

@@ -5,10 +5,10 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import io.temporal.api.enums.v1.QueryRejectCondition
 import io.temporal.client.WorkflowClientOptions
 import io.temporal.common.context.ContextPropagator
-import io.temporal.common.converter._
+import io.temporal.common.converter.*
 import io.temporal.common.interceptors.WorkflowClientInterceptor
-
-import scala.jdk.CollectionConverters._
+import zio.temporal.json.JacksonDataConverter
+import scala.jdk.CollectionConverters.*
 
 /** Represents temporal workflow client options
   *
@@ -17,7 +17,7 @@ import scala.jdk.CollectionConverters._
   */
 case class ZWorkflowClientOptions private[zio] (
   namespace:                            Option[String],
-  dataConverter:                        Option[DataConverter],
+  dataConverter:                        DataConverter,
   interceptors:                         List[WorkflowClientInterceptor],
   identity:                             Option[String],
   binaryChecksum:                       Option[String],
@@ -29,7 +29,7 @@ case class ZWorkflowClientOptions private[zio] (
     copy(namespace = Some(value))
 
   def withDataConverter(value: DataConverter): ZWorkflowClientOptions =
-    copy(dataConverter = Some(value))
+    copy(dataConverter = value)
 
   def withInterceptors(value: WorkflowClientInterceptor*): ZWorkflowClientOptions =
     copy(interceptors = value.toList)
@@ -61,7 +61,7 @@ case class ZWorkflowClientOptions private[zio] (
     val builder = WorkflowClientOptions.newBuilder()
 
     namespace.foreach(builder.setNamespace)
-    dataConverter.foreach(builder.setDataConverter)
+    builder.setDataConverter(dataConverter)
     builder.setInterceptors(interceptors: _*)
     identity.foreach(builder.setIdentity)
     binaryChecksum.foreach(builder.setBinaryChecksum)
@@ -74,24 +74,11 @@ case class ZWorkflowClientOptions private[zio] (
 
 object ZWorkflowClientOptions {
 
-  val defaultDataConverter: DefaultDataConverter = new DefaultDataConverter(
-    // order matters!
-    Seq(
-      new NullPayloadConverter(),
-      new ByteArrayPayloadConverter(),
-      new ProtobufJsonPayloadConverter(),
-      new JacksonJsonPayloadConverter(
-        JsonMapper
-          .builder()
-          .addModule(DefaultScalaModule)
-          .build()
-      )
-    ): _*
-  )
+  val defaultDataConverter: DataConverter = JacksonDataConverter.make()
 
   val default: ZWorkflowClientOptions = new ZWorkflowClientOptions(
     namespace = None,
-    dataConverter = Some(defaultDataConverter),
+    dataConverter = defaultDataConverter,
     interceptors = Nil,
     identity = None,
     binaryChecksum = None,

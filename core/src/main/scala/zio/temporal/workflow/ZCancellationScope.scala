@@ -1,7 +1,7 @@
 package zio.temporal.workflow
 
 import io.temporal.workflow.CancellationScope
-import zio.temporal.promise.ZPromise
+import zio.temporal.promise.ZAsync
 
 /** Handle to a cancellation scope created through [[ZWorkflow.newCancellationScope]] or
   * [[ZWorkflow.newDetachedCancellationScope]]. Supports explicit cancelling of the code a cancellation scope wraps. The
@@ -43,8 +43,8 @@ final class ZCancellationScope private[zio] (val toJava: CancellationScope) {
     * @return
     *   promise that becomes ready when scope is canceled. It contains reason value or null if none was provided.
     */
-  def cancellationRequest =
-    new ZPromise.Impl[Nothing, String](toJava.getCancellationRequest.thenApply[Either[Nothing, String]](Right(_)))
+  def cancellationRequest: ZAsync[String] =
+    new ZAsync.Impl[String](toJava.getCancellationRequest)
 
   /** Executes the code specified in this cancellation scope */
   def run(): Unit = toJava.run()

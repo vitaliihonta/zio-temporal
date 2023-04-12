@@ -3,8 +3,9 @@ package zio.temporal.testkit
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.uber.m3.tally.Scope
-import io.temporal.common.converter._
+import io.temporal.common.converter.*
 import io.temporal.testing.TestEnvironmentOptions
+import zio.temporal.json.JacksonDataConverter
 import zio.temporal.worker.ZWorkerFactoryOptions
 import zio.temporal.workflow.ZWorkflowClientOptions
 
@@ -63,7 +64,9 @@ object ZTestEnvironmentOptions {
 
   val default: ZTestEnvironmentOptions = new ZTestEnvironmentOptions(
     workerFactoryOptions = ZWorkerFactoryOptions.default,
-    workflowClientOptions = ZWorkflowClientOptions.default,
+    workflowClientOptions = ZWorkflowClientOptions.default.withDataConverter(
+      JacksonDataConverter.make()
+    ),
     metricsScope = None,
     useExternalService = None,
     target = None,

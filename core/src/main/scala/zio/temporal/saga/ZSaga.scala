@@ -6,18 +6,17 @@ import zio.BuildFrom
 
 import scala.collection.mutable
 import scala.util.Try
+import scala.util.control.NoStackTrace
 
 /** Implements the logic to execute compensation operations that is often required in Saga applications. The following
   * is a skeleton to show of how it is supposed to be used in workflow code:
   *
   * @see
   *   https://en.wikipedia.org/wiki/Compensating_transaction
-  * @tparam E
-  *   error type
   * @tparam A
   *   value type
   */
-sealed trait ZSaga[+E, +A] { self =>
+sealed trait ZSaga[+A] { self =>
 
   /** Runs this saga, returning either error or successful value. Compensations are automatically applied if error
     * occurs
@@ -27,42 +26,33 @@ sealed trait ZSaga[+E, +A] { self =>
     * @return
     *   either successful value or error (with compensations executed)
     */
-  final def run(options: ZSaga.Options = ZSaga.Options.default): Either[E, A] =
+  final def run(options: ZSaga.Options = ZSaga.Options.default): Either[Throwable, A] =
     ZSaga.runImpl(self)(options)
 
-  final def runOrThrow(options: ZSaga.Options = ZSaga.Options.default)(implicit ev: E <:< Throwable): A =
+  final def runOrThrow(options: ZSaga.Options = ZSaga.Options.default): A =
     run(options) match {
       case Right(value) => value
-      case Left(error)  => throw ev(error)
+      case Left(error)  => throw error
     }
 
-  def swap: ZSaga[A, E] = ZSaga.Swap(this)
+  def map[B](f: A => B): ZSaga[B] =
+    ZSaga.Bind[A, B](this, a => ZSaga.Succeed(f(a)))
 
-  def map[B](f: A => B): ZSaga[E, B] =
-    ZSaga.Bind[E, A, B](this, a => ZSaga.Succeed(f(a)))
-
-  def as[B](value: B): ZSaga[E, B] =
+  def as[B](value: B): ZSaga[B] =
     self.map(_ => value)
 
-  def unit: ZSaga[E, Unit] =
+  def unit: ZSaga[Unit] =
     self.as(())
+  def flatMap[B](f: A => ZSaga[B]): ZSaga[B] =
+    ZSaga.Bind[A, B](this, f)
 
-  def mapError[E2](f: E => E2): ZSaga[E2, A] =
-    ZSaga.BindError[E, E2, A](this, e => ZSaga.Succeed(f(e)))
+  def catchAll[A0 >: A](f: Throwable => ZSaga[A0]): ZSaga[A0] =
+    ZSaga.CatchAll[A0](this, f)
 
-  def flatMap[E0 >: E, B](f: A => ZSaga[E0, B]): ZSaga[E0, B] =
-    ZSaga.Bind[E0, A, B](this, f)
+  def catchSome[A0 >: A](pf: PartialFunction[Throwable, ZSaga[A0]]): ZSaga[A0] =
+    ZSaga.CatchAll[A0](this, pf.applyOrElse(_, ZSaga.Failed(_)))
 
-  def flatMapError[E2](f: E => ZSaga[Nothing, E2]): ZSaga[E2, A] =
-    ZSaga.BindError[E, E2, A](this, f)
-
-  def catchAll[E2, A0 >: A](f: E => ZSaga[E2, A0]): ZSaga[E2, A0] =
-    ZSaga.CatchAll[E, E2, A0](this, f)
-
-  def catchSome[E0 >: E, A0 >: A](pf: PartialFunction[E, ZSaga[E0, A0]]): ZSaga[E0, A0] =
-    ZSaga.CatchAll[E, E0, A0](this, pf.applyOrElse(_, ZSaga.Failed[E0](_)))
-
-  final def zipWith[E1 >: E, B, C](that: => ZSaga[E1, B])(f: (A, B) => C): ZSaga[E1, C] =
+  final def zipWith[B, C](that: => ZSaga[B])(f: (A, B) => C): ZSaga[C] =
     self.flatMap(a => that.map(f(a, _)))
 }
 
@@ -73,6 +63,18 @@ object ZSaga {
     val default: Options = Options()
   }
 
+  /** Creates a saga which will run a compensation if the main action fails.
+    *
+    * @tparam A
+    *   action result
+    * @param exec
+    *   the main action
+    * @param compensate
+    *   the compensation which will run in case the saga fails
+    */
+  def make[A](exec: => A)(compensate: => Unit): ZSaga[A] =
+    ZSaga.Compensation[A](() => compensate, ZSaga.Attempt(() => exec))
+
   /** Creates immediately completed [[ZSaga]] instance which won't fail
     * @tparam A
     *   value type
@@ -81,41 +83,30 @@ object ZSaga {
     * @return
     *   value wrapped into [[ZSaga]]
     */
-  def succeed[A](value: A): ZSaga[Nothing, A] =
+  def succeed[A](value: A): ZSaga[A] =
     ZSaga.Succeed(value)
+
+  /** Adds a compensation to the current saga
+    *
+    * @param compensate
+    *   the compensation which will run in case the saga fails
+    */
+  def compensation(compensate: => Unit): ZSaga[Unit] =
+    ZSaga.Compensation[Unit](() => compensate, ZSaga.unit)
 
   /** Creates a completed [[ZSaga]] with [[Unit]] result.
     */
-  val unit: ZSaga[Nothing, Unit] =
+  val unit: ZSaga[Unit] =
     succeed(())
 
   /** Creates immediately failed [[ZSaga]] instance
-    * @tparam E
-    *   error type
     * @param error
     *   error value
     * @return
     *   failed [[ZSaga]]
     */
-  def fail[E](error: E): ZSaga[E, Nothing] =
+  def fail(error: Throwable): ZSaga[Nothing] =
     ZSaga.Failed(error)
-
-  /** Suspends side effect execution within [[ZSaga]]
-    * @tparam E
-    *   error value
-    * @tparam A
-    *   value type
-    * @param thunk
-    *   side effect (which should not throw exceptions)
-    * @return
-    *   suspended [[ZSaga]]
-    */
-  def fromEither[E, A](thunk: => Either[E, A]): ZSaga[E, A] =
-    ZSaga.FromEither(() => thunk)
-
-  @deprecated("Use attempt instead", since = "0.1.0-RC6")
-  def effect[A](thunk: => A): ZSaga[Throwable, A] =
-    attempt[A](thunk)
 
   /** Suspends side effect execution within [[ZSaga]]
     * @tparam A
@@ -125,111 +116,82 @@ object ZSaga {
     * @return
     *   suspended [[ZSaga]]
     */
-  def attempt[A](thunk: => A): ZSaga[Throwable, A] =
-    fromEither(Try(thunk).toEither)
+  def attempt[A](thunk: => A): ZSaga[A] =
+    ZSaga.Attempt(() => thunk)
 
-  /** Creates a saga which will run a compensation if the main action fails.
+  /** Creates immediately completed [[ZSaga]] instance from scala's [[Try]]
     *
-    * @tparam E
-    *   typed error
-    * @tparam A
-    *   action result
-    * @param exec
-    *   the main action
-    * @param compensate
-    *   the compensation which will run in case the main action returns Left
+    * @param value
+    *   scala Try value
+    * @return
+    *   failed [[ZSaga]]
     */
-  def make[E, A](exec: => Either[E, A])(compensate: => Unit): ZSaga[E, A] =
-    ZSaga.Compensation[E, A](() => compensate, ZSaga.FromEither(() => exec))
+  def fromTry[A](value: Try[A]): ZSaga[A] =
+    value.fold(ZSaga.Failed(_), ZSaga.Succeed(_))
 
-  /** Creates a saga which will run a compensation if the main action fails.
+  /** Creates immediately completed [[ZSaga]] instance from scala's [[Either]]
     *
-    * @tparam A
-    *   action result
-    * @param exec
-    *   the main action
-    * @param compensate
-    *   the compensation which will run in case the main action throw an Exception
+    * @param value
+    *   scala Either value
+    * @return
+    *   failed [[ZSaga]]
     */
-  def makeAttempt[A](exec: => A)(compensate: => Unit): ZSaga[Throwable, A] =
-    ZSaga.Compensation[Throwable, A](() => compensate, attempt(exec))
+  def fromEither[A](value: Either[Throwable, A]): ZSaga[A] =
+    value.fold(ZSaga.Failed(_), ZSaga.Succeed(_))
 
-  def foreach[E, A, B](in: Option[A])(f: A => ZSaga[E, B]): ZSaga[E, Option[B]] =
-    in.fold[ZSaga[E, Option[B]]](succeed(None))(f(_).map(Some(_)))
+  def foreach[A, B](in: Option[A])(f: A => ZSaga[B]): ZSaga[Option[B]] =
+    in.fold[ZSaga[Option[B]]](succeed(None))(f(_).map(Some(_)))
 
-  def foreach[E, A, B, Collection[+Element] <: Iterable[Element]](
+  def foreach[A, B, Collection[+Element] <: Iterable[Element]](
     in:          Collection[A]
-  )(f:           A => ZSaga[E, B]
+  )(f:           A => ZSaga[B]
   )(implicit bf: BuildFrom[Collection[A], B, Collection[B]]
-  ): ZSaga[E, Collection[B]] =
-    in.foldLeft[ZSaga[E, mutable.Builder[B, Collection[B]]]](succeed(bf(in)))((io, a) => io.zipWith(f(a))(_ += _))
+  ): ZSaga[Collection[B]] =
+    in.foldLeft[ZSaga[mutable.Builder[B, Collection[B]]]](succeed(bf(in)))((io, a) => io.zipWith(f(a))(_ += _))
       .map(_.result())
 
-  final case class FromEither[E, A] private[zio] (apply: () => Either[E, A]) extends ZSaga[Nothing, A]
+  // Internal
+  final case class Attempt[A] private[zio] (thunk: () => A) extends ZSaga[A]
 
-  final case class Swap[E, A] private[zio] (base: ZSaga[E, A]) extends ZSaga[A, E] {
-    override def swap: ZSaga[E, A] = base
-  }
+  final case class Succeed[A] private[zio] (value: A) extends ZSaga[A] {
 
-  final case class Succeed[A] private[zio] (value: A) extends ZSaga[Nothing, A] {
-    override def swap: ZSaga[A, Nothing] = ZSaga.Failed(value)
+    override def map[B](f: A => B): ZSaga[B] = ZSaga.Succeed(f(value))
 
-    override def map[B](f: A => B): ZSaga[Nothing, B] = ZSaga.Succeed(f(value))
-
-    override def flatMap[E0 >: Nothing, B](f: A => ZSaga[E0, B]): ZSaga[E0, B] =
+    override def flatMap[B](f: A => ZSaga[B]): ZSaga[B] =
       f(value)
 
-    override def mapError[E2](f: Nothing => E2): ZSaga[E2, A] = this
+    override def catchAll[A0 >: A](f: Throwable => ZSaga[A0]): ZSaga[A0] = this
 
-    override def flatMapError[E2](f: Nothing => ZSaga[Nothing, E2]): ZSaga[E2, A] = this
-
-    override def catchAll[E2, A0 >: A](f: Nothing => ZSaga[E2, A0]): ZSaga[E2, A0] = this
-
-    override def catchSome[E0 >: Nothing, A0 >: A](pf: PartialFunction[Nothing, ZSaga[E0, A0]]): ZSaga[E0, A0] = this
+    override def catchSome[A0 >: A](pf: PartialFunction[Throwable, ZSaga[A0]]): ZSaga[A0] = this
   }
 
-  final case class Failed[E] private[zio] (error: E) extends ZSaga[E, Nothing] {
-    override def swap: ZSaga[Nothing, E] = ZSaga.Succeed(error)
+  final case class Failed private[zio] (error: Throwable) extends ZSaga[Nothing] {
 
-    override def mapError[E2](f: E => E2): ZSaga[E2, Nothing] = ZSaga.Failed(f(error))
+    override def catchAll[A0 >: Nothing](f: Throwable => ZSaga[A0]): ZSaga[A0] = f(error)
 
-    override def flatMapError[E2](f: E => ZSaga[Nothing, E2]): ZSaga[E2, Nothing] = f(error).swap
-
-    override def catchAll[E2, A0 >: Nothing](f: E => ZSaga[E2, A0]): ZSaga[E2, A0] = f(error)
-
-    override def catchSome[E0 >: E, A0 >: Nothing](pf: PartialFunction[E, ZSaga[E0, A0]]): ZSaga[E0, A0] =
-      pf.applyOrElse[E, ZSaga[E0, A0]](error, _ => this)
+    override def catchSome[A0 >: Nothing](pf: PartialFunction[Throwable, ZSaga[A0]]): ZSaga[A0] =
+      pf.applyOrElse[Throwable, ZSaga[A0]](error, _ => this)
   }
 
-  final case class Compensation[E, A] private[zio] (compensate: () => Unit, cont: ZSaga[E, A]) extends ZSaga[E, A] {
-    override def swap: ZSaga[A, E] = ZSaga.Compensation(compensate, cont.swap)
+  final case class Compensation[A] private[zio] (compensate: () => Unit, cont: ZSaga[A]) extends ZSaga[A] {
 
-    override def map[B](f: A => B): ZSaga[E, B] = ZSaga.Compensation(compensate, cont.map(f))
-
-    override def mapError[E2](f: E => E2): ZSaga[E2, A] = ZSaga.Compensation(compensate, cont.mapError(f))
+    override def map[B](f: A => B): ZSaga[B] = ZSaga.Compensation(compensate, cont.map(f))
   }
 
-  final case class Bind[E, A, B] private[zio] (base: ZSaga[E, A], cont: A => ZSaga[E, B]) extends ZSaga[E, B] {
-    override def map[B2](f: B => B2): ZSaga[E, B2] = ZSaga.Bind[E, A, B2](base, cont(_).map(f))
+  final case class Bind[A, B] private[zio] (base: ZSaga[A], cont: A => ZSaga[B]) extends ZSaga[B] {
+    override def map[B2](f: B => B2): ZSaga[B2] = ZSaga.Bind[A, B2](base, cont(_).map(f))
 
-    override def flatMap[E0 >: E, B2](f: B => ZSaga[E0, B2]): ZSaga[E0, B2] =
-      ZSaga.Bind[E0, A, B2](base, cont(_).flatMap(f))
+    override def flatMap[B2](f: B => ZSaga[B2]): ZSaga[B2] =
+      ZSaga.Bind[A, B2](base, cont(_).flatMap(f))
   }
 
-  final case class BindError[E0, E, A] private[zio] (base: ZSaga[E0, A], cont: E0 => ZSaga[Nothing, E])
-      extends ZSaga[E, A] {
+  final case class CatchAll[A] private[zio] (base: ZSaga[A], handle: Throwable => ZSaga[A]) extends ZSaga[A] {
 
-    override def mapError[E2](f: E => E2): ZSaga[E2, A] =
-      ZSaga.BindError[E0, E2, A](base, cont(_).map(f))
+    override def catchAll[A0 >: A](f: Throwable => ZSaga[A0]): ZSaga[A0] =
+      ZSaga.CatchAll[A0](base, handle(_).catchAll(f))
   }
 
-  final case class CatchAll[E0, E, A] private[zio] (base: ZSaga[E0, A], handle: E0 => ZSaga[E, A]) extends ZSaga[E, A] {
-
-    override def catchAll[E2, A0 >: A](f: E => ZSaga[E2, A0]): ZSaga[E2, A0] =
-      ZSaga.CatchAll[E0, E2, A0](base, handle(_).catchAll(f))
-  }
-
-  private[zio] def runImpl[E, A](self: ZSaga[E, A])(options: ZSaga.Options): Either[E, A] = {
+  private[zio] def runImpl[A](self: ZSaga[A])(options: ZSaga.Options): Either[Throwable, A] = {
     val temporalSagaOptions = new Saga.Options.Builder()
       .setParallelCompensation(options.parallelCompensation)
       .setContinueWithError(options.continueWithError)
@@ -237,35 +199,26 @@ object ZSaga {
 
     val temporalSaga = new Saga(temporalSagaOptions)
 
-    def interpret[E0, A0](saga: ZSaga[E0, A0]): Either[E0, A0] =
+    def interpret[A0](saga: ZSaga[A0]): Either[Throwable, A0] =
       saga match {
-        case succeed: Succeed[A0]     => Right(succeed.value)
-        case failed: Failed[E0]       => Left(failed.error)
-        case exec: FromEither[E0, A0] => exec.apply()
+        case succeed: Succeed[A0] => Right(succeed.value)
+        case failed: Failed       => Left(failed.error)
+        case attempt: Attempt[A0] => Try(attempt.thunk()).toEither
 
-        case swap: Swap[A0, E0] => interpret(swap.base).swap
-
-        case bindError: BindError[baseE, E0, A0] =>
-          interpret(bindError.base) match {
-            case right: Right[_, A0] => right.asInstanceOf[Either[E0, A0]]
-            case Left(error) =>
-              interpret[Nothing, E0](bindError.cont(error)).swap
-          }
-
-        case compensation: Compensation[E0, A0] =>
+        case compensation: Compensation[A0] =>
           temporalSaga.addCompensation((() => compensation.compensate()): Proc)
           interpret(compensation.cont)
 
-        case cont: Bind[E0, baseA, A0] =>
+        case cont: Bind[baseA, A0] =>
           interpret(cont.base) match {
-            case left @ Left(_) => left.asInstanceOf[Either[E0, A0]]
+            case left @ Left(_) => left.asInstanceOf[Either[Throwable, A0]]
             case Right(value)   => interpret(cont.cont(value))
           }
 
-        case catchAll: CatchAll[baseE, E0, A0] =>
+        case catchAll: CatchAll[A0] =>
           interpret(catchAll.base) match {
-            case right: Right[E0, A0] => right
-            case Left(error)          => interpret(catchAll.handle(error))
+            case right: Right[Throwable, A0] => right
+            case Left(error)                 => interpret(catchAll.handle(error))
           }
       }
 

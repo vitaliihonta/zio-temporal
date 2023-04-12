@@ -31,8 +31,11 @@ object TemporalWorkflowFacade {
     implicit def proc(f: () => Unit): Functions.Proc = new Functions.Proc {
       override def apply(): Unit = f()
     }
-    implicit def func0[A, R](f: () => R): Functions.Func[R] = new Functions.Func[R] {
+    implicit def func0[R](f: () => R): Functions.Func[R] = new Functions.Func[R] {
       override def apply(): R = f()
+    }
+    implicit def func1[A, R](f: A => R): Functions.Func1[A, R] = new Functions.Func1[A, R] {
+      override def apply(value: A): R = f(value)
     }
   }
 }
