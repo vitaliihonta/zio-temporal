@@ -42,19 +42,15 @@ object Main extends ZIOAppDefault {
       } yield ()
     }
 
-    val program =
-      registerWorkflows *> ZIO.serviceWithZIO[ZWorkerFactory] {
-        _.use {
-          ZIO.serviceWithZIO[ZWorkflowServiceStubs] {
-            _.use() {
-              invokeWorkflows
-            }
-          }
-        }
-      }
+    val program = for {
+      _ <- registerWorkflows
+      _ <- ZWorkerFactory.setup
+      _ <- ZWorkflowServiceStubs.setup()
+      _ <- invokeWorkflows
+    } yield ()
 
     program
-      .provide(
+      .provideSome[Scope](
         ZLayer.succeed(ZWorkflowServiceStubsOptions.default),
         ZLayer.succeed(
           ZWorkflowClientOptions.default.withDataConverter(JacksonDataConverter.make())

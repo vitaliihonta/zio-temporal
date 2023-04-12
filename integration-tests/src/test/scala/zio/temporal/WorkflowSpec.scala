@@ -35,17 +35,16 @@ object WorkflowSpec extends ZIOSpecDefault {
           .addWorkflow[SampleWorkflowImpl]
           .fromClass
 
-        testEnv.use() {
-          for {
-            sampleWorkflow <- client
-                                .newWorkflowStub[SampleWorkflow]
-                                .withTaskQueue(taskQueue)
-                                .withWorkflowId(UUID.randomUUID().toString)
-                                .withWorkflowRunTimeout(10.second)
-                                .build
-            result <- ZWorkflowStub.execute(sampleWorkflow.echo(sampleIn))
-          } yield assertTrue(result == sampleOut)
-        }
+        for {
+          _ <- testEnv.setup()
+          sampleWorkflow <- client
+                              .newWorkflowStub[SampleWorkflow]
+                              .withTaskQueue(taskQueue)
+                              .withWorkflowId(UUID.randomUUID().toString)
+                              .withWorkflowRunTimeout(10.second)
+                              .build
+          result <- ZWorkflowStub.execute(sampleWorkflow.echo(sampleIn))
+        } yield assertTrue(result == sampleOut)
       }
     }.provideEnv,
     test("runs child workflows") {
@@ -59,18 +58,16 @@ object WorkflowSpec extends ZIOSpecDefault {
           .fromClass
           .addWorkflow[GreetingChildImpl]
           .fromClass
-
-        testEnv.use() {
-          for {
-            greetingWorkflow <- client
-                                  .newWorkflowStub[GreetingWorkflow]
-                                  .withTaskQueue(taskQueue)
-                                  .withWorkflowId(UUID.randomUUID().toString)
-                                  .withWorkflowRunTimeout(10.second)
-                                  .build
-            result <- ZWorkflowStub.execute(greetingWorkflow.getGreeting("Vitalii"))
-          } yield assertTrue(result == "Hello Vitalii!")
-        }
+        for {
+          _ <- testEnv.setup()
+          greetingWorkflow <- client
+                                .newWorkflowStub[GreetingWorkflow]
+                                .withTaskQueue(taskQueue)
+                                .withWorkflowId(UUID.randomUUID().toString)
+                                .withWorkflowRunTimeout(10.second)
+                                .build
+          result <- ZWorkflowStub.execute(greetingWorkflow.getGreeting("Vitalii"))
+        } yield assertTrue(result == "Hello Vitalii!")
       }
     }.provideEnv,
     test("run workflow with signals") {
@@ -86,39 +83,38 @@ object WorkflowSpec extends ZIOSpecDefault {
 
           val workflowId = UUID.randomUUID().toString + taskQueue
 
-          testEnv.use() {
-            for {
-              signalWorkflow <- client
-                                  .newWorkflowStub[SignalWorkflow]
-                                  .withTaskQueue(taskQueue)
-                                  .withWorkflowId(workflowId)
-                                  .withWorkflowRunTimeout(30.seconds)
-                                  .withWorkflowTaskTimeout(30.seconds)
-                                  .withWorkflowExecutionTimeout(30.seconds)
-                                  .build
-              _ <- ZIO.log("Before start")
-              _ <- ZWorkflowStub
-                     .start(signalWorkflow.echoServer("ECHO"))
-              _               <- ZIO.log("Started")
-              workflowStub    <- client.newWorkflowStubProxy[SignalWorkflow](workflowId)
-              _               <- ZIO.log("New stub created!")
-              progress        <- ZWorkflowStub.query(workflowStub.getProgress(default = None))
-              _               <- ZIO.log(s"Progress=$progress")
-              progressDefault <- ZWorkflowStub.query(workflowStub.getProgress(default = Some("default")))
-              _               <- ZIO.log(s"Progress_default=$progressDefault")
-              _ <- ZWorkflowStub.signal(
-                     workflowStub.echo("Hello!")
-                   )
-              progress2 <- ZWorkflowStub
-                             .query(workflowStub.getProgress(default = None))
-                             .repeatWhile(_.isEmpty)
-              _      <- ZIO.log(s"Progress2=$progress2")
-              result <- workflowStub.result[String]
-            } yield assertTrue(progress.isEmpty) &&
-              assertTrue(progressDefault.contains("default")) &&
-              assertTrue(progress2.contains("Hello!")) &&
-              assertTrue(result == "ECHO Hello!")
-          }
+          for {
+            _ <- testEnv.setup()
+            signalWorkflow <- client
+                                .newWorkflowStub[SignalWorkflow]
+                                .withTaskQueue(taskQueue)
+                                .withWorkflowId(workflowId)
+                                .withWorkflowRunTimeout(30.seconds)
+                                .withWorkflowTaskTimeout(30.seconds)
+                                .withWorkflowExecutionTimeout(30.seconds)
+                                .build
+            _ <- ZIO.log("Before start")
+            _ <- ZWorkflowStub
+                   .start(signalWorkflow.echoServer("ECHO"))
+            _               <- ZIO.log("Started")
+            workflowStub    <- client.newWorkflowStubProxy[SignalWorkflow](workflowId)
+            _               <- ZIO.log("New stub created!")
+            progress        <- ZWorkflowStub.query(workflowStub.getProgress(default = None))
+            _               <- ZIO.log(s"Progress=$progress")
+            progressDefault <- ZWorkflowStub.query(workflowStub.getProgress(default = Some("default")))
+            _               <- ZIO.log(s"Progress_default=$progressDefault")
+            _ <- ZWorkflowStub.signal(
+                   workflowStub.echo("Hello!")
+                 )
+            progress2 <- ZWorkflowStub
+                           .query(workflowStub.getProgress(default = None))
+                           .repeatWhile(_.isEmpty)
+            _      <- ZIO.log(s"Progress2=$progress2")
+            result <- workflowStub.result[String]
+          } yield assertTrue(progress.isEmpty) &&
+            assertTrue(progressDefault.contains("default")) &&
+            assertTrue(progress2.contains("Hello!")) &&
+            assertTrue(result == "ECHO Hello!")
         }
     }.provideEnv,
     test("run workflow with ZIO") {
@@ -136,25 +132,24 @@ object WorkflowSpec extends ZIOSpecDefault {
 
           val workflowId = UUID.randomUUID().toString + taskQueue
 
-          testEnv.use() {
-            for {
-              zioWorkflow <- client
-                               .newWorkflowStub[ZioWorkflow]
-                               .withTaskQueue(taskQueue)
-                               .withWorkflowId(workflowId)
-                               .withWorkflowRunTimeout(30.seconds)
-                               .withWorkflowTaskTimeout(30.seconds)
-                               .withWorkflowExecutionTimeout(30.seconds)
-                               .build
-              _ <- ZWorkflowStub
-                     .start(zioWorkflow.echo("HELLO THERE"))
-              workflowStub <- client.newWorkflowStubProxy[ZioWorkflow](workflowId)
-              _ <- ZWorkflowStub.signal(
-                     workflowStub.complete()
-                   )
-              result <- workflowStub.result[String]
-            } yield assertTrue(result == "Echoed HELLO THERE")
-          }
+          for {
+            _ <- testEnv.setup()
+            zioWorkflow <- client
+                             .newWorkflowStub[ZioWorkflow]
+                             .withTaskQueue(taskQueue)
+                             .withWorkflowId(workflowId)
+                             .withWorkflowRunTimeout(30.seconds)
+                             .withWorkflowTaskTimeout(30.seconds)
+                             .withWorkflowExecutionTimeout(30.seconds)
+                             .build
+            _ <- ZWorkflowStub
+                   .start(zioWorkflow.echo("HELLO THERE"))
+            workflowStub <- client.newWorkflowStubProxy[ZioWorkflow](workflowId)
+            _ <- ZWorkflowStub.signal(
+                   workflowStub.complete()
+                 )
+            result <- workflowStub.result[String]
+          } yield assertTrue(result == "Echoed HELLO THERE")
         }
     }.provideEnv,
     test("run workflow with signal and start") {
@@ -169,44 +164,43 @@ object WorkflowSpec extends ZIOSpecDefault {
 
         val workflowId = UUID.randomUUID().toString
 
-        testEnv.use() {
-          for {
-            signalWithStartWorkflow <- client
-                                         .newWorkflowStub[SignalWithStartWorkflow]
-                                         .withTaskQueue(taskQueue)
-                                         .withWorkflowId(workflowId)
-                                         .withWorkflowRunTimeout(10.seconds)
-                                         .build
-            _ <- client
-                   .signalWith(
-                     signalWithStartWorkflow.echo("Hello")
-                   )
-                   .start(signalWithStartWorkflow.echoServer())
-            workflowStub <- client.newWorkflowStubProxy[SignalWithStartWorkflow](workflowId)
-            initialSnapshot <- ZWorkflowStub.query(
-                                 workflowStub.messages
-                               )
-            _ <- ZWorkflowStub.signal(
-                   workflowStub.echo("World!")
+        for {
+          _ <- testEnv.setup()
+          signalWithStartWorkflow <- client
+                                       .newWorkflowStub[SignalWithStartWorkflow]
+                                       .withTaskQueue(taskQueue)
+                                       .withWorkflowId(workflowId)
+                                       .withWorkflowRunTimeout(10.seconds)
+                                       .build
+          _ <- client
+                 .signalWith(
+                   signalWithStartWorkflow.echo("Hello")
                  )
-            secondSnapshot <- ZWorkflowStub.query(
-                                workflowStub.messages
-                              )
-            _ <- ZWorkflowStub.signal(
-                   workflowStub.echo("Again...")
-                 )
-            thirdSnapshot <- ZWorkflowStub.query(
+                 .start(signalWithStartWorkflow.echoServer())
+          workflowStub <- client.newWorkflowStubProxy[SignalWithStartWorkflow](workflowId)
+          initialSnapshot <- ZWorkflowStub.query(
                                workflowStub.messages
                              )
-            _ <- ZWorkflowStub.signal(
-                   workflowStub.stop()
-                 )
-            result <- workflowStub.result[Int]
-          } yield assertTrue(initialSnapshot == List("Hello")) &&
-            assertTrue(secondSnapshot == List("Hello", "World!")) &&
-            assertTrue(thirdSnapshot == List("Hello", "World!", "Again...")) &&
-            assertTrue(result == 3)
-        }
+          _ <- ZWorkflowStub.signal(
+                 workflowStub.echo("World!")
+               )
+          secondSnapshot <- ZWorkflowStub.query(
+                              workflowStub.messages
+                            )
+          _ <- ZWorkflowStub.signal(
+                 workflowStub.echo("Again...")
+               )
+          thirdSnapshot <- ZWorkflowStub.query(
+                             workflowStub.messages
+                           )
+          _ <- ZWorkflowStub.signal(
+                 workflowStub.stop()
+               )
+          result <- workflowStub.result[Int]
+        } yield assertTrue(initialSnapshot == List("Hello")) &&
+          assertTrue(secondSnapshot == List("Hello", "World!")) &&
+          assertTrue(thirdSnapshot == List("Hello", "World!", "Again...")) &&
+          assertTrue(result == 3)
       }
     }.provideEnv @@ TestAspect.flaky,
     test("run workflow with successful sagas") {
@@ -227,17 +221,16 @@ object WorkflowSpec extends ZIOSpecDefault {
 
         val workflowId = UUID.randomUUID().toString
 
-        testEnv.use() {
-          for {
-            signalWorkflow <- client
-                                .newWorkflowStub[SagaWorkflow]
-                                .withTaskQueue(taskQueue)
-                                .withWorkflowId(workflowId)
-                                .withWorkflowRunTimeout(10.seconds)
-                                .build
-            result <- ZWorkflowStub.execute(signalWorkflow.transfer(TransferCommand("from", "to", expectedResult)))
-          } yield assertTrue(result == expectedResult)
-        }
+        for {
+          _ <- testEnv.setup()
+          signalWorkflow <- client
+                              .newWorkflowStub[SagaWorkflow]
+                              .withTaskQueue(taskQueue)
+                              .withWorkflowId(workflowId)
+                              .withWorkflowRunTimeout(10.seconds)
+                              .build
+          result <- ZWorkflowStub.execute(signalWorkflow.transfer(TransferCommand("from", "to", expectedResult)))
+        } yield assertTrue(result == expectedResult)
       }
     }.provideEnv,
     test("run workflow with saga compensations") {
@@ -270,25 +263,24 @@ object WorkflowSpec extends ZIOSpecDefault {
 
         val workflowId = UUID.randomUUID().toString
 
-        testEnv.use() {
-          for {
-            sagaWorkflow <- client
-                              .newWorkflowStub[SagaWorkflow]
-                              .withTaskQueue(taskQueue)
-                              .withWorkflowId(workflowId)
-                              .withWorkflowRunTimeout(10.seconds)
-                              .build
-            result <- ZWorkflowStub
-                        .execute(sagaWorkflow.transfer(TransferCommand(From, To, amount)))
-                        .either
-          } yield {
-            val actualError = result.left.getOrElse(???)
-            println("-" * 20)
-            println(s"Actual error: $actualError")
-            println("-" * 20)
+        for {
+          _ <- testEnv.setup()
+          sagaWorkflow <- client
+                            .newWorkflowStub[SagaWorkflow]
+                            .withTaskQueue(taskQueue)
+                            .withWorkflowId(workflowId)
+                            .withWorkflowRunTimeout(10.seconds)
+                            .build
+          result <- ZWorkflowStub
+                      .execute(sagaWorkflow.transfer(TransferCommand(From, To, amount)))
+                      .either
+        } yield {
+          val actualError = result.left.getOrElse(???)
+          println("-" * 20)
+          println(s"Actual error: $actualError")
+          println("-" * 20)
 
-            assertTrue(compensated.get())
-          }
+          assertTrue(compensated.get())
         }
       }
     }.provideEnv,
@@ -318,36 +310,34 @@ object WorkflowSpec extends ZIOSpecDefault {
         val x = 2
         val y = 3
 
-        testEnv.use() {
-          val tests = for {
-            workflowId <- ZIO.randomWith(_.nextUUID)
-            promiseWorkflow <- client
-                                 .newWorkflowStub[PromiseWorkflow]
-                                 .withTaskQueue(taskQueue)
-                                 .withWorkflowId(workflowId.toString)
-                                 .withWorkflowRunTimeout(10.seconds)
-                                 .build
+        val tests = for {
+          workflowId <- ZIO.randomWith(_.nextUUID)
+          promiseWorkflow <- client
+                               .newWorkflowStub[PromiseWorkflow]
+                               .withTaskQueue(taskQueue)
+                               .withWorkflowId(workflowId.toString)
+                               .withWorkflowRunTimeout(10.seconds)
+                               .build
 
-            result <- ZWorkflowStub.execute(promiseWorkflow.fooBar(x, y))
-          } yield assertTrue(result == x + y)
+          result <- ZWorkflowStub.execute(promiseWorkflow.fooBar(x, y))
+        } yield assertTrue(result == x + y)
 
-          tests.repeatN(19).map { res =>
-            val actualResult = order.get.toList
+        testEnv.setup() *> tests.repeatN(19).map { res =>
+          val actualResult = order.get.toList
 
-            println(actualResult.toString)
+          println(actualResult.toString)
 
-            res &&
-            assertTrue(actualResult.size == 40) &&
-            assertTrue(actualResult != List.fill(20)(List("foo" -> x, "bar" -> y)))
-          }
+          res &&
+          assertTrue(actualResult.size == 40) &&
+          assertTrue(actualResult != List.fill(20)(List("foo" -> x, "bar" -> y)))
         }
       }
     }.provideEnv @@ TestAspect.flaky
   )
 
-  private implicit class ProvidedTestkit[E, A](thunk: Spec[ZTestWorkflowEnvironment[Any], E]) {
-    def provideEnv: Spec[Any, E] =
-      thunk.provide(
+  private implicit class ProvidedTestkit[E, A](thunk: Spec[ZTestWorkflowEnvironment[Any] with Scope, E]) {
+    def provideEnv: Spec[Scope, E] =
+      thunk.provideSome[Scope](
         ZLayer.succeed(ZTestEnvironmentOptions.default),
         ZTestWorkflowEnvironment.make[Any]
       )

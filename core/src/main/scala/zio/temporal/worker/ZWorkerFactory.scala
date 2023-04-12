@@ -19,6 +19,7 @@ final class ZWorkerFactory private[zio] (val toJava: WorkerFactory) {
     * @param thunk
     *   the effect to run
     */
+  @deprecated("Use scope-based 'setup' or explicit start/shutdown", since = "0.2.0")
   def use[R, E, A](thunk: ZIO[R, E, A]): ZIO[R, E, A] =
     for {
       _ <- start
@@ -26,6 +27,16 @@ final class ZWorkerFactory private[zio] (val toJava: WorkerFactory) {
                   shutdownNow
                 }
     } yield result
+
+  /** Allows to setup [[ZWorkerFactory]] with guaranteed finalization.
+    */
+  def setup: URIO[Scope, Unit] =
+    for {
+      _ <- start
+      _ <- ZIO.addFinalizer {
+             shutdownNow
+           }
+    } yield ()
 
   /** Starts all the workers created by this factory.
     */
@@ -69,6 +80,11 @@ final class ZWorkerFactory private[zio] (val toJava: WorkerFactory) {
 }
 
 object ZWorkerFactory {
+
+  /** Allows to setup [[ZWorkerFactory]] with guaranteed finalization.
+    */
+  def setup: URIO[ZWorkerFactory with Scope, Unit] =
+    ZIO.serviceWithZIO[ZWorkerFactory](_.setup)
 
   /** Creates an instance of [[ZWorkerFactory]]
     *

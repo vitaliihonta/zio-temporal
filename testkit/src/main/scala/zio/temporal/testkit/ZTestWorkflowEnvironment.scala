@@ -50,6 +50,7 @@ class ZTestWorkflowEnvironment[R] private[zio] (val toJava: TestWorkflowEnvironm
     * @param options
     *   await options with polling interval and poll delay
     */
+  @deprecated("Use scope-based 'setup' or explicit start/shutdownNow", since = "0.2.0")
   def use[E, A](
     options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.testDefault
   )(thunk:   ZIO[R, E, A]
@@ -66,6 +67,20 @@ class ZTestWorkflowEnvironment[R] private[zio] (val toJava: TestWorkflowEnvironm
                   }
                 }
     } yield result
+
+  /** Setup test environment with a guaranteed finalization.
+    *
+    * @param options
+    *   await options with polling interval and poll delay
+    */
+  def setup(options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.testDefault): URIO[Scope, Unit] =
+    for {
+      started <- start.fork
+      _ <- ZIO.addFinalizer {
+             shutdownNow *> awaitTermination(options) *> started.join
+           }
+      _ <- workflowService.setup()
+    } yield ()
 
   /** Start all workers created by this test environment. */
   def start: UIO[Unit] =
@@ -110,6 +125,16 @@ class ZTestWorkflowEnvironment[R] private[zio] (val toJava: TestWorkflowEnvironm
 }
 
 object ZTestWorkflowEnvironment {
+
+  /** Setup test environment with a guaranteed finalization.
+    *
+    * @param options
+    *   await options with polling interval and poll delay
+    */
+  def setup[R: Tag](
+    options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.testDefault
+  ): URIO[ZTestWorkflowEnvironment[R] with Scope, Unit] =
+    ZIO.serviceWithZIO[ZTestWorkflowEnvironment[R]](_.setup(options))
 
   /** Creates a new instance of [[ZTestWorkflowEnvironment]]
     *
