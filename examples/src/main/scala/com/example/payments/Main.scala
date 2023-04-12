@@ -14,21 +14,14 @@ object Main extends ZIOAppDefault {
     Runtime.removeDefaultLoggers ++ SLF4J.slf4j
 
   override def run: ZIO[ZIOAppArgs with Scope, Any, Any] = {
-    val program =
-      ZIO.service[ZWorkerFactory].flatMap { workerFactory =>
-        workerFactory.use {
-          for {
-            flow  <- ZIO.service[ExampleFlow]
-            stubs <- ZIO.service[ZWorkflowServiceStubs]
-            _ <- stubs.use() {
-                   flow.proceedPayment()
-                 }
-          } yield ()
-        }
-      }
+    val program = for {
+      _ <- ZWorkerFactory.setup
+      _ <- ZWorkflowServiceStubs.setup()
+      _ <- ZIO.serviceWithZIO[ExampleFlow](_.proceedPayment())
+    } yield ()
 
     program
-      .provide(
+      .provideSome[Scope](
         ExampleModule.clientOptions,
         ExampleModule.stubOptions,
         ExampleModule.workerFactoryOptions,

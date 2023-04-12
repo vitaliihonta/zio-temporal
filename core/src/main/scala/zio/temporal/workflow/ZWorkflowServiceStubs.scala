@@ -17,6 +17,7 @@ final class ZWorkflowServiceStubs private[zio] (val toJava: WorkflowServiceStubs
     * @param options
     *   await options with polling interval and poll delay
     */
+  @deprecated("Use scope-based 'setup' or explicit shutdown/awaitTermination", since = "0.2.0")
   def use[R, E, A](
     options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.default
   )(thunk:   ZIO[R, E, A]
@@ -27,6 +28,15 @@ final class ZWorkflowServiceStubs private[zio] (val toJava: WorkflowServiceStubs
                   shutdownNow *> awaitFiber.join
                 }
     } yield result
+
+  /** Allows to setup [[ZWorkflowServiceStubs]] with guaranteed finalization.
+    */
+  def setup(
+    options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.default
+  ): URIO[Scope, Unit] =
+    ZIO.addFinalizer {
+      shutdownNow *> awaitTermination(options)
+    }.unit
 
   /** Shutdowns client asynchronously allowing existing gRPC calls to finish
     */
@@ -67,6 +77,13 @@ final class ZWorkflowServiceStubs private[zio] (val toJava: WorkflowServiceStubs
 }
 
 object ZWorkflowServiceStubs {
+
+  /** Allows to setup [[ZWorkflowServiceStubs]] with guaranteed finalization.
+    */
+  def setup(
+    options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.default
+  ): URIO[ZWorkflowServiceStubs with Scope, Unit] =
+    ZIO.serviceWithZIO[ZWorkflowServiceStubs](_.setup(options))
 
   /** Create gRPC connection stubs using provided options.
     */
