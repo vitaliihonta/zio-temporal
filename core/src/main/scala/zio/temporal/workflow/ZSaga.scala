@@ -1,9 +1,8 @@
-package zio.temporal.saga
+package zio.temporal.workflow
 
 import io.temporal.workflow.Functions.Proc
 import io.temporal.workflow.Saga
 import zio.BuildFrom
-
 import scala.collection.mutable
 import scala.util.Try
 import scala.util.control.NoStackTrace

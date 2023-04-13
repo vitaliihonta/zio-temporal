@@ -3,7 +3,6 @@ package zio.temporal.workflow
 import zio.temporal.internal.ZWorkflowMacro
 import zio.temporal.TemporalIO
 import zio.temporal.ZWorkflowExecution
-import zio.temporal.promise.ZAsync
 import scala.language.experimental.macros
 import scala.language.implicitConversions
 
