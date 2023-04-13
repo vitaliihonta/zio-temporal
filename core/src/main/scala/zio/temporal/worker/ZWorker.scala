@@ -68,7 +68,6 @@ class ZWorker private[zio] (
   }
 }
 
-// TODO: finish the rest of the ZIOAspect's
 object ZWorker {
 
   type Add[+LowerR, -UpperR] = ZIOAspect[LowerR, UpperR, Nothing, Any, ZWorker, ZWorker]
