@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit
   * @see
   *   [[TestWorkflowEnvironment]]
   */
-class ZTestWorkflowEnvironment[R] private[zio] (val toJava: TestWorkflowEnvironment, runtime: zio.Runtime[R]) {
+class ZTestWorkflowEnvironment[+R] private[zio] (val toJava: TestWorkflowEnvironment, runtime: zio.Runtime[R]) {
 
   /** Creates a new Worker instance that is connected to the in-memory test Temporal service.
     *
@@ -41,36 +41,10 @@ class ZTestWorkflowEnvironment[R] private[zio] (val toJava: TestWorkflowEnvironm
   lazy val workflowClient = new ZWorkflowClient(toJava.getWorkflowClient)
 
   /** Returns the in-memory test Temporal service that is owned by this. */
-  lazy val workflowService = new ZWorkflowServiceStubs(toJava.getWorkflowServiceStubs)
+  lazy val workflowServiceStubs = new ZWorkflowServiceStubs(toJava.getWorkflowServiceStubs)
 
   implicit lazy val activityOptions: ZActivityOptions[R] =
     new ZActivityOptions[R](runtime, workflowClient.toJava.newActivityCompletionClient())
-
-  /** Allows to run arbitrary effect ensuring a shutdown on effect completion.
-    *
-    * Shutdown will be initiated when effect either completes successfully or fails (with error or defect) The effect
-    * will return after shutdown completed
-    *
-    * @param options
-    *   await options with polling interval and poll delay
-    */
-  @deprecated("Use scope-based 'setup' or explicit start/shutdownNow", since = "0.2.0")
-  def use[E, A](
-    options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.testDefault
-  )(thunk:   ZIO[R, E, A]
-  ): ZIO[R, E, A] =
-    for {
-      started <- start.fork
-      result <- thunk.onExit { _ =>
-                  workflowService.shutdownNow.fork.zipWith(shutdownNow.fork) { (stubsShutdown, thisShutdown) =>
-                    awaitTermination(options).fork.flatMap { awaitFiber =>
-                      Fiber.joinAll(
-                        List(stubsShutdown, thisShutdown, awaitFiber, started)
-                      )
-                    }
-                  }
-                }
-    } yield result
 
   /** Setup test environment with a guaranteed finalization.
     *
@@ -83,7 +57,7 @@ class ZTestWorkflowEnvironment[R] private[zio] (val toJava: TestWorkflowEnvironm
       _ <- ZIO.addFinalizer {
              shutdownNow *> awaitTermination(options) *> started.join
            }
-      _ <- workflowService.setup()
+      _ <- workflowServiceStubs.setup()
     } yield ()
 
   /** Start all workers created by this test environment. */
@@ -135,10 +109,46 @@ object ZTestWorkflowEnvironment {
     * @param options
     *   await options with polling interval and poll delay
     */
-  def setup[R: Tag](
+  def setup(
     options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.testDefault
-  ): URIO[ZTestWorkflowEnvironment[R] with Scope, Unit] =
-    ZIO.serviceWithZIO[ZTestWorkflowEnvironment[R]](_.setup(options))
+  ): URIO[ZTestWorkflowEnvironment[Any] with Scope, Unit] =
+    ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]](_.setup(options))
+
+  /** Creates a new Worker instance that is connected to the in-memory test Temporal service.
+    *
+    * @param taskQueue
+    *   task queue to poll.
+    */
+  def newWorker(
+    taskQueue: String,
+    options:   ZWorkerOptions = ZWorkerOptions.default
+  ): URIO[ZTestWorkflowEnvironment[Any], ZWorker] =
+    ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]](_.newWorker(taskQueue, options))
+
+  /** Access a WorkflowClient that is connected to the in-memory test Temporal service. */
+  def workflowClientWithZIO[R: Tag, E, A](
+    f: ZWorkflowClient => ZIO[R, E, A]
+  ): ZIO[ZTestWorkflowEnvironment[Any] with R, E, A] =
+    ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]](testEnv => f(testEnv.workflowClient))
+
+  /** Returns the in-memory test Temporal service that is owned by this. */
+  def workflowServiceStubs: URIO[ZTestWorkflowEnvironment[Any], ZWorkflowServiceStubs] =
+    ZIO.serviceWith[ZTestWorkflowEnvironment[Any]](_.workflowServiceStubs)
+
+  def activityOptions[R: Tag]: URIO[ZTestWorkflowEnvironment[R], ZActivityOptions[R]] =
+    ZIO.serviceWith[ZTestWorkflowEnvironment[R]](_.activityOptions)
+
+  /** Access activity options */
+  def activityOptionsWithZIO[R]: ActivityOptionsWithZIOPartiallyApplied[R] =
+    new ActivityOptionsWithZIOPartiallyApplied[R]
+
+  final class ActivityOptionsWithZIOPartiallyApplied[R](private val `dummy`: Boolean = true) extends AnyVal {
+    def apply[R2 <: ZTestWorkflowEnvironment[R], E, A](
+      f:            ZActivityOptions[R] => ZIO[R2, E, A]
+    )(implicit tag: Tag[R]
+    ): ZIO[R2, E, A] =
+      ZIO.serviceWithZIO[ZTestWorkflowEnvironment[R]](testEnv => f(testEnv.activityOptions))
+  }
 
   /** Creates a new instance of [[ZTestWorkflowEnvironment]]
     *

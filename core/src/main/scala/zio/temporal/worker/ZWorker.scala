@@ -71,32 +71,34 @@ class ZWorker private[zio] (
 // TODO: finish the rest of the ZIOAspect's
 object ZWorker {
 
-  def addWorkflow[I: IsWorkflow]: ZWorker.AddWorkflowEnvDsl[I] =
-    _AddWorkflowEnvDslInstance.asInstanceOf[AddWorkflowEnvDsl[I]]
+  type Add[+LowerR, -UpperR] = ZIOAspect[LowerR, UpperR, Nothing, Any, ZWorker, ZWorker]
 
-  def addActivityImplementation[Act <: AnyRef: IsActivity](activity: Act) =
+  def addWorkflow[I: IsWorkflow]: ZWorker.AddWorkflowAspectDsl[I] =
+    new AddWorkflowAspectDsl[I](implicitly[IsWorkflow[I]])
+
+  def addActivityImplementation[Activity <: AnyRef: IsActivity](activity: Activity): ZWorker.Add[Nothing, Any] =
     new ZIOAspect[Nothing, Any, Nothing, Any, ZWorker, ZWorker] {
       override def apply[R >: Nothing <: Any, E >: Nothing <: Any, A >: ZWorker <: ZWorker](
         zio:            ZIO[R, E, A]
       )(implicit trace: Trace
       ): ZIO[R, E, A] =
-        zio.flatMap(_.addActivityImplementation[Act](activity))
+        zio.flatMap(_.addActivityImplementation[Activity](activity))
     }
 
-  def addActivityImplementationService[Act <: AnyRef: IsActivity: Tag] =
-    new ZIOAspect[Nothing, Act, Nothing, Any, ZWorker, ZWorker] {
-      override def apply[R >: Nothing <: Act, E >: Nothing <: Any, A >: ZWorker <: ZWorker](
+  def addActivityImplementationService[Activity <: AnyRef: IsActivity: Tag]: ZWorker.Add[Nothing, Activity] =
+    new ZIOAspect[Nothing, Activity, Nothing, Any, ZWorker, ZWorker] {
+      override def apply[R >: Nothing <: Activity, E >: Nothing <: Any, A >: ZWorker <: ZWorker](
         zio:            ZIO[R, E, A]
       )(implicit trace: Trace
       ): ZIO[R, E, A] =
-        zio.flatMap(_.addActivityImplementationService[Act])
+        zio.flatMap(_.addActivityImplementationService[Activity])
     }
 
-  private val _AddWorkflowEnvDslInstance = new AddWorkflowEnvDsl[Any]()
-  final class AddWorkflowEnvDsl[I] private[zio] (private val `dummy`: Boolean = true) extends AnyVal {
-
-    // it's already been verified above
-    private implicit def dummyIsWorkflow: IsWorkflow[I] = null
+  /** Allows building workers using [[ZIOAspect]]
+    */
+  final class AddWorkflowAspectDsl[I] private[zio] (private val isWorkflow: IsWorkflow[I]) extends AnyVal {
+    // for internal use only
+    private implicit def _isWorkflow: IsWorkflow[I] = isWorkflow
 
     /** Registers workflow implementation classes with a worker. Can be called multiple times to add more types.
       *
@@ -109,8 +111,14 @@ object ZWorker {
       implicit ctg:                ClassTag[I],
       isConcreteClass:             IsConcreteClass[I],
       hasPublicNullaryConstructor: HasPublicNullaryConstructor[I]
-    ): URIO[ZWorker, ZWorker] =
-      ZIO.serviceWithZIO[ZWorker](_.addWorkflow[I].fromClass)
+    ): ZWorker.Add[Nothing, Any] =
+      new ZIOAspect[Nothing, Any, Nothing, Any, ZWorker, ZWorker] {
+        override def apply[R >: Nothing <: Any, E >: Nothing <: Any, A >: ZWorker <: ZWorker](
+          zio:            ZIO[R, E, A]
+        )(implicit trace: Trace
+        ): ZIO[R, E, A] =
+          zio.flatMap(_.addWorkflow[I].fromClass)
+      }
 
     /** Registers workflow implementation classes with a worker. Can be called multiple times to add more types.
       *
@@ -123,8 +131,14 @@ object ZWorker {
       cls:                         Class[I]
     )(implicit isConcreteClass:    IsConcreteClass[I],
       hasPublicNullaryConstructor: HasPublicNullaryConstructor[I]
-    ): URIO[ZWorker, ZWorker] =
-      ZIO.serviceWithZIO[ZWorker](_.addWorkflow[I].fromClass(cls))
+    ): ZWorker.Add[Nothing, Any] =
+      new ZIOAspect[Nothing, Any, Nothing, Any, ZWorker, ZWorker] {
+        override def apply[R >: Nothing <: Any, E >: Nothing <: Any, A >: ZWorker <: ZWorker](
+          zio:            ZIO[R, E, A]
+        )(implicit trace: Trace
+        ): ZIO[R, E, A] =
+          zio.flatMap(_.addWorkflow[I].fromClass(cls))
+      }
 
     /** Configures a factory to use when an instance of a workflow implementation is created. The only valid use for
       * this method is unit testing, specifically to instantiate mocks that implement child workflows. An example of
@@ -139,7 +153,7 @@ object ZWorker {
       * @see
       *   [[Worker#addWorkflowImplementationFactory]]
       */
-    def from[Wf <: I](f: => Wf)(implicit ctg: ClassTag[I]) =
+    def from[Workflow <: I](f: => Workflow)(implicit ctg: ClassTag[I]): ZWorker.Add[Nothing, Any] =
       new ZIOAspect[Nothing, Any, Nothing, Any, ZWorker, ZWorker] {
         override def apply[R >: Nothing <: Any, E >: Nothing <: Any, A >: ZWorker <: ZWorker](
           zio:            ZIO[R, E, A]
@@ -159,7 +173,7 @@ object ZWorker {
       * @see
       *   [[Worker#addWorkflowImplementationFactory]]
       */
-    def from(cls: Class[I], f: () => I) =
+    def from(cls: Class[I], f: () => I): ZWorker.Add[Nothing, Any] =
       new ZIOAspect[Nothing, Any, Nothing, Any, ZWorker, ZWorker] {
         override def apply[R >: Nothing <: Any, E >: Nothing <: Any, A >: ZWorker <: ZWorker](
           zio:            ZIO[R, E, A]
@@ -169,6 +183,8 @@ object ZWorker {
       }
   }
 
+  /** Allows building workers
+    */
   final class AddWorkflowDsl[I] private[zio] (private val worker: ZWorker) extends AnyVal {
 
     /** Registers workflow implementation classes with a worker. Can be called multiple times to add more types.
