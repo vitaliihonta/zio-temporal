@@ -68,6 +68,7 @@ class ZWorker private[zio] (
   }
 }
 
+// TODO: finish the rest of the ZIOAspect's
 object ZWorker {
 
   def addWorkflow[I: IsWorkflow]: ZWorker.AddWorkflowEnvDsl[I] =
