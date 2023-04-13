@@ -40,7 +40,7 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
     val method     = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
     q"""
-       _root_.zio.temporal.promise.ZAsync.attempt($f)
+       _root_.zio.temporal.workflow.ZAsync.attempt($f)
      """.debugged(SharedCompileTimeMessages.generatedWorkflowStartAsync)
   }
 

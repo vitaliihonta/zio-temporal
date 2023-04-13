@@ -1,7 +1,7 @@
 import BuildConfig._
 
-val scala212 = "2.12.15"
-val scala213 = "2.13.8"
+val scala212 = "2.12.17"
+val scala213 = "2.13.10"
 val scala3   = "3.2.2"
 
 val allScalaVersions          = List(scala212, scala213, scala3)
@@ -9,7 +9,7 @@ val documentationScalaVersion = scala213
 
 ThisBuild / scalaVersion           := scala213
 ThisBuild / organization           := "dev.vhonta"
-ThisBuild / version                := "0.2.0-M1"
+ThisBuild / version                := "0.2.0-M2"
 ThisBuild / versionScheme          := Some("early-semver")
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 ThisBuild / sonatypeRepository     := "https://s01.oss.sonatype.org/service/local"

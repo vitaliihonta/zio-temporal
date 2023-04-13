@@ -1,7 +1,6 @@
 package zio.temporal.workflow
 
 import io.temporal.workflow.CancellationScope
-import zio.temporal.promise.ZAsync
 
 /** Handle to a cancellation scope created through [[ZWorkflow.newCancellationScope]] or
   * [[ZWorkflow.newDetachedCancellationScope]]. Supports explicit cancelling of the code a cancellation scope wraps. The

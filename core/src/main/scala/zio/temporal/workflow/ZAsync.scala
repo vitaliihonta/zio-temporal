@@ -1,15 +1,15 @@
-package zio.temporal.promise
+package zio.temporal.workflow
 
 import io.temporal.failure.CanceledFailure
 import io.temporal.workflow.{Async, Functions, Promise}
 import zio.*
+import zio.temporal.internal.TemporalWorkflowFacade.FunctionConverters.*
 import java.util.concurrent.TimeUnit
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.mutable
 import scala.concurrent.TimeoutException
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
-import zio.temporal.internal.TemporalWorkflowFacade.FunctionConverters._
 
 /** Contains result of an asynchronous computation. Similar to [[zio.IO]] with the following differences:
   *

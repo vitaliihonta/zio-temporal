@@ -3,8 +3,6 @@ package zio.temporal.workflow
 import zio.temporal.TemporalIO
 import zio.temporal.ZWorkflowExecution
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
-import zio.temporal.promise.ZAsync
-
 import scala.quoted.*
 
 trait ZWorkflowExecutionSyntax {

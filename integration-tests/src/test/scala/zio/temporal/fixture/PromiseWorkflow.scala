@@ -1,9 +1,9 @@
 package zio.temporal.fixture
 
-import zio._
-import zio.temporal._
-import zio.temporal.promise.ZAsync
-import zio.temporal.workflow.ZWorkflow
+import zio.*
+import zio.temporal.*
+import zio.temporal.workflow.ZAsync
+import zio.temporal.workflow.{ZAsync, ZWorkflow}
 
 @activityInterface
 trait PromiseActivity {

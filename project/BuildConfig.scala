@@ -60,8 +60,8 @@ trait Dependencies {
 
   private object versions {
     val temporal   = "1.18.2"
-    val zio        = "2.0.10"
-    val zioLogging = "2.1.11"
+    val zio        = "2.0.12"
+    val zioLogging = "2.1.12"
     val enumeratum = "1.7.2"
   }
 
@@ -99,7 +99,7 @@ trait Dependencies {
   object Utility {
     val scalaJava8Compat  = "org.scala-lang.modules" %% "scala-java8-compat"      % "1.0.2"
     val collectionsCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.9.0"
-    val izumiReflect      = org.zio                  %% "izumi-reflect"           % "2.2.5" // the same one used in ZIO
+    val izumiReflect      = org.zio                  %% "izumi-reflect"           % "2.3.1" // the same one used in ZIO
     val reflections       = "org.reflections"         % "reflections"             % "0.10.2"
   }
 
