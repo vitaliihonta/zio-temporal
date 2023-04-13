@@ -30,8 +30,12 @@ class ZTestWorkflowEnvironment[R] private[zio] (val toJava: TestWorkflowEnvironm
     * @param taskQueue
     *   task queue to poll.
     */
-  def newWorker(taskQueue: String, options: ZWorkerOptions = ZWorkerOptions.default) =
-    new ZWorker(toJava.newWorker(taskQueue, options.toJava), workflows = Nil, activities = Nil)
+  def newWorker(taskQueue: String, options: ZWorkerOptions = ZWorkerOptions.default): UIO[ZWorker] =
+    ZIO.blocking(
+      ZIO.succeed(
+        new ZWorker(toJava.newWorker(taskQueue, options.toJava))
+      )
+    )
 
   /** Creates a WorkflowClient that is connected to the in-memory test Temporal service. */
   lazy val workflowClient = new ZWorkflowClient(toJava.getWorkflowClient)

@@ -15,15 +15,10 @@ object Main extends ZIOAppDefault {
     Runtime.removeDefaultLoggers ++ SLF4J.slf4j
 
   override def run: ZIO[ZIOAppArgs with Scope, Any, Any] = {
-    val registerWorkflows = ZIO.serviceWithZIO[ZWorkerFactory] { workerFactory =>
-      for {
-        worker <- workerFactory.newWorker(TaskQueue)
-        // NOTE: try typed/untyped activities and workflows
-        activityImpl <- ZIO.service[TypedArithmeticActivityImpl]
-        _ = worker.addActivityImplementation(activityImpl)
-        _ = worker.addWorkflow[MathWorkflow].from(new TypedMathWorkflowImpl)
-      } yield ()
-    }
+    val registerWorkflows =
+      ZWorkerFactory.newWorker(TaskQueue) @@
+        ZWorker.addActivityImplementationService[TypedArithmeticActivityImpl] @@
+        ZWorker.addWorkflow[MathWorkflow].from(new TypedMathWorkflowImpl)
 
     val invokeWorkflows = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
