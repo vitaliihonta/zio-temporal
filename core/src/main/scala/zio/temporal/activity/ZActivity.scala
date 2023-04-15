@@ -4,7 +4,6 @@ import io.temporal.activity.Activity
 import zio.*
 import zio.temporal.internal.ZioUnsafeFacade
 
-// TODO: add getExecutionContext and heartbeat methods
 object ZActivity {
 
   /** Use this to rethrow a checked exception from an Activity Execution instead of adding the exception to a method
