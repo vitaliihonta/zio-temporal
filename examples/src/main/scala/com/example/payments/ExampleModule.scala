@@ -28,13 +28,8 @@ object ExampleModule {
 
   val worker: URLayer[PaymentActivity with ZWorkerFactory, Unit] =
     ZLayer.fromZIO {
-      ZIO.serviceWithZIO[ZWorkerFactory] { workerFactory =>
-        for {
-          worker       <- workerFactory.newWorker("payments")
-          activityImpl <- ZIO.service[PaymentActivity]
-          _ = worker.addActivityImplementation(activityImpl)
-          _ = worker.addWorkflow[PaymentWorkflow].from(new PaymentWorkflowImpl)
-        } yield ()
-      }
-    }
+      ZWorkerFactory.newWorker("payments") @@
+        ZWorker.addActivityImplementationService[PaymentActivity] @@
+        ZWorker.addWorkflow[PaymentWorkflow].from(new PaymentWorkflowImpl)
+    }.unit
 }

@@ -78,8 +78,8 @@ class BookingActivityZIOImpl(implicit options: ZActivityOptions[Any]) extends Bo
 
 Important notes regarding `ZIO` example:
 - In order to run `ZIO` inside the activity, it's required for the activity to have an implicit `ZActivityOptions` available.  
-- `ZActivityOptions[-R]` contains the following:
-  - `zio.Runtime[-R]` instance allowing to run the `ZIO` itself
+- `ZActivityOptions[+R]` contains the following:
+  - `zio.Runtime[+R]` instance allowing to run the `ZIO` itself
   - `ActivityCompletionClient` instance which allows to complete the Activity asynchronously
   - Those, the Activity method execution won't block on the worker, allowing to utilize resources better.
 
@@ -134,15 +134,10 @@ It's pretty easy to provide the implementation: it could be done via `ZIO`'s sta
 ```scala mdoc:silent
 val worker: URLayer[BookingActivity with ZWorkerFactory, Unit] =
   ZLayer.fromZIO {
-    ZIO.serviceWithZIO[ZWorkerFactory] { workerFactory =>
-      for {
-        worker       <- workerFactory.newWorker("booking")
-        activityImpl <- ZIO.service[BookingActivity]
-        _ = worker.addActivityImplementation(activityImpl)
-        _ = worker.addWorkflow[BookingWorkflow].from(new BookingWorkflowImpl)
-      } yield ()
-    }
-  }
+    ZWorkerFactory.newWorker("booking") @@
+      ZWorker.addActivityImplementationService[BookingActivity] @@
+      ZWorker.addWorkflow[BookingWorkflow].from(new BookingWorkflowImpl)
+  }.unit
 ```
 
 The activity could be created as follows:

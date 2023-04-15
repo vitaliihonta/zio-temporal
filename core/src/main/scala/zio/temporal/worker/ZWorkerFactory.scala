@@ -75,8 +75,22 @@ final class ZWorkerFactory private[zio] (val toJava: WorkerFactory) {
     *   ZWorker
     */
   def newWorker(taskQueue: String, options: ZWorkerOptions = ZWorkerOptions.default): UIO[ZWorker] =
-    ZIO.succeed(new ZWorker(toJava.newWorker(taskQueue, options.toJava), Nil, Nil))
+    ZIO.blocking(
+      ZIO.succeed(new ZWorker(toJava.newWorker(taskQueue, options.toJava)))
+    )
 
+  /** @param taskQueue
+    *   task queue name to lookup an existing worker for
+    * @return
+    *   a worker created previously through [[newWorker]] for the given task queue.
+    */
+  def getWorker(taskQueue: String): UIO[Option[ZWorker]] =
+    ZIO.blocking(
+      ZIO
+        .attempt(new ZWorker(toJava.getWorker(taskQueue)))
+        .refineToOrDie[IllegalArgumentException]
+        .option
+    )
 }
 
 object ZWorkerFactory {
@@ -85,6 +99,12 @@ object ZWorkerFactory {
     */
   def setup: URIO[ZWorkerFactory with Scope, Unit] =
     ZIO.serviceWithZIO[ZWorkerFactory](_.setup)
+
+  /** @see
+    *   [[ZWorkerFactory.newWorker]]
+    */
+  def newWorker(taskQueue: String, options: ZWorkerOptions = ZWorkerOptions.default): URIO[ZWorkerFactory, ZWorker] =
+    ZIO.serviceWithZIO[ZWorkerFactory](_.newWorker(taskQueue, options))
 
   /** Creates an instance of [[ZWorkerFactory]]
     *

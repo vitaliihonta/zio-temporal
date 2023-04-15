@@ -6,7 +6,7 @@ import zio.temporal.workflow.ZWorkflowClient
 
 /** Represents options required to run the effects in the activity implementation
   */
-class ZActivityOptions[R](
+class ZActivityOptions[+R](
   val runtime:                  Runtime[R],
   val activityCompletionClient: ActivityCompletionClient)
 
