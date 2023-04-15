@@ -36,41 +36,70 @@ import zio.temporal._
 import zio.temporal.workflow._
 import zio.temporal.protobuf.syntax._
 
-def proceedTransaction(sender: UUID, receiver: UUID, amount: BigDecimal) =
-  for {
-    transactionId <- ZIO.randomWith(_.nextUUID)
-    paymentWorkflow <- client
-                         .newWorkflowStub[PaymentWorkflow]
-                         .withTaskQueue("payments")
-                         .withWorkflowId(transactionId.toString)
-                         .build
-    _ <- ZWorkflowStub.start(
-           paymentWorkflow.proceed(
-             ProceedTransactionCommand(
-               id = transactionId,
-               sender = sender,
-               receiver = receiver,
-               amount = amount
+// Business process as an interface
+@workflowInterface
+trait PaymentWorkflow {
+
+  @workflowMethod
+  def proceed(transaction: ProceedTransactionCommand): TransactionView
+
+  @queryMethod
+  def isFinished(): Boolean
+
+  @signalMethod
+  def confirmTransaction(command: ConfirmTransactionCommand): Unit
+}
+
+// Client-side code
+class TemporalPaymentService(workflowClient: ZWorkflowClient) {
+  def createPayment(sender: UUID, receiver: UUID, amount: BigDecimal) =
+    for {
+      transactionId <- ZIO.randomWith(_.nextUUID)
+      paymentWorkflow <- workflowClient
+                           .newWorkflowStub[PaymentWorkflow]
+                           .withTaskQueue("payments")
+                           .withWorkflowId(transactionId.toString)
+                           // Built-in timeouts
+                           .withWorkflowExecutionTimeout(6.minutes)
+                           .withWorkflowRunTimeout(1.minute)
+                           // Built-in retries
+                           .withRetryOptions(
+                             ZRetryOptions.default.withMaximumAttempts(5)
+                           )
+                           .build
+      // Start the business process
+      _ <- ZWorkflowStub.start(
+             paymentWorkflow.proceed(
+               ProceedTransactionCommand(
+                 id = transactionId,
+                 sender = sender,
+                 receiver = receiver,
+                 amount = amount
+               )
              )
            )
-         )
-  } yield transactionId
+    } yield transactionId
 
-def confirmTransaction(transactionId: UUID, confirmationCode: String) =
-  for {
-    paymentWorkflow <- client.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId.toString)
-    status <- ZWorkflowStub.query(
-                paymentWorkflow.getStatus
-              )
-    _ <- ZIO.when(status.status.isFailed) {
-           ZIO.fail(TemporalError(s"Cannot confirm transaction, it's already failed: ${"$"}{status.description}"))
-         }
-    _ <- ZWorkflowStub.signal(
-           paymentWorkflow.confirmTransaction(
-             ConfirmTransactionCommand(id = transactionId, confirmationCode)
-           )
-         )
-  } yield ()
+  def confirmTransaction(transactionId: UUID, confirmationCode: String) =
+    for {
+      // Get the running business process
+      workflowStub <- workflowClient.newWorkflowStubProxy[PaymentWorkflow](
+        workflowId = transactionId.toString
+      )
+      // Check the business process state
+      isFinished <- ZWorkflowStub.query(
+                      workflowStub.isFinished()
+                    )
+      _ <- ZIO.unless(isFinished) {
+             // Interact with a running workflow!
+             ZWorkflowStub.signal(
+               workflowStub.confirmTransaction(
+                 ConfirmTransactionCommand(id = transactionId, confirmationCode)
+               )
+             )
+           }
+    } yield ()
+}
 `
 
 export default function Home() {

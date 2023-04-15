@@ -55,14 +55,13 @@ First, you should connect to the Temporal cluster. This is done via the Workflow
 In order to run a specific workflow, you should create a Workflow stub:
 
 ```scala mdoc:silent
-val workflowStubZIO = ZIO.serviceWithZIO[ZWorkflowClient] { workflowClient =>
+def createWorkflowStub(workflowClient: ZWorkflowClient) = 
   workflowClient
     .newWorkflowStub[EchoWorkflow]
     .withTaskQueue("echo-queue")
     .withWorkflowId(UUID.randomUUID().toString)
     .withWorkflowRunTimeout(10.second)
     .build
-}
 ```
 
 Important notes:
@@ -79,8 +78,8 @@ its completion:
 ```scala mdoc:silent
 val workflowResultZIO = 
   for {
-    echoWorkflow <- workflowStubZIO
-    result <- ZWorkflowStub.execute(echoWorkflow.echo("Hello there"))
+    echoWorkflow <- ZIO.serviceWithZIO[ZWorkflowClient](createWorkflowStub)
+    result       <- ZWorkflowStub.execute(echoWorkflow.echo("Hello there"))
   } yield result
 ```
 
@@ -109,11 +108,24 @@ val worker: URLayer[ZWorkerFactory, Unit] = ZLayer.fromZIO {
   ZIO.serviceWithZIO[ZWorkerFactory] { workerFactory =>
     for {
       worker <- workerFactory.newWorker("echo-queue")
-      _ = worker.addWorkflow[EchoWorkflow].from(new EchoWorkflowImpl)
+      _ <- worker
+              .addWorkflow[EchoWorkflow]
+              .from(new EchoWorkflowImpl)
     } yield ()
   }
 }
 ```
+
+There is also an alternative syntax for building workflows which relies on *ZIO Aspects*:  
+```scala mdoc:silent
+val workerAspects: URLayer[ZWorkerFactory, Unit] = ZLayer.fromZIO {
+  ZWorkerFactory.newWorker("echo-queue") @@
+    ZWorker.addWorkflow[EchoWorkflow].from(new EchoWorkflowImpl)
+}.unit
+```
+
+This syntax allows avoiding syntactic noise of monadic composition and accessing ZIO's environment.  
+Therefore, it's a preferred one.  
 
 Important notes:
 
@@ -131,11 +143,9 @@ Let's bring all the parts into a program:
 ```scala mdoc:silent
 val program = 
   for {
-    workerFactory <-ZIO.service[ZWorkerFactory]
-    workflowResult <- workerFactory.use {
-      workflowResultZIO
-    }
-    _ <- ZIO.log(s"The workflow result: $workflowResult")
+    _              <- ZWorkerFactory.setup
+    workflowResult <- workflowResultZIO
+    _              <- ZIO.log(s"The workflow result: $workflowResult")
   } yield ()
 ```
 

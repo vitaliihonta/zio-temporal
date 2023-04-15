@@ -8,8 +8,7 @@ import zio.logging.LogAnnotation
 import zio.logging.logContext
 import zio.temporal._
 import zio.temporal.protobuf.syntax._
-import zio.temporal.workflow.ZWorkflowClient
-import zio.temporal.workflow.ZWorkflowStub
+import zio.temporal.workflow._
 
 case class PaymentError(details: String)
 
@@ -35,44 +34,43 @@ object PaymentService {
   val make: URLayer[ZWorkflowClient, PaymentService] = ZLayer.fromFunction(new TemporalPaymentService(_))
 }
 
-class TemporalPaymentService(client: ZWorkflowClient) extends PaymentService {
+class TemporalPaymentService(workflowClient: ZWorkflowClient) extends PaymentService {
   override def createPayment(sender: UUID, receiver: UUID, amount: BigDecimal): IO[PaymentError, UUID] =
     withErrorHandling {
-      Random.nextUUID.flatMap { transactionId =>
-        for {
-          _ <- updateLogContext(transactionId)
-          paymentWorkflow <- client
-                               .newWorkflowStub[PaymentWorkflow]
-                               .withTaskQueue("payments")
-                               .withWorkflowId(transactionId.toString)
-                               .withWorkflowExecutionTimeout(6.minutes)
-                               // Avoid setting runTimeout < timeout in ZWorkflow.awaitWhile
-                               // Otherwise, you'll get a creepy error
-                               .withWorkflowRunTimeout(1.minute)
-                               .withRetryOptions(
-                                 ZRetryOptions.default.withMaximumAttempts(5)
-                               )
-                               .build
-          _ <- ZIO.logInfo("Going to trigger workflow")
-          _ <- ZWorkflowStub.start(
-                 paymentWorkflow.proceed(
-                   ProceedTransactionCommand(
-                     id = transactionId,
-                     sender = sender,
-                     receiver = receiver,
-                     amount = BigDecimal(9000)
-                   )
+      for {
+        transactionId <- ZIO.randomWith(_.nextUUID)
+        _             <- updateLogContext(transactionId)
+        paymentWorkflow <- workflowClient
+                             .newWorkflowStub[PaymentWorkflow]
+                             .withTaskQueue("payments")
+                             .withWorkflowId(transactionId.toString)
+                             .withWorkflowExecutionTimeout(6.minutes)
+                             // Avoid setting runTimeout < timeout in ZWorkflow.awaitWhile
+                             // Otherwise, you'll get a creepy error
+                             .withWorkflowRunTimeout(1.minute)
+                             .withRetryOptions(
+                               ZRetryOptions.default.withMaximumAttempts(5)
+                             )
+                             .build
+        _ <- ZIO.logInfo("Going to trigger workflow")
+        _ <- ZWorkflowStub.start(
+               paymentWorkflow.proceed(
+                 ProceedTransactionCommand(
+                   id = transactionId,
+                   sender = sender,
+                   receiver = receiver,
+                   amount = BigDecimal(9000)
                  )
                )
-        } yield transactionId
-      }
+             )
+      } yield transactionId
     }
 
   override def getState(transactionId: UUID): IO[PaymentError, Option[Transaction]] =
     withErrorHandling {
       for {
         _            <- updateLogContext(transactionId)
-        workflowStub <- client.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId.toString)
+        workflowStub <- workflowClient.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId.toString)
         _            <- ZIO.logInfo("Checking if transaction is finished...")
         maybeTransaction <- ZIO.whenZIO(
                               ZWorkflowStub.query(
@@ -90,7 +88,7 @@ class TemporalPaymentService(client: ZWorkflowClient) extends PaymentService {
     withErrorHandling {
       for {
         _            <- updateLogContext(transactionId)
-        workflowStub <- client.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId.toString)
+        workflowStub <- workflowClient.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId.toString)
         _            <- ZIO.logInfo("Going to send confirmation")
         isFinished <- ZWorkflowStub.query(
                         workflowStub.isFinished()
