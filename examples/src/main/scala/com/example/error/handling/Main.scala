@@ -47,9 +47,7 @@ object Main extends ZIOAppDefault {
     program
       .provideSome[Scope](
         ZLayer.succeed(ZWorkflowServiceStubsOptions.default),
-        ZLayer.succeed(
-          ZWorkflowClientOptions.default.withDataConverter(JacksonDataConverter.make())
-        ),
+        ZLayer.succeed(ZWorkflowClientOptions.default),
         ZLayer.succeed(ZWorkerFactoryOptions.default),
         // NOTE: try typed/untyped activities
         ZLayer.fromFunction(new TypedArithmeticActivityImpl()(_: ZActivityOptions[Any])),
