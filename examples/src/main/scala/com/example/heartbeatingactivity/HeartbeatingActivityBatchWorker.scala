@@ -6,6 +6,7 @@ import zio.temporal.worker.*
 import zio.temporal.workflow.*
 import zio.logging.backend.SLF4J
 import zio.temporal.activity.ZActivityOptions
+
 object HeartbeatingActivityBatchWorker extends ZIOAppDefault {
   val TaskQueue = "HeartbeatingActivityBatch"
 
@@ -19,10 +20,9 @@ object HeartbeatingActivityBatchWorker extends ZIOAppDefault {
 
     val program = for {
       _ <- registerWorkflows
-      _ <- ZWorkerFactory.setup
       _ <- ZWorkflowServiceStubs.setup()
       // Poll workflow tasks
-      _ <- ZIO.never
+      _ <- ZWorkerFactory.serve
     } yield ()
 
     program

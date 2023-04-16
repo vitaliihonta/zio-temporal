@@ -6,6 +6,7 @@ import zio.temporal.activity.ZActivityOptions
 import zio.temporal.worker.*
 import zio.temporal.workflow.*
 import zio.logging.backend.SLF4J
+
 object Main extends ZIOAppDefault {
   val TaskQueue = "hello-cancellation"
 
