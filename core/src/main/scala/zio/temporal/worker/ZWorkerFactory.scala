@@ -38,10 +38,15 @@ final class ZWorkerFactory private[zio] (val toJava: WorkerFactory) {
            }
     } yield ()
 
+  /** Allows to setup [[ZWorkerFactory]] with guaranteed finalization. To be used in worker-only applications
+    */
+  def serve: URIO[Scope, Nothing] =
+    setup *> ZIO.logInfo("ZWorkerFactory endlessly polling tasks...") *> ZIO.never
+
   /** Starts all the workers created by this factory.
     */
   def start: UIO[Unit] =
-    ZIO.blocking(ZIO.succeed(toJava.start()))
+    ZIO.blocking(ZIO.succeed(toJava.start())) *> ZIO.logInfo("ZWorkerFactory started")
 
   /** Initiates an orderly shutdown in which polls are stopped and already received workflow and activity tasks are
     * executed.
@@ -50,7 +55,8 @@ final class ZWorkerFactory private[zio] (val toJava: WorkerFactory) {
     *   [[WorkerFactory#shutdown]]
     */
   def shutdown: UIO[Unit] =
-    ZIO.blocking(ZIO.succeed(toJava.shutdown()))
+    ZIO.logInfo("ZWorkerFactory shutdown initiated...") *>
+      ZIO.blocking(ZIO.succeed(toJava.shutdown()))
 
   /** Initiates an orderly shutdown in which polls are stopped and already received workflow and activity tasks are
     * attempted to be stopped. This implementation cancels tasks via Thread.interrupt(), so any task that fails to
@@ -60,7 +66,8 @@ final class ZWorkerFactory private[zio] (val toJava: WorkerFactory) {
     *   [[WorkerFactory#shutdownNow]]
     */
   def shutdownNow: UIO[Unit] =
-    ZIO.blocking(ZIO.succeed(toJava.shutdownNow()))
+    ZIO.logInfo("ZWorkerFactory shutdownNow initiated...") *>
+      ZIO.blocking(ZIO.succeed(toJava.shutdownNow()))
 
   /** Creates worker that connects to an instance of the Temporal Service. It uses the namespace configured at the
     * Factory level. New workers cannot be created after the start() has been called
@@ -99,6 +106,11 @@ object ZWorkerFactory {
     */
   def setup: URIO[ZWorkerFactory with Scope, Unit] =
     ZIO.serviceWithZIO[ZWorkerFactory](_.setup)
+
+  /** Allows to setup [[ZWorkerFactory]] with guaranteed finalization. To be used in worker-only applications
+    */
+  def serve: URIO[ZWorkerFactory with Scope, Nothing] =
+    ZIO.serviceWithZIO[ZWorkerFactory](_.serve)
 
   /** @see
     *   [[ZWorkerFactory.newWorker]]

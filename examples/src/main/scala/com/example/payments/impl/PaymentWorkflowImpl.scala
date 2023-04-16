@@ -94,13 +94,14 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
   private def handleConfirmation(): ZSaga[Unit] = {
     state.snapshotOf(_.confirmation) match {
       case Some(confirmation) => verifyConfirmation(confirmation)
-      case None               => ZSaga.fail(new Exception("Invalid transaction state, it shouldn't happen"))
+      // should not be handled by Temporal
+      case None => ZSaga.fail(new RuntimeException("Invalid transaction state, it shouldn't happen"))
     }
   }
 
   private def verifyConfirmation(confirmation: ConfirmTransactionCommand): ZSaga[Unit] =
     ZSaga
-      .make(activity.verifyConfirmation(confirmation))(compensate = cancelTransaction())
+      .attempt(activity.verifyConfirmation(confirmation))
       .as(finalizeTransaction())
       .unit
 

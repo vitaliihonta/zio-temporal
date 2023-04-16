@@ -3,9 +3,8 @@ package com.example.payments
 import com.example.payments.impl.PaymentActivityImpl
 import com.example.payments.service.PaymentService
 import zio._
-import zio.temporal.worker.ZWorkerFactory
-import zio.temporal.workflow.ZWorkflowClient
-import zio.temporal.workflow.ZWorkflowServiceStubs
+import zio.temporal.worker.*
+import zio.temporal.workflow.*
 import zio.logging.backend.SLF4J
 import zio.temporal.activity.ZActivityOptions
 

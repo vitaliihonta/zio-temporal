@@ -150,9 +150,9 @@ object ZSaga {
       .map(_.result())
 
   // Internal
-  final case class Attempt[A] private[zio] (thunk: () => A) extends ZSaga[A]
+  private[temporal] final case class Attempt[A] private[zio] (thunk: () => A) extends ZSaga[A]
 
-  final case class Succeed[A] private[zio] (value: A) extends ZSaga[A] {
+  private[temporal] final case class Succeed[A] private[zio] (value: A) extends ZSaga[A] {
 
     override def map[B](f: A => B): ZSaga[B] = ZSaga.Succeed(f(value))
 
@@ -164,7 +164,7 @@ object ZSaga {
     override def catchSome[A0 >: A](pf: PartialFunction[Throwable, ZSaga[A0]]): ZSaga[A0] = this
   }
 
-  final case class Failed private[zio] (error: Throwable) extends ZSaga[Nothing] {
+  private[temporal] final case class Failed private[zio] (error: Throwable) extends ZSaga[Nothing] {
 
     override def catchAll[A0 >: Nothing](f: Throwable => ZSaga[A0]): ZSaga[A0] = f(error)
 
@@ -172,19 +172,21 @@ object ZSaga {
       pf.applyOrElse[Throwable, ZSaga[A0]](error, _ => this)
   }
 
-  final case class Compensation[A] private[zio] (compensate: () => Unit, cont: ZSaga[A]) extends ZSaga[A] {
+  private[temporal] final case class Compensation[A] private[zio] (compensate: () => Unit, cont: ZSaga[A])
+      extends ZSaga[A] {
 
     override def map[B](f: A => B): ZSaga[B] = ZSaga.Compensation(compensate, cont.map(f))
   }
 
-  final case class Bind[A, B] private[zio] (base: ZSaga[A], cont: A => ZSaga[B]) extends ZSaga[B] {
+  private[temporal] final case class Bind[A, B] private[zio] (base: ZSaga[A], cont: A => ZSaga[B]) extends ZSaga[B] {
     override def map[B2](f: B => B2): ZSaga[B2] = ZSaga.Bind[A, B2](base, cont(_).map(f))
 
     override def flatMap[B2](f: B => ZSaga[B2]): ZSaga[B2] =
       ZSaga.Bind[A, B2](base, cont(_).flatMap(f))
   }
 
-  final case class CatchAll[A] private[zio] (base: ZSaga[A], handle: Throwable => ZSaga[A]) extends ZSaga[A] {
+  private[temporal] final case class CatchAll[A] private[zio] (base: ZSaga[A], handle: Throwable => ZSaga[A])
+      extends ZSaga[A] {
 
     override def catchAll[A0 >: A](f: Throwable => ZSaga[A0]): ZSaga[A0] =
       ZSaga.CatchAll[A0](base, handle(_).catchAll(f))

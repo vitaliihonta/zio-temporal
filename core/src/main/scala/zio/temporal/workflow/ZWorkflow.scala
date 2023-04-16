@@ -132,6 +132,22 @@ object ZWorkflow {
   /** Wraps a procedure in a CancellationScope. The procedure receives the wrapping CancellationScope as a parameter.
     * Useful when cancellation is requested from within the wrapped code. The following example cancels the sibling
     * activity on any failure.
+    *
+    * @see
+    *   [[Workflow.newCancellationScope]]
+    * @param thunk
+    *   code to wrap in the cancellation scope
+    * @return
+    *   wrapped proc
+    */
+  def newCancellationScope[U](thunk: => U): ZCancellationScope = {
+    val scope = Workflow.newCancellationScope(() => (thunk: Unit))
+    new ZCancellationScope(scope)
+  }
+
+  /** Wraps a procedure in a CancellationScope. The procedure receives the wrapping CancellationScope as a parameter.
+    * Useful when cancellation is requested from within the wrapped code. The following example cancels the sibling
+    * activity on any failure.
     * @see
     *   [[Workflow.newCancellationScope]]
     * @param thunk

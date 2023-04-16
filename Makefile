@@ -18,3 +18,23 @@ build-site: gen-doc
 .PHONY: start-site
 start-site: gen-doc
 	cd website && npm install --save && npm run start
+
+.PHONY: start-temporal
+start-temporal:
+	docker-compose -f examples/docker-compose.yaml up -d
+
+.PHONY: stop-temporal
+stop-temporal:
+	docker-compose -f examples/docker-compose.yaml down
+
+.PHONY: run-heartbeatingactivity-worker
+run-heartbeatingactivity-worker:
+	sbt "examples/runMain com.example.heartbeatingactivity.HeartbeatingActivityBatchWorker"
+
+.PHONY: run-heartbeatingactivity-starter
+run-heartbeatingactivity-starter:
+	sbt "examples/runMain com.example.heartbeatingactivity.HeartbeatingActivityBatchStarter"
+
+.PHONY: run-heartbeatingactivity-cancel
+run-heartbeatingactivity-cancel:
+	sbt "examples/runMain com.example.heartbeatingactivity.HeartbeatingActivityBatchCancelling"
