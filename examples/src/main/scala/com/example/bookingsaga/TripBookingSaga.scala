@@ -55,11 +55,11 @@ object TripBookingSaga extends ZIOAppDefault {
       ZLayer.succeed(ZWorkflowServiceStubsOptions.default),
       ZLayer.succeed(ZWorkflowClientOptions.default),
       ZLayer.succeed(ZWorkerFactoryOptions.default),
+      ZActivityOptions.default,
       // Activity
       TripBookingActivitiesImpl.make,
       // Services
       ZWorkflowClient.make,
-      ZActivityOptions.default,
       ZWorkflowServiceStubs.make,
       ZWorkerFactory.make
     )

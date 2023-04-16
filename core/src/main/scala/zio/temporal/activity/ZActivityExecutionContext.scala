@@ -1,9 +1,11 @@
 package zio.temporal.activity
 
+import zio.*
 import io.temporal.activity.*
 import zio.temporal.internal.ClassTagUtils
 import scala.reflect.ClassTag
 import scala.jdk.OptionConverters._
+
 class ZActivityExecutionContext private[zio] (val toJava: ActivityExecutionContext) extends AnyVal {
 
   /** Used to notify the Workflow Execution that the Activity Execution is alive.
@@ -14,10 +16,10 @@ class ZActivityExecutionContext private[zio] (val toJava: ActivityExecutionConte
     * @throws ActivityCompletionException
     *   Which indicates that cancellation of the Activity Execution was requested by the Workflow Execution. Or it could
     *   indicate any other reason for an Activity Execution to stop. Should be rethrown from the Activity implementation
-    *   to indicate a successful cancellation.
+    *   to indicate a successful cancellation. Therefore, not handled by zio-temporal
     */
-  def heartbeat[V](details: V): Unit =
-    toJava.heartbeat(details)
+  def heartbeat[V](details: V): UIO[Unit] =
+    ZIO.succeed(toJava.heartbeat(details))
 
   /** Extracts Heartbeat details from the last failed attempt. This is used in combination with retry options. An
     * Activity Execution could be scheduled with optional [[zio.temporal.common.ZRetryOptions]] via
@@ -29,6 +31,8 @@ class ZActivityExecutionContext private[zio] (val toJava: ActivityExecutionConte
     * @tparam V
     *   type of the Heartbeat details
     */
-  def getHeartbeatDetails[V: ClassTag]: Option[V] =
-    toJava.getHeartbeatDetails(ClassTagUtils.classOf[V]).toScala
+  def getHeartbeatDetails[V: ClassTag]: UIO[Option[V]] =
+    ZIO.succeed {
+      toJava.getHeartbeatDetails(ClassTagUtils.classOf[V]).toScala
+    }
 }
