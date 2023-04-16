@@ -2,15 +2,23 @@ package com.example.hello.child
 
 import zio.*
 import zio.temporal.*
+import zio.temporal.state.ZWorkflowState
 import zio.temporal.workflow.*
 
 class GreetingChildImpl extends GreetingChild {
   private val logger = ZWorkflow.getLogger(getClass)
+  private val prefix = ZWorkflowState.empty[String]
+
   override def composeGreeting(greeting: String, name: String): String = {
     logger.info("Composing greeting...")
     ZWorkflow.sleep(3.seconds)
     logger.info("Composing greeting done!")
-    s"$greeting $name!"
+    s"$greeting $name!" + " " + prefix.snapshotOrElse("")
+  }
+
+  override def addPrefix(newPrefix: String): Unit = {
+    logger.info(s"Prefix set: $newPrefix")
+    prefix := newPrefix
   }
 }
 
@@ -33,12 +41,19 @@ class GreetingWorkflowImpl extends GreetingWorkflow {
      * Invoke the child workflows composeGreeting workflow method.
      * This call is non-blocking and returns immediately returning a {@link io.temporal.workflow.Promise}
      *
-     * You can use child.composeGreeting("Hello", name) instead to call the child workflow method synchronously.
+     * You can use ZChildWorkflowStub.execute(child.composeGreeting("Hello", name))
+     * instead to call the child workflow method synchronously.
      */
     val greeting: ZAsync[String] = ZChildWorkflowStub.executeAsync(
       child.composeGreeting("Hello", name)
     )
     logger.info("Waiting until child workflow completes...")
+
+    // Try commenting/uncommenting out the signal
+    ZChildWorkflowStub.signal(
+      child.addPrefix("How are you doing?")
+    )
+
     // Wait for the child workflow to complete and return its results
     greeting.run.getOrThrow
   }

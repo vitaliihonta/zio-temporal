@@ -109,6 +109,13 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
     findImplicit(tagTpe, SharedCompileTimeMessages.notFound(tagTpe.toString))
   }
 
+  protected def getSignalName(method: Symbol): String =
+    getAnnotation(method, SignalMethod).children.tail
+      .collectFirst { case NamedArgVersionSpecific(_, Literal(Constant(signalName: String))) =>
+        signalName
+      }
+      .getOrElse(method.name.toString)
+
   protected def assertWorkflow(workflow: Type): Type = {
     if (!isWorkflow(workflow)) {
       error(SharedCompileTimeMessages.notWorkflow(workflow.toString))

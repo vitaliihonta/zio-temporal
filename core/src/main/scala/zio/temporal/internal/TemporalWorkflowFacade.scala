@@ -38,6 +38,22 @@ object TemporalWorkflowFacade {
     stub.getResultAsync(timeout.toNanos, TimeUnit.NANOSECONDS, ClassTagUtils.classOf[R])
   }
 
+  def signal(
+    stub:       WorkflowStub,
+    signalName: String,
+    args:       List[Any]
+  ): Unit = {
+    stub.signal(signalName, args.asInstanceOf[List[AnyRef]]: _*)
+  }
+
+  def signalChild(
+    stub:       ChildWorkflowStub,
+    signalName: String,
+    args:       List[Any]
+  ): Unit = {
+    stub.signal(signalName, args.asInstanceOf[List[AnyRef]]: _*)
+  }
+
   def signalWithStart(
     stub:       WorkflowStub,
     signalName: String,

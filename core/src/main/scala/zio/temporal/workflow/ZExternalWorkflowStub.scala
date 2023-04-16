@@ -1,21 +1,16 @@
 package zio.temporal.workflow
 
 import io.temporal.workflow.ExternalWorkflowStub
-import zio.temporal.internal.CanSignal
 import zio.temporal.internal.tagging.Stubs
 import zio.temporal.internalApi
-import zio.temporal.query.ZWorkflowStubQuerySyntax
-import zio.temporal.signal.ZWorkflowStubSignalSyntax
 
 /** Represents untyped external workflow stub
   *
   * @see
   *   [[ExternalWorkflowStub]]
   */
-sealed trait ZExternalWorkflowStub extends CanSignal[ExternalWorkflowStub] {
-
-  override protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit =
-    toJava.signal(signalName, args: _*)
+sealed trait ZExternalWorkflowStub {
+  def toJava: ExternalWorkflowStub
 }
 
 final class ZExternalWorkflowStubImpl @internalApi() (val toJava: ExternalWorkflowStub) extends ZExternalWorkflowStub {}

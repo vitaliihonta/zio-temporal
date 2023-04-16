@@ -19,7 +19,7 @@ object ZChildWorkflowExecutionSyntax {
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val invocation = getMethodInvocation(betaReduceExpression(f).asTerm)
+    val invocation = getMethodInvocation(f.asTerm)
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
@@ -42,7 +42,7 @@ object ZChildWorkflowExecutionSyntax {
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val invocation = getMethodInvocation(betaReduceExpression(f).asTerm)
+    val invocation = getMethodInvocation(f.asTerm)
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()

@@ -41,27 +41,25 @@ object ZWorkflowStubSignalSyntax {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
-    val invocation = getMethodInvocation(betaReduceExpression(f).asTerm)
+    val invocation = getMethodInvocation(f.asTerm)
     val method     = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
 
     method.assertSignalMethod()
     val signalName = getSignalName(method.symbol)
 
-    val theMethod = invocation.instance
-      .select(invocation.instance.symbol.methodMember("__zio_temporal_invokeSignal").head)
+    val stub = invocation.instance
+      .select(invocation.instance.symbol.methodMember("toJava").head)
+      .asExprOf[io.temporal.client.WorkflowStub]
 
-    val invokeTree =
-      Apply(
-        theMethod,
-        List(
-          Literal(StringConstant(signalName)),
-          Expr.ofList(invocation.args.map(_.asExprOf[AnyRef])).asTerm
-        )
-      )
+    val castedArgs = Expr.ofList(
+      method.appliedArgs.map(_.asExprOf[Any])
+    )
 
-    invokeTree
-      .asExprOf[TemporalIO[Unit]]
-      .debugged(SharedCompileTimeMessages.generatedSignal)
+    '{
+      TemporalInteraction.from {
+        TemporalWorkflowFacade.signal($stub, ${ Expr(signalName) }, $castedArgs)
+      }
+    }.debugged(SharedCompileTimeMessages.generatedSignal)
   }
 
   def signalWithStartImpl(
@@ -74,11 +72,11 @@ object ZWorkflowStubSignalSyntax {
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val startInvocation = getMethodInvocation(betaReduceExpression(start).asTerm)
+    val startInvocation = getMethodInvocation(start.asTerm)
     val startMethod     = startInvocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     startMethod.assertWorkflowMethod()
 
-    val signalInvocation = getMethodInvocation(betaReduceExpression(signal).asTerm)
+    val signalInvocation = getMethodInvocation(signal.asTerm)
     val signalMethod     = signalInvocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     signalMethod.assertSignalMethod()
     val signalName = getSignalName(signalMethod.symbol)

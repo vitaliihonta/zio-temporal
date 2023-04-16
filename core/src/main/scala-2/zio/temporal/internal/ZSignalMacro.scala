@@ -44,7 +44,15 @@ class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtil
     method.assertSignalMethod()
     val signalName = getSignalName(method.symbol)
 
-    q"""${invocation.instance}.__zio_temporal_invokeSignal($signalName, ${invocation.args})"""
+    q"""
+       _root_.zio.temporal.internal.TemporalInteraction.from {
+         _root_.zio.temporal.internal.TemporalWorkflowFacade.signal(
+           ${invocation.instance}.toJava,
+           $signalName,
+           ${invocation.args}
+         )
+       }
+       """
       .debugged(SharedCompileTimeMessages.generatedSignal)
   }
 
@@ -65,11 +73,4 @@ class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtil
      )
    """
   }
-
-  private def getSignalName(method: Symbol): String =
-    getAnnotation(method, SignalMethod).children.tail
-      .collectFirst { case NamedArgVersionSpecific(_, Literal(Constant(signalName: String))) =>
-        signalName
-      }
-      .getOrElse(method.name.toString)
 }

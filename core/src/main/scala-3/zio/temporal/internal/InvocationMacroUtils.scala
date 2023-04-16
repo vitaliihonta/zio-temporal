@@ -21,6 +21,8 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
 
   def getMethodInvocation(tree: Term): MethodInvocation =
     tree match {
+      case Inlined(_, _, body) =>
+        getMethodInvocation(body)
       case Select(instance, methodName) =>
         MethodInvocation(instance, methodName, Nil)
       case Apply(Select(instance, methodName), args) =>

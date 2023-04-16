@@ -21,7 +21,7 @@ object ZWorkflowStubQuerySyntax {
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val theQuery = buildQueryInvocation[R](betaReduceExpression(f).asTerm, ctg)
+    val theQuery = buildQueryInvocation[R](f.asTerm, ctg)
 
     '{
       _root_.zio.temporal.internal.TemporalInteraction.from[R] {

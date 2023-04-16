@@ -20,4 +20,7 @@ trait GreetingChild {
     */
   @workflowMethod
   def composeGreeting(greeting: String, name: String): String
+
+  @signalMethod
+  def addPrefix(newPrefix: String): Unit
 }

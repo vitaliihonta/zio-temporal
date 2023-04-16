@@ -3,7 +3,6 @@ package zio.temporal.workflow
 import zio.Duration
 import io.temporal.client.WorkflowStub
 import zio.temporal.{TemporalIO, internalApi}
-import zio.temporal.internal.CanSignal
 import zio.temporal.internal.ClassTagUtils
 import zio.temporal.internal.TemporalInteraction
 import zio.temporal.internal.tagging.Stubs
@@ -13,10 +12,8 @@ import java.util.concurrent.TimeUnit
 import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
-sealed trait ZWorkflowStub extends ZWorkflowClientSignalWithStartSyntax with CanSignal[WorkflowStub] {
-
-  override protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit =
-    toJava.signal(signalName, args: _*)
+sealed trait ZWorkflowStub extends ZWorkflowClientSignalWithStartSyntax {
+  def toJava: WorkflowStub
 
   /** Fetches workflow result
     *
@@ -83,13 +80,5 @@ object ZWorkflowStub
     with ZWorkflowStubSignalSyntax
     with ZWorkflowStubQuerySyntax {
 
-  final implicit class Ops[A](private val self: ZWorkflowStub.Of[A]) extends AnyVal {
-
-    /** Converts typed stub [[A]] to [[WorkflowStub]]
-      *
-      * @return
-      *   untyped workflow stub
-      */
-    def toStub: ZWorkflowStub = new ZWorkflowStubImpl(WorkflowStub.fromTyped(self))
-  }
+  final implicit class Ops[A](private val self: ZWorkflowStub.Of[A]) extends AnyVal {}
 }

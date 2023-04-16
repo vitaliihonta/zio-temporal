@@ -20,7 +20,7 @@ object ZWorkflowExecutionSyntax {
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val theStart = buildStartWorkflowInvocation(betaReduceExpression(f).asTerm)
+    val theStart = buildStartWorkflowInvocation(f.asTerm)
 
     '{
       zio.temporal.internal.TemporalInteraction.from {
@@ -40,7 +40,7 @@ object ZWorkflowExecutionSyntax {
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val theExecute = buildExecuteWorkflowInvocation(betaReduceExpression(f).asTerm, ctg)
+    val theExecute = buildExecuteWorkflowInvocation(f.asTerm, ctg)
 
     '{
       zio.temporal.internal.TemporalInteraction.fromFuture {
