@@ -1,6 +1,5 @@
 package com.example.error.handling
 
-import org.slf4j.LoggerFactory
 import zio.*
 import zio.temporal.*
 import zio.temporal.activity.*
@@ -26,7 +25,7 @@ class ArithmeticActivityImpl()(implicit options: ZActivityOptions[Any]) extends 
 }
 
 class MathWorkflowImpl extends MathWorkflow {
-  private lazy val logger = LoggerFactory.getLogger(getClass)
+  private lazy val logger = ZWorkflow.getLogger(getClass)
 
   private val activity = ZWorkflow
     .newActivityStub[ArithmeticActivity]

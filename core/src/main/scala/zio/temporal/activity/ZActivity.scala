@@ -4,9 +4,22 @@ import io.temporal.activity.Activity
 import zio.*
 import zio.temporal.internal.ZioUnsafeFacade
 
-/** Executed arbitrary effects within an activity implementation asynchronously completing the activity
-  */
 object ZActivity {
+
+  /** Use this to rethrow a checked exception from an Activity Execution instead of adding the exception to a method
+    * signature.
+    *
+    * @return
+    *   Never returns; always throws. Throws original exception if e is [[RuntimeException]] or [[Error]].
+    */
+  def wrap(e: Throwable): RuntimeException =
+    Activity.wrap(e)
+
+  /** Can be used to get information about an Activity Execution and to invoke Heartbeats. This static method relies on
+    * a thread-local variable and works only in the original Activity Execution thread.
+    */
+  def executionContext =
+    new ZActivityExecutionContext(Activity.getExecutionContext)
 
   /** Runs provided effect completing this activity with the effect result.
     *
@@ -20,7 +33,7 @@ object ZActivity {
     *   result of executing the action
     */
   def run[R, A](action: RIO[R, A])(implicit zactivityOptions: ZActivityOptions[R]): A =
-    runImpl(action)(Activity.wrap)
+    runImpl(action)(wrap)
 
   /** Runs provided effect completing this activity with the effect result.
     *
@@ -62,7 +75,7 @@ object ZActivity {
       onDie = cause =>
         zactivityOptions.activityCompletionClient.completeExceptionally(
           taskToken,
-          Activity.wrap(cause)
+          wrap(cause)
         ),
       onFailure = error =>
         zactivityOptions.activityCompletionClient.completeExceptionally(

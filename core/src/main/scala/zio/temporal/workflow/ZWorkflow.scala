@@ -2,6 +2,7 @@ package zio.temporal.workflow
 
 import io.temporal.workflow.CancellationScope
 import io.temporal.workflow.Workflow
+import org.slf4j.Logger
 import zio.temporal.activity.{IsActivity, ZActivityStubBuilderInitial, ZLocalActivityStubBuilderInitial}
 import zio.temporal.internal.ClassTagUtils
 import zio.temporal.ZCurrentTimeMillis
@@ -9,9 +10,9 @@ import zio.temporal.ZSearchAttribute
 import zio.temporal.ZWorkflowExecution
 import zio.temporal.ZWorkflowInfo
 import zio.*
-
 import java.util.UUID
 import scala.jdk.CollectionConverters.*
+import scala.jdk.OptionConverters.*
 import scala.reflect.ClassTag
 
 object ZWorkflow {
@@ -43,6 +44,26 @@ object ZWorkflow {
     */
   def version(changeId: String, minSupported: Int, maxSupported: Int): Int =
     Workflow.getVersion(changeId, minSupported, maxSupported)
+
+  /** Get logger to use inside workflow. Logs in replay mode are omitted unless
+    * [[zio.temporal.worker.ZWorkerFactoryOptions.enableLoggingInReplay]] is set to 'true'.
+    *
+    * @param name
+    *   name to appear in logging.
+    * @return
+    *   logger to use in workflow logic.
+    */
+  def getLogger(name: String): Logger = Workflow.getLogger(name)
+
+  /** Get logger to use inside workflow. Logs in replay mode are omitted unless
+    * [[zio.temporal.worker.ZWorkerFactoryOptions.enableLoggingInReplay]] is set to 'true'.
+    *
+    * @param clazz
+    *   class name to appear in logging.
+    * @return
+    *   logger to use in workflow logic.
+    */
+  def getLogger(clazz: Class[_]): Logger = Workflow.getLogger(clazz)
 
   /** Suspends workflow execution until the given duration elapsed
     *
@@ -261,4 +282,30 @@ object ZWorkflow {
     ZExternalWorkflowStub.Proxy[A](
       new ZExternalWorkflowStubImpl(Workflow.newUntypedExternalWorkflowStub(workflowExecution.toJava))
     )
+
+  /** GetLastCompletionResult extract last completion result from previous run for this cron workflow. This is used in
+    * combination with cron schedule. A workflow can be started with an optional cron schedule. If a cron workflow wants
+    * to pass some data to next schedule, it can return any data and that data will become available when next run
+    * starts.
+    *
+    * @tparam R
+    *   type of the return data from last run
+    * @return
+    *   result of last run
+    * @see
+    *   io.temporal.client.WorkflowOptions.Builder#setCronSchedule(String)
+    */
+  def getLastCompletionResult[R: ClassTag]: R =
+    Workflow.getLastCompletionResult(ClassTagUtils.classOf[R])
+
+  /** Extract the latest failure from a previous run of this workflow. If any previous run of this workflow has failed,
+    * this function returns that failure. If no previous runs have failed, an empty optional is returned. The run you
+    * are calling this from may have been created as a retry of the previous failed run or as a next cron invocation for
+    * cron workflows.
+    *
+    * @return
+    *   The last [[Exception]]that occurred in this workflow, if there has been one.
+    */
+  def getPreviousRunFailure: Option[Exception] =
+    Workflow.getPreviousRunFailure.toScala
 }
