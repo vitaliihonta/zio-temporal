@@ -11,10 +11,13 @@ import scala.concurrent.TimeoutException
 @internalApi
 object TemporalInteraction {
 
-  def from[A](thunk: => A): TemporalIO[A] =
+  def from[A](thunk: => A): TemporalIO[A] = {
     ZIO
-      .attempt(thunk)
+      .blocking(
+        ZIO.attempt(thunk)
+      )
       .refineToOrDie[WorkflowException]
+  }
 
   def fromFuture[A](future: => CompletableFuture[A]): TemporalIO[A] =
     ZIO

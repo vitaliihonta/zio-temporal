@@ -229,47 +229,48 @@ object ZWorkflow {
   def newLocalActivityStub[A: ClassTag: IsActivity]: ZLocalActivityStubBuilderInitial[A] =
     new ZLocalActivityStubBuilderInitial[A](ClassTagUtils.classTagOf[A])
 
-  /** Creates a builder of client stub that can be used to start a child workflow that implements given interface.
-    *
-    * @tparam A
-    *   workflow interface
-    * @return
-    *   child workflow stub builder
-    */
-  def newChildWorkflowStub[A: ClassTag: IsWorkflow]: ZChildWorkflowStubBuilder[A] =
-    new ZChildWorkflowStubBuilder[A](identity)
-
-  /** Creates client stub that can be used to communicate to an existing workflow execution.
-    *
-    * @tparam A
-    *   workflow interface
-    * @param workflowId
-    *   id of the workflow to communicate with.
-    * @return
-    *   external workflow stub
-    */
-  def newExternalWorkflowStub[A: ClassTag: IsWorkflow](
-    workflowId: String
-  ): ZExternalWorkflowStub.Of[A] =
-    ZExternalWorkflowStub.Of(
-      Workflow.newExternalWorkflowStub[A](ClassTagUtils.classOf[A], workflowId)
-    )
-
-  /** Creates client stub that can be used to communicate to an existing workflow execution.
-    *
-    * @tparam A
-    *   workflow interface
-    * @param workflowExecution
-    *   execution of the workflow to communicate with.
-    * @return
-    *   external workflow stub
-    */
-  def newExternalWorkflowStub[A: ClassTag: IsWorkflow](
-    workflowExecution: ZWorkflowExecution
-  ): ZExternalWorkflowStub.Of[A] =
-    ZExternalWorkflowStub.Of(
-      Workflow.newExternalWorkflowStub[A](ClassTagUtils.classOf[A], workflowExecution.toJava)
-    )
+// TODO: re-implement
+//  /** Creates a builder of client stub that can be used to start a child workflow that implements given interface.
+//    *
+//    * @tparam A
+//    *   workflow interface
+//    * @return
+//    *   child workflow stub builder
+//    */
+//  def newChildWorkflowStub[A: ClassTag: IsWorkflow]: ZChildWorkflowStubBuilder[A] =
+//    new ZChildWorkflowStubBuilder[A](identity)
+//
+//  /** Creates client stub that can be used to communicate to an existing workflow execution.
+//    *
+//    * @tparam A
+//    *   workflow interface
+//    * @param workflowId
+//    *   id of the workflow to communicate with.
+//    * @return
+//    *   external workflow stub
+//    */
+//  def newExternalWorkflowStub[A: ClassTag: IsWorkflow](
+//    workflowId: String
+//  ): ZExternalWorkflowStub.Of[A] =
+//    ZExternalWorkflowStub.Of(
+//      Workflow.newExternalWorkflowStub[A](ClassTagUtils.classOf[A], workflowId)
+//    )
+//
+//  /** Creates client stub that can be used to communicate to an existing workflow execution.
+//    *
+//    * @tparam A
+//    *   workflow interface
+//    * @param workflowExecution
+//    *   execution of the workflow to communicate with.
+//    * @return
+//    *   external workflow stub
+//    */
+//  def newExternalWorkflowStub[A: ClassTag: IsWorkflow](
+//    workflowExecution: ZWorkflowExecution
+//  ): ZExternalWorkflowStub.Of[A] =
+//    ZExternalWorkflowStub.Of(
+//      Workflow.newExternalWorkflowStub[A](ClassTagUtils.classOf[A], workflowExecution.toJava)
+//    )
 
   /** Creates untyped client stub that can be used to communicate to an existing workflow execution.
     *
@@ -280,8 +281,8 @@ object ZWorkflow {
     */
   def newExternalWorkflowStubProxy[A: ClassTag: IsWorkflow](
     workflowId: String
-  ): ZExternalWorkflowStub.Proxy[A] =
-    ZExternalWorkflowStub.Proxy(
+  ): ZExternalWorkflowStub.Of[A] =
+    ZExternalWorkflowStub.Of(
       new ZExternalWorkflowStubImpl(Workflow.newUntypedExternalWorkflowStub(workflowId))
     )
 
@@ -294,8 +295,8 @@ object ZWorkflow {
     */
   def newExternalWorkflowStubProxy[A: ClassTag: IsWorkflow](
     workflowExecution: ZWorkflowExecution
-  ): ZExternalWorkflowStub.Proxy[A] =
-    ZExternalWorkflowStub.Proxy[A](
+  ): ZExternalWorkflowStub.Of[A] =
+    ZExternalWorkflowStub.Of[A](
       new ZExternalWorkflowStubImpl(Workflow.newUntypedExternalWorkflowStub(workflowExecution.toJava))
     )
 

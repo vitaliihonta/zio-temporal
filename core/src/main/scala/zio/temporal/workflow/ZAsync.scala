@@ -86,6 +86,18 @@ object ZAsync {
     override def getOrThrow: Nothing = throw failure
   }
 
+  /** Wraps Temporal's [[Promise]] into [[ZAsync]]
+    *
+    * @tparam A
+    *   value type
+    * @param promise
+    *   the promise
+    * @return
+    *   promise wrapped
+    */
+  def fromJava[A](promise: Promise[A]): ZAsync[A] =
+    new Impl[A](promise)
+
   /** Creates successfully completed [[ZAsync]]
     *
     * @tparam A

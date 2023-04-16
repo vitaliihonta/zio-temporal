@@ -44,4 +44,8 @@ package object temporal {
     *   [[ZRetryOptions.withDoNotRetry]]
     */
   def nameOf[A: ClassTag]: String = ClassTagUtils.classOf[A].getName
+
+  /** Retrieves simple class name of a given type. Useful when specifying creating untyped stubs.
+    */
+  def simpleNameOf[A: ClassTag]: String = ClassTagUtils.classOf[A].getSimpleName
 }

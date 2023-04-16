@@ -30,14 +30,14 @@ final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) extends 
     *   builder instance
     */
   def newWorkflowStub[A: ClassTag: IsWorkflow]: ZWorkflowStubBuilderTaskQueueDsl[A] =
-    new ZWorkflowStubBuilderTaskQueueDsl[A](toJava, implicitly[ClassTag[A]])
+    new ZWorkflowStubBuilderTaskQueueDsl[A](toJava)
 
   def newWorkflowStubProxy[A: ClassTag: IsWorkflow](
     workflowId: String,
     runId:      Option[String] = None
-  ): UIO[ZWorkflowStub.Proxy[A]] =
+  ): UIO[ZWorkflowStub.Of[A]] =
     ZIO.succeed {
-      ZWorkflowStub.Proxy[A](
+      ZWorkflowStub.Of[A](
         new ZWorkflowStubImpl(toJava.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava))
       )
     }

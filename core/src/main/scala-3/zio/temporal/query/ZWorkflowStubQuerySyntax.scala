@@ -1,7 +1,7 @@
 package zio.temporal.query
 
 import zio.temporal.TemporalIO
-import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages}
+import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
 
 import scala.quoted.*
 import scala.reflect.ClassTag

@@ -51,16 +51,17 @@ class ZChildWorkflowStubBuilder[A: ClassTag] private[zio] (
   def withCancellationType(cancellationType: ChildWorkflowCancellationType): ZChildWorkflowStubBuilder[A] =
     copy(_.setCancellationType(cancellationType))
 
-  /** Builds typed ZChildWorkflowStub
-    * @return
-    *   typed child workflow stub
-    */
-  def build: ZChildWorkflowStub.Of[A] = {
-    val options = additionalOptions(ChildWorkflowOptions.newBuilder()).build()
-    ZChildWorkflowStub.Of(
-      Workflow.newChildWorkflowStub(ClassTagUtils.classOf[A], options)
-    )
-  }
+  // TODO: re-implement
+//  /** Builds typed ZChildWorkflowStub
+//    * @return
+//    *   typed child workflow stub
+//    */
+//  def build: ZChildWorkflowStub.Of[A] = {
+//    val options = additionalOptions(ChildWorkflowOptions.newBuilder()).build()
+//    ZChildWorkflowStub.Of(
+//      Workflow.newChildWorkflowStub(ClassTagUtils.classOf[A], options)
+//    )
+//  }
 
   private def copy(
     options: ChildWorkflowOptions.Builder => ChildWorkflowOptions.Builder

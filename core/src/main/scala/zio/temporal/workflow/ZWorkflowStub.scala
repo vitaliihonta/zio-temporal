@@ -6,7 +6,7 @@ import zio.temporal.{TemporalIO, internalApi}
 import zio.temporal.internal.CanSignal
 import zio.temporal.internal.ClassTagUtils
 import zio.temporal.internal.TemporalInteraction
-import zio.temporal.internal.tagging.Proxies
+import zio.temporal.internal.tagging.Stubs
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.ZWorkflowStubSignalSyntax
 import java.util.concurrent.TimeUnit
@@ -79,7 +79,7 @@ sealed trait ZWorkflowStub extends CanSignal[WorkflowStub] {
 final class ZWorkflowStubImpl @internalApi() (val toJava: WorkflowStub) extends ZWorkflowStub
 
 object ZWorkflowStub
-    extends Proxies[ZWorkflowStub]
+    extends Stubs[ZWorkflowStub]
     with ZWorkflowExecutionSyntax
     with ZWorkflowStubSignalSyntax
     with ZWorkflowStubQuerySyntax {

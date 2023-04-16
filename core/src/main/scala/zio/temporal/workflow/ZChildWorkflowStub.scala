@@ -2,7 +2,7 @@ package zio.temporal.workflow
 
 import io.temporal.workflow.ChildWorkflowStub
 import zio.temporal.internal.CanSignal
-import zio.temporal.internal.tagging.Proxies
+import zio.temporal.internal.tagging.Stubs
 import zio.temporal.internalApi
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.ZWorkflowStubSignalSyntax
@@ -21,8 +21,8 @@ sealed trait ZChildWorkflowStub extends CanSignal[ChildWorkflowStub] {
 final class ZChildWorkflowStubImpl @internalApi() (val toJava: ChildWorkflowStub) extends ZChildWorkflowStub
 
 object ZChildWorkflowStub
-    extends Proxies[ZChildWorkflowStub]
-    with ZWorkflowExecutionSyntax
+    extends Stubs[ZChildWorkflowStub]
+    with ZChildWorkflowExecutionSyntax
     with ZWorkflowStubSignalSyntax
     with ZWorkflowStubQuerySyntax {
 

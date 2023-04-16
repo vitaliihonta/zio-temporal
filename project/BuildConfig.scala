@@ -59,7 +59,7 @@ object BuildConfig extends Dependencies {
 trait Dependencies {
 
   private object versions {
-    val temporal   = "1.18.2"
+    val temporal   = "1.19.1"
     val zio        = "2.0.12"
     val zioLogging = "2.1.12"
     val enumeratum = "1.7.2"

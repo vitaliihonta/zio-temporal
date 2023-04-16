@@ -3,17 +3,16 @@ package zio.temporal.workflow
 import zio.temporal.TemporalIO
 import zio.temporal.ZWorkflowExecution
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
+
 import scala.quoted.*
+import scala.reflect.ClassTag
 
 trait ZWorkflowExecutionSyntax {
   inline def start[A](inline f: A): TemporalIO[ZWorkflowExecution] =
     ${ ZWorkflowExecutionSyntax.startImpl[A]('f) }
 
-  inline def execute[R](inline f: R): TemporalIO[R] =
-    ${ ZWorkflowExecutionSyntax.executeImpl[R]('f) }
-
-  inline def async[R](inline f: R): ZAsync[R] =
-    ${ ZWorkflowExecutionSyntax.asyncImpl[R]('f) }
+  inline def execute[R](inline f: R)(using ctg: ClassTag[R]): TemporalIO[R] =
+    ${ ZWorkflowExecutionSyntax.executeImpl[R]('f, 'ctg) }
 }
 
 object ZWorkflowExecutionSyntax {
@@ -22,46 +21,32 @@ object ZWorkflowExecutionSyntax {
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val fTree      = betaReduceExpression(f)
-    val invocation = getMethodInvocation(fTree.asTerm)
-    val method     = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
-    method.assertWorkflowMethod()
+    val theStart = buildStartWorkflowInvocation(betaReduceExpression(f).asTerm)
 
     '{
       zio.temporal.internal.TemporalInteraction.from {
-        new ZWorkflowExecution(TemporalWorkflowFacade.start(() => $fTree))
+        new ZWorkflowExecution(
+          $theStart
+        )
       }
     }.debugged(SharedCompileTimeMessages.generatedWorkflowStart)
   }
 
-  def executeImpl[R: Type](f: Expr[R])(using q: Quotes): Expr[TemporalIO[R]] = {
+  def executeImpl[R: Type](
+    f:       Expr[R],
+    ctg:     Expr[ClassTag[R]]
+  )(using q: Quotes
+  ): Expr[TemporalIO[R]] = {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val fTree      = betaReduceExpression(f)
-    val invocation = getMethodInvocation(fTree.asTerm)
-    val method     = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
-    method.assertWorkflowMethod()
+    val theExecute = buildExecuteWorkflowInvocation(betaReduceExpression(f).asTerm, ctg)
 
     '{
       zio.temporal.internal.TemporalInteraction.fromFuture {
-        TemporalWorkflowFacade.execute(() => $fTree)
+        $theExecute
       }
     }.debugged(SharedCompileTimeMessages.generatedWorkflowExecute)
-  }
-
-  def asyncImpl[R: Type](f: Expr[R])(using q: Quotes): Expr[ZAsync[R]] = {
-    import q.reflect.*
-    val macroUtils = new InvocationMacroUtils[q.type]
-    import macroUtils.*
-
-    val fTree      = betaReduceExpression(f)
-    val invocation = getMethodInvocation(fTree.asTerm)
-    val method     = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
-    method.assertWorkflowMethod()
-
-    '{ ZAsync.attempt($fTree) }
-      .debugged(SharedCompileTimeMessages.generatedWorkflowStartAsync)
   }
 }
