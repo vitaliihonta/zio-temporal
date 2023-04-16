@@ -1,6 +1,7 @@
 package zio.temporal.activity
 
 import io.temporal.activity.Activity
+import io.temporal.client.ActivityCompletionException
 import zio.*
 import zio.temporal.internal.ZioUnsafeFacade
 
@@ -72,16 +73,24 @@ object ZActivity {
       zactivityOptions.runtime,
       action
     )(
-      onDie = cause =>
-        zactivityOptions.activityCompletionClient.completeExceptionally(
-          taskToken,
-          wrap(cause)
-        ),
-      onFailure = error =>
-        zactivityOptions.activityCompletionClient.completeExceptionally(
-          taskToken,
-          convertError(error)
-        ),
+      onDie = {
+        // don't need to handle it
+        case _: ActivityCompletionException =>
+        case cause =>
+          zactivityOptions.activityCompletionClient.completeExceptionally(
+            taskToken,
+            wrap(cause)
+          )
+      },
+      onFailure = {
+        // don't need to handle it
+        case _: ActivityCompletionException =>
+        case error =>
+          zactivityOptions.activityCompletionClient.completeExceptionally(
+            taskToken,
+            convertError(error)
+          )
+      },
       onSuccess = value =>
         zactivityOptions.activityCompletionClient.complete(
           taskToken,

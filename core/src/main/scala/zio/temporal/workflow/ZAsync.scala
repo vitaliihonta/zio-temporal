@@ -139,18 +139,25 @@ object ZAsync {
   def attempt[A](thunk: => A): ZAsync[A] =
     new Impl[A](Async.function(() => thunk))
 
-  /** Ensures sequence of promises are either finished successfully or failed
+  /** Returns [[ZAsync]] that becomes completed when all promises in the collection are completed. A single promise
+    * failure causes resulting promise to deliver the failure immediately.
     *
-    * @see
-    *   [[Promise.allOf]]
     * @param in
-    *   sequence of promises
+    *   async computations to wait for.
     * @return
-    *   suspended promise
+    *   [[ZAsync]] that is completed with null when all the argument promises become completed.
     */
   def collectAllDiscard(in: Iterable[ZAsync[Any]]): ZAsync[Unit] =
     new ZAsync.Impl[Unit](
-      Promise.allOf(in.map(_.underlying).asJava).thenApply(_ => Right(()))
+      Promise.allOf(in.map(_.underlying).asJava).thenApply(_ => ())
+    )
+
+  /** Returns [[ZAsync]] that becomes completed when any of the arguments is completed. If it completes exceptionally
+    * then result is also completes exceptionally.
+    */
+  def raceFirst[A](in: Iterable[ZAsync[A]]): ZAsync[A] =
+    new ZAsync.Impl[A](
+      Promise.anyOf(in.map(_.underlying).asJava)
     )
 
   /** Similar to [[zio.ZIO.foreach]] for Option

@@ -1,4 +1,4 @@
-package com.example.error.handling
+package com.example.hello.cancellation
 
 import zio.*
 import zio.temporal.*
@@ -6,9 +6,8 @@ import zio.temporal.activity.ZActivityOptions
 import zio.temporal.worker.*
 import zio.temporal.workflow.*
 import zio.logging.backend.SLF4J
-
 object Main extends ZIOAppDefault {
-  val TaskQueue = "math"
+  val TaskQueue = "hello-cancellation"
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
     Runtime.removeDefaultLoggers ++ SLF4J.slf4j
@@ -16,23 +15,22 @@ object Main extends ZIOAppDefault {
   override def run: ZIO[ZIOAppArgs with Scope, Any, Any] = {
     val registerWorkflows =
       ZWorkerFactory.newWorker(TaskQueue) @@
-        ZWorker.addActivityImplementationService[TypedArithmeticActivityImpl] @@
-        ZWorker.addWorkflow[MathWorkflow].from(new TypedMathWorkflowImpl)
+        ZWorker.addActivityImplementationService[GreetingActivities] @@
+        ZWorker.addWorkflow[GreetingWorkflowImpl].fromClass
 
     val invokeWorkflows = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
         workflowId <- Random.nextUUID
-        mathWorkflow <- client
-                          .newWorkflowStub[MathWorkflow]
-                          .withTaskQueue(TaskQueue)
-                          .withWorkflowId(workflowId.toString)
-                          .withWorkflowExecutionTimeout(30.seconds)
-                          .build
-        _ <- ZIO.logInfo("Running math workflow!")
+        greetingWorkflow <- client
+                              .newWorkflowStub[GreetingWorkflow]
+                              .withTaskQueue(TaskQueue)
+                              .withWorkflowId(workflowId.toString)
+                              .build
+        _ <- ZIO.logInfo("Running greeting with cancellation workflow!")
         res <- ZWorkflowStub.execute(
-                 mathWorkflow.formula(4)
+                 greetingWorkflow.getGreeting("World")
                )
-        _ <- ZIO.logInfo(s"Math workflow result: $res")
+        _ <- ZIO.logInfo(s"Greeting received: $res")
       } yield ()
     }
 
@@ -48,8 +46,7 @@ object Main extends ZIOAppDefault {
         ZLayer.succeed(ZWorkflowServiceStubsOptions.default),
         ZLayer.succeed(ZWorkflowClientOptions.default),
         ZLayer.succeed(ZWorkerFactoryOptions.default),
-        // NOTE: try typed/untyped activities
-        ZLayer.fromFunction(new TypedArithmeticActivityImpl()(_: ZActivityOptions[Any])),
+        GreetingActivitiesImpl.make,
         ZWorkflowClient.make,
         ZActivityOptions.default,
         ZWorkflowServiceStubs.make,

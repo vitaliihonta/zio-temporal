@@ -38,8 +38,8 @@ sealed trait ZWorkflowStub extends CanSignal[WorkflowStub] {
 
   /** Request cancellation of a workflow execution.
     *
-    * <p>Cancellation cancels {@link io.temporal.workflow.CancellationScope} that wraps the main workflow method. Note
-    * that workflow can take long time to get canceled or even completely ignore the cancellation request.
+    * <p>Cancellation cancels [[io.temporal.workflow.CancellationScope]] that wraps the main workflow method. Note that
+    * workflow can take long time to get canceled or even completely ignore the cancellation request.
     *
     * @throws WorkflowNotFoundException
     *   if the workflow execution doesn't exist or is already completed
@@ -65,9 +65,9 @@ sealed trait ZWorkflowStub extends CanSignal[WorkflowStub] {
     * @throws WorkflowServiceException
     *   for all other failures including networking and service availability issues
     */
-  def terminate(reason: String, details: Any*): TemporalIO[Unit] =
+  def terminate(reason: Option[String], details: Any*): TemporalIO[Unit] =
     TemporalInteraction.from {
-      toJava.terminate(reason, details.asInstanceOf[Seq[AnyRef]]: _*)
+      toJava.terminate(reason.orNull, details.asInstanceOf[Seq[AnyRef]]: _*)
     }
 }
 

@@ -12,11 +12,20 @@ object ZioUnsafeFacade {
     onSuccess: A => Unit
   ): Unit =
     Unsafe.unsafe { implicit unsafe: Unsafe =>
-      val fiber = runtime.unsafe.fork(action)
+      // Handle defects to avoid noisy error logs
+      val errorsHandled: ZIO[R, Either[Throwable, E], A] = action
+        .mapError(Right(_))
+        .catchAllDefect(defect => ZIO.fail(Left(defect)))
+
+      val fiber = runtime.unsafe.fork(errorsHandled)
       fiber.unsafe.addObserver {
-        case Exit.Failure(cause) if cause.dieOption.nonEmpty => onDie(cause.dieOption.get)
-        case Exit.Failure(cause)                             => onFailure(cause.failureOption.get)
-        case Exit.Success(value)                             => onSuccess(value)
+        case Exit.Failure(cause) =>
+          cause.failureOption.get match {
+            case Left(defect)   => onDie(defect)
+            case Right(failure) => onFailure(failure)
+          }
+
+        case Exit.Success(value) => onSuccess(value)
       }
     }
 }
