@@ -17,11 +17,14 @@ object SharedCompileTimeMessages {
   val generatedWorkflowStart: String =
     "Generated workflow method start"
 
+  val generateChildWorkflowExecute: String =
+    "Generated child workflow execute"
+
   val generatedWorkflowExecute: String =
     "Generated workflow method execute"
 
-  val generatedWorkflowStartAsync: String =
-    "Generated workflow start async"
+  val generatedChildWorkflowExecuteAsync: String =
+    "Generated child workflow start async"
 
   val generatedSignal: String =
     "Generated signal"
@@ -69,18 +72,6 @@ object SharedCompileTimeMessages {
 
   def expectedSimpleMethodInvocation(treeCls: Class[_], tree: String): String =
     s"Expected simple method invocation, got tree of class $treeCls: $tree"
-
-  def zsignalBuildNotExtracted(treeCls: Class[_], tree: String): String =
-    s"""Wasn't able to eliminate ZSignalBuilder from the resulting AST! 
-       |Normally, it shouldn't be instantiated at runtime.
-       |Please, fill up a ticket with the following info:
-       |  1. Your scala version
-       |  2. Your library version
-       |  3. Add reproducible code example without any sensitive information
-       |  4. Fill-up the following info for debugging:
-       |     - tree class: $treeCls
-       |     - tree: $tree
-       |""".stripMargin
 
   def unexpectedLibraryError(details: String): String =
     s"Unexpected library error! This should not normally happen.\n" +

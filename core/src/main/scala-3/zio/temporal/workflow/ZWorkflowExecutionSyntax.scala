@@ -2,8 +2,7 @@ package zio.temporal.workflow
 
 import zio.temporal.TemporalIO
 import zio.temporal.ZWorkflowExecution
-import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
-
+import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages}
 import scala.quoted.*
 import scala.reflect.ClassTag
 

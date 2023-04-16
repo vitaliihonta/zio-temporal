@@ -2,7 +2,8 @@ package zio.temporal.internal
 
 import io.temporal.api.common.v1.WorkflowExecution
 import io.temporal.client.{BatchRequest, WorkflowStub}
-import io.temporal.workflow.Functions
+import io.temporal.workflow.{ChildWorkflowStub, Functions, Promise}
+
 import java.util.concurrent.{CompletableFuture, TimeUnit}
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
@@ -19,6 +20,14 @@ object TemporalWorkflowFacade {
     stub.getResultAsync(ClassTagUtils.classOf[R])
   }
 
+  def executeChild[R](stub: ChildWorkflowStub, args: List[Any])(implicit ctg: ClassTag[R]): R = {
+    stub.execute(ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
+  }
+
+  def executeChildAsync[R](stub: ChildWorkflowStub, args: List[Any])(implicit ctg: ClassTag[R]): Promise[R] = {
+    stub.executeAsync(ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
+  }
+
   def executeWithTimeout[R](
     stub:         WorkflowStub,
     timeout:      Duration,
@@ -29,12 +38,14 @@ object TemporalWorkflowFacade {
     stub.getResultAsync(timeout.toNanos, TimeUnit.NANOSECONDS, ClassTagUtils.classOf[R])
   }
 
-  def addToBatchRequest(f: () => Unit): BatchRequest => Unit = { (b: BatchRequest) =>
-    addToBatchRequest(b, f)
+  def signalWithStart(
+    stub:       WorkflowStub,
+    signalName: String,
+    signalArgs: Array[Any],
+    startArgs:  Array[Any]
+  ): WorkflowExecution = {
+    stub.signalWithStart(signalName, signalArgs.asInstanceOf[Array[AnyRef]], startArgs.asInstanceOf[Array[AnyRef]])
   }
-
-  def addToBatchRequest(b: BatchRequest, f: () => Unit): Unit =
-    b.add(f: Functions.Proc)
 
   def query[R](stub: WorkflowStub, name: String, args: List[Any])(implicit ctg: ClassTag[R]): R =
     stub.query[R](name, ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)

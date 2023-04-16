@@ -9,7 +9,6 @@ import zio.temporal.signal.ZWorkflowStubSignalSyntax
 
 /** Represents untyped external workflow stub
   *
-  * TODO: not sure whether it's needed
   * @see
   *   [[ExternalWorkflowStub]]
   */
@@ -21,11 +20,8 @@ sealed trait ZExternalWorkflowStub extends CanSignal[ExternalWorkflowStub] {
 
 final class ZExternalWorkflowStubImpl @internalApi() (val toJava: ExternalWorkflowStub) extends ZExternalWorkflowStub {}
 
-object ZExternalWorkflowStub
-    extends Stubs[ZExternalWorkflowStub]
-    with ZExternalWorkflowExecutionSyntax
-    with ZWorkflowStubSignalSyntax
-    with ZWorkflowStubQuerySyntax {
+// TODO: add signal (non-IO, see https://docs.temporal.io/application-development/features?lang=java#send-signal-from-workflow)
+object ZExternalWorkflowStub extends Stubs[ZExternalWorkflowStub] with ZExternalWorkflowExecutionSyntax {
 
   final implicit class Ops[A](private val self: ZExternalWorkflowStub.Of[A]) extends AnyVal {
 

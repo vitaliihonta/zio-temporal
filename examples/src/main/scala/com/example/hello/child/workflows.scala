@@ -22,13 +22,8 @@ class GreetingWorkflowImpl extends GreetingWorkflow {
      * Define the child workflow stub. Since workflows are stateful,
      * a new stub must be created for each child workflow.
      */
-    val child =
-      io.temporal.workflow.Workflow.newUntypedChildWorkflowStub(
-        simpleNameOf[GreetingChild],
-        io.temporal.workflow.ChildWorkflowOptions
-          .newBuilder()
-          .build()
-      )
+    val child: ZChildWorkflowStub.Of[GreetingChild] =
+      ZWorkflow.newChildWorkflowStub[GreetingChild].build
 
     // This is a non blocking call that returns immediately.
     // Use child.composeGreeting("Hello", name) to call synchronously
@@ -40,8 +35,8 @@ class GreetingWorkflowImpl extends GreetingWorkflow {
      *
      * You can use child.composeGreeting("Hello", name) instead to call the child workflow method synchronously.
      */
-    val greeting = ZAsync.fromJava(
-      child.executeAsync(classOf[String], "Hello", name)
+    val greeting: ZAsync[String] = ZChildWorkflowStub.executeAsync(
+      child.composeGreeting("Hello", name)
     )
     logger.info("Waiting until child workflow completes...")
     // Wait for the child workflow to complete and return its results

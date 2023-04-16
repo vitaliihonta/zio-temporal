@@ -147,23 +147,17 @@ object WorkflowSpec extends ZIOSpecDefault {
         _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
                ZWorker.addWorkflow[SignalWithStartWorkflowImpl].fromClass
         _ <- ZTestWorkflowEnvironment.setup()
-        signalWithStartWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                                     _.newWorkflowStub[SignalWithStartWorkflow]
-                                       .withTaskQueue(taskQueue)
-                                       .withWorkflowId(workflowId)
-                                       .withWorkflowRunTimeout(10.seconds)
-                                       .build
-                                   )
-        _ <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-               _ signalWith (
-                 signalWithStartWorkflow.echo("Hello")
-               ) start (
-                 signalWithStartWorkflow.echoServer()
-               )
-             )
         workflowStub <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                          _.newWorkflowStubProxy[SignalWithStartWorkflow](workflowId)
+                          _.newWorkflowStub[SignalWithStartWorkflow]
+                            .withTaskQueue(taskQueue)
+                            .withWorkflowId(workflowId)
+                            .withWorkflowRunTimeout(10.seconds)
+                            .build
                         )
+        _ <- workflowStub.signalWithStart(
+               workflowStub.echoServer(),
+               workflowStub.echo("Hello")
+             )
         initialSnapshot <- ZWorkflowStub.query(
                              workflowStub.messages
                            )
@@ -203,15 +197,15 @@ object WorkflowSpec extends ZIOSpecDefault {
                  ZWorker.addWorkflow[SagaWorkflowImpl].fromClass @@
                  ZWorker.addActivityImplementation(new TransferActivityImpl(successFunc, successFunc))
           _ <- ZTestWorkflowEnvironment.setup()
-          signalWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                              _.newWorkflowStub[SagaWorkflow]
-                                .withTaskQueue(taskQueue)
-                                .withWorkflowId(workflowId)
-                                .withWorkflowRunTimeout(10.seconds)
-                                .build
-                            )
+          sagaWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
+                            _.newWorkflowStub[SagaWorkflow]
+                              .withTaskQueue(taskQueue)
+                              .withWorkflowId(workflowId)
+                              .withWorkflowRunTimeout(10.seconds)
+                              .build
+                          )
           result <- ZWorkflowStub.execute(
-                      signalWorkflow.transfer(TransferCommand("from", "to", expectedResult))
+                      sagaWorkflow.transfer(TransferCommand("from", "to", expectedResult))
                     )
         } yield {
           assertTrue(result == expectedResult)

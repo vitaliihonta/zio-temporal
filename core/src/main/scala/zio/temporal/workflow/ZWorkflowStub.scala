@@ -8,13 +8,12 @@ import zio.temporal.internal.ClassTagUtils
 import zio.temporal.internal.TemporalInteraction
 import zio.temporal.internal.tagging.Stubs
 import zio.temporal.query.ZWorkflowStubQuerySyntax
-import zio.temporal.signal.ZWorkflowStubSignalSyntax
+import zio.temporal.signal.{ZWorkflowClientSignalWithStartSyntax, ZWorkflowStubSignalSyntax}
 import java.util.concurrent.TimeUnit
-import scala.concurrent.TimeoutException
 import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
-sealed trait ZWorkflowStub extends CanSignal[WorkflowStub] {
+sealed trait ZWorkflowStub extends ZWorkflowClientSignalWithStartSyntax with CanSignal[WorkflowStub] {
 
   override protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit =
     toJava.signal(signalName, args: _*)

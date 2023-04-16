@@ -5,11 +5,11 @@ import io.temporal.common.context.ContextPropagator
 import io.temporal.workflow.ChildWorkflowCancellationType
 import io.temporal.workflow.ChildWorkflowOptions
 import io.temporal.workflow.Workflow
-import zio._
-import zio.temporal.ZRetryOptions
-import zio.temporal.ZSearchAttribute
+import zio.*
+import zio.temporal.{ZRetryOptions, ZSearchAttribute, simpleNameOf}
 import zio.temporal.internal.ClassTagUtils
-import scala.jdk.CollectionConverters._
+
+import scala.jdk.CollectionConverters.*
 import scala.reflect.ClassTag
 
 class ZChildWorkflowStubBuilder[A: ClassTag] private[zio] (
@@ -51,17 +51,18 @@ class ZChildWorkflowStubBuilder[A: ClassTag] private[zio] (
   def withCancellationType(cancellationType: ChildWorkflowCancellationType): ZChildWorkflowStubBuilder[A] =
     copy(_.setCancellationType(cancellationType))
 
-  // TODO: re-implement
-//  /** Builds typed ZChildWorkflowStub
-//    * @return
-//    *   typed child workflow stub
-//    */
-//  def build: ZChildWorkflowStub.Of[A] = {
-//    val options = additionalOptions(ChildWorkflowOptions.newBuilder()).build()
-//    ZChildWorkflowStub.Of(
-//      Workflow.newChildWorkflowStub(ClassTagUtils.classOf[A], options)
-//    )
-//  }
+  /** Builds typed ZChildWorkflowStub
+    * @return
+    *   typed child workflow stub
+    */
+  def build: ZChildWorkflowStub.Of[A] = {
+    val options = additionalOptions(ChildWorkflowOptions.newBuilder()).build()
+    ZChildWorkflowStub.Of(
+      new ZChildWorkflowStubImpl(
+        Workflow.newUntypedChildWorkflowStub(simpleNameOf[A], options)
+      )
+    )
+  }
 
   private def copy(
     options: ChildWorkflowOptions.Builder => ChildWorkflowOptions.Builder

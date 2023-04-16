@@ -20,11 +20,8 @@ sealed trait ZChildWorkflowStub extends CanSignal[ChildWorkflowStub] {
 
 final class ZChildWorkflowStubImpl @internalApi() (val toJava: ChildWorkflowStub) extends ZChildWorkflowStub
 
-object ZChildWorkflowStub
-    extends Stubs[ZChildWorkflowStub]
-    with ZChildWorkflowExecutionSyntax
-    with ZWorkflowStubSignalSyntax
-    with ZWorkflowStubQuerySyntax {
+// TODO: add signal & query
+object ZChildWorkflowStub extends Stubs[ZChildWorkflowStub] with ZChildWorkflowExecutionSyntax {
 
   final implicit class Ops[A](private val self: ZChildWorkflowStub.Of[A]) extends AnyVal {
 

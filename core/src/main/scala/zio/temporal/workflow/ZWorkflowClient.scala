@@ -14,7 +14,7 @@ import scala.reflect.ClassTag
   * @see
   *   [[WorkflowClient]]
   */
-final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) extends ZWorkflowClientSignalWithStartSyntax {
+final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) {
 
   /** Creates new ActivityCompletionClient
     * @see
