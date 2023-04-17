@@ -19,7 +19,6 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   private val SignalMethod      = typeSymbolOf[signalMethod]
   private val ActivityMethod    = typeSymbolOf[activityMethod]
 
-  // TODO: add same for activity
   private val zworkflowStub         = TypeRepr.of[ZWorkflowStub]
   private val zchildWorkflowStub    = TypeRepr.of[ZChildWorkflowStub]
   private val zexternalWorkflowStub = TypeRepr.of[ZExternalWorkflowStub]
@@ -28,9 +27,11 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   def betaReduceExpression[A: Type](f: Expr[A]): Expr[A] =
     Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
 
+  // Asserts that this is a WorkflowInterface
   def getMethodInvocationOfWorkflow(tree: Term): MethodInvocation =
     getMethodInvocation(tree, getWorkflowType)
 
+  // Asserts that this is a ActivityInterface
   def getMethodInvocationOfActivity(tree: Term): MethodInvocation =
     getMethodInvocation(tree, getActivityType)
 
@@ -54,7 +55,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     methodName:      String,
     args:            List[Term],
     disassembleType: TypeRepr => TypeRepr) {
-    // Asserts that this is a WorkflowInterface
+
     private val tpe = disassembleType(instance.tpe.widen)
 
     def getMethod(errorDetails: => String): MethodInfo =

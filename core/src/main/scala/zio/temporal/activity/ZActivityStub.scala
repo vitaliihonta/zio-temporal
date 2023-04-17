@@ -3,6 +3,7 @@ package zio.temporal.activity
 import io.temporal.workflow.ActivityStub
 import zio.temporal.internalApi
 import zio.temporal.internal.tagging.Stubs
+
 sealed trait ZActivityStub {
   def toJava: ActivityStub
 }
