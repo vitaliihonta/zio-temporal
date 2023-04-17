@@ -58,6 +58,46 @@ object WorkflowSpec extends ZIOSpecDefault {
       } yield assertTrue(result == "Hello Vitalii!")
 
     }.provideEnv,
+    test("runs workflows with external workflow signalling") {
+      val taskQueue      = "external-workflow-queue"
+      val input          = "Wooork"
+      val expectedOutput = "Wooork done"
+      for {
+        _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
+               ZWorker.addWorkflow[WorkflowFooImpl].fromClass @@
+               ZWorker.addWorkflow[WorkflowBarImpl].fromClass
+
+        _             <- ZTestWorkflowEnvironment.setup()
+        fooWorkflowId <- ZIO.randomWith(_.nextUUID).map(_.toString)
+        fooWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
+                         _.newWorkflowStub[WorkflowFoo]
+                           .withTaskQueue(taskQueue)
+                           .withWorkflowId(fooWorkflowId)
+                           .withWorkflowRunTimeout(10.second)
+                           .build
+                       )
+        barWorkflowId = fooWorkflowId + "-bar"
+        barWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
+                         _.newWorkflowStub[WorkflowBar]
+                           .withTaskQueue(taskQueue)
+                           .withWorkflowId(barWorkflowId)
+                           .withWorkflowRunTimeout(10.second)
+                           .build
+                       )
+        _ <- ZIO.collectAllParDiscard(
+               List(
+                 ZWorkflowStub.start(
+                   fooWorkflow.doSomething(input)
+                 ),
+                 ZWorkflowStub.start(
+                   barWorkflow.doSomethingElse()
+                 )
+               )
+             )
+        result <- fooWorkflow.result[String]
+      } yield assertTrue(result == expectedOutput)
+
+    }.provideEnv,
     test("run workflow with signals") {
       val taskQueue  = "signal-queue"
       val workflowId = UUID.randomUUID().toString + taskQueue
@@ -260,8 +300,8 @@ object WorkflowSpec extends ZIOSpecDefault {
       }
 
     }.provideEnv,
-    test("run workflow with promise") {
-      val taskQueue = "promise-queue"
+    test("run workflow with zasync") {
+      val taskQueue = "zasync-queue"
 
       val order = new AtomicReference(ListBuffer.empty[(String, Int)])
       val fooFunc = (x: Int) => {

@@ -98,7 +98,7 @@ object ZWorkflow {
     * @see
     *   [[Workflow.await]]
     * @return
-    *   unblocks when condition becomes false or timeout elapsed
+    *   unblocks when condition becomes false or timeout elapsed. '''False''' if timed out
     */
   def awaitWhile(timeout: Duration)(cond: => Boolean): Boolean =
     awaitUntil(timeout)(!cond)
@@ -124,7 +124,7 @@ object ZWorkflow {
     * @see
     *   [[Workflow.await]]
     * @return
-    *   unblocks when condition becomes true or timeout elapsed
+    *   unblocks when condition becomes true or timeout elapsed. '''False''' if timed out
     */
   def awaitUntil(timeout: Duration)(cond: => Boolean): Boolean =
     Workflow.await(timeout.asJava, () => cond)
@@ -238,38 +238,42 @@ object ZWorkflow {
     */
   def newChildWorkflowStub[A: ClassTag: IsWorkflow]: ZChildWorkflowStubBuilder[A] =
     new ZChildWorkflowStubBuilder[A](identity)
-//
-//  /** Creates client stub that can be used to communicate to an existing workflow execution.
-//    *
-//    * @tparam A
-//    *   workflow interface
-//    * @param workflowId
-//    *   id of the workflow to communicate with.
-//    * @return
-//    *   external workflow stub
-//    */
-//  def newExternalWorkflowStub[A: ClassTag: IsWorkflow](
-//    workflowId: String
-//  ): ZExternalWorkflowStub.Of[A] =
-//    ZExternalWorkflowStub.Of(
-//      Workflow.newExternalWorkflowStub[A](ClassTagUtils.classOf[A], workflowId)
-//    )
-//
-//  /** Creates client stub that can be used to communicate to an existing workflow execution.
-//    *
-//    * @tparam A
-//    *   workflow interface
-//    * @param workflowExecution
-//    *   execution of the workflow to communicate with.
-//    * @return
-//    *   external workflow stub
-//    */
-//  def newExternalWorkflowStub[A: ClassTag: IsWorkflow](
-//    workflowExecution: ZWorkflowExecution
-//  ): ZExternalWorkflowStub.Of[A] =
-//    ZExternalWorkflowStub.Of(
-//      Workflow.newExternalWorkflowStub[A](ClassTagUtils.classOf[A], workflowExecution.toJava)
-//    )
+
+  /** Creates client stub that can be used to signal or cancel an existing workflow
+    *
+    * @tparam A
+    *   workflow interface
+    * @param workflowId
+    *   id of the workflow to communicate with.
+    * @return
+    *   external workflow stub
+    */
+  def newExternalWorkflowStub[A: ClassTag: IsWorkflow](
+    workflowId: String
+  ): ZExternalWorkflowStub.Of[A] =
+    ZExternalWorkflowStub.Of(
+      new ZExternalWorkflowStubImpl(
+        Workflow.newUntypedExternalWorkflowStub(workflowId)
+      )
+    )
+
+  /** Creates client stub that can be used to signal or cancel an existing workflow
+    *
+    * @tparam A
+    *   workflow interface
+    * @param workflowExecution
+    *   execution of the workflow to communicate with.
+    * @return
+    *   external workflow stub
+    */
+  def newExternalWorkflowStub[A: ClassTag: IsWorkflow](
+    workflowExecution: ZWorkflowExecution
+  ): ZExternalWorkflowStub.Of[A] =
+    ZExternalWorkflowStub.Of(
+      new ZExternalWorkflowStubImpl(
+        Workflow.newUntypedExternalWorkflowStub(workflowExecution.toJava)
+      )
+    )
 
 //  /** Creates untyped client stub that can be used to communicate to an existing workflow execution.
 //    *

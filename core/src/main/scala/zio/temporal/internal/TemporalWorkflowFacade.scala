@@ -2,7 +2,7 @@ package zio.temporal.internal
 
 import io.temporal.api.common.v1.WorkflowExecution
 import io.temporal.client.{BatchRequest, WorkflowStub}
-import io.temporal.workflow.{ChildWorkflowStub, Functions, Promise}
+import io.temporal.workflow.{ChildWorkflowStub, ExternalWorkflowStub, Functions, Promise}
 
 import java.util.concurrent.{CompletableFuture, TimeUnit}
 import scala.language.implicitConversions
@@ -46,8 +46,16 @@ object TemporalWorkflowFacade {
     stub.signal(signalName, args.asInstanceOf[List[AnyRef]]: _*)
   }
 
-  def signalChild(
+  def signal(
     stub:       ChildWorkflowStub,
+    signalName: String,
+    args:       List[Any]
+  ): Unit = {
+    stub.signal(signalName, args.asInstanceOf[List[AnyRef]]: _*)
+  }
+
+  def signal(
+    stub:       ExternalWorkflowStub,
     signalName: String,
     args:       List[Any]
   ): Unit = {

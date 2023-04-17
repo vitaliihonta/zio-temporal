@@ -62,6 +62,3 @@ object ZChildWorkflowExecutionSyntax {
     }.debugged(SharedCompileTimeMessages.generatedChildWorkflowExecuteAsync)
   }
 }
-
-// TODO: implement
-trait ZExternalWorkflowExecutionSyntax {}

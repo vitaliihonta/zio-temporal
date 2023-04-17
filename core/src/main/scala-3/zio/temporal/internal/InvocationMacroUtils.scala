@@ -2,6 +2,7 @@ package zio.temporal.internal
 
 import io.temporal.api.common.v1.WorkflowExecution
 import zio.temporal.*
+import zio.temporal.workflow.*
 
 import java.util.concurrent.CompletableFuture
 import scala.quoted.*
@@ -15,6 +16,10 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   private val WorkflowMethod    = typeSymbolOf[workflowMethod]
   private val QueryMethod       = typeSymbolOf[queryMethod]
   private val SignalMethod      = typeSymbolOf[signalMethod]
+  // TODO: add same for activity
+  private val zworkflowStub         = TypeRepr.of[ZWorkflowStub]
+  private val zchildWorkflowStub    = TypeRepr.of[ZChildWorkflowStub]
+  private val zexternalWorkflowStub = TypeRepr.of[ZExternalWorkflowStub]
 
   def betaReduceExpression[A: Type](f: Expr[A]): Expr[A] =
     Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
@@ -123,7 +128,14 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     findWorkflowType(workflow).getOrElse(error(SharedCompileTimeMessages.notWorkflow(workflow.show)))
 
   def findWorkflowType(workflow: TypeRepr): Option[TypeRepr] = {
+//    println(workflow.getClass.toString + s" cls, tpe: $workflow")
     val tpe = workflow match {
+      case AndType(left, wf)
+          if left =:= zworkflowStub ||
+            left =:= zchildWorkflowStub ||
+            left =:= zexternalWorkflowStub =>
+        wf
+
       case AppliedType(_, List(wf)) => wf
       case _                        => workflow
     }

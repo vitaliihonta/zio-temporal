@@ -3,12 +3,12 @@ package zio.temporal.signal
 import scala.quoted.*
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
 
-trait ZChildWorkflowStubSignalSyntax {
+trait ZExternalWorkflowStubSignalSyntax {
   inline def signal(inline f: Unit): Unit =
-    ${ ZChildWorkflowStubSignalSyntax.signalImpl('f) }
+    ${ ZExternalWorkflowStubSignalSyntax.signalImpl('f) }
 }
 
-object ZChildWorkflowStubSignalSyntax {
+object ZExternalWorkflowStubSignalSyntax {
   def signalImpl(f: Expr[Unit])(using q: Quotes): Expr[Unit] = {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
@@ -21,7 +21,7 @@ object ZChildWorkflowStubSignalSyntax {
 
     val stub = invocation.instance
       .select(invocation.instance.symbol.methodMember("toJava").head)
-      .asExprOf[io.temporal.workflow.ChildWorkflowStub]
+      .asExprOf[io.temporal.workflow.ExternalWorkflowStub]
 
     val castedArgs = Expr.ofList(
       method.appliedArgs.map(_.asExprOf[Any])

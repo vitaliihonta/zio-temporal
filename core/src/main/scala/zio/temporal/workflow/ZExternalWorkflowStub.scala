@@ -1,8 +1,10 @@
 package zio.temporal.workflow
 
 import io.temporal.workflow.ExternalWorkflowStub
+import zio.temporal.internal.TemporalInteraction
 import zio.temporal.internal.tagging.Stubs
-import zio.temporal.internalApi
+import zio.temporal.{TemporalIO, internalApi}
+import zio.temporal.signal.ZExternalWorkflowStubSignalSyntax
 
 /** Represents untyped external workflow stub
   *
@@ -11,20 +13,16 @@ import zio.temporal.internalApi
   */
 sealed trait ZExternalWorkflowStub {
   def toJava: ExternalWorkflowStub
+
+  def cancel(): TemporalIO[Unit] =
+    TemporalInteraction.from {
+      toJava.cancel()
+    }
 }
 
 final class ZExternalWorkflowStubImpl @internalApi() (val toJava: ExternalWorkflowStub) extends ZExternalWorkflowStub {}
 
-// TODO: add signal (non-IO, see https://docs.temporal.io/application-development/features?lang=java#send-signal-from-workflow)
-object ZExternalWorkflowStub extends Stubs[ZExternalWorkflowStub] with ZExternalWorkflowExecutionSyntax {
+object ZExternalWorkflowStub extends Stubs[ZExternalWorkflowStub] with ZExternalWorkflowStubSignalSyntax {
 
-  final implicit class Ops[A](private val self: ZExternalWorkflowStub.Of[A]) extends AnyVal {
-
-    /** Converts typed stub [[A]] to [[ZExternalWorkflowStub]]
-      *
-      * @return
-      *   untyped external workflow stub
-      */
-    def toStub: ZExternalWorkflowStub = new ZExternalWorkflowStubImpl(ExternalWorkflowStub.fromTyped(self))
-  }
+  final implicit class Ops[A](private val self: ZExternalWorkflowStub.Of[A]) extends AnyVal {}
 }

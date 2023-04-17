@@ -1,16 +1,16 @@
 package zio.temporal.internal
 
-import zio.temporal.workflow.ZChildWorkflowStub
+import zio.temporal.workflow.ZExternalWorkflowStub
 import scala.reflect.macros.blackbox
 
-class ZChildSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
+class ZExternalSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
   import c.universe._
 
-  private val zchildWorkflowStub = typeOf[ZChildWorkflowStub.type].dealias
+  private val zexternalWorkflowStub = typeOf[ZExternalWorkflowStub.type].dealias
 
   def signalImpl(f: Expr[Unit]): Tree = {
-    // Assert called on ZChildWorkflowStub
-    val _ = getPrefixOf(zchildWorkflowStub)
+    // Assert called on ZExternalWorkflowStub
+    val _ = getPrefixOf(zexternalWorkflowStub)
 
     val tree       = f.tree
     val invocation = getMethodInvocation(tree)

@@ -10,6 +10,3 @@ trait ZChildWorkflowExecutionSyntax {
   def executeAsync[R](f: R): ZAsync[R] =
     macro ZChildWorkflowMacro.executeAsyncImpl[R]
 }
-
-// TODO: implement
-trait ZExternalWorkflowExecutionSyntax {}
