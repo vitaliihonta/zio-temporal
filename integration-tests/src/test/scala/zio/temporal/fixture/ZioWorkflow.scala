@@ -38,7 +38,9 @@ class ZioWorkflowImpl extends ZioWorkflow {
     .build
 
   override def echo(what: String): String = {
-    val msg = activity.echo(what)
+    val msg = ZActivityStub.execute(
+      activity.echo(what)
+    )
     println("Waiting for completion...")
     ZWorkflow.awaitWhile(state.isEmpty)
     msg

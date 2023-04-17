@@ -3,6 +3,7 @@ package com.example.heartbeatingactivity
 import zio.*
 import zio.temporal.*
 import zio.temporal.workflow.*
+import zio.temporal.activity.ZActivityStub
 
 @workflowInterface
 trait HeartbeatingActivityBatchWorkflow {
@@ -29,7 +30,7 @@ class HeartbeatingActivityBatchWorkflowImpl extends HeartbeatingActivityBatchWor
     * batch sizes. Heartbeat timeout is required to quickly restart the activity in case of failures. The heartbeat
     * timeout is also needed to record heartbeat details at the service.
     */
-  private val recordProcessor = ZWorkflow
+  private val recordProcessor: ZActivityStub.Of[RecordProcessorActivity] = ZWorkflow
     .newActivityStub[RecordProcessorActivity]
     .withStartToCloseTimeout(1.hour)
     .withHeartbeatTimeout(10.seconds)
@@ -40,7 +41,9 @@ class HeartbeatingActivityBatchWorkflowImpl extends HeartbeatingActivityBatchWor
   // No special logic needed here as activity is retried automatically by the service.
   override def processBatch(): Int = {
     logger.info("Started workflow")
-    val result = recordProcessor.processRecords()
+    val result = ZActivityStub.execute(
+      recordProcessor.processRecords()
+    )
     logger.info(s"Workflow result is $result")
     result
   }

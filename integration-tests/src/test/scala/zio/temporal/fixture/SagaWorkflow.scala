@@ -2,7 +2,7 @@ package zio.temporal.fixture
 
 import zio.*
 import zio.temporal.*
-import zio.temporal.activity.{ZActivity, ZActivityOptions}
+import zio.temporal.activity.*
 import zio.temporal.workflow.*
 
 case class TransferError(msg: String) extends Exception(msg)
@@ -58,10 +58,16 @@ class SagaWorkflowImpl extends SagaWorkflow {
 
   override def transfer(command: TransferCommand): BigDecimal = {
     val saga = for {
-      _ <- ZSaga.attempt(activity.withdraw(command.from, command.amount))
+      _ <- ZSaga.attempt(
+             ZActivityStub.execute(
+               activity.withdraw(command.from, command.amount)
+             )
+           )
       _ <- ZSaga.make(
-             activity.deposit(command.to, command.amount)
-           )(compensate = activity.deposit(command.from, command.amount))
+             ZActivityStub.execute(
+               activity.deposit(command.to, command.amount)
+             )
+           )(compensate = ZActivityStub.execute(activity.deposit(command.from, command.amount)))
     } yield command.amount
 
     saga.runOrThrow()

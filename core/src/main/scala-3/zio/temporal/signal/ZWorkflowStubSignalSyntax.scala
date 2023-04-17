@@ -41,9 +41,9 @@ object ZWorkflowStubSignalSyntax {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
-    val invocation = getMethodInvocation(f.asTerm)
-    val method     = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
+    val invocation = getMethodInvocationOfWorkflow(f.asTerm)
 
+    val method = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     method.assertSignalMethod()
     val signalName = getSignalName(method.symbol)
 
@@ -72,12 +72,14 @@ object ZWorkflowStubSignalSyntax {
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val startInvocation = getMethodInvocation(start.asTerm)
-    val startMethod     = startInvocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
+    val startInvocation = getMethodInvocationOfWorkflow(start.asTerm)
+
+    val startMethod = startInvocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     startMethod.assertWorkflowMethod()
 
-    val signalInvocation = getMethodInvocation(signal.asTerm)
-    val signalMethod     = signalInvocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
+    val signalInvocation = getMethodInvocationOfWorkflow(signal.asTerm)
+
+    val signalMethod = signalInvocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     signalMethod.assertSignalMethod()
     val signalName = getSignalName(signalMethod.symbol)
 

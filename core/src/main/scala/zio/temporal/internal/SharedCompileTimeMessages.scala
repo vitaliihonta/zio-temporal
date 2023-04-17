@@ -5,6 +5,9 @@ object SharedCompileTimeMessages {
   val wfMethodShouldntBeExtMethod: String =
     "Workflow method should not be an extension method!"
 
+  val actMethodShouldntBeExtMethod: String =
+    "Activity method should not be an extension method!"
+
   val sgnlMethodShouldntBeExtMethod: String =
     "Signal method should not be an extension method!"
 
@@ -20,11 +23,17 @@ object SharedCompileTimeMessages {
   val generateChildWorkflowExecute: String =
     "Generated child workflow execute"
 
+  val generatedActivityExecute: String =
+    "Generated activity execute"
+
   val generatedWorkflowExecute: String =
     "Generated workflow method execute"
 
   val generatedChildWorkflowExecuteAsync: String =
-    "Generated child workflow start async"
+    "Generated child workflow execute async"
+
+  val generatedActivityExecuteAsync: String =
+    "Generated activity execute async"
 
   val generatedSignal: String =
     "Generated signal"

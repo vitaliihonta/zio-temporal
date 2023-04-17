@@ -65,7 +65,7 @@ Then we could implement a stateful workflow as follows:
 
 ```scala mdoc:silent
 class PaymentWorkflowImpl extends PaymentWorkflow {
-  private val paymentActivity = ZWorkflow
+  private val paymentActivity: ZActivityStub.Of[PaymentActivity] = ZWorkflow
     .newActivityStub[PaymentActivity]
     .withStartToCloseTimeout(10.seconds)
     .build
@@ -79,13 +79,17 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
   }
   
   override def proceed(amount: BigDecimal, from: String, to: String): Unit = {
-    paymentActivity.debit(amount, from)
+    ZActivityStub.execute(
+      paymentActivity.debit(amount, from)
+    )
     paymentState := PaymentState.Debited
     
     // Waiting for the confirmation
     ZWorkflow.awaitWhile(paymentState =:= PaymentState.Debited)
-    
-    paymentActivity.credit(amount, to)
+
+    ZActivityStub.execute(
+      paymentActivity.credit(amount, to)
+    )
     paymentState := PaymentState.Credited
   }
 }
@@ -119,7 +123,7 @@ val runWorkflow = for {
   _ <- startWorkflow
   
   paymentWorkflow <- ZIO.serviceWithZIO[ZWorkflowClient] { workflowClient =>
-    workflowClient.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId)
+    workflowClient.newWorkflowStub[PaymentWorkflow](workflowId = transactionId)
   }
   
   stateBefore <- ZWorkflowStub.query(paymentWorkflow.getPaymentState())
@@ -132,9 +136,7 @@ val runWorkflow = for {
 } yield ()
 ```
 
-Important notes:
-
-- Due to Java SDK implementation, it's not allowed to just invoke the signal method directly: this will throw an
-  exception
+- **Reminder: you must always** wrap the query method invocation into `ZWorkflowStub.signal` method.
+  - `paymentWorkflow.confirmPayment(code = "1234")` invocation would be re-written into an untyped Temporal's signal invocation
+  - A direct method invocation will throw an exception
 - Reminder: signalling workflow state = calling a remote server
-- Those, you should wrap the signal method invocation into a `ZWorkflowStub.signal` block

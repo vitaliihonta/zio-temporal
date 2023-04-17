@@ -14,6 +14,7 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
   protected val WorkflowMethod    = typeOf[workflowMethod].dealias
   protected val QueryMethod       = typeOf[queryMethod].dealias
   protected val SignalMethod      = typeOf[signalMethod].dealias
+  protected val ActivityMethod    = typeOf[activityMethod].dealias
 
   protected case class MethodInfo(name: Name, symbol: Symbol, appliedArgs: List[Tree]) {
     validateCalls()
@@ -109,6 +110,16 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
     findImplicit(tagTpe, SharedCompileTimeMessages.notFound(tagTpe.toString))
   }
 
+  protected def getActivityName(method: Symbol): String =
+    findAnnotation(method, ActivityMethod)
+      .flatMap(
+        _.children.tail
+          .collectFirst { case NamedArgVersionSpecific(_, Literal(Constant(signalName: String))) =>
+            signalName
+          }
+      )
+      .getOrElse(method.name.toString.capitalize)
+
   protected def getSignalName(method: Symbol): String =
     getAnnotation(method, SignalMethod).children.tail
       .collectFirst { case NamedArgVersionSpecific(_, Literal(Constant(signalName: String))) =>
@@ -121,6 +132,13 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
       error(SharedCompileTimeMessages.notWorkflow(workflow.toString))
     }
     workflow
+  }
+
+  protected def assertActivity(activity: Type): Type = {
+    if (!isActivity(activity)) {
+      error(SharedCompileTimeMessages.notActivity(activity.toString))
+    }
+    activity
   }
 
   protected def assertExtendsWorkflow(workflow: Type): Type = {

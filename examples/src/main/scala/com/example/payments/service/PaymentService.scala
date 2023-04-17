@@ -70,7 +70,7 @@ class TemporalPaymentService(workflowClient: ZWorkflowClient) extends PaymentSer
     withErrorHandling {
       for {
         _            <- updateLogContext(transactionId)
-        workflowStub <- workflowClient.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId.toString)
+        workflowStub <- workflowClient.newWorkflowStub[PaymentWorkflow](workflowId = transactionId.toString)
         _            <- ZIO.logInfo("Checking if transaction is finished...")
         maybeTransaction <- ZIO.whenZIO(
                               ZWorkflowStub.query(
@@ -88,7 +88,7 @@ class TemporalPaymentService(workflowClient: ZWorkflowClient) extends PaymentSer
     withErrorHandling {
       for {
         _            <- updateLogContext(transactionId)
-        workflowStub <- workflowClient.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId.toString)
+        workflowStub <- workflowClient.newWorkflowStub[PaymentWorkflow](workflowId = transactionId.toString)
         _            <- ZIO.logInfo("Going to send confirmation")
         isFinished <- ZWorkflowStub.query(
                         workflowStub.isFinished()

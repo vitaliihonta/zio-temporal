@@ -27,7 +27,7 @@ class ArithmeticActivityImpl()(implicit options: ZActivityOptions[Any]) extends 
 class MathWorkflowImpl extends MathWorkflow {
   private lazy val logger = ZWorkflow.getLogger(getClass)
 
-  private val activity = ZWorkflow
+  private val activity: ZActivityStub.Of[ArithmeticActivity] = ZWorkflow
     .newActivityStub[ArithmeticActivity]
     .withStartToCloseTimeout(10.seconds)
     .withRetryOptions(
@@ -39,9 +39,13 @@ class MathWorkflowImpl extends MathWorkflow {
     .build
 
   override def formula(a: Int): Int = {
-    val twice = activity.multiply(a, a)
+    val twice = ZActivityStub.execute(
+      activity.multiply(a, a)
+    )
     try {
-      activity.divide(twice, 0)
+      ZActivityStub.execute(
+        activity.divide(twice, 0)
+      )
     } catch {
       // Example of handling errors in the workflow
       case ActivityFailure.Cause(e) =>

@@ -2,6 +2,7 @@ package zio.temporal.internal
 
 import io.temporal.api.common.v1.WorkflowExecution
 import zio.temporal.*
+import zio.temporal.activity.ZActivityStub
 import zio.temporal.workflow.*
 
 import java.util.concurrent.CompletableFuture
@@ -16,35 +17,49 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   private val WorkflowMethod    = typeSymbolOf[workflowMethod]
   private val QueryMethod       = typeSymbolOf[queryMethod]
   private val SignalMethod      = typeSymbolOf[signalMethod]
-  // TODO: add same for activity
+  private val ActivityMethod    = typeSymbolOf[activityMethod]
+
   private val zworkflowStub         = TypeRepr.of[ZWorkflowStub]
   private val zchildWorkflowStub    = TypeRepr.of[ZChildWorkflowStub]
   private val zexternalWorkflowStub = TypeRepr.of[ZExternalWorkflowStub]
+  private val zactivityStub         = TypeRepr.of[ZActivityStub]
 
   def betaReduceExpression[A: Type](f: Expr[A]): Expr[A] =
     Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
 
-  def getMethodInvocation(tree: Term): MethodInvocation =
+  // Asserts that this is a WorkflowInterface
+  def getMethodInvocationOfWorkflow(tree: Term): MethodInvocation =
+    getMethodInvocation(tree, getWorkflowType)
+
+  // Asserts that this is a ActivityInterface
+  def getMethodInvocationOfActivity(tree: Term): MethodInvocation =
+    getMethodInvocation(tree, getActivityType)
+
+  private def getMethodInvocation(tree: Term, disassembleType: TypeRepr => TypeRepr): MethodInvocation =
     tree match {
       case Inlined(_, _, body) =>
-        getMethodInvocation(body)
+        getMethodInvocation(body, disassembleType)
       case Select(instance, methodName) =>
-        MethodInvocation(instance, methodName, Nil)
+        MethodInvocation(instance, methodName, Nil, disassembleType)
       case Apply(Select(instance, methodName), args) =>
-        MethodInvocation(instance, methodName, args)
+        MethodInvocation(instance, methodName, args, disassembleType)
       case TypeApply(inner, _) =>
-        getMethodInvocation(inner)
+        getMethodInvocation(inner, disassembleType)
       case Block(List(inner: Term), _) =>
-        getMethodInvocation(inner)
+        getMethodInvocation(inner, disassembleType)
       case _ => sys.error(s"Expected simple method invocation, got tree of class ${tree.getClass}: $tree")
     }
 
-  case class MethodInvocation(instance: Term, methodName: String, args: List[Term]) {
-    // Asserts that this is a WorkflowInterface
-    val workflowType = getWorkflowType(instance.tpe.widen)
+  case class MethodInvocation(
+    instance:        Term,
+    methodName:      String,
+    args:            List[Term],
+    disassembleType: TypeRepr => TypeRepr) {
+
+    private val tpe = disassembleType(instance.tpe.widen)
 
     def getMethod(errorDetails: => String): MethodInfo =
-      workflowType.typeSymbol
+      tpe.typeSymbol
         .methodMember(methodName)
         .headOption
         .map(MethodInfo(methodName, _, args))
@@ -127,8 +142,10 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   def getWorkflowType(workflow: TypeRepr): TypeRepr =
     findWorkflowType(workflow).getOrElse(error(SharedCompileTimeMessages.notWorkflow(workflow.show)))
 
+  def getActivityType(workflow: TypeRepr): TypeRepr =
+    findActivityType(workflow).getOrElse(error(SharedCompileTimeMessages.notActivity(workflow.show)))
+
   def findWorkflowType(workflow: TypeRepr): Option[TypeRepr] = {
-//    println(workflow.getClass.toString + s" cls, tpe: $workflow")
     val tpe = workflow match {
       case AndType(left, wf)
           if left =:= zworkflowStub ||
@@ -145,6 +162,8 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
 
   def findActivityType(activity: TypeRepr): Option[TypeRepr] = {
     val tpe = activity match {
+      case AndType(left, act) if left =:= zactivityStub =>
+        act
       case AppliedType(_, List(act)) => act
       case _                         => activity
     }
@@ -176,7 +195,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
 
   // Workflow#start
   def buildStartWorkflowInvocation(f: Term): Expr[WorkflowExecution] = {
-    val invocation = getMethodInvocation(f)
+    val invocation = getMethodInvocationOfWorkflow(f)
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
@@ -201,7 +220,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
 
   // Workflow#execute
   def buildExecuteWorkflowInvocation[R: Type](f: Term, ctgExpr: Expr[ClassTag[R]]): Expr[CompletableFuture[R]] = {
-    val invocation = getMethodInvocation(f)
+    val invocation = getMethodInvocationOfWorkflow(f)
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
@@ -227,7 +246,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
 
   // Workflow#query
   def buildQueryInvocation[R: Type](f: Term, ctgExpr: Expr[ClassTag[R]]): Expr[R] = {
-    val invocation = getMethodInvocation(f)
+    val invocation = getMethodInvocationOfWorkflow(f)
 
     val method = invocation.getMethod(SharedCompileTimeMessages.qrMethodShouldntBeExtMethod)
     method.assertQueryMethod()
@@ -259,6 +278,19 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
       case Some(Apply(Select(New(_), _), List(NamedArg(_, Literal(StringConstant(name)))))) =>
         name
       case _ => method.name
+    }
+  }
+
+  def getActivityName(method: Symbol): String = {
+    def methodNameCap = method.name.capitalize
+    if (!method.hasAnnotation(ActivityMethod)) {
+      methodNameCap
+    } else {
+      method.getAnnotation(ActivityMethod) match {
+        case Some(Apply(Select(New(_), _), List(NamedArg(_, Literal(StringConstant(name)))))) =>
+          name
+        case _ => methodNameCap
+      }
     }
   }
 

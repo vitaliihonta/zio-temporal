@@ -3,9 +3,10 @@ package com.example.bookingsaga
 import zio.*
 import zio.temporal.*
 import zio.temporal.workflow.*
+import zio.temporal.activity.ZActivityStub
 
 class TripBookingWorkflowImpl extends TripBookingWorkflow {
-  private val activities: TripBookingActivities = ZWorkflow
+  private val activities: ZActivityStub.Of[TripBookingActivities] = ZWorkflow
     .newActivityStub[TripBookingActivities]
     .withStartToCloseTimeout(1.hour)
     .withRetryOptions(
@@ -16,19 +17,35 @@ class TripBookingWorkflowImpl extends TripBookingWorkflow {
   override def bookTrip(name: String): Unit = {
     val bookingSaga = for {
       // Option 1: attempt and add compensation later
-      carReservationID <- ZSaga.attempt(activities.reserveCar(name))
+      carReservationID <- ZSaga.attempt(
+                            ZActivityStub.execute(
+                              activities.reserveCar(name)
+                            )
+                          )
       _ <- ZSaga.compensation(
-             activities.cancelCar(carReservationID, name)
+             ZActivityStub.execute(
+               activities.cancelCar(carReservationID, name)
+             )
            )
       hotelReservationID <- ZSaga.attempt(
-                              activities.bookHotel(name)
+                              ZActivityStub.execute(
+                                activities.bookHotel(name)
+                              )
                             )
       // Option 2: make a ZSaga with main action and compensation
       flightReservationID <- ZSaga.make(
-                               activities.bookFlight(name)
-                             )(activities.cancelHotel(hotelReservationID, name))
+                               exec = ZActivityStub.execute(
+                                 activities.bookFlight(name)
+                               )
+                             )(
+                               compensate = ZActivityStub.execute(
+                                 activities.cancelHotel(hotelReservationID, name)
+                               )
+                             )
       _ <- ZSaga.compensation(
-             activities.cancelFlight(flightReservationID, name)
+             ZActivityStub.execute(
+               activities.cancelFlight(flightReservationID, name)
+             )
            )
     } yield ()
 

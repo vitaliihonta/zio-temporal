@@ -55,7 +55,7 @@ Then we could implement a stateful workflow as follows:
 
 ```scala mdoc:silent
 class PaymentWorkflowImpl extends PaymentWorkflow {
-  private val paymentActivity = ZWorkflow
+  private val paymentActivity: ZActivityStub.Of[PaymentActivity] = ZWorkflow
     .newActivityStub[PaymentActivity]
     .withStartToCloseTimeout(10.seconds)
     .build
@@ -63,9 +63,16 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
   private val paymentState = ZWorkflowState.make[PaymentState](PaymentState.Initial)
   
   override def proceed(amount: BigDecimal, from: String, to: String): Unit = {
-    paymentActivity.debit(amount, from)
+    ZActivityStub.execute(
+      paymentActivity.debit(amount, from)
+    )
+    
     paymentState := PaymentState.Debited
-    paymentActivity.credit(amount, to)
+    
+    ZActivityStub.execute(
+      paymentActivity.credit(amount, to)
+    )
+    
     paymentState := PaymentState.Credited
   }
 }

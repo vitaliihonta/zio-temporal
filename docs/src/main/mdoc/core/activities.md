@@ -102,25 +102,33 @@ Then you implement it the same way as usual:
 
 ```scala mdoc
 class BookingWorkflowImpl extends BookingWorkflow {
-  private val bookingActivity = ZWorkflow
+  private val bookingActivity: ZActivityStub.Of[BookingActivity] = ZWorkflow
     .newActivityStub[BookingActivity]
     .withStartToCloseTimeout(10.seconds)
     .build
     
   override def bookFlight(name: String, surname: String, flightNumber: String, cardId: UUID): UUID = {
-    val bookingId = bookingActivity.bookFlight(name, surname, flightNumber)
+    val bookingId = ZActivityStub.execute(
+      bookingActivity.bookFlight(name, surname, flightNumber)
+    )
     bookingActivity.purchaseFlight(bookingId, cardId)
   }
 }
 ```
 
 Unlike usual composition with constructor parameters, Temporal requires you to create dependencies via its library API.  
-In this case, we create an instance of `BookingActivity` via `ZWorkflow.newActivityStub` method. 
+In this case, we create an instance of `ZActivityStub.Of[BookingActivity]` via `ZWorkflow.newActivityStub` method. 
 The method accepts the Activity **interface** type (but **not the implementation**).  
 It's also mandatory to provide at least the `start to close timeout`, which we'll cover later.  
 
 Important notes:
 - `ZWorkflow.newActivityStub` provides you a stub which communicates to Temporal cluster in order to invoke activities
+- **You must always** wrap the activity method invocation into `ZActivityStub.execute` method.
+  - The `ZActivityStub.Of[BookingActivity]` is a compile-time stub, so actual method invocations are only valid in compile-time
+  - `bookingActivity.bookFlight(name, surname, flightNumber)` invocation would be re-written into an untyped Temporal's activity invocation
+    (see [activity Execution doc](https://docs.temporal.io/application-development/foundations?lang=java#activity-execution))
+  - A direct method invocation will throw an exception
+- The `ZActivityStub` is basically a proxy, which executes the Activity (via Temporal cluster or locally in case of `newLocalActivityStub`)
 - Activity method invocation result is persisted into a journal (e.g. database like Postgres etc.)
 - Persisting the result allows the workflow to retry in case of any failures, starting from the closest successful activity invocation
 - We'll cover retries later

@@ -2,7 +2,7 @@ package zio.temporal.internal
 
 import io.temporal.api.common.v1.WorkflowExecution
 import io.temporal.client.{BatchRequest, WorkflowStub}
-import io.temporal.workflow.{ChildWorkflowStub, ExternalWorkflowStub, Functions, Promise}
+import io.temporal.workflow.{ActivityStub, ChildWorkflowStub, ExternalWorkflowStub, Functions, Promise}
 
 import java.util.concurrent.{CompletableFuture, TimeUnit}
 import scala.language.implicitConversions
@@ -27,6 +27,21 @@ object TemporalWorkflowFacade {
   def executeChildAsync[R](stub: ChildWorkflowStub, args: List[Any])(implicit ctg: ClassTag[R]): Promise[R] = {
     stub.executeAsync(ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
   }
+
+  def executeActivity[R](stub: ActivityStub, activityName: String, args: List[Any])(implicit ctg: ClassTag[R]): R = {
+    stub.execute[R](activityName, ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
+  }
+
+  def executeActivityAsync[R](
+    stub:         ActivityStub,
+    activityName: String,
+    args:         List[Any]
+  )(implicit ctg: ClassTag[R]
+  ): Promise[R] = {
+    stub.executeAsync[R](activityName, ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
+  }
+
+  // TODO: use
 
   def executeWithTimeout[R](
     stub:         WorkflowStub,
