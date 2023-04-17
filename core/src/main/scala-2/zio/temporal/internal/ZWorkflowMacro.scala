@@ -2,15 +2,19 @@ package zio.temporal.internal
 
 import scala.reflect.macros.blackbox
 import zio.temporal.ZWorkflowExecution
+import zio.temporal.workflow.ZWorkflowStub
 
 class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
   import c.universe._
 
   private val ZWorkflowExecution = typeOf[ZWorkflowExecution]
+  private val zworkflowStub      = typeOf[ZWorkflowStub.type].dealias
 
   def startImpl[A: WeakTypeTag](f: Expr[A]): Tree = {
-    val invocation = getMethodInvocation(f.tree)
+    // Assert called on ZWorkflowStub
+    assertPrefixType(zworkflowStub)
 
+    val invocation = getMethodInvocation(f.tree)
     assertWorkflow(invocation.instance.tpe)
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
@@ -28,8 +32,10 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
   }
 
   def executeImpl[R: WeakTypeTag](f: Expr[R]): Tree = {
-    val invocation = getMethodInvocation(f.tree)
+    // Assert called on ZWorkflowStub
+    assertPrefixType(zworkflowStub)
 
+    val invocation = getMethodInvocation(f.tree)
     assertWorkflow(invocation.instance.tpe)
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)

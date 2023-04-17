@@ -122,6 +122,10 @@ abstract class MacroUtils(val c: blackbox.Context) {
       .exists(m => m.isConstructor && m.asMethod.paramLists.flatten.isEmpty && m.isPublic)
   }
 
+  protected def assertPrefixType(tpe: Type): Unit = {
+    val _ = getPrefixOf(tpe)
+  }
+
   protected def getPrefixOf(tpe: Type): Tree = {
     val prefix = c.prefix.tree
     if (!(prefix.tpe <:< tpe)) {

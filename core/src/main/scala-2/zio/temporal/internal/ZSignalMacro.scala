@@ -6,10 +6,11 @@ import scala.reflect.macros.blackbox
 class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
   import c.universe._
 
-  private val ZWorkflowStub = typeOf[ZWorkflowStub].dealias
+  private val zworkflowStub         = typeOf[ZWorkflowStub.type].dealias
+  private val zworkflowStubInstance = typeOf[ZWorkflowStub].dealias
 
   def signalWithStartImpl(start: Expr[Unit], signal: Expr[Unit]): Tree = {
-    val self = getPrefixOf(ZWorkflowStub)
+    val self = getPrefixOf(zworkflowStubInstance)
 
     val startInvocation = getMethodInvocation(start.tree)
     val startMethod     = startInvocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
@@ -36,6 +37,9 @@ class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtil
   }
 
   def signalImpl(f: Expr[Unit]): Tree = {
+    // Assert called on ZWorkflowStub
+    assertPrefixType(zworkflowStub)
+
     val tree       = f.tree
     val invocation = getMethodInvocation(tree)
     assertWorkflow(invocation.instance.tpe)

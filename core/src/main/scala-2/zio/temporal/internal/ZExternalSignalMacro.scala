@@ -10,7 +10,7 @@ class ZExternalSignalMacro(override val c: blackbox.Context) extends InvocationM
 
   def signalImpl(f: Expr[Unit]): Tree = {
     // Assert called on ZExternalWorkflowStub
-    val _ = getPrefixOf(zexternalWorkflowStub)
+    assertPrefixType(zexternalWorkflowStub)
 
     val tree       = f.tree
     val invocation = getMethodInvocation(tree)

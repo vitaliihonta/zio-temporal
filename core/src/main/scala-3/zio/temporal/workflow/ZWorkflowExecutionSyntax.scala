@@ -2,7 +2,7 @@ package zio.temporal.workflow
 
 import zio.temporal.TemporalIO
 import zio.temporal.ZWorkflowExecution
-import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages}
+import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
 import scala.quoted.*
 import scala.reflect.ClassTag
 
@@ -20,12 +20,17 @@ object ZWorkflowExecutionSyntax {
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val theStart = buildStartWorkflowInvocation(f.asTerm)
+    val invocation = getMethodInvocationOfWorkflow(f.asTerm)
+
+    val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
+    method.assertWorkflowMethod()
+
+    val stub = invocation.selectJavaReprOf[io.temporal.client.WorkflowStub]
 
     '{
       zio.temporal.internal.TemporalInteraction.from {
         new ZWorkflowExecution(
-          $theStart
+          TemporalWorkflowFacade.start($stub, ${ method.argsExpr })
         )
       }
     }.debugged(SharedCompileTimeMessages.generatedWorkflowStart)
@@ -40,11 +45,16 @@ object ZWorkflowExecutionSyntax {
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val theExecute = buildExecuteWorkflowInvocation(f.asTerm, ctg)
+    val invocation = getMethodInvocationOfWorkflow(f.asTerm)
+
+    val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
+    method.assertWorkflowMethod()
+
+    val stub = invocation.selectJavaReprOf[io.temporal.client.WorkflowStub]
 
     '{
       zio.temporal.internal.TemporalInteraction.fromFuture {
-        $theExecute
+        TemporalWorkflowFacade.execute($stub, ${ method.argsExpr })($ctg)
       }
     }.debugged(SharedCompileTimeMessages.generatedWorkflowExecute)
   }

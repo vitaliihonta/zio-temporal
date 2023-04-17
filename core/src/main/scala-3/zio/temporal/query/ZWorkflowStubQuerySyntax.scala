@@ -2,7 +2,6 @@ package zio.temporal.query
 
 import zio.temporal.TemporalIO
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
-
 import scala.quoted.*
 import scala.reflect.ClassTag
 
@@ -21,11 +20,17 @@ object ZWorkflowStubQuerySyntax {
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val theQuery = buildQueryInvocation[R](f.asTerm, ctg)
+    val invocation = getMethodInvocationOfWorkflow(f.asTerm)
+
+    val method = invocation.getMethod(SharedCompileTimeMessages.qrMethodShouldntBeExtMethod)
+    method.assertQueryMethod()
+    val queryName = getQueryName(method.symbol)
+
+    val stub = invocation.selectJavaReprOf[io.temporal.client.WorkflowStub]
 
     '{
       _root_.zio.temporal.internal.TemporalInteraction.from[R] {
-        ${ theQuery.asExprOf[R] }
+        TemporalWorkflowFacade.query[R]($stub, ${ Expr(queryName) }, ${ method.argsExpr })($ctg)
       }
     }.debugged(SharedCompileTimeMessages.generatedQueryInvoke)
   }
