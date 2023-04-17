@@ -37,7 +37,7 @@ trait BookingWorkflow {
 When declaring activities inside the workflow implementation, it's allowed to provide custom timeouts and retry policies:
 ```scala mdoc
 class BookingWorkflowImpl extends BookingWorkflow {
-  private val bookingActivity = ZWorkflow
+  private val bookingActivity: ZActivityStub.Of[BookingActivity] = ZWorkflow
     .newActivityStub[BookingActivity]
     .withStartToCloseTimeout(10.seconds)
     .withRetryOptions(

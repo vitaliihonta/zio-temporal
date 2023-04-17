@@ -2,8 +2,8 @@ package zio.temporal.fixture
 
 import zio.*
 import zio.temporal.*
-import zio.temporal.workflow.ZAsync
-import zio.temporal.workflow.{ZAsync, ZWorkflow}
+import zio.temporal.activity.*
+import zio.temporal.workflow.ZWorkflow
 
 @activityInterface
 trait PromiseActivity {
@@ -34,8 +34,8 @@ class PromiseWorkflowImpl extends PromiseWorkflow {
     .build
 
   override def fooBar(x: Int, y: Int): Int = {
-    val first  = ZAsync.attempt(activity.foo(x))
-    val second = ZAsync.attempt(activity.bar(y))
+    val first  = ZActivityStub.executeAsync(activity.foo(x))
+    val second = ZActivityStub.executeAsync(activity.bar(y))
 
     val result = for {
       x <- first

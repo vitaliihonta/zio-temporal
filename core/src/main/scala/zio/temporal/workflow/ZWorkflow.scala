@@ -216,8 +216,8 @@ object ZWorkflow {
     * @return
     *   activity stub builder
     */
-  def newActivityStub[A: ClassTag: IsActivity] =
-    new ZActivityStubBuilderInitial[A](ClassTagUtils.classTagOf[A])
+  def newActivityStub[A: ClassTag: IsActivity]: ZActivityStubBuilderInitial[A] =
+    new ZActivityStubBuilderInitial[A]()
 
   /** Creates a builder of client stub to local activities that implement given interface.
     *
@@ -227,7 +227,7 @@ object ZWorkflow {
     *   local activity stub builder
     */
   def newLocalActivityStub[A: ClassTag: IsActivity]: ZLocalActivityStubBuilderInitial[A] =
-    new ZLocalActivityStubBuilderInitial[A](ClassTagUtils.classTagOf[A])
+    new ZLocalActivityStubBuilderInitial[A]()
 
   /** Creates a builder of client stub that can be used to start a child workflow that implements given interface.
     *
@@ -274,34 +274,6 @@ object ZWorkflow {
         Workflow.newUntypedExternalWorkflowStub(workflowExecution.toJava)
       )
     )
-
-//  /** Creates untyped client stub that can be used to communicate to an existing workflow execution.
-//    *
-//    * @param workflowId
-//    *   id of the workflow to communicate with.
-//    * @return
-//    *   external workflow stub
-//    */
-//  def newExternalWorkflowStubProxy[A: ClassTag: IsWorkflow](
-//    workflowId: String
-//  ): ZExternalWorkflowStub.Of[A] =
-//    ZExternalWorkflowStub.Of(
-//      new ZExternalWorkflowStubImpl(Workflow.newUntypedExternalWorkflowStub(workflowId))
-//    )
-
-//  /** Creates untyped client stub that can be used to communicate to an existing workflow execution.
-//    *
-//    * @param workflowExecution
-//    *   execution of the workflow to communicate with.
-//    * @return
-//    *   external workflow stub
-//    */
-//  def newExternalWorkflowStubProxy[A: ClassTag: IsWorkflow](
-//    workflowExecution: ZWorkflowExecution
-//  ): ZExternalWorkflowStub.Of[A] =
-//    ZExternalWorkflowStub.Of[A](
-//      new ZExternalWorkflowStubImpl(Workflow.newUntypedExternalWorkflowStub(workflowExecution.toJava))
-//    )
 
   /** GetLastCompletionResult extract last completion result from previous run for this cron workflow. This is used in
     * combination with cron schedule. A workflow can be started with an optional cron schedule. If a cron workflow wants

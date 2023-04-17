@@ -83,7 +83,7 @@ class TemporalPaymentService(workflowClient: ZWorkflowClient) {
   def confirmTransaction(transactionId: UUID, confirmationCode: String) =
     for {
       // Get the running business process
-      workflowStub <- workflowClient.newWorkflowStubProxy[PaymentWorkflow](
+      workflowStub <- workflowClient.newWorkflowStub[PaymentWorkflow](
         workflowId = transactionId.toString
       )
       // Check the business process state

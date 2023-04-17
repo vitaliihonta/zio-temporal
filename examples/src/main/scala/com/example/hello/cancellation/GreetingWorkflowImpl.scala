@@ -31,7 +31,7 @@ class GreetingWorkflowImpl extends GreetingWorkflow {
     * that activity should be first notified of the cancellation, and cancelled after it can perform some cleanup tasks
     * for example. Note that an activity must heartbeat to receive cancellation notifications.
     */
-  private val activities = ZWorkflow
+  private val activities: ZActivityStub.Of[GreetingActivities] = ZWorkflow
     .newActivityStub[GreetingActivities]
     .withStartToCloseTimeout(GreetingWorkflowImpl.ActivityStartToCloseTimeoutSeconds.seconds)
     .withHeartbeatTimeout(5.seconds)
@@ -48,7 +48,7 @@ class GreetingWorkflowImpl extends GreetingWorkflow {
      */
     val scope = ZWorkflow.newCancellationScope {
       activityResult = greetings.map { greeting =>
-        ZAsync.attempt(
+        ZActivityStub.executeAsync(
           activities.composeGreeting(greeting, name)
         )
       }

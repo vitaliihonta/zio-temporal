@@ -13,9 +13,9 @@ object ZChildWorkflowStubSignalSyntax {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
-    val invocation = getMethodInvocation(f.asTerm)
-    val method     = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
+    val invocation = getMethodInvocationOfWorkflow(f.asTerm)
 
+    val method = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     method.assertSignalMethod()
     val signalName = getSignalName(method.symbol)
 

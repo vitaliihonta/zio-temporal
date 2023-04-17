@@ -1,39 +1,40 @@
-package zio.temporal.workflow
+package zio.temporal.activity
 
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
 import scala.quoted.*
 import scala.reflect.ClassTag
+import zio.temporal.workflow.ZAsync
 
-trait ZChildWorkflowExecutionSyntax {
+trait ZActivityExecutionSyntax {
   inline def execute[R](inline f: R)(using ctg: ClassTag[R]): R =
-    ${ ZChildWorkflowExecutionSyntax.executeImpl[R]('f, 'ctg) }
+    ${ ZActivityExecutionSyntax.executeImpl[R]('f, 'ctg) }
 
   inline def executeAsync[R](inline f: R)(using ctg: ClassTag[R]): ZAsync[R] =
-    ${ ZChildWorkflowExecutionSyntax.executeAsyncImpl[R]('f, 'ctg) }
+    ${ ZActivityExecutionSyntax.executeAsyncImpl[R]('f, 'ctg) }
 }
 
-object ZChildWorkflowExecutionSyntax {
+object ZActivityExecutionSyntax {
   def executeImpl[R: Type](f: Expr[R], ctg: Expr[ClassTag[R]])(using q: Quotes): Expr[R] = {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val invocation = getMethodInvocationOfWorkflow(f.asTerm)
+    val invocation = getMethodInvocationOfActivity(f.asTerm)
 
-    val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
-    method.assertWorkflowMethod()
+    val method       = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
+    val activityName = getActivityName(method.symbol)
 
     val stub = invocation.instance
       .select(invocation.instance.symbol.methodMember("toJava").head)
-      .asExprOf[io.temporal.workflow.ChildWorkflowStub]
+      .asExprOf[io.temporal.workflow.ActivityStub]
 
     val castedArgs = Expr.ofList(
       method.appliedArgs.map(_.asExprOf[Any])
     )
 
     '{
-      TemporalWorkflowFacade.executeChild($stub, $castedArgs)($ctg)
-    }.debugged(SharedCompileTimeMessages.generateChildWorkflowExecute)
+      TemporalWorkflowFacade.executeActivity($stub, ${ Expr(activityName) }, $castedArgs)($ctg)
+    }.debugged(SharedCompileTimeMessages.generatedActivityExecute)
   }
 
   def executeAsyncImpl[R: Type](f: Expr[R], ctg: Expr[ClassTag[R]])(using q: Quotes): Expr[ZAsync[R]] = {
@@ -41,14 +42,14 @@ object ZChildWorkflowExecutionSyntax {
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val invocation = getMethodInvocationOfWorkflow(f.asTerm)
+    val invocation = getMethodInvocationOfActivity(f.asTerm)
 
-    val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
-    method.assertWorkflowMethod()
+    val method       = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
+    val activityName = getActivityName(method.symbol)
 
     val stub = invocation.instance
       .select(invocation.instance.symbol.methodMember("toJava").head)
-      .asExprOf[io.temporal.workflow.ChildWorkflowStub]
+      .asExprOf[io.temporal.workflow.ActivityStub]
 
     val castedArgs = Expr.ofList(
       method.appliedArgs.map(_.asExprOf[Any])
@@ -56,8 +57,8 @@ object ZChildWorkflowExecutionSyntax {
 
     '{
       ZAsync.fromJava(
-        TemporalWorkflowFacade.executeChildAsync($stub, $castedArgs)($ctg)
+        TemporalWorkflowFacade.executeActivityAsync($stub, ${ Expr(activityName) }, $castedArgs)($ctg)
       )
-    }.debugged(SharedCompileTimeMessages.generatedChildWorkflowExecuteAsync)
+    }.debugged(SharedCompileTimeMessages.generatedActivityExecuteAsync)
   }
 }

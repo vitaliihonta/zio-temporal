@@ -121,7 +121,7 @@ object WorkflowSpec extends ZIOSpecDefault {
              )
         _ <- ZIO.log("Started")
         workflowStub <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                          _.newWorkflowStubProxy[SignalWorkflow](workflowId)
+                          _.newWorkflowStub[SignalWorkflow](workflowId)
                         )
         _ <- ZIO.log("New stub created!")
         progress <- ZWorkflowStub.query(
@@ -169,7 +169,7 @@ object WorkflowSpec extends ZIOSpecDefault {
                  zioWorkflow.echo("HELLO THERE")
                )
           workflowStub <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                            _.newWorkflowStubProxy[ZioWorkflow](workflowId)
+                            _.newWorkflowStub[ZioWorkflow](workflowId)
                           )
           _ <- ZWorkflowStub.signal(
                  workflowStub.complete()

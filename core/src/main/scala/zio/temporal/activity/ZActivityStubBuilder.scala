@@ -6,12 +6,10 @@ import io.temporal.activity.ActivityOptions
 import io.temporal.common.context.ContextPropagator
 import io.temporal.workflow.Workflow
 import zio.temporal.ZRetryOptions
-import zio.temporal.internal.ClassTagUtils
-import scala.compat.java8.DurationConverters._
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
-class ZActivityStubBuilderInitial[A] private[zio] (private val ctg: ClassTag[A]) extends AnyVal {
+class ZActivityStubBuilderInitial[A: ClassTag] private[zio] () {
 
   /** Configures startToCloseTimeout
     *
@@ -19,13 +17,12 @@ class ZActivityStubBuilderInitial[A] private[zio] (private val ctg: ClassTag[A])
     *   [[ActivityOptions.Builder.setStartToCloseTimeout]]
     */
   def withStartToCloseTimeout(timeout: Duration): ZActivityStubBuilder[A] =
-    new ZActivityStubBuilder[A](timeout, identity)(ctg)
+    new ZActivityStubBuilder[A](timeout, identity)
 }
 
-class ZActivityStubBuilder[A] private[zio] (
+class ZActivityStubBuilder[A: ClassTag] private[zio] (
   startToCloseTimeout: Duration,
-  additionalOptions:   ActivityOptions.Builder => ActivityOptions.Builder
-)(implicit ctg:        ClassTag[A]) {
+  additionalOptions:   ActivityOptions.Builder => ActivityOptions.Builder) {
 
   private def copy(options: ActivityOptions.Builder => ActivityOptions.Builder): ZActivityStubBuilder[A] =
     new ZActivityStubBuilder[A](startToCloseTimeout, additionalOptions andThen options)
@@ -102,13 +99,17 @@ class ZActivityStubBuilder[A] private[zio] (
     * @return
     *   activity stub
     */
-  def build: A = {
+  def build: ZActivityStub.Of[A] = {
     val options = additionalOptions {
       ActivityOptions
         .newBuilder()
         .setStartToCloseTimeout(startToCloseTimeout.asJava)
     }.build()
 
-    Workflow.newActivityStub[A](ClassTagUtils.classOf[A], options)
+    ZActivityStub.Of[A](
+      new ZActivityStubImpl(
+        Workflow.newUntypedActivityStub(options)
+      )
+    )
   }
 }

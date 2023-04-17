@@ -11,7 +11,7 @@ const siteConfig = {
       {
         docs: {
           path: '../docs/target/mdoc',
-          sidebarPath: require.resolve('./sidebars.json'),
+          sidebarPath: require.resolve('./sidebars.js'),
         },
         // theme: {
         //   customCss: [require.resolve('./src/css/custom.css')],

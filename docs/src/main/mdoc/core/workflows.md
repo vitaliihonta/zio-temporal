@@ -55,7 +55,7 @@ First, you should connect to the Temporal cluster. This is done via the Workflow
 In order to run a specific workflow, you should create a Workflow stub:
 
 ```scala mdoc:silent
-def createWorkflowStub(workflowClient: ZWorkflowClient) = 
+def createWorkflowStub(workflowClient: ZWorkflowClient): UIO[ZWorkflowStub.Of[EchoWorkflow]] = 
   workflowClient
     .newWorkflowStub[EchoWorkflow]
     .withTaskQueue("echo-queue")
@@ -85,11 +85,12 @@ val workflowResultZIO =
 
 Important notes:
 
-- Due to Java SDK implementation, it's not allowed to just invoke the workflow method directly: this will throw an
-  exception
-- This is because the Workflow may run on a remote machine.
-- The Workflow stub is basically a proxy, which executes the Workflow via Temporal cluster
-- Those, you should wrap the method invocation into a `ZWorkflowStub.execute` block
+- **You must always** wrap the workflow method invocation into `ZWorkflowStub.execute` method.
+  - The `ZWorkflowStub.Of[EchoWorkflow]` is a compile-time stub, so actual method invocations are only valid in compile-time
+  - `echoWorkflow.echo("Hello there")` invocation would be re-written into an untyped Temporal's workflow invocation
+    (see [workflow Execution doc](https://docs.temporal.io/application-development/foundations?lang=java#start-workflow-execution))
+  - A direct method invocation will throw an exception
+- The `ZWorkflowStub` is basically a proxy, which executes the Workflow via Temporal cluster
 
 ## Workers
 

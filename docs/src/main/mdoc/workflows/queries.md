@@ -59,7 +59,7 @@ Then we could implement a stateful workflow as follows:
 
 ```scala mdoc:silent
 class PaymentWorkflowImpl extends PaymentWorkflow {
-  private val paymentActivity = ZWorkflow
+  private val paymentActivity: ZActivityStub.Of[PaymentActivity] = ZWorkflow
     .newActivityStub[PaymentActivity]
     .withStartToCloseTimeout(10.seconds)
     .build
@@ -69,13 +69,17 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
   override def getPaymentState(): PaymentState = paymentState.snapshot
   
   override def proceed(amount: BigDecimal, from: String, to: String): Unit = {
-    paymentActivity.debit(amount, from)
+    ZActivityStub.execute(
+      paymentActivity.debit(amount, from)
+    )
     paymentState := PaymentState.Debited
     
     // Let's add a pause here to emulate long-running workflow 
     ZWorkflow.sleep(5.seconds)
-    
-    paymentActivity.credit(amount, to)
+
+    ZActivityStub.execute(
+      paymentActivity.credit(amount, to)
+    )
     paymentState := PaymentState.Credited
   }
 }
@@ -112,7 +116,7 @@ To create a stub proxy, you'll need the same Workflow client:
 
 ```scala mdoc:silent
 val paymentWorkflowZIO = ZIO.serviceWithZIO[ZWorkflowClient] { workflowClient =>
-  workflowClient.newWorkflowStubProxy[PaymentWorkflow](workflowId = transactionId)
+  workflowClient.newWorkflowStub[PaymentWorkflow](workflowId = transactionId)
 }
 ```
 
@@ -128,7 +132,7 @@ val currentWorkflowStateZIO = for {
 
 Important notes:
 
-- Due to Java SDK implementation, it's not allowed to just invoke the query method directly: this will throw an
-  exception
+- **Reminder: you must always** wrap the query method invocation into `ZWorkflowStub.query` method.
+  - `paymentWorkflow.getPaymentState()` invocation would be re-written into an untyped Temporal's query invocation
+  - A direct method invocation will throw an exception
 - Reminder: querying workflow state = calling a remote server
-- Those, you should wrap the query method invocation into a `ZWorkflowStub.query` block

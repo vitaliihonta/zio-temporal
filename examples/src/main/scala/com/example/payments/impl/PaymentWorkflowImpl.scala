@@ -7,10 +7,9 @@ import zio.*
 import zio.temporal.*
 import zio.temporal.workflow.*
 import zio.temporal.state.*
-import org.slf4j.LoggerFactory
+import zio.temporal.activity.ZActivityStub
 import org.slf4j.MDC
 import zio.temporal.failure.{ActivityFailure, ApplicationFailure}
-
 import scala.concurrent.TimeoutException
 import scala.util.control.NoStackTrace
 
@@ -22,10 +21,10 @@ private[impl] case object ConfirmationTimeout extends Exception("Confirmation ti
 
 class PaymentWorkflowImpl extends PaymentWorkflow {
 
-  private lazy val logger = LoggerFactory.getLogger(getClass)
+  private lazy val logger = ZWorkflow.getLogger(getClass)
   MDC.put("transaction_id", ZWorkflow.info.workflowId)
 
-  private val activity = ZWorkflow
+  private val activity: ZActivityStub.Of[PaymentActivity] = ZWorkflow
     .newActivityStub[PaymentActivity]
     .withStartToCloseTimeout(10.seconds)
     .withRetryOptions(
@@ -82,13 +81,19 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
     )
 
   private def proceedTransaction(command: ProceedTransactionCommand): ZSaga[TransactionView] =
-    ZSaga.make(activity.proceed(command))(
+    ZSaga.make(
+      ZActivityStub.execute(
+        activity.proceed(command)
+      )
+    )(
       compensate = cancelTransaction()
     )
 
   private def cancelTransaction(): Unit =
     state.toOption.foreach { state =>
-      activity.cancelTransaction(CancelTransactionCommand(id = state.transaction.id))
+      ZActivityStub.execute(
+        activity.cancelTransaction(CancelTransactionCommand(id = state.transaction.id))
+      )
     }
 
   private def handleConfirmation(): ZSaga[Unit] = {
@@ -101,7 +106,11 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
 
   private def verifyConfirmation(confirmation: ConfirmTransactionCommand): ZSaga[Unit] =
     ZSaga
-      .attempt(activity.verifyConfirmation(confirmation))
+      .attempt(
+        ZActivityStub.execute(
+          activity.verifyConfirmation(confirmation)
+        )
+      )
       .as(finalizeTransaction())
       .unit
 

@@ -16,7 +16,7 @@ object HeartbeatingActivityBatchCancelling extends ZIOAppDefault {
       workflowClient <- ZIO.service[ZWorkflowClient]
       workflowId     <- ZIO.consoleWith(_.readLine("Enter workflowId to cancel: "))
 
-      batchWorkflow <- workflowClient.newWorkflowStubProxy[HeartbeatingActivityBatchWorkflow](workflowId)
+      batchWorkflow <- workflowClient.newWorkflowStub[HeartbeatingActivityBatchWorkflow](workflowId)
       _             <- batchWorkflow.cancel
       _             <- ZIO.logInfo(s"Cancelled workflowId=$workflowId")
     } yield ()

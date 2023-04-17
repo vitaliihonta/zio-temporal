@@ -8,8 +8,8 @@
     "write-translations": "docusaurus write-translations"
   },
   "dependencies": {
-    "@docusaurus/core": "~2.0.0-beta.21",
-    "@docusaurus/preset-classic": "~2.0.0-beta.21",
+    "@docusaurus/core": "^2.4.0",
+    "@docusaurus/preset-classic": "^2.4.0",
     "clsx": "^1.1.1",
     "react": "^16.12.0",
     "react-dom": "^16.12.0"
