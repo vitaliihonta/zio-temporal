@@ -47,17 +47,11 @@ object ZWorkflowStubSignalSyntax {
     method.assertSignalMethod()
     val signalName = getSignalName(method.symbol)
 
-    val stub = invocation.instance
-      .select(invocation.instance.symbol.methodMember("toJava").head)
-      .asExprOf[io.temporal.client.WorkflowStub]
-
-    val castedArgs = Expr.ofList(
-      method.appliedArgs.map(_.asExprOf[Any])
-    )
+    val stub = invocation.selectJavaReprOf[io.temporal.client.WorkflowStub]
 
     '{
       TemporalInteraction.from {
-        TemporalWorkflowFacade.signal($stub, ${ Expr(signalName) }, $castedArgs)
+        TemporalWorkflowFacade.signal($stub, ${ Expr(signalName) }, ${ method.argsExpr })
       }
     }.debugged(SharedCompileTimeMessages.generatedSignal)
   }

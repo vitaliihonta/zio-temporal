@@ -24,16 +24,10 @@ object ZActivityExecutionSyntax {
     val method       = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
     val activityName = getActivityName(method.symbol)
 
-    val stub = invocation.instance
-      .select(invocation.instance.symbol.methodMember("toJava").head)
-      .asExprOf[io.temporal.workflow.ActivityStub]
-
-    val castedArgs = Expr.ofList(
-      method.appliedArgs.map(_.asExprOf[Any])
-    )
+    val stub = invocation.selectJavaReprOf[io.temporal.workflow.ActivityStub]
 
     '{
-      TemporalWorkflowFacade.executeActivity($stub, ${ Expr(activityName) }, $castedArgs)($ctg)
+      TemporalWorkflowFacade.executeActivity($stub, ${ Expr(activityName) }, ${ method.argsExpr })($ctg)
     }.debugged(SharedCompileTimeMessages.generatedActivityExecute)
   }
 
@@ -47,17 +41,11 @@ object ZActivityExecutionSyntax {
     val method       = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
     val activityName = getActivityName(method.symbol)
 
-    val stub = invocation.instance
-      .select(invocation.instance.symbol.methodMember("toJava").head)
-      .asExprOf[io.temporal.workflow.ActivityStub]
-
-    val castedArgs = Expr.ofList(
-      method.appliedArgs.map(_.asExprOf[Any])
-    )
+    val stub = invocation.selectJavaReprOf[io.temporal.workflow.ActivityStub]
 
     '{
       ZAsync.fromJava(
-        TemporalWorkflowFacade.executeActivityAsync($stub, ${ Expr(activityName) }, $castedArgs)($ctg)
+        TemporalWorkflowFacade.executeActivityAsync($stub, ${ Expr(activityName) }, ${ method.argsExpr })($ctg)
       )
     }.debugged(SharedCompileTimeMessages.generatedActivityExecuteAsync)
   }

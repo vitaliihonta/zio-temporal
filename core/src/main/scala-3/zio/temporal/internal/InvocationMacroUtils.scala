@@ -58,6 +58,11 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
 
     private val tpe = disassembleType(instance.tpe.widen)
 
+    def selectJavaReprOf[T: Type]: Expr[T] =
+      instance
+        .select(instance.symbol.methodMember("toJava").head)
+        .asExprOf[T]
+
     def getMethod(errorDetails: => String): MethodInfo =
       tpe.typeSymbol
         .methodMember(methodName)
@@ -93,6 +98,10 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
       if (!symbol.hasAnnotation(QueryMethod)) {
         error(SharedCompileTimeMessages.notQueryMethod(symbol.toString))
       }
+
+    def argsExpr: Expr[List[Any]] = Expr.ofList(
+      appliedArgs.map(_.asExprOf[Any])
+    )
 
     private def validateCalls(): Unit =
       symbol.paramSymss.headOption.foreach { expectedArgs =>
@@ -192,85 +201,6 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     if (!extendsActivity(activity)) {
       error(SharedCompileTimeMessages.notActivity(activity.show))
     }
-
-  // Workflow#start
-  def buildStartWorkflowInvocation(f: Term): Expr[WorkflowExecution] = {
-    val invocation = getMethodInvocationOfWorkflow(f)
-
-    val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
-    method.assertWorkflowMethod()
-
-    workflowStartInvocation(invocation, method)
-  }
-
-  def workflowStartInvocation(
-    invocation: MethodInvocation,
-    method:     MethodInfo
-  ): Expr[WorkflowExecution] = {
-    val stub = invocation.instance
-      .select(invocation.instance.symbol.methodMember("toJava").head)
-      .asExprOf[io.temporal.client.WorkflowStub]
-
-    val castedArgs = Expr.ofList(
-      method.appliedArgs.map(_.asExprOf[Any])
-    )
-
-    '{ TemporalWorkflowFacade.start($stub, $castedArgs) }
-  }
-
-  // Workflow#execute
-  def buildExecuteWorkflowInvocation[R: Type](f: Term, ctgExpr: Expr[ClassTag[R]]): Expr[CompletableFuture[R]] = {
-    val invocation = getMethodInvocationOfWorkflow(f)
-
-    val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
-    method.assertWorkflowMethod()
-
-    workflowExecuteInvocation(invocation, method, ctgExpr)
-  }
-
-  def workflowExecuteInvocation[R: Type](
-    invocation: MethodInvocation,
-    method:     MethodInfo,
-    ctgExpr:    Expr[ClassTag[R]]
-  ): Expr[CompletableFuture[R]] = {
-    val stub = invocation.instance
-      .select(invocation.instance.symbol.methodMember("toJava").head)
-      .asExprOf[io.temporal.client.WorkflowStub]
-
-    val castedArgs = Expr.ofList(
-      method.appliedArgs.map(_.asExprOf[Any])
-    )
-
-    '{ TemporalWorkflowFacade.execute($stub, $castedArgs)($ctgExpr) }
-  }
-
-  // Workflow#query
-  def buildQueryInvocation[R: Type](f: Term, ctgExpr: Expr[ClassTag[R]]): Expr[R] = {
-    val invocation = getMethodInvocationOfWorkflow(f)
-
-    val method = invocation.getMethod(SharedCompileTimeMessages.qrMethodShouldntBeExtMethod)
-    method.assertQueryMethod()
-    val queryName = getQueryName(method.symbol)
-
-    queryInvocation(invocation, method, queryName, ctgExpr)
-  }
-
-  def queryInvocation[R: Type](
-    invocation: MethodInvocation,
-    method:     MethodInfo,
-    queryName:  String,
-    ctgExpr:    Expr[ClassTag[R]]
-  ): Expr[R] = {
-    val stub = invocation.instance
-      .select(invocation.instance.symbol.methodMember("toJava").head)
-      .asExprOf[io.temporal.client.WorkflowStub]
-
-    val castedArgs = Expr.ofList(
-      method.appliedArgs.map(_.asExprOf[Any])
-    )
-
-    '{ TemporalWorkflowFacade.query[R]($stub, ${ Expr(queryName) }, $castedArgs)($ctgExpr) }
-  }
 
   def getQueryName(method: Symbol): String = {
     val ann = method.getAnnotation(QueryMethod)

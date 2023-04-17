@@ -10,7 +10,7 @@ class ZChildSignalMacro(override val c: blackbox.Context) extends InvocationMacr
 
   def signalImpl(f: Expr[Unit]): Tree = {
     // Assert called on ZChildWorkflowStub
-    val _ = getPrefixOf(zchildWorkflowStub)
+    assertPrefixType(zchildWorkflowStub)
 
     val tree       = f.tree
     val invocation = getMethodInvocation(tree)

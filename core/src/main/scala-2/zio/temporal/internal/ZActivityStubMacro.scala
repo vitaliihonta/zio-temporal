@@ -1,11 +1,18 @@
 package zio.temporal.internal
 
+import zio.temporal.activity.ZActivityStub
+
 import scala.reflect.macros.blackbox
 
 class ZActivityStubMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
   import c.universe._
 
+  private val zactivityStub = typeOf[ZActivityStub.type].dealias
+
   def executeImpl[R: WeakTypeTag](f: Expr[R]): Tree = {
+    // Assert called on ZActivityStub
+    assertPrefixType(zactivityStub)
+
     val invocation = getMethodInvocation(f.tree)
     assertActivity(invocation.instance.tpe)
 
@@ -18,6 +25,9 @@ class ZActivityStubMacro(override val c: blackbox.Context) extends InvocationMac
   }
 
   def executeAsyncImpl[R: WeakTypeTag](f: Expr[R]): Tree = {
+    // Assert called on ZActivityStub
+    assertPrefixType(zactivityStub)
+
     val invocation = getMethodInvocation(f.tree)
     assertActivity(invocation.instance.tpe)
 

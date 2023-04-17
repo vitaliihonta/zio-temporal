@@ -8,7 +8,12 @@ import scala.reflect.macros.blackbox
 class ZWorkflowQueryMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
   import c.universe._
 
+  private val zworkflowStub = typeOf[ZWorkflowStub.type].dealias
+
   def newQueryImpl[R: WeakTypeTag](f: Expr[R]): Tree = {
+    // Assert called on ZWorkflowStub
+    assertPrefixType(zworkflowStub)
+
     val theQuery = buildQueryInvocation(f.tree, weakTypeOf[R])
 
     q"""
