@@ -12,7 +12,4 @@ trait ZWorkflowExecutionSyntax {
 
   def execute[R](f: R): TemporalIO[R] =
     macro ZWorkflowMacro.executeImpl[R]
-
-  def async[R](f: R): ZAsync[R] =
-    macro ZWorkflowMacro.asyncImpl[R]
 }

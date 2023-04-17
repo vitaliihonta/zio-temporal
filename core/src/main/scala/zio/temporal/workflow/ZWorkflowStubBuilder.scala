@@ -2,36 +2,32 @@ package zio.temporal.workflow
 
 import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowOptions
-import zio._
-import zio.temporal.ZRetryOptions
-import zio.temporal.ZSearchAttribute
-import scala.compat.java8.DurationConverters._
+import zio.*
+import zio.temporal.{ZRetryOptions, ZSearchAttribute, simpleNameOf}
 import scala.reflect.ClassTag
 
-final class ZWorkflowStubBuilderTaskQueueDsl[A] private[zio] (client: WorkflowClient, ctg: ClassTag[A]) {
+final class ZWorkflowStubBuilderTaskQueueDsl[A: ClassTag] private[zio] (client: WorkflowClient) {
 
   def withTaskQueue(taskQueue: String): ZWorkflowStubBuilderWorkflowIdDsl[A] =
-    new ZWorkflowStubBuilderWorkflowIdDsl[A](client, ctg, taskQueue)
+    new ZWorkflowStubBuilderWorkflowIdDsl[A](client, taskQueue)
 }
 
-final class ZWorkflowStubBuilderWorkflowIdDsl[A] private[zio] (
+final class ZWorkflowStubBuilderWorkflowIdDsl[A: ClassTag] private[zio] (
   client:    WorkflowClient,
-  ctg:       ClassTag[A],
   taskQueue: String) {
 
   def withWorkflowId(workflowId: String): ZWorkflowStubBuilder[A] =
-    new ZWorkflowStubBuilder[A](client, ctg, taskQueue, workflowId, additionalConfig = identity)
+    new ZWorkflowStubBuilder[A](client, taskQueue, workflowId, additionalConfig = identity)
 }
 
-final class ZWorkflowStubBuilder[A] private[zio] (
+final class ZWorkflowStubBuilder[A: ClassTag] private[zio] (
   client:           WorkflowClient,
-  ctg:              ClassTag[A],
   taskQueue:        String,
   workflowId:       String,
   additionalConfig: WorkflowOptions.Builder => WorkflowOptions.Builder) {
 
   private def copy(config: WorkflowOptions.Builder => WorkflowOptions.Builder): ZWorkflowStubBuilder[A] =
-    new ZWorkflowStubBuilder[A](client, ctg, taskQueue, workflowId, additionalConfig andThen config)
+    new ZWorkflowStubBuilder[A](client, taskQueue, workflowId, additionalConfig andThen config)
 
   def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZWorkflowStubBuilder[A] =
     copy(_.setSearchAttributes(attrs))
@@ -76,9 +72,11 @@ final class ZWorkflowStubBuilder[A] private[zio] (
         }.build()
 
       ZWorkflowStub.Of(
-        client.newWorkflowStub(
-          ctg.runtimeClass.asInstanceOf[Class[A]],
-          options
+        new ZWorkflowStubImpl(
+          client.newUntypedWorkflowStub(
+            simpleNameOf[A],
+            options
+          )
         )
       )
     }

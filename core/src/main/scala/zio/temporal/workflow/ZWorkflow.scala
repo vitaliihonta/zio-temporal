@@ -98,7 +98,7 @@ object ZWorkflow {
     * @see
     *   [[Workflow.await]]
     * @return
-    *   unblocks when condition becomes false or timeout elapsed
+    *   unblocks when condition becomes false or timeout elapsed. '''False''' if timed out
     */
   def awaitWhile(timeout: Duration)(cond: => Boolean): Boolean =
     awaitUntil(timeout)(!cond)
@@ -124,7 +124,7 @@ object ZWorkflow {
     * @see
     *   [[Workflow.await]]
     * @return
-    *   unblocks when condition becomes true or timeout elapsed
+    *   unblocks when condition becomes true or timeout elapsed. '''False''' if timed out
     */
   def awaitUntil(timeout: Duration)(cond: => Boolean): Boolean =
     Workflow.await(timeout.asJava, () => cond)
@@ -239,7 +239,7 @@ object ZWorkflow {
   def newChildWorkflowStub[A: ClassTag: IsWorkflow]: ZChildWorkflowStubBuilder[A] =
     new ZChildWorkflowStubBuilder[A](identity)
 
-  /** Creates client stub that can be used to communicate to an existing workflow execution.
+  /** Creates client stub that can be used to signal or cancel an existing workflow
     *
     * @tparam A
     *   workflow interface
@@ -252,10 +252,12 @@ object ZWorkflow {
     workflowId: String
   ): ZExternalWorkflowStub.Of[A] =
     ZExternalWorkflowStub.Of(
-      Workflow.newExternalWorkflowStub[A](ClassTagUtils.classOf[A], workflowId)
+      new ZExternalWorkflowStubImpl(
+        Workflow.newUntypedExternalWorkflowStub(workflowId)
+      )
     )
 
-  /** Creates client stub that can be used to communicate to an existing workflow execution.
+  /** Creates client stub that can be used to signal or cancel an existing workflow
     *
     * @tparam A
     *   workflow interface
@@ -268,36 +270,38 @@ object ZWorkflow {
     workflowExecution: ZWorkflowExecution
   ): ZExternalWorkflowStub.Of[A] =
     ZExternalWorkflowStub.Of(
-      Workflow.newExternalWorkflowStub[A](ClassTagUtils.classOf[A], workflowExecution.toJava)
+      new ZExternalWorkflowStubImpl(
+        Workflow.newUntypedExternalWorkflowStub(workflowExecution.toJava)
+      )
     )
 
-  /** Creates untyped client stub that can be used to communicate to an existing workflow execution.
-    *
-    * @param workflowId
-    *   id of the workflow to communicate with.
-    * @return
-    *   external workflow stub
-    */
-  def newExternalWorkflowStubProxy[A: ClassTag: IsWorkflow](
-    workflowId: String
-  ): ZExternalWorkflowStub.Proxy[A] =
-    ZExternalWorkflowStub.Proxy(
-      new ZExternalWorkflowStubImpl(Workflow.newUntypedExternalWorkflowStub(workflowId))
-    )
+//  /** Creates untyped client stub that can be used to communicate to an existing workflow execution.
+//    *
+//    * @param workflowId
+//    *   id of the workflow to communicate with.
+//    * @return
+//    *   external workflow stub
+//    */
+//  def newExternalWorkflowStubProxy[A: ClassTag: IsWorkflow](
+//    workflowId: String
+//  ): ZExternalWorkflowStub.Of[A] =
+//    ZExternalWorkflowStub.Of(
+//      new ZExternalWorkflowStubImpl(Workflow.newUntypedExternalWorkflowStub(workflowId))
+//    )
 
-  /** Creates untyped client stub that can be used to communicate to an existing workflow execution.
-    *
-    * @param workflowExecution
-    *   execution of the workflow to communicate with.
-    * @return
-    *   external workflow stub
-    */
-  def newExternalWorkflowStubProxy[A: ClassTag: IsWorkflow](
-    workflowExecution: ZWorkflowExecution
-  ): ZExternalWorkflowStub.Proxy[A] =
-    ZExternalWorkflowStub.Proxy[A](
-      new ZExternalWorkflowStubImpl(Workflow.newUntypedExternalWorkflowStub(workflowExecution.toJava))
-    )
+//  /** Creates untyped client stub that can be used to communicate to an existing workflow execution.
+//    *
+//    * @param workflowExecution
+//    *   execution of the workflow to communicate with.
+//    * @return
+//    *   external workflow stub
+//    */
+//  def newExternalWorkflowStubProxy[A: ClassTag: IsWorkflow](
+//    workflowExecution: ZWorkflowExecution
+//  ): ZExternalWorkflowStub.Of[A] =
+//    ZExternalWorkflowStub.Of[A](
+//      new ZExternalWorkflowStubImpl(Workflow.newUntypedExternalWorkflowStub(workflowExecution.toJava))
+//    )
 
   /** GetLastCompletionResult extract last completion result from previous run for this cron workflow. This is used in
     * combination with cron schedule. A workflow can be started with an optional cron schedule. If a cron workflow wants

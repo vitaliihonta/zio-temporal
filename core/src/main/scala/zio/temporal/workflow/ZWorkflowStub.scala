@@ -3,21 +3,17 @@ package zio.temporal.workflow
 import zio.Duration
 import io.temporal.client.WorkflowStub
 import zio.temporal.{TemporalIO, internalApi}
-import zio.temporal.internal.CanSignal
 import zio.temporal.internal.ClassTagUtils
 import zio.temporal.internal.TemporalInteraction
-import zio.temporal.internal.tagging.Proxies
+import zio.temporal.internal.tagging.Stubs
 import zio.temporal.query.ZWorkflowStubQuerySyntax
-import zio.temporal.signal.ZWorkflowStubSignalSyntax
+import zio.temporal.signal.{ZWorkflowClientSignalWithStartSyntax, ZWorkflowStubSignalSyntax}
 import java.util.concurrent.TimeUnit
-import scala.concurrent.TimeoutException
 import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
-sealed trait ZWorkflowStub extends CanSignal[WorkflowStub] {
-
-  override protected[zio] def signalMethod(signalName: String, args: Seq[AnyRef]): Unit =
-    toJava.signal(signalName, args: _*)
+sealed trait ZWorkflowStub extends ZWorkflowClientSignalWithStartSyntax {
+  def toJava: WorkflowStub
 
   /** Fetches workflow result
     *
@@ -79,18 +75,10 @@ sealed trait ZWorkflowStub extends CanSignal[WorkflowStub] {
 final class ZWorkflowStubImpl @internalApi() (val toJava: WorkflowStub) extends ZWorkflowStub
 
 object ZWorkflowStub
-    extends Proxies[ZWorkflowStub]
+    extends Stubs[ZWorkflowStub]
     with ZWorkflowExecutionSyntax
     with ZWorkflowStubSignalSyntax
     with ZWorkflowStubQuerySyntax {
 
-  final implicit class Ops[A](private val self: ZWorkflowStub.Of[A]) extends AnyVal {
-
-    /** Converts typed stub [[A]] to [[WorkflowStub]]
-      *
-      * @return
-      *   untyped workflow stub
-      */
-    def toStub: ZWorkflowStub = new ZWorkflowStubImpl(WorkflowStub.fromTyped(self))
-  }
+  final implicit class Ops[A](private val self: ZWorkflowStub.Of[A]) extends AnyVal {}
 }

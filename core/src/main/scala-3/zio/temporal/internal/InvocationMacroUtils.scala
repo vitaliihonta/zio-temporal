@@ -1,6 +1,10 @@
 package zio.temporal.internal
 
+import io.temporal.api.common.v1.WorkflowExecution
 import zio.temporal.*
+import zio.temporal.workflow.*
+
+import java.util.concurrent.CompletableFuture
 import scala.quoted.*
 import scala.reflect.ClassTag
 
@@ -12,12 +16,18 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   private val WorkflowMethod    = typeSymbolOf[workflowMethod]
   private val QueryMethod       = typeSymbolOf[queryMethod]
   private val SignalMethod      = typeSymbolOf[signalMethod]
+  // TODO: add same for activity
+  private val zworkflowStub         = TypeRepr.of[ZWorkflowStub]
+  private val zchildWorkflowStub    = TypeRepr.of[ZChildWorkflowStub]
+  private val zexternalWorkflowStub = TypeRepr.of[ZExternalWorkflowStub]
 
   def betaReduceExpression[A: Type](f: Expr[A]): Expr[A] =
     Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
 
   def getMethodInvocation(tree: Term): MethodInvocation =
     tree match {
+      case Inlined(_, _, body) =>
+        getMethodInvocation(body)
       case Select(instance, methodName) =>
         MethodInvocation(instance, methodName, Nil)
       case Apply(Select(instance, methodName), args) =>
@@ -118,7 +128,14 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     findWorkflowType(workflow).getOrElse(error(SharedCompileTimeMessages.notWorkflow(workflow.show)))
 
   def findWorkflowType(workflow: TypeRepr): Option[TypeRepr] = {
+//    println(workflow.getClass.toString + s" cls, tpe: $workflow")
     val tpe = workflow match {
+      case AndType(left, wf)
+          if left =:= zworkflowStub ||
+            left =:= zchildWorkflowStub ||
+            left =:= zexternalWorkflowStub =>
+        wf
+
       case AppliedType(_, List(wf)) => wf
       case _                        => workflow
     }
@@ -157,6 +174,58 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
       error(SharedCompileTimeMessages.notActivity(activity.show))
     }
 
+  // Workflow#start
+  def buildStartWorkflowInvocation(f: Term): Expr[WorkflowExecution] = {
+    val invocation = getMethodInvocation(f)
+
+    val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
+    method.assertWorkflowMethod()
+
+    workflowStartInvocation(invocation, method)
+  }
+
+  def workflowStartInvocation(
+    invocation: MethodInvocation,
+    method:     MethodInfo
+  ): Expr[WorkflowExecution] = {
+    val stub = invocation.instance
+      .select(invocation.instance.symbol.methodMember("toJava").head)
+      .asExprOf[io.temporal.client.WorkflowStub]
+
+    val castedArgs = Expr.ofList(
+      method.appliedArgs.map(_.asExprOf[Any])
+    )
+
+    '{ TemporalWorkflowFacade.start($stub, $castedArgs) }
+  }
+
+  // Workflow#execute
+  def buildExecuteWorkflowInvocation[R: Type](f: Term, ctgExpr: Expr[ClassTag[R]]): Expr[CompletableFuture[R]] = {
+    val invocation = getMethodInvocation(f)
+
+    val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
+    method.assertWorkflowMethod()
+
+    workflowExecuteInvocation(invocation, method, ctgExpr)
+  }
+
+  def workflowExecuteInvocation[R: Type](
+    invocation: MethodInvocation,
+    method:     MethodInfo,
+    ctgExpr:    Expr[ClassTag[R]]
+  ): Expr[CompletableFuture[R]] = {
+    val stub = invocation.instance
+      .select(invocation.instance.symbol.methodMember("toJava").head)
+      .asExprOf[io.temporal.client.WorkflowStub]
+
+    val castedArgs = Expr.ofList(
+      method.appliedArgs.map(_.asExprOf[Any])
+    )
+
+    '{ TemporalWorkflowFacade.execute($stub, $castedArgs)($ctgExpr) }
+  }
+
+  // Workflow#query
   def buildQueryInvocation[R: Type](f: Term, ctgExpr: Expr[ClassTag[R]]): Expr[R] = {
     val invocation = getMethodInvocation(f)
 
@@ -178,7 +247,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
       .asExprOf[io.temporal.client.WorkflowStub]
 
     val castedArgs = Expr.ofList(
-      method.appliedArgs.map(_.asExprOf[AnyRef])
+      method.appliedArgs.map(_.asExprOf[Any])
     )
 
     '{ TemporalWorkflowFacade.query[R]($stub, ${ Expr(queryName) }, $castedArgs)($ctgExpr) }

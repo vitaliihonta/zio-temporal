@@ -1,11 +1,8 @@
 package zio.temporal.signal
 
-import io.temporal.client.BatchRequest
 import zio.temporal.internal.ZSignalMacro
 import zio.temporal.TemporalIO
 import zio.temporal.ZWorkflowExecution
-import zio.temporal.internalApi
-import zio.temporal.workflow.ZWorkflowClient
 import scala.language.experimental.macros
 import scala.language.implicitConversions
 
@@ -16,28 +13,15 @@ trait ZWorkflowStubSignalSyntax {
 
 trait ZWorkflowClientSignalWithStartSyntax {
 
-  /** Creates builder for SignalWithStart operation.
+  /** Performs signal with start atomically.
     *
-    * @param f
+    * @param start
+    *   workflow method call
+    * @param signal
     *   signal method call
     * @return
-    *   the builder
+    *   Workflow execution
     */
-  def signalWith(f: Unit): ZSignalBuilder =
-    macro ZSignalMacro.signalWithStartBuilderImpl
-}
-
-final class ZSignalBuilder @internalApi() (
-  val __zio_temporal_workflowClient: ZWorkflowClient,
-  val __zio_temporal_addSignal:      BatchRequest => Unit) {
-
-  /** Invokes SignalWithStart operation.
-    *
-    * @param f
-    *   workflow method to start
-    * @return
-    *   workflowExecution of the started and signaled workflow.
-    */
-  def start[A](f: A): TemporalIO[ZWorkflowExecution] =
-    macro ZSignalMacro.signalWithStartImpl[A]
+  def signalWithStart(start: Unit, signal: Unit): TemporalIO[ZWorkflowExecution] =
+    macro ZSignalMacro.signalWithStartImpl
 }

@@ -1,31 +1,78 @@
 package zio.temporal.internal
 
 import io.temporal.api.common.v1.WorkflowExecution
-import io.temporal.client.{BatchRequest, WorkflowClient, WorkflowStub}
-import io.temporal.workflow.Functions
+import io.temporal.client.{BatchRequest, WorkflowStub}
+import io.temporal.workflow.{ChildWorkflowStub, ExternalWorkflowStub, Functions, Promise}
 
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.{CompletableFuture, TimeUnit}
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
+import zio.Duration
 
 object TemporalWorkflowFacade {
   import FunctionConverters.*
 
-  def start(f: () => Unit): WorkflowExecution =
-    WorkflowClient.start(f: Functions.Proc)
+  def start(stub: WorkflowStub, args: List[Any]): WorkflowExecution =
+    stub.start(args.asInstanceOf[List[AnyRef]]: _*)
 
-  def execute[R](f: () => R): CompletableFuture[R] =
-    WorkflowClient.execute[R](f: Functions.Func[R])
-
-  def addToBatchRequest(f: () => Unit): BatchRequest => Unit = { (b: BatchRequest) =>
-    addToBatchRequest(b, f)
+  def execute[R](stub: WorkflowStub, args: List[Any])(implicit ctg: ClassTag[R]): CompletableFuture[R] = {
+    start(stub, args)
+    stub.getResultAsync(ClassTagUtils.classOf[R])
   }
 
-  def addToBatchRequest(b: BatchRequest, f: () => Unit): Unit =
-    b.add(f: Functions.Proc)
+  def executeChild[R](stub: ChildWorkflowStub, args: List[Any])(implicit ctg: ClassTag[R]): R = {
+    stub.execute(ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
+  }
 
-  def query[R](stub: WorkflowStub, name: String, args: List[AnyRef])(implicit ctg: ClassTag[R]): R =
-    stub.query[R](name, ClassTagUtils.classOf[R], args: _*)
+  def executeChildAsync[R](stub: ChildWorkflowStub, args: List[Any])(implicit ctg: ClassTag[R]): Promise[R] = {
+    stub.executeAsync(ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
+  }
+
+  def executeWithTimeout[R](
+    stub:         WorkflowStub,
+    timeout:      Duration,
+    args:         List[AnyRef]
+  )(implicit ctg: ClassTag[R]
+  ): CompletableFuture[R] = {
+    start(stub, args)
+    stub.getResultAsync(timeout.toNanos, TimeUnit.NANOSECONDS, ClassTagUtils.classOf[R])
+  }
+
+  def signal(
+    stub:       WorkflowStub,
+    signalName: String,
+    args:       List[Any]
+  ): Unit = {
+    stub.signal(signalName, args.asInstanceOf[List[AnyRef]]: _*)
+  }
+
+  def signal(
+    stub:       ChildWorkflowStub,
+    signalName: String,
+    args:       List[Any]
+  ): Unit = {
+    stub.signal(signalName, args.asInstanceOf[List[AnyRef]]: _*)
+  }
+
+  def signal(
+    stub:       ExternalWorkflowStub,
+    signalName: String,
+    args:       List[Any]
+  ): Unit = {
+    stub.signal(signalName, args.asInstanceOf[List[AnyRef]]: _*)
+  }
+
+  def signalWithStart(
+    stub:       WorkflowStub,
+    signalName: String,
+    signalArgs: Array[Any],
+    startArgs:  Array[Any]
+  ): WorkflowExecution = {
+    stub.signalWithStart(signalName, signalArgs.asInstanceOf[Array[AnyRef]], startArgs.asInstanceOf[Array[AnyRef]])
+  }
+
+  def query[R](stub: WorkflowStub, name: String, args: List[Any])(implicit ctg: ClassTag[R]): R =
+    stub.query[R](name, ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
 
   object FunctionConverters {
     implicit def proc(f: () => Unit): Functions.Proc = new Functions.Proc {
