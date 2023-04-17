@@ -49,3 +49,23 @@ class ZioWorkflowImpl extends ZioWorkflow {
   override def complete(): Unit =
     state := ()
 }
+
+/** Untyped version of [[ZioWorkflow]] */
+class ZioWorkflowUntypedImpl extends ZioWorkflow {
+  private val state = ZWorkflowState.empty[Unit]
+
+  private val activity = ZWorkflow.newUntypedActivityStub
+    .withStartToCloseTimeout(5.seconds)
+    .build
+
+  override def echo(what: String): String = {
+    val msg = activity.execute[String]("Echo", what)
+
+    println("Waiting for completion...")
+    ZWorkflow.awaitWhile(state.isEmpty)
+    msg
+  }
+
+  override def complete(): Unit =
+    state := ()
+}

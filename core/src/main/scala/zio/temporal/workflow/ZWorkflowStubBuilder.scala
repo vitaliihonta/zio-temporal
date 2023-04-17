@@ -81,3 +81,76 @@ final class ZWorkflowStubBuilder[A: ClassTag] private[zio] (
       )
     }
 }
+
+final class ZWorkflowStubUntypedBuilderTaskQueueDsl private[zio] (workflowType: String, client: WorkflowClient) {
+
+  def withTaskQueue(taskQueue: String): ZWorkflowStubUntypedBuilderWorkflowIdDsl =
+    new ZWorkflowStubUntypedBuilderWorkflowIdDsl(workflowType, client, taskQueue)
+}
+
+final class ZWorkflowStubUntypedBuilderWorkflowIdDsl private[zio] (
+  workflowType: String,
+  client:       WorkflowClient,
+  taskQueue:    String) {
+
+  def withWorkflowId(workflowId: String): ZWorkflowStubUntypedBuilder =
+    new ZWorkflowStubUntypedBuilder(workflowType, client, taskQueue, workflowId, additionalConfig = identity)
+}
+
+final class ZWorkflowStubUntypedBuilder private[zio] (
+  workflowType:     String,
+  client:           WorkflowClient,
+  taskQueue:        String,
+  workflowId:       String,
+  additionalConfig: WorkflowOptions.Builder => WorkflowOptions.Builder) {
+
+  private def copy(config: WorkflowOptions.Builder => WorkflowOptions.Builder): ZWorkflowStubUntypedBuilder =
+    new ZWorkflowStubUntypedBuilder(workflowType, client, taskQueue, workflowId, additionalConfig andThen config)
+
+  def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZWorkflowStubUntypedBuilder =
+    copy(_.setSearchAttributes(attrs))
+
+  def withCronSchedule(schedule: String): ZWorkflowStubUntypedBuilder =
+    copy(_.setCronSchedule(schedule))
+
+  def withWorkflowRunTimeout(timeout: Duration): ZWorkflowStubUntypedBuilder =
+    copy(_.setWorkflowRunTimeout(timeout.asJava))
+
+  def withWorkflowTaskTimeout(timeout: Duration): ZWorkflowStubUntypedBuilder =
+    copy(_.setWorkflowTaskTimeout(timeout.asJava))
+
+  def withWorkflowExecutionTimeout(timeout: Duration): ZWorkflowStubUntypedBuilder =
+    copy(_.setWorkflowExecutionTimeout(timeout.asJava))
+
+  def withRetryOptions(options: ZRetryOptions): ZWorkflowStubUntypedBuilder =
+    copy(_.setRetryOptions(options.toJava))
+
+  /** Allows to specify options directly on the java SDK's [[WorkflowOptions]]. Use it in case an appropriate `withXXX`
+    * method is missing
+    *
+    * @note
+    *   the options specified via this method take precedence over those specified via other methods.
+    */
+  def transformJavaOptions(
+    f: WorkflowOptions.Builder => WorkflowOptions.Builder
+  ): ZWorkflowStubUntypedBuilder = copy(f)
+
+  /** Builds typed ZWorkflowStub
+    * @return
+    *   typed workflow stub
+    */
+  def build: UIO[ZWorkflowStub.Untyped] =
+    ZIO.succeed {
+      val options =
+        additionalConfig {
+          WorkflowOptions
+            .newBuilder()
+            .setTaskQueue(taskQueue)
+            .setWorkflowId(workflowId)
+        }.build()
+
+      new ZWorkflowStub.UntypedImpl(
+        client.newUntypedWorkflowStub(workflowType, options)
+      )
+    }
+}

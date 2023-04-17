@@ -30,6 +30,17 @@ class GreetingWorkflowImpl extends GreetingWorkflow {
   }
 }
 
+class GreetingWorkflowUntypedImpl extends GreetingWorkflow {
+  override def getGreeting(name: String): String = {
+    val child = ZWorkflow.newUntypedChildWorkflowStub("GreetingChild").build
+
+    println("Invoking child workflow...")
+    val greetingPromise = child.executeAsync[String]("Hello", name)
+    println("Child workflow started!")
+    greetingPromise.run.getOrThrow
+  }
+}
+
 class GreetingChildImpl extends GreetingChild {
   override def composeGreeting(greeting: String, name: String): String = {
     println(s"composeGreeting($greeting, $name)")

@@ -2,6 +2,7 @@ package zio.temporal.workflow
 
 import io.temporal.client.ActivityCompletionClient
 import io.temporal.client.WorkflowClient
+import org.checkerframework.checker.units.qual.A
 import zio.*
 import zio.temporal.internalApi
 import zio.temporal.signal.ZWorkflowClientSignalWithStartSyntax
@@ -23,7 +24,7 @@ final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) {
   def newActivityCompletionClient: UIO[ActivityCompletionClient] =
     ZIO.blocking(ZIO.succeed(toJava.newActivityCompletionClient()))
 
-  /** Creates new type workflow stub builder
+  /** Creates new typed workflow stub builder
     * @tparam A
     *   workflow interface
     * @return
@@ -32,6 +33,16 @@ final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) {
   def newWorkflowStub[A: ClassTag: IsWorkflow]: ZWorkflowStubBuilderTaskQueueDsl[A] =
     new ZWorkflowStubBuilderTaskQueueDsl[A](toJava)
 
+  /** Creates new untyped type workflow stub builder
+    *
+    * @param workflowType
+    *   name of the workflow type
+    * @return
+    *   builder instance
+    */
+  def newUntypedWorkflowStub(workflowType: String): ZWorkflowStubUntypedBuilderTaskQueueDsl =
+    new ZWorkflowStubUntypedBuilderTaskQueueDsl(workflowType, toJava)
+
   def newWorkflowStub[A: ClassTag: IsWorkflow](
     workflowId: String,
     runId:      Option[String] = None
@@ -39,6 +50,16 @@ final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) {
     ZIO.succeed {
       ZWorkflowStub.Of[A](
         new ZWorkflowStubImpl(toJava.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava))
+      )
+    }
+
+  def newUntypedWorkflowStub(
+    workflowId: String,
+    runId:      Option[String]
+  ): UIO[ZWorkflowStub.Untyped] =
+    ZIO.succeed {
+      new ZWorkflowStub.UntypedImpl(
+        toJava.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava)
       )
     }
 }

@@ -33,6 +33,18 @@ class WorkflowFooImpl extends WorkflowFoo {
   }
 }
 
+class WorkflowFooUntypedImpl extends WorkflowFoo {
+  private val logger = ZWorkflow.getLogger(getClass)
+  override def doSomething(name: String): String = {
+    ZWorkflow.sleep(1.second)
+    val bar = ZWorkflow.newUntypedExternalWorkflowStub(ZWorkflow.info.workflowId + "-bar")
+
+    logger.info("Signalling external workflow...")
+    bar.signal("Unblock", name)
+    name + " done"
+  }
+}
+
 class WorkflowBarImpl extends WorkflowBar {
   private val logger = ZWorkflow.getLogger(getClass)
 

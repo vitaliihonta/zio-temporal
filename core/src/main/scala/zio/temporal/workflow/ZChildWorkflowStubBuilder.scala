@@ -70,3 +70,61 @@ class ZChildWorkflowStubBuilder[A: ClassTag] private[zio] (
     new ZChildWorkflowStubBuilder[A](additionalOptions andThen options)
 
 }
+
+class ZChildWorkflowUntypedStubBuilder private[zio] (
+  workflowType:      String,
+  additionalOptions: ChildWorkflowOptions.Builder => ChildWorkflowOptions.Builder) {
+
+  def withNamespace(namespace: String): ZChildWorkflowUntypedStubBuilder =
+    copy(_.setNamespace(namespace))
+
+  def withWorkflowId(workflowId: String): ZChildWorkflowUntypedStubBuilder =
+    copy(_.setWorkflowId(workflowId))
+
+  def withWorkflowIdReusePolicy(policy: WorkflowIdReusePolicy): ZChildWorkflowUntypedStubBuilder =
+    copy(_.setWorkflowIdReusePolicy(policy))
+
+  def withWorkflowRunTimeout(timeout: Duration): ZChildWorkflowUntypedStubBuilder =
+    copy(_.setWorkflowRunTimeout(timeout.asJava))
+
+  def withWorkflowExecutionTimeout(timeout: Duration): ZChildWorkflowUntypedStubBuilder =
+    copy(_.setWorkflowExecutionTimeout(timeout.asJava))
+
+  def withWorkflowTaskTimeout(timeout: Duration): ZChildWorkflowUntypedStubBuilder =
+    copy(_.setWorkflowTaskTimeout(timeout.asJava))
+
+  def withTaskQueue(taskQueue: String): ZChildWorkflowUntypedStubBuilder =
+    copy(_.setTaskQueue(taskQueue))
+
+  def withRetryOptions(options: ZRetryOptions): ZChildWorkflowUntypedStubBuilder =
+    copy(_.setRetryOptions(options.toJava))
+
+  def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZChildWorkflowUntypedStubBuilder =
+    copy(_.setSearchAttributes(attrs))
+
+  def withCronSchedule(schedule: String): ZChildWorkflowUntypedStubBuilder =
+    copy(_.setCronSchedule(schedule))
+
+  def withContextPropagators(propagators: Seq[ContextPropagator]): ZChildWorkflowUntypedStubBuilder =
+    copy(_.setContextPropagators(propagators.asJava))
+
+  def withCancellationType(cancellationType: ChildWorkflowCancellationType): ZChildWorkflowUntypedStubBuilder =
+    copy(_.setCancellationType(cancellationType))
+
+  /** Builds ZChildWorkflowStub.Untyped
+    * @return
+    *   typed child workflow stub
+    */
+  def build: ZChildWorkflowStub.Untyped = {
+    val options = additionalOptions(ChildWorkflowOptions.newBuilder()).build()
+    new ZChildWorkflowStub.UntypedImpl(
+      Workflow.newUntypedChildWorkflowStub(workflowType, options)
+    )
+  }
+
+  private def copy(
+    options: ChildWorkflowOptions.Builder => ChildWorkflowOptions.Builder
+  ): ZChildWorkflowUntypedStubBuilder =
+    new ZChildWorkflowUntypedStubBuilder(workflowType, additionalOptions andThen options)
+
+}
