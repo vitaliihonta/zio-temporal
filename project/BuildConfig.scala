@@ -12,7 +12,7 @@ object BuildConfig extends Dependencies {
 
   val coreLibs = baseLibs ++ Seq(
     Utility.scalaJava8Compat,
-    Jackson.scala % Optional,
+    Jackson.scala,
     Utility.izumiReflect,
     Testing.scalatest
   )
