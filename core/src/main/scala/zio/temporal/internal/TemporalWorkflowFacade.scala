@@ -20,6 +20,16 @@ object TemporalWorkflowFacade {
     stub.getResultAsync(ClassTagUtils.classOf[R])
   }
 
+  def executeWithTimeout[R](
+    stub:         WorkflowStub,
+    timeout:      Duration,
+    args:         List[Any]
+  )(implicit ctg: ClassTag[R]
+  ): CompletableFuture[R] = {
+    start(stub, args)
+    stub.getResultAsync(timeout.toNanos, TimeUnit.NANOSECONDS, ClassTagUtils.classOf[R])
+  }
+
   def executeChild[R](stub: ChildWorkflowStub, args: List[Any])(implicit ctg: ClassTag[R]): R = {
     stub.execute(ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
   }
@@ -39,18 +49,6 @@ object TemporalWorkflowFacade {
   )(implicit ctg: ClassTag[R]
   ): Promise[R] = {
     stub.executeAsync[R](activityName, ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
-  }
-
-  // TODO: use
-
-  def executeWithTimeout[R](
-    stub:         WorkflowStub,
-    timeout:      Duration,
-    args:         List[AnyRef]
-  )(implicit ctg: ClassTag[R]
-  ): CompletableFuture[R] = {
-    start(stub, args)
-    stub.getResultAsync(timeout.toNanos, TimeUnit.NANOSECONDS, ClassTagUtils.classOf[R])
   }
 
   def signal(

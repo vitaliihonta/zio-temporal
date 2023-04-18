@@ -2,7 +2,7 @@ package zio.temporal
 
 import zio._
 import io.temporal.workflow.WorkflowInfo
-import scala.compat.java8.OptionConverters._
+import scala.jdk.OptionConverters._
 import scala.jdk.CollectionConverters._
 
 /** Represents current workflow information

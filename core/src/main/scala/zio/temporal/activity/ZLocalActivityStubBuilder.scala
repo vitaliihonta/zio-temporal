@@ -6,46 +6,62 @@ import io.temporal.workflow.Workflow
 import zio.temporal.ZRetryOptions
 import scala.reflect.ClassTag
 
-class ZLocalActivityStubBuilderInitial[A: ClassTag] private[zio] () {
+object ZLocalActivityStubBuilderInitial {
+  type Of[A]   = ZLocalActivityStubBuilderInitial[ZActivityStub.Of[A]]
+  type Untyped = ZLocalActivityStubBuilderInitial[ZActivityStub.Untyped]
 
-  def withStartToCloseTimeout(timeout: Duration): ZLocalActivityStubBuilder[A] =
-    new ZLocalActivityStubBuilder[A](timeout, identity)
+  private[temporal] def buildTyped[A: ClassTag]: LocalActivityOptions => ZActivityStub.Of[A] =
+    options =>
+      ZActivityStub.Of[A](
+        new ZActivityStubImpl(
+          Workflow.newUntypedLocalActivityStub(options)
+        )
+      )
+
+  private[temporal] def buildUntyped: LocalActivityOptions => ZActivityStub.Untyped =
+    options =>
+      new ZActivityStub.UntypedImpl(
+        Workflow.newUntypedLocalActivityStub(options)
+      )
 }
 
-class ZLocalActivityStubBuilder[A: ClassTag] private[zio] (
+class ZLocalActivityStubBuilderInitial[Res] private[zio] (buildImpl: LocalActivityOptions => Res) {
+
+  def withStartToCloseTimeout(timeout: Duration): ZLocalActivityStubBuilder[Res] =
+    new ZLocalActivityStubBuilder[Res](buildImpl, timeout, identity)
+}
+
+class ZLocalActivityStubBuilder[Res] private[zio] (
+  buildImpl:           LocalActivityOptions => Res,
   startToCloseTimeout: Duration,
   additionalOptions:   LocalActivityOptions.Builder => LocalActivityOptions.Builder) {
 
-  def withScheduleToCloseTimeout(timeout: Duration): ZLocalActivityStubBuilder[A] =
+  def withScheduleToCloseTimeout(timeout: Duration): ZLocalActivityStubBuilder[Res] =
     copy(_.setScheduleToCloseTimeout(timeout.asJava))
 
-  def withLocalRetryThreshold(localRetryThreshold: Duration): ZLocalActivityStubBuilder[A] =
+  def withLocalRetryThreshold(localRetryThreshold: Duration): ZLocalActivityStubBuilder[Res] =
     copy(_.setLocalRetryThreshold(localRetryThreshold.asJava))
 
-  def withRetryOptions(options: ZRetryOptions): ZLocalActivityStubBuilder[A] =
+  def withRetryOptions(options: ZRetryOptions): ZLocalActivityStubBuilder[Res] =
     copy(_.setRetryOptions(options.toJava))
 
   /** Builds typed ZLocalActivityStub
     * @return
     *   typed local activity stub
     */
-  def build: ZActivityStub.Of[A] = {
+  def build: Res = {
     val options = additionalOptions {
       LocalActivityOptions
         .newBuilder()
         .setStartToCloseTimeout(startToCloseTimeout.asJava)
     }.build()
 
-    ZActivityStub.Of[A](
-      new ZActivityStubImpl(
-        Workflow.newUntypedLocalActivityStub(options)
-      )
-    )
+    buildImpl(options)
   }
 
   private def copy(
     options: LocalActivityOptions.Builder => LocalActivityOptions.Builder
-  ): ZLocalActivityStubBuilder[A] =
-    new ZLocalActivityStubBuilder[A](startToCloseTimeout, additionalOptions andThen options)
+  ): ZLocalActivityStubBuilder[Res] =
+    new ZLocalActivityStubBuilder[Res](buildImpl, startToCloseTimeout, additionalOptions andThen options)
 
 }

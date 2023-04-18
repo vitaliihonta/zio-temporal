@@ -4,9 +4,7 @@ import io.temporal.client.ActivityCompletionClient
 import io.temporal.client.WorkflowClient
 import zio.*
 import zio.temporal.internalApi
-import zio.temporal.signal.ZWorkflowClientSignalWithStartSyntax
-
-import scala.compat.java8.OptionConverters.*
+import scala.jdk.OptionConverters.*
 import scala.reflect.ClassTag
 
 /** Represents temporal workflow client
@@ -23,14 +21,24 @@ final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) {
   def newActivityCompletionClient: UIO[ActivityCompletionClient] =
     ZIO.blocking(ZIO.succeed(toJava.newActivityCompletionClient()))
 
-  /** Creates new type workflow stub builder
+  /** Creates new typed workflow stub builder
     * @tparam A
     *   workflow interface
     * @return
     *   builder instance
     */
-  def newWorkflowStub[A: ClassTag: IsWorkflow]: ZWorkflowStubBuilderTaskQueueDsl[A] =
-    new ZWorkflowStubBuilderTaskQueueDsl[A](toJava)
+  def newWorkflowStub[A: ClassTag: IsWorkflow]: ZWorkflowStubBuilderTaskQueueDsl.Of[A] =
+    new ZWorkflowStubBuilderTaskQueueDsl.Of[A](toJava, ZWorkflowStubBuilderTaskQueueDsl.typed[A])
+
+  /** Creates new untyped type workflow stub builder
+    *
+    * @param workflowType
+    *   name of the workflow type
+    * @return
+    *   builder instance
+    */
+  def newUntypedWorkflowStub(workflowType: String): ZWorkflowStubBuilderTaskQueueDsl.Untyped =
+    new ZWorkflowStubBuilderTaskQueueDsl.Untyped(toJava, ZWorkflowStubBuilderTaskQueueDsl.untyped(workflowType))
 
   def newWorkflowStub[A: ClassTag: IsWorkflow](
     workflowId: String,
@@ -39,6 +47,16 @@ final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) {
     ZIO.succeed {
       ZWorkflowStub.Of[A](
         new ZWorkflowStubImpl(toJava.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava))
+      )
+    }
+
+  def newUntypedWorkflowStub(
+    workflowId: String,
+    runId:      Option[String]
+  ): UIO[ZWorkflowStub.Untyped] =
+    ZIO.succeed {
+      new ZWorkflowStub.UntypedImpl(
+        toJava.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava)
       )
     }
 }
