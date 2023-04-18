@@ -6,71 +6,12 @@ import zio.*
 import zio.temporal.{ZRetryOptions, ZSearchAttribute, simpleNameOf}
 import scala.reflect.ClassTag
 
-final class ZWorkflowStubBuilderTaskQueueDsl[A: ClassTag] private[zio] (client: WorkflowClient) {
+object ZWorkflowStubBuilderTaskQueueDsl {
+  type Of[A]   = ZWorkflowStubBuilderTaskQueueDsl[ZWorkflowStub.Of[A]]
+  type Untyped = ZWorkflowStubBuilderTaskQueueDsl[ZWorkflowStub.Untyped]
 
-  def withTaskQueue(taskQueue: String): ZWorkflowStubBuilderWorkflowIdDsl[A] =
-    new ZWorkflowStubBuilderWorkflowIdDsl[A](client, taskQueue)
-}
-
-final class ZWorkflowStubBuilderWorkflowIdDsl[A: ClassTag] private[zio] (
-  client:    WorkflowClient,
-  taskQueue: String) {
-
-  def withWorkflowId(workflowId: String): ZWorkflowStubBuilder[A] =
-    new ZWorkflowStubBuilder[A](client, taskQueue, workflowId, additionalConfig = identity)
-}
-
-final class ZWorkflowStubBuilder[A: ClassTag] private[zio] (
-  client:           WorkflowClient,
-  taskQueue:        String,
-  workflowId:       String,
-  additionalConfig: WorkflowOptions.Builder => WorkflowOptions.Builder) {
-
-  private def copy(config: WorkflowOptions.Builder => WorkflowOptions.Builder): ZWorkflowStubBuilder[A] =
-    new ZWorkflowStubBuilder[A](client, taskQueue, workflowId, additionalConfig andThen config)
-
-  def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZWorkflowStubBuilder[A] =
-    copy(_.setSearchAttributes(attrs))
-
-  def withCronSchedule(schedule: String): ZWorkflowStubBuilder[A] =
-    copy(_.setCronSchedule(schedule))
-
-  def withWorkflowRunTimeout(timeout: Duration): ZWorkflowStubBuilder[A] =
-    copy(_.setWorkflowRunTimeout(timeout.asJava))
-
-  def withWorkflowTaskTimeout(timeout: Duration): ZWorkflowStubBuilder[A] =
-    copy(_.setWorkflowTaskTimeout(timeout.asJava))
-
-  def withWorkflowExecutionTimeout(timeout: Duration): ZWorkflowStubBuilder[A] =
-    copy(_.setWorkflowExecutionTimeout(timeout.asJava))
-
-  def withRetryOptions(options: ZRetryOptions): ZWorkflowStubBuilder[A] =
-    copy(_.setRetryOptions(options.toJava))
-
-  /** Allows to specify options directly on the java SDK's [[WorkflowOptions]]. Use it in case an appropriate `withXXX`
-    * method is missing
-    *
-    * @note
-    *   the options specified via this method take precedence over those specified via other methods.
-    */
-  def transformJavaOptions(
-    f: WorkflowOptions.Builder => WorkflowOptions.Builder
-  ): ZWorkflowStubBuilder[A] = copy(f)
-
-  /** Builds typed ZWorkflowStub
-    * @return
-    *   typed workflow stub
-    */
-  def build: UIO[ZWorkflowStub.Of[A]] =
-    ZIO.succeed {
-      val options =
-        additionalConfig {
-          WorkflowOptions
-            .newBuilder()
-            .setTaskQueue(taskQueue)
-            .setWorkflowId(workflowId)
-        }.build()
-
+  private[temporal] def typed[A: ClassTag]: (WorkflowClient, WorkflowOptions) => ZWorkflowStub.Of[A] =
+    (client, options) =>
       ZWorkflowStub.Of(
         new ZWorkflowStubImpl(
           client.newUntypedWorkflowStub(
@@ -79,50 +20,57 @@ final class ZWorkflowStubBuilder[A: ClassTag] private[zio] (
           )
         )
       )
-    }
+
+  private[temporal] def untyped(workflowType: String): (WorkflowClient, WorkflowOptions) => ZWorkflowStub.Untyped =
+    (client, options) =>
+      new ZWorkflowStub.UntypedImpl(
+        client.newUntypedWorkflowStub(workflowType, options)
+      )
 }
 
-final class ZWorkflowStubUntypedBuilderTaskQueueDsl private[zio] (workflowType: String, client: WorkflowClient) {
+final class ZWorkflowStubBuilderTaskQueueDsl[Res] private[zio] (
+  client:    WorkflowClient,
+  buildImpl: (WorkflowClient, WorkflowOptions) => Res) {
 
-  def withTaskQueue(taskQueue: String): ZWorkflowStubUntypedBuilderWorkflowIdDsl =
-    new ZWorkflowStubUntypedBuilderWorkflowIdDsl(workflowType, client, taskQueue)
+  def withTaskQueue(taskQueue: String): ZWorkflowStubBuilderWorkflowIdDsl[Res] =
+    new ZWorkflowStubBuilderWorkflowIdDsl[Res](client, buildImpl, taskQueue)
 }
 
-final class ZWorkflowStubUntypedBuilderWorkflowIdDsl private[zio] (
-  workflowType: String,
-  client:       WorkflowClient,
-  taskQueue:    String) {
+final class ZWorkflowStubBuilderWorkflowIdDsl[Res] private[zio] (
+  client:    WorkflowClient,
+  buildImpl: (WorkflowClient, WorkflowOptions) => Res,
+  taskQueue: String) {
 
-  def withWorkflowId(workflowId: String): ZWorkflowStubUntypedBuilder =
-    new ZWorkflowStubUntypedBuilder(workflowType, client, taskQueue, workflowId, additionalConfig = identity)
+  def withWorkflowId(workflowId: String): ZWorkflowStubBuilder[Res] =
+    new ZWorkflowStubBuilder[Res](client, buildImpl, taskQueue, workflowId, additionalConfig = identity)
 }
 
-final class ZWorkflowStubUntypedBuilder private[zio] (
-  workflowType:     String,
+final class ZWorkflowStubBuilder[Res] private[zio] (
   client:           WorkflowClient,
+  buildImpl:        (WorkflowClient, WorkflowOptions) => Res,
   taskQueue:        String,
   workflowId:       String,
   additionalConfig: WorkflowOptions.Builder => WorkflowOptions.Builder) {
 
-  private def copy(config: WorkflowOptions.Builder => WorkflowOptions.Builder): ZWorkflowStubUntypedBuilder =
-    new ZWorkflowStubUntypedBuilder(workflowType, client, taskQueue, workflowId, additionalConfig andThen config)
+  private def copy(config: WorkflowOptions.Builder => WorkflowOptions.Builder): ZWorkflowStubBuilder[Res] =
+    new ZWorkflowStubBuilder[Res](client, buildImpl, taskQueue, workflowId, additionalConfig andThen config)
 
-  def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZWorkflowStubUntypedBuilder =
+  def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZWorkflowStubBuilder[Res] =
     copy(_.setSearchAttributes(attrs))
 
-  def withCronSchedule(schedule: String): ZWorkflowStubUntypedBuilder =
+  def withCronSchedule(schedule: String): ZWorkflowStubBuilder[Res] =
     copy(_.setCronSchedule(schedule))
 
-  def withWorkflowRunTimeout(timeout: Duration): ZWorkflowStubUntypedBuilder =
+  def withWorkflowRunTimeout(timeout: Duration): ZWorkflowStubBuilder[Res] =
     copy(_.setWorkflowRunTimeout(timeout.asJava))
 
-  def withWorkflowTaskTimeout(timeout: Duration): ZWorkflowStubUntypedBuilder =
+  def withWorkflowTaskTimeout(timeout: Duration): ZWorkflowStubBuilder[Res] =
     copy(_.setWorkflowTaskTimeout(timeout.asJava))
 
-  def withWorkflowExecutionTimeout(timeout: Duration): ZWorkflowStubUntypedBuilder =
+  def withWorkflowExecutionTimeout(timeout: Duration): ZWorkflowStubBuilder[Res] =
     copy(_.setWorkflowExecutionTimeout(timeout.asJava))
 
-  def withRetryOptions(options: ZRetryOptions): ZWorkflowStubUntypedBuilder =
+  def withRetryOptions(options: ZRetryOptions): ZWorkflowStubBuilder[Res] =
     copy(_.setRetryOptions(options.toJava))
 
   /** Allows to specify options directly on the java SDK's [[WorkflowOptions]]. Use it in case an appropriate `withXXX`
@@ -133,13 +81,13 @@ final class ZWorkflowStubUntypedBuilder private[zio] (
     */
   def transformJavaOptions(
     f: WorkflowOptions.Builder => WorkflowOptions.Builder
-  ): ZWorkflowStubUntypedBuilder = copy(f)
+  ): ZWorkflowStubBuilder[Res] = copy(f)
 
   /** Builds typed ZWorkflowStub
     * @return
     *   typed workflow stub
     */
-  def build: UIO[ZWorkflowStub.Untyped] =
+  def build: UIO[Res] =
     ZIO.succeed {
       val options =
         additionalConfig {
@@ -149,8 +97,6 @@ final class ZWorkflowStubUntypedBuilder private[zio] (
             .setWorkflowId(workflowId)
         }.build()
 
-      new ZWorkflowStub.UntypedImpl(
-        client.newUntypedWorkflowStub(workflowType, options)
-      )
+      buildImpl(client, options)
     }
 }

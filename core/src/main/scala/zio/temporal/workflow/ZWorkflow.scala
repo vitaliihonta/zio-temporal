@@ -216,16 +216,16 @@ object ZWorkflow {
     * @return
     *   activity stub builder
     */
-  def newActivityStub[A: ClassTag: IsActivity]: ZActivityStubBuilderInitial[A] =
-    new ZActivityStubBuilderInitial[A]()
+  def newActivityStub[A: ClassTag: IsActivity]: ZActivityStubBuilderInitial.Of[A] =
+    new ZActivityStubBuilderInitial.Of[A](ZActivityStubBuilderInitial.buildTyped[A])
 
   /** Creates a builder of untyped client stub to activities
     *
     * @return
     *   untyped activity stub builder
     */
-  def newUntypedActivityStub: ZActivityStubUntypedBuilderInitial =
-    new ZActivityStubUntypedBuilderInitial()
+  def newUntypedActivityStub: ZActivityStubBuilderInitial.Untyped =
+    new ZActivityStubBuilderInitial.Untyped(ZActivityStubBuilderInitial.buildUntyped)
 
   /** Creates a builder of client stub to local activities that implement given interface.
     *
@@ -234,16 +234,16 @@ object ZWorkflow {
     * @return
     *   local activity stub builder
     */
-  def newLocalActivityStub[A: ClassTag: IsActivity]: ZLocalActivityStubBuilderInitial[A] =
-    new ZLocalActivityStubBuilderInitial[A]()
+  def newLocalActivityStub[A: ClassTag: IsActivity]: ZLocalActivityStubBuilderInitial.Of[A] =
+    new ZLocalActivityStubBuilderInitial.Of[A](ZLocalActivityStubBuilderInitial.buildTyped[A])
 
   /** Creates a builder of untyped client stub to local activities that implement given interface.
     *
     * @return
     *   local activity stub builder
     */
-  def newUntypedLocalActivityStub: ZLocalActivityUntypedStubBuilderInitial =
-    new ZLocalActivityUntypedStubBuilderInitial
+  def newUntypedLocalActivityStub: ZLocalActivityStubBuilderInitial.Untyped =
+    new ZLocalActivityStubBuilderInitial.Untyped(ZLocalActivityStubBuilderInitial.buildUntyped)
 
   /** Creates a builder of client stub that can be used to start a child workflow that implements given interface.
     *
@@ -252,8 +252,8 @@ object ZWorkflow {
     * @return
     *   child workflow stub builder
     */
-  def newChildWorkflowStub[A: ClassTag: IsWorkflow]: ZChildWorkflowStubBuilder[A] =
-    new ZChildWorkflowStubBuilder[A](identity)
+  def newChildWorkflowStub[A: ClassTag: IsWorkflow]: ZChildWorkflowStubBuilder.Of[A] =
+    new ZChildWorkflowStubBuilder.Of[A](ZChildWorkflowStubBuilder.buildTyped[A], identity)
 
   /** Creates a builder of untyped client stub that can be used to start a child workflow that implements given
     * interface.
@@ -261,8 +261,8 @@ object ZWorkflow {
     * @return
     *   child workflow stub builder
     */
-  def newUntypedChildWorkflowStub(workflowType: String): ZChildWorkflowUntypedStubBuilder =
-    new ZChildWorkflowUntypedStubBuilder(workflowType, identity)
+  def newUntypedChildWorkflowStub(workflowType: String): ZChildWorkflowStubBuilder.Untyped =
+    new ZChildWorkflowStubBuilder.Untyped(ZChildWorkflowStubBuilder.buildUntyped(workflowType), identity)
 
   /** Creates client stub that can be used to signal or cancel an existing workflow
     *

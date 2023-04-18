@@ -30,8 +30,8 @@ final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) {
     * @return
     *   builder instance
     */
-  def newWorkflowStub[A: ClassTag: IsWorkflow]: ZWorkflowStubBuilderTaskQueueDsl[A] =
-    new ZWorkflowStubBuilderTaskQueueDsl[A](toJava)
+  def newWorkflowStub[A: ClassTag: IsWorkflow]: ZWorkflowStubBuilderTaskQueueDsl.Of[A] =
+    new ZWorkflowStubBuilderTaskQueueDsl.Of[A](toJava, ZWorkflowStubBuilderTaskQueueDsl.typed[A])
 
   /** Creates new untyped type workflow stub builder
     *
@@ -40,8 +40,8 @@ final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) {
     * @return
     *   builder instance
     */
-  def newUntypedWorkflowStub(workflowType: String): ZWorkflowStubUntypedBuilderTaskQueueDsl =
-    new ZWorkflowStubUntypedBuilderTaskQueueDsl(workflowType, toJava)
+  def newUntypedWorkflowStub(workflowType: String): ZWorkflowStubBuilderTaskQueueDsl.Untyped =
+    new ZWorkflowStubBuilderTaskQueueDsl.Untyped(toJava, ZWorkflowStubBuilderTaskQueueDsl.untyped(workflowType))
 
   def newWorkflowStub[A: ClassTag: IsWorkflow](
     workflowId: String,
