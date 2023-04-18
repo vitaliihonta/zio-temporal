@@ -231,7 +231,7 @@ lazy val examples = projectMatrix
     testkit,
     protobuf
   )
-  .jvmPlatform(scalaVersions = List(scala213, scala3))
+  .jvmPlatform(scalaVersions = allScalaVersions)
 
 // MDOC
 lazy val mdocSettings = Seq(

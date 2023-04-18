@@ -2,12 +2,9 @@ package zio.temporal.workflow
 
 import io.temporal.client.ActivityCompletionClient
 import io.temporal.client.WorkflowClient
-import org.checkerframework.checker.units.qual.A
 import zio.*
 import zio.temporal.internalApi
-import zio.temporal.signal.ZWorkflowClientSignalWithStartSyntax
-
-import scala.compat.java8.OptionConverters.*
+import scala.jdk.OptionConverters.*
 import scala.reflect.ClassTag
 
 /** Represents temporal workflow client
