@@ -6,33 +6,31 @@ import zio.temporal.workflow._
 import zio.temporal.activity._
 
 @workflowInterface
-trait GreetingWorkflow {
+trait GreetingUntypedWorkflow {
   @workflowMethod
   def getGreeting(name: String): String
 }
 
 @workflowInterface
-trait GreetingChild {
+trait GreetingUntypedChild {
   @workflowMethod
   def composeGreeting(greeting: String, name: String): String
 }
 
-class GreetingWorkflowImpl extends GreetingWorkflow {
+class GreetingUntypedWorkflowImpl extends GreetingUntypedWorkflow {
   override def getGreeting(name: String): String = {
-    val child = ZWorkflow.newChildWorkflowStub[GreetingChild].build
+    val child = ZWorkflow.newUntypedChildWorkflowStub("GreetingUntypedChild").build
 
-    println("Invoking child workflow...")
-    val greetingPromise = ZChildWorkflowStub.executeAsync(
-      child.composeGreeting("Hello", name)
-    )
-    println("Child workflow started!")
+    println("Invoking untyped child workflow...")
+    val greetingPromise = child.executeAsync[String]("Hello", name)
+    println("Child untyped workflow started!")
     greetingPromise.run.getOrThrow
   }
 }
 
-class GreetingChildImpl extends GreetingChild {
+class GreetingUntypedChildImpl extends GreetingUntypedChild {
   override def composeGreeting(greeting: String, name: String): String = {
-    println(s"composeGreeting($greeting, $name)")
+    println(s"untyped composeGreeting($greeting, $name)")
     s"$greeting $name!"
   }
 }

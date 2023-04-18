@@ -133,12 +133,12 @@ object ZWorkflowStub
     def result[V: ClassTag]: TemporalIO[V]
 
     def execute[V: ClassTag](args: Any*): TemporalIO[V] =
-      start(args) *> result[V]
+      start(args: _*) *> result[V]
 
     def result[V: ClassTag](timeout: Duration): TemporalIO[Option[V]]
 
     def executeWithTimeout[V: ClassTag](timeout: Duration, args: Any*): TemporalIO[Option[V]] =
-      start(args) *> result[V](timeout)
+      start(args: _*) *> result[V](timeout)
 
     /** Request cancellation of a workflow execution.
       *

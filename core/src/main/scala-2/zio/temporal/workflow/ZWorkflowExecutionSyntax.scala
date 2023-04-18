@@ -1,8 +1,8 @@
 package zio.temporal.workflow
 
+import zio.*
 import zio.temporal.internal.ZWorkflowMacro
-import zio.temporal.TemporalIO
-import zio.temporal.ZWorkflowExecution
+import zio.temporal.*
 import scala.language.experimental.macros
 import scala.language.implicitConversions
 
@@ -12,4 +12,7 @@ trait ZWorkflowExecutionSyntax {
 
   def execute[R](f: R): TemporalIO[R] =
     macro ZWorkflowMacro.executeImpl[R]
+
+  def executeWithTimeout[R](timeout: Duration)(f: R): TemporalIO[R] =
+    macro ZWorkflowMacro.executeWithTimeoutImpl[R]
 }

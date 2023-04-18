@@ -6,13 +6,13 @@ import zio.temporal.workflow.*
 import zio.temporal.state.ZWorkflowState
 
 @workflowInterface
-trait WorkflowFoo {
+trait WorkflowFooUntyped {
   @workflowMethod
   def doSomething(name: String): String
 }
 
 @workflowInterface
-trait WorkflowBar {
+trait WorkflowBarUntyped {
   @workflowMethod
   def doSomethingElse(): String
 
@@ -20,20 +20,19 @@ trait WorkflowBar {
   def unblock(name: String): Unit
 }
 
-class WorkflowFooImpl extends WorkflowFoo {
+class WorkflowFooUntypedImpl extends WorkflowFooUntyped {
   private val logger = ZWorkflow.getLogger(getClass)
   override def doSomething(name: String): String = {
     ZWorkflow.sleep(1.second)
-    val bar = ZWorkflow.newExternalWorkflowStub[WorkflowBar](ZWorkflow.info.workflowId + "-bar")
+    val bar = ZWorkflow.newUntypedExternalWorkflowStub(ZWorkflow.info.workflowId + "-bar")
+
     logger.info("Signalling external workflow...")
-    ZExternalWorkflowStub.signal(
-      bar.unblock(name)
-    )
+    bar.signal("Unblock", name)
     name + " done"
   }
 }
 
-class WorkflowBarImpl extends WorkflowBar {
+class WorkflowBarUntypedImpl extends WorkflowBarUntyped {
   private val logger = ZWorkflow.getLogger(getClass)
 
   private val state = ZWorkflowState.empty[String]
