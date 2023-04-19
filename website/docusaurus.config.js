@@ -63,20 +63,33 @@ const siteConfig = {
           title: 'Info',
           items: [
             {
-              label: 'Contacts',
-              to: 'docs/contacts',
-            },
-            {
               label: 'Contribution',
               to: 'docs/contribution'
+            },
+            {
+              label: 'FAQ',
+              to: 'docs/FAQ'
             }
           ],
         },
+        {
+          title: 'Community & Contacts',
+          items: [
+            {
+              label: 'Discord',
+              href: 'https://discord.gg/5Vyc2GjXws'
+            },
+            {
+              label: 'Author on Telegram',
+              href: 'https://t.me/vitaliihonta'
+            },
+            {
+              label: "Author's email",
+              href: 'mailto:vitalii.honta@gmail.com'
+            }
+          ]
+        }
       ],
-      // logo: {
-      //   alt: 'Facebook Open Source Logo',
-      //   src: 'img/oss_logo.png',
-      // },
       copyright: `Copyright © ${new Date().getFullYear()} Vitalii Honta`,
     }
   }
