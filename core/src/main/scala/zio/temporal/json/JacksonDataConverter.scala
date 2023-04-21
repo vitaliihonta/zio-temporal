@@ -1,8 +1,9 @@
 package zio.temporal.json
 
 import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import io.temporal.common.converter._
+import io.temporal.common.converter.*
 
 object JacksonDataConverter {
   def make(): DataConverter = {
@@ -16,6 +17,7 @@ object JacksonDataConverter {
           JsonMapper
             .builder()
             .addModule(DefaultScalaModule)
+            .addModule(new JavaTimeModule)
             .build()
         )
       ): _*

@@ -3,7 +3,7 @@ package zio.temporal.activity
 import io.temporal.workflow.ActivityStub
 import zio.temporal.internal.ClassTagUtils
 import zio.temporal.internalApi
-import zio.temporal.internal.tagging.Stubs
+import zio.temporal.internal.Stubs
 import zio.temporal.workflow.ZAsync
 import scala.reflect.ClassTag
 

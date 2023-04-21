@@ -277,6 +277,32 @@ object WorkflowSpec extends ZIOSpecDefault {
       }
 
     }.provideEnv,
+    test("run workflow with continue as new") {
+      ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
+        val taskQueue  = "continue-as-new-queue"
+        val workflowId = UUID.randomUUID().toString + taskQueue
+
+        for {
+          _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
+                 ZWorker.addWorkflow[ContinueAsNewWorkflowImpl].fromClass
+
+          _ <- ZTestWorkflowEnvironment.setup()
+          workflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
+                        _.newWorkflowStub[ContinueAsNewWorkflow]
+                          .withTaskQueue(taskQueue)
+                          .withWorkflowId(workflowId)
+                          .withWorkflowRunTimeout(30.seconds)
+                          .withWorkflowTaskTimeout(30.seconds)
+                          .withWorkflowExecutionTimeout(30.seconds)
+                          .build
+                      )
+          result <- ZWorkflowStub.execute(
+                      workflow.doSomething(0)
+                    )
+        } yield assertTrue(result == "Done")
+      }
+
+    }.provideEnv,
     test("run workflow with ZIO untyped activity") {
       ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
         val taskQueue  = "zio-untyped-queue"

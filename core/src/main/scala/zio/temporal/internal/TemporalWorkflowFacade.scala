@@ -2,8 +2,15 @@ package zio.temporal.internal
 
 import io.temporal.api.common.v1.WorkflowExecution
 import io.temporal.client.{BatchRequest, WorkflowStub}
-import io.temporal.workflow.{ActivityStub, ChildWorkflowStub, ExternalWorkflowStub, Functions, Promise}
-
+import io.temporal.workflow.{
+  ActivityStub,
+  ChildWorkflowStub,
+  ContinueAsNewOptions,
+  ExternalWorkflowStub,
+  Functions,
+  Promise,
+  Workflow
+}
 import java.util.concurrent.{CompletableFuture, TimeUnit}
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
@@ -86,6 +93,12 @@ object TemporalWorkflowFacade {
 
   def query[R](stub: WorkflowStub, name: String, args: List[Any])(implicit ctg: ClassTag[R]): R =
     stub.query[R](name, ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
+
+  def continueAsNew[R](workflowType: String, options: ContinueAsNewOptions, args: List[Any]): R = {
+    Workflow.continueAsNew(workflowType, options, args.asInstanceOf[List[AnyRef]]: _*)
+    // continueAsNew never returns
+    null.asInstanceOf[R]
+  }
 
   object FunctionConverters {
     implicit def proc(f: () => Unit): Functions.Proc = new Functions.Proc {

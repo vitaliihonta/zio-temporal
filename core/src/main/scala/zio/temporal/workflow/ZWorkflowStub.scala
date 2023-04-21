@@ -5,11 +5,10 @@ import io.temporal.client.WorkflowStub
 import zio.temporal.{TemporalIO, ZWorkflowExecution, internalApi}
 import zio.temporal.internal.ClassTagUtils
 import zio.temporal.internal.TemporalInteraction
-import zio.temporal.internal.tagging.Stubs
+import zio.temporal.internal.Stubs
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.{ZWorkflowClientSignalWithStartSyntax, ZWorkflowStubSignalSyntax}
 import java.util.concurrent.TimeUnit
-import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
 sealed trait ZWorkflowStub extends ZWorkflowClientSignalWithStartSyntax {

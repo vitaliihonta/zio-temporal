@@ -2,7 +2,7 @@ package zio.temporal.workflow
 
 import io.temporal.workflow.ChildWorkflowStub
 import zio.temporal.internal.ClassTagUtils
-import zio.temporal.internal.tagging.Stubs
+import zio.temporal.internal.Stubs
 import zio.temporal.{ZWorkflowExecution, internalApi}
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.ZChildWorkflowStubSignalSyntax
