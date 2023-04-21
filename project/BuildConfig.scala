@@ -7,12 +7,12 @@ object BuildConfig extends Dependencies {
   val baseLibs = Seq(
     Temporal.self,
     Zio.self,
-    Jackson.scala
+    Jackson.scala,
+    Jackson.jsr310
   )
 
   val coreLibs = baseLibs ++ Seq(
     Utility.scalaJava8Compat,
-    Jackson.scala,
     Utility.izumiReflect,
     Testing.scalatest
   )
@@ -23,8 +23,7 @@ object BuildConfig extends Dependencies {
   )
 
   val testkitLibs = baseLibs ++ Seq(
-    Temporal.testing,
-    Jackson.scala
+    Temporal.testing
   )
 
   val testLibs = baseLibs ++ Seq(
@@ -63,6 +62,7 @@ trait Dependencies {
     val zio        = "2.0.12"
     val zioLogging = "2.1.12"
     val enumeratum = "1.7.2"
+    val jackson    = "2.14.2"
   }
 
   object org {
@@ -77,7 +77,9 @@ trait Dependencies {
   }
 
   object Jackson {
-    val scala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.2"
+    val scala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % versions.jackson
+    // to support zio.Duration (that is java.time.Duration)
+    val jsr310 = "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % versions.jackson
   }
 
   object Zio {

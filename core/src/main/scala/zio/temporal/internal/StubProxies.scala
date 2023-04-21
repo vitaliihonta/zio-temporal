@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory
 private[zio] object StubProxies {
   private val logger = LoggerFactory.getLogger(getClass)
 
+  final class IllegalStubProxyInvocationException(msg: String) extends RuntimeException(msg)
+
   def proxy[Delegate, Proxied](
     delegate:             Delegate
   )(implicit delegateCtg: ClassTag[Delegate],
@@ -22,7 +24,7 @@ private[zio] object StubProxies {
           method.invoke(delegate, methodArgs: _*)
         } else {
           logger.warn(s"Stub $method called, usually this shouldn't happen")
-          throw new IllegalStateException(
+          throw new IllegalStubProxyInvocationException(
             s"Proxied methods of $Proxied should not be invoked at runtime!\n" +
               s"But invoked $method"
           )

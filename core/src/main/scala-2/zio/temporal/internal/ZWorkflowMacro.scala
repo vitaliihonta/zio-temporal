@@ -1,15 +1,17 @@
 package zio.temporal.internal
 
 import zio.Duration
+
 import scala.reflect.macros.blackbox
 import zio.temporal.ZWorkflowExecution
-import zio.temporal.workflow.ZWorkflowStub
+import zio.temporal.workflow.{ZWorkflowContinueAsNewStub, ZWorkflowStub}
 
 class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
   import c.universe._
 
-  private val ZWorkflowExecution = typeOf[ZWorkflowExecution]
-  private val zworkflowStub      = typeOf[ZWorkflowStub.type].dealias
+  private val ZWorkflowExecution         = typeOf[ZWorkflowExecution]
+  private val zworkflowStub              = typeOf[ZWorkflowStub.type].dealias
+  private val zworkflowContinueAsNewStub = typeOf[ZWorkflowContinueAsNewStub.type].dealias
 
   def startImpl[A: WeakTypeTag](f: Expr[A]): Tree = {
     // Assert called on ZWorkflowStub
@@ -68,6 +70,29 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
         $executeInvocation
       } 
      """.debugged(SharedCompileTimeMessages.generatedWorkflowExecute)
+  }
+
+  def continueAsNewImpl[R: WeakTypeTag](f: Expr[R]): Tree = {
+    // Assert called on ZWorkflowContinueAsNewStub
+    assertPrefixType(zworkflowContinueAsNewStub)
+
+    val invocation = getMethodInvocation(f.tree)
+    assertWorkflow(invocation.instance.tpe)
+
+    val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
+    method.assertWorkflowMethod()
+
+    val workflowType = {
+      val tpe = getWorkflowInterface(invocation.instance.tpe)
+      tpe.typeSymbol.name.toString
+    }
+
+    val ret = weakTypeOf[R]
+
+    val options = q"""${invocation.instance}.options"""
+    q"""
+      _root_.zio.temporal.internal.TemporalWorkflowFacade.continueAsNew[$ret]($workflowType, $options, List(..${method.appliedArgs}))
+     """.debugged(SharedCompileTimeMessages.generatedContinueAsNewExecute)
   }
 
   private def workflowStartInvocation(

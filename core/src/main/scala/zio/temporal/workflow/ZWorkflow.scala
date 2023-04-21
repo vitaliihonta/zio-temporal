@@ -1,15 +1,15 @@
 package zio.temporal.workflow
 
-import io.temporal.workflow.CancellationScope
-import io.temporal.workflow.Workflow
+import io.temporal.workflow.{CancellationScope, ContinueAsNewOptions, Workflow}
 import org.slf4j.Logger
 import zio.temporal.activity.*
-import zio.temporal.internal.ClassTagUtils
+import zio.temporal.internal.{ClassTagUtils, TemporalWorkflowFacade}
 import zio.temporal.ZCurrentTimeMillis
 import zio.temporal.ZSearchAttribute
 import zio.temporal.ZWorkflowExecution
 import zio.temporal.ZWorkflowInfo
 import zio.*
+
 import java.util.UUID
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
@@ -327,6 +327,27 @@ object ZWorkflow {
     new ZExternalWorkflowStub.UntypedImpl(
       Workflow.newUntypedExternalWorkflowStub(workflowExecution.toJava)
     )
+
+  /** Creates a client stub that can be used to continue this workflow as a new run.
+    *
+    * @tparam A
+    *   an interface type implemented by the next run of the workflow
+    */
+  def newContinueAsNewStub[A: ClassTag: IsWorkflow] =
+    new ZWorkflowContinueAsNewStubBuilder[A](identity)
+
+  /** Continues the current workflow execution as a new run possibly overriding the workflow type and options.
+    *
+    * @param workflowType
+    *   workflow type override for the next run, can be null of no override is needed
+    * @param options
+    *   option overrides for the next run, can be null if no overrides are needed
+    * @param args
+    *   arguments of the next run.
+    */
+  def continueAsNew(workflowType: String, options: Option[ContinueAsNewOptions], args: Any*): Unit = {
+    TemporalWorkflowFacade.continueAsNew[Any](workflowType, options.orNull, args.toList)
+  }
 
   /** GetLastCompletionResult extract last completion result from previous run for this cron workflow. This is used in
     * combination with cron schedule. A workflow can be started with an optional cron schedule. If a cron workflow wants

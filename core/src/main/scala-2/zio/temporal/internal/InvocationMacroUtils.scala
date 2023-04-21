@@ -153,17 +153,24 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
       error(SharedCompileTimeMessages.notActivity(workflow.toString))
     }
 
-  protected def isWorkflow(tpe: Type): Boolean =
-    tpe match {
+  protected def getWorkflowInterface(workflow: Type): Type =
+    findWorkflowInterface(workflow).getOrElse(
+      error(SharedCompileTimeMessages.notWorkflow(workflow.toString))
+    )
+
+  protected def findWorkflowInterface(workflow: Type): Option[Type] =
+    workflow match {
       case SingleType(_, sym) =>
         sym.typeSignature.baseClasses
-          .flatMap(sym => findAnnotation(sym, WorkflowInterface).map(_ => sym.typeSignature))
+          .flatMap(sym => findAnnotation(sym, WorkflowInterface).map(_ => sym.asType.toType))
           .headOption
-          .nonEmpty
 
       case _ =>
-        hasAnnotation(tpe.typeSymbol, WorkflowInterface)
+        if (hasAnnotation(workflow.typeSymbol, WorkflowInterface)) Some(workflow) else None
     }
+
+  protected def isWorkflow(tpe: Type): Boolean =
+    findWorkflowInterface(tpe).nonEmpty
 
   protected def extendsWorkflow(tpe: Type): Boolean =
     isWorkflow(tpe) || tpe.baseClasses.exists(sym => isWorkflow(sym.typeSignature))
