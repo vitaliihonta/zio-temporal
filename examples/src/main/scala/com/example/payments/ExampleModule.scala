@@ -1,30 +1,30 @@
 package com.example.payments
 
-import com.example.transactions._
-import com.example.payments.impl._
-import com.example.payments.workflows._
-import zio._
+import com.example.transactions.*
+import com.example.payments.impl.*
+import com.example.payments.workflows.*
+import zio.*
+import zio.temporal.*
 import zio.temporal.protobuf.ProtobufDataConverter
 import zio.temporal.worker.ZWorker
 import zio.temporal.worker.ZWorkerFactory
 import zio.temporal.worker.ZWorkerFactoryOptions
-import zio.temporal.workflow.ZWorkflowClientOptions
-import zio.temporal.workflow.ZWorkflowServiceStubsOptions
+import zio.temporal.workflow.{
+  ZWorkflowClient,
+  ZWorkflowClientOptions,
+  ZWorkflowServiceStubs,
+  ZWorkflowServiceStubsOptions
+}
 
 object ExampleModule {
-  val stubOptions: ULayer[ZWorkflowServiceStubsOptions] = ZLayer.succeed {
-    ZWorkflowServiceStubsOptions.default
-  }
+  val stubOptions: Layer[Config.Error, ZWorkflowServiceStubsOptions] = ZWorkflowServiceStubsOptions.make
 
-  val clientOptions: ULayer[ZWorkflowClientOptions] = ZLayer.succeed {
-    ZWorkflowClientOptions.default.withDataConverter(
-      ProtobufDataConverter.makeAutoLoad()
-    )
-  }
+  val workerFactoryOptions: Layer[Config.Error, ZWorkerFactoryOptions] = ZWorkerFactoryOptions.make @@
+    ZWorkerFactoryOptions.withEnableLoggingInReplay(true)
 
-  val workerFactoryOptions: ULayer[ZWorkerFactoryOptions] = ZLayer.succeed {
-    ZWorkerFactoryOptions.default
-  }
+  val clientOptions: Layer[Config.Error, ZWorkflowClientOptions] =
+    ZWorkflowClientOptions.make @@
+      ZWorkflowClientOptions.withDataConverter(ProtobufDataConverter.makeAutoLoad())
 
   val worker: URLayer[PaymentActivity with ZWorkerFactory, Unit] =
     ZLayer.fromZIO {

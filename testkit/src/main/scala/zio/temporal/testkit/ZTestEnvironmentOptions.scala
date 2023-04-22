@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.uber.m3.tally.Scope
 import io.temporal.common.converter.*
 import io.temporal.testing.TestEnvironmentOptions
+import zio.*
 import zio.temporal.json.JacksonDataConverter
 import zio.temporal.worker.ZWorkerFactoryOptions
 import zio.temporal.workflow.ZWorkflowClientOptions
@@ -62,14 +63,24 @@ case class ZTestEnvironmentOptions private[zio] (
 
 object ZTestEnvironmentOptions {
 
-  val default: ZTestEnvironmentOptions = new ZTestEnvironmentOptions(
-    workerFactoryOptions = ZWorkerFactoryOptions.default,
-    workflowClientOptions = ZWorkflowClientOptions.default.withDataConverter(
-      JacksonDataConverter.make()
-    ),
-    metricsScope = None,
-    useExternalService = None,
-    target = None,
-    javaOptionsCustomization = identity
-  )
+  val make: URLayer[ZWorkerFactoryOptions with ZWorkflowClientOptions, ZTestEnvironmentOptions] =
+    ZLayer.fromFunction(
+      ZTestEnvironmentOptions(
+        _: ZWorkerFactoryOptions,
+        _: ZWorkflowClientOptions,
+        metricsScope = None,
+        useExternalService = None,
+        target = None,
+        javaOptionsCustomization = identity
+      )
+    )
+
+  val default: ULayer[ZTestEnvironmentOptions] =
+    ZLayer
+      .make[ZTestEnvironmentOptions](
+        make,
+        ZWorkerFactoryOptions.make,
+        ZWorkflowClientOptions.make
+      )
+      .orDie
 }

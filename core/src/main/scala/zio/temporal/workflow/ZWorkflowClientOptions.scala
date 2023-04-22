@@ -1,7 +1,7 @@
 package zio.temporal.workflow
 
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import zio.*
+import zio.temporal.internal.ConfigurationCompanion
 import io.temporal.api.enums.v1.QueryRejectCondition
 import io.temporal.client.WorkflowClientOptions
 import io.temporal.common.context.ContextPropagator
@@ -72,18 +72,50 @@ case class ZWorkflowClientOptions private[zio] (
   }
 }
 
-object ZWorkflowClientOptions {
+object ZWorkflowClientOptions extends ConfigurationCompanion[ZWorkflowClientOptions] {
+  def withNamespace(value: String): Configure =
+    configure(_.withNamespace(value))
 
-  val defaultDataConverter: DataConverter = JacksonDataConverter.make()
+  def withDataConverter(value: => DataConverter): Configure =
+    configure(_.withDataConverter(value))
 
-  val default: ZWorkflowClientOptions = new ZWorkflowClientOptions(
-    namespace = None,
-    dataConverter = defaultDataConverter,
-    interceptors = Nil,
-    identity = None,
-    binaryChecksum = None,
-    contextPropagators = Nil,
-    queryRejectCondition = None,
-    javaOptionsCustomization = identity
-  )
+  def withInterceptors(value: WorkflowClientInterceptor*): Configure =
+    configure(_.withInterceptors(value: _*))
+
+  def withIdentity(value: String): Configure =
+    configure(_.withIdentity(value))
+
+  def withBinaryChecksum(value: String): Configure =
+    configure(_.withBinaryChecksum(value))
+
+  def withContextPropagators(value: ContextPropagator*): Configure =
+    configure(_.withContextPropagators(value: _*))
+
+  def withQueryRejectCondition(value: QueryRejectCondition): Configure =
+    configure(_.withQueryRejectCondition(value))
+
+  def transformJavaOptions(
+    f: WorkflowClientOptions.Builder => WorkflowClientOptions.Builder
+  ): Configure = configure(_.transformJavaOptions(f))
+
+  private val workflowClientConfig =
+    (Config.string("namespace").optional ++
+      Config.string("identity").optional ++
+      Config.string("binaryChecksum").optional)
+      .nested("zio", "temporal", "ZWorkflowClient")
+
+  val make: Layer[Config.Error, ZWorkflowClientOptions] = ZLayer.fromZIO {
+    ZIO.config(workflowClientConfig).map { case (namespace, identityCfg, binaryChecksum) =>
+      new ZWorkflowClientOptions(
+        namespace = namespace,
+        dataConverter = JacksonDataConverter.make(),
+        interceptors = Nil,
+        identity = identityCfg,
+        binaryChecksum = binaryChecksum,
+        contextPropagators = Nil,
+        queryRejectCondition = None,
+        javaOptionsCustomization = identity
+      )
+    }
+  }
 }

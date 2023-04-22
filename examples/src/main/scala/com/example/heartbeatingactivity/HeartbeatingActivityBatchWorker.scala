@@ -27,16 +27,16 @@ object HeartbeatingActivityBatchWorker extends ZIOAppDefault {
 
     program
       .provideSome[Scope](
-        ZLayer.succeed(ZWorkflowServiceStubsOptions.default),
-        ZLayer.succeed(ZWorkflowClientOptions.default),
-        ZLayer.succeed(ZWorkerFactoryOptions.default),
+        ZWorkflowServiceStubsOptions.make,
+        ZWorkflowClientOptions.make,
+        ZWorkerFactoryOptions.make,
+        ZActivityOptions.default,
         // Activity
         RecordLoaderImpl.make,
         RecordProcessorImpl.make,
         RecordProcessorActivityImpl.make,
         // Services
         ZWorkflowClient.make,
-        ZActivityOptions.default,
         ZWorkflowServiceStubs.make,
         ZWorkerFactory.make
       )

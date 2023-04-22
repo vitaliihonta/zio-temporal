@@ -2,7 +2,9 @@ package zio.temporal.worker
 
 import io.temporal.common.interceptors.WorkerInterceptor
 import io.temporal.worker.WorkerFactoryOptions
-import zio._
+import zio.*
+import zio.temporal.internal.ConfigurationCompanion
+import zio.temporal.workflow.ZWorkflowClientOptions
 
 /** Represents worker factory options
   *
@@ -10,16 +12,11 @@ import zio._
   *   [[WorkerFactoryOptions]]
   */
 case class ZWorkerFactoryOptions private[zio] (
-  workflowHostLocalTaskQueueScheduleToStartTimeout: Option[Duration],
-  workflowCacheSize:                                Option[Int],
-  maxWorkflowThreadCount:                           Option[Int],
-  workerInterceptors:                               List[WorkerInterceptor],
-  enableLoggingInReplay:                            Option[Boolean],
-  workflowHostLocalPollThreadCount:                 Option[Int],
-  private val javaOptionsCustomization:             WorkerFactoryOptions.Builder => WorkerFactoryOptions.Builder) {
-
-  def withWorkflowHostLocalTaskQueueScheduleToStartTimeout(value: Duration): ZWorkerFactoryOptions =
-    copy(workflowHostLocalTaskQueueScheduleToStartTimeout = Some(value))
+  workflowCacheSize:                    Option[Int],
+  maxWorkflowThreadCount:               Option[Int],
+  workerInterceptors:                   List[WorkerInterceptor],
+  enableLoggingInReplay:                Option[Boolean],
+  private val javaOptionsCustomization: WorkerFactoryOptions.Builder => WorkerFactoryOptions.Builder) {
 
   def withWorkflowCacheSize(value: Int): ZWorkerFactoryOptions =
     copy(workflowCacheSize = Some(value))
@@ -32,9 +29,6 @@ case class ZWorkerFactoryOptions private[zio] (
 
   def withEnableLoggingInReplay(value: Boolean): ZWorkerFactoryOptions =
     copy(enableLoggingInReplay = Some(value))
-
-  def withWorkflowHostLocalPollThreadCount(value: Int): ZWorkerFactoryOptions =
-    copy(workflowHostLocalPollThreadCount = Some(value))
 
   /** Allows to specify options directly on the java SDK's [[WorkerFactoryOptions]]. Use it in case an appropriate
     * `withXXX` method is missing
@@ -49,27 +43,53 @@ case class ZWorkerFactoryOptions private[zio] (
 
   def toJava: WorkerFactoryOptions = {
     val builder = WorkerFactoryOptions.newBuilder()
-    workflowHostLocalTaskQueueScheduleToStartTimeout.foreach(timeout =>
-      builder.setWorkflowHostLocalTaskQueueScheduleToStartTimeout(timeout.asJava)
-    )
     workflowCacheSize.foreach(builder.setWorkflowCacheSize)
     maxWorkflowThreadCount.foreach(builder.setMaxWorkflowThreadCount)
     builder.setWorkerInterceptors(workerInterceptors: _*)
     enableLoggingInReplay.foreach(builder.setEnableLoggingInReplay)
-    workflowHostLocalPollThreadCount.foreach(builder.setWorkflowHostLocalPollThreadCount)
     javaOptionsCustomization(builder).build()
   }
 }
 
-object ZWorkerFactoryOptions {
+object ZWorkerFactoryOptions extends ConfigurationCompanion[ZWorkerFactoryOptions] {
 
-  val default: ZWorkerFactoryOptions = new ZWorkerFactoryOptions(
-    workflowHostLocalTaskQueueScheduleToStartTimeout = None,
-    workflowCacheSize = None,
-    maxWorkflowThreadCount = None,
-    workerInterceptors = Nil,
-    enableLoggingInReplay = None,
-    workflowHostLocalPollThreadCount = None,
-    javaOptionsCustomization = identity
-  )
+  def withWorkflowCacheSize(value: Int): Configure =
+    configure(_.withWorkflowCacheSize(value))
+
+  def withMaxWorkflowThreadCount(value: Int): Configure =
+    configure(_.withMaxWorkflowThreadCount(value))
+
+  def withWorkerInterceptors(value: WorkerInterceptor*): Configure =
+    configure(_.withWorkerInterceptors(value: _*))
+
+  def withEnableLoggingInReplay(value: Boolean): Configure =
+    configure(_.withEnableLoggingInReplay(value))
+
+  def transformJavaOptions(
+    f: WorkerFactoryOptions.Builder => WorkerFactoryOptions.Builder
+  ): Configure =
+    configure(_.transformJavaOptions(f))
+
+  private val workerFactoryConfig =
+    (Config.int("workflowCacheSize").optional ++
+      Config.int("maxWorkflowThreadCount").optional ++
+      Config.boolean("enableLoggingInReplay").optional)
+      .nested("zio", "temporal", "ZWorkerFactory")
+
+  val make: Layer[Config.Error, ZWorkerFactoryOptions] = ZLayer.fromZIO {
+    ZIO.config(workerFactoryConfig).map {
+      case (
+            workflowCacheSize,
+            maxWorkflowThreadCount,
+            enableLoggingInReplay
+          ) =>
+        new ZWorkerFactoryOptions(
+          workflowCacheSize = workflowCacheSize,
+          maxWorkflowThreadCount = maxWorkflowThreadCount,
+          workerInterceptors = Nil,
+          enableLoggingInReplay = enableLoggingInReplay,
+          javaOptionsCustomization = identity
+        )
+    }
+  }
 }

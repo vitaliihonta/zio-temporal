@@ -5,7 +5,8 @@ import io.grpc.Metadata
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext
 import io.temporal.serviceclient.RpcRetryOptions
 import io.temporal.serviceclient.WorkflowServiceStubsOptions
-import zio._
+import zio.*
+import zio.temporal.internal.ConfigurationCompanion
 
 /** Represents temporal workflow service stubs options
   *
@@ -108,24 +109,106 @@ case class ZWorkflowServiceStubsOptions private[zio] (
   }
 }
 
-object ZWorkflowServiceStubsOptions {
+object ZWorkflowServiceStubsOptions extends ConfigurationCompanion[ZWorkflowServiceStubsOptions] {
 
-  val default: ZWorkflowServiceStubsOptions = new ZWorkflowServiceStubsOptions(
-    serverUrl = "127.0.0.1:7233",
-    channel = None,
-    sslContext = None,
-    enableHttps = None,
-    enableKeepAlive = None,
-    keepAliveTime = None,
-    keepAliveTimeout = None,
-    keepAlivePermitWithoutStream = None,
-    rpcTimeout = None,
-    rpcLongPollTimeout = None,
-    rpcQueryTimeout = None,
-    rpcRetryOptions = None,
-    connectionBackoffResetFrequency = None,
-    grpcReconnectFrequency = None,
-    headers = None,
-    javaOptionsCustomization = identity
-  )
+  def withServiceUrl(value: String): Configure =
+    configure(_.withServiceUrl(value))
+
+  def withChannel(value: ManagedChannel): Configure =
+    configure(_.withChannel(value))
+
+  def withSslContext(value: SslContext): Configure =
+    configure(_.withSslContext(value))
+
+  def withEnableHttps(value: Boolean): Configure =
+    configure(_.withEnableHttps(value))
+
+  def withEnableKeepAlive(value: Boolean): Configure =
+    configure(_.withEnableKeepAlive(value))
+
+  def withKeepAliveTime(value: Duration): Configure =
+    configure(_.withKeepAliveTime(value))
+
+  def withKeepAliveTimeout(value: Duration): Configure =
+    configure(_.withKeepAliveTimeout(value))
+
+  def withKeepAlivePermitWithoutStream(value: Boolean): Configure =
+    configure(_.withKeepAlivePermitWithoutStream(value))
+
+  def withRpcTimeout(value: Duration): Configure =
+    configure(_.withRpcTimeout(value))
+
+  def withRpcLongPollTimeout(value: Duration): Configure =
+    configure(_.withRpcLongPollTimeout(value))
+
+  def withRpcQueryTimeout(value: Duration): Configure =
+    configure(_.withRpcQueryTimeout(value))
+
+  def withRpcRetryOptions(value: RpcRetryOptions): Configure =
+    configure(_.withRpcRetryOptions(value))
+
+  def withConnectionBackoffResetFrequency(value: Duration): Configure =
+    configure(_.withConnectionBackoffResetFrequency(value))
+
+  def withGrpcReconnectFrequency(value: Duration): Configure =
+    configure(_.withGrpcReconnectFrequency(value))
+
+  def withHeaders(value: Metadata): Configure =
+    configure(_.withHeaders(value))
+
+  def transformJavaOptions(
+    f: WorkflowServiceStubsOptions.Builder => WorkflowServiceStubsOptions.Builder
+  ): Configure =
+    configure(_.transformJavaOptions(f))
+
+  private val workflowServiceStubsConfig = (
+    Config.string("serverUrl").withDefault("127.0.0.1:7233") ++
+      Config.boolean("enableHttps").optional ++
+      Config.boolean("enableKeepAlive").optional ++
+      Config.duration("keepAliveTime").optional ++
+      Config.duration("keepAliveTimeout").optional ++
+      Config.boolean("keepAlivePermitWithoutStream").optional ++
+      Config.duration("rpcTimeout").optional ++
+      Config.duration("rpcLongPollTimeout").optional ++
+      Config.duration("rpcQueryTimeout").optional ++
+      Config.duration("connectionBackoffResetFrequency").optional ++
+      Config.duration("grpcReconnectFrequency").optional
+  ).nested("zio", "temporal", "ZWorkflowServiceStubs")
+
+  val make: Layer[Config.Error, ZWorkflowServiceStubsOptions] =
+    ZLayer.fromZIO {
+      ZIO.config(workflowServiceStubsConfig).map {
+        case (
+              serverUrl,
+              enableHttps,
+              enableKeepAlive,
+              keepAliveTime,
+              keepAliveTimeout,
+              keepAlivePermitWithoutStream,
+              rpcTimeout,
+              rpcLongPollTimeout,
+              rpcQueryTimeout,
+              connectionBackoffResetFrequency,
+              grpcReconnectFrequency
+            ) =>
+          new ZWorkflowServiceStubsOptions(
+            serverUrl = serverUrl,
+            channel = None,
+            sslContext = None,
+            enableHttps = enableHttps,
+            enableKeepAlive = enableKeepAlive,
+            keepAliveTime = keepAliveTime,
+            keepAliveTimeout = keepAliveTimeout,
+            keepAlivePermitWithoutStream = keepAlivePermitWithoutStream,
+            rpcTimeout = rpcTimeout,
+            rpcLongPollTimeout = rpcLongPollTimeout,
+            rpcQueryTimeout = rpcQueryTimeout,
+            rpcRetryOptions = None,
+            connectionBackoffResetFrequency = connectionBackoffResetFrequency,
+            grpcReconnectFrequency = grpcReconnectFrequency,
+            headers = None,
+            javaOptionsCustomization = identity
+          )
+      }
+    }
 }

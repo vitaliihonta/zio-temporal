@@ -9,10 +9,10 @@ import io.temporal.workflow.SignalMethod
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
 import zio.temporal.internal.ClassTagUtils
-
+import zio.temporal.extras.ZLayerAspects
 import scala.reflect.ClassTag
 
-package object temporal {
+package object temporal extends ZLayerAspects {
 
   // Convenient aliases
   final type activityInterface = ActivityInterface
