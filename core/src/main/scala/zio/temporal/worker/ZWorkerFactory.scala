@@ -141,11 +141,4 @@ object ZWorkerFactory {
         )
       }
     }
-
-  // TODO: remove
-  val configuration: ZLayer[ZWorkerFactoryOptions, Nothing, ZWorkerFactoryOptions] =
-    ZLayer.environment[ZWorkerFactoryOptions].update(_.withWorkflowCacheSize(10))
-
-  val composition: URLayer[ZWorkflowClient with ZWorkerFactoryOptions, ZWorkerFactory] =
-    configuration >>> make
 }
