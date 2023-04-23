@@ -2,11 +2,12 @@ package com.example.payments
 
 import com.example.payments.impl.PaymentActivityImpl
 import com.example.payments.service.PaymentService
-import zio._
+import zio.*
 import zio.temporal.worker.*
 import zio.temporal.workflow.*
 import zio.logging.backend.SLF4J
 import zio.temporal.activity.ZActivityOptions
+import zio.temporal.protobuf.ProtobufDataConverter
 
 object Main extends ZIOAppDefault {
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =

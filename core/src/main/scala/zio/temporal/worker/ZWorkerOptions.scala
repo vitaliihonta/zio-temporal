@@ -1,5 +1,6 @@
 package zio.temporal.worker
 
+import zio.*
 import io.temporal.worker.WorkerOptions
 
 /** Represents worker options
@@ -13,9 +14,10 @@ case class ZWorkerOptions private[zio] (
   maxConcurrentWorkflowTaskExecutionSize:  Option[Int],
   maxConcurrentLocalActivityExecutionSize: Option[Int],
   maxTaskQueueActivitiesPerSecond:         Option[Double],
-  workflowPollThreadCount:                 Option[Int],
-  activityPollThreadCount:                 Option[Int],
+  maxConcurrentWorkflowTaskPollers:        Option[Int],
+  maxConcurrentActivityTaskPollers:        Option[Int],
   localActivityWorkerOnly:                 Option[Boolean],
+  stickyQueueScheduleToStartTimeout:       Option[Duration],
   private val javaOptionsCustomization:    WorkerOptions.Builder => WorkerOptions.Builder) {
 
   def withMaxWorkerActivitiesPerSecond(value: Double): ZWorkerOptions =
@@ -33,11 +35,11 @@ case class ZWorkerOptions private[zio] (
   def withMaxTaskQueueActivitiesPerSecond(value: Double): ZWorkerOptions =
     copy(maxTaskQueueActivitiesPerSecond = Some(value))
 
-  def withWorkflowPollThreadCount(value: Int): ZWorkerOptions =
-    copy(workflowPollThreadCount = Some(value))
+  def withMaxConcurrentWorkflowTaskPollers(value: Int): ZWorkerOptions =
+    copy(maxConcurrentWorkflowTaskPollers = Some(value))
 
-  def withActivityPollThreadCount(value: Int): ZWorkerOptions =
-    copy(activityPollThreadCount = Some(value))
+  def withMaxConcurrentActivityTaskPollers(value: Int): ZWorkerOptions =
+    copy(maxConcurrentActivityTaskPollers = Some(value))
 
   def withLocalActivityWorkerOnly(value: Boolean): ZWorkerOptions =
     copy(localActivityWorkerOnly = Some(value))
@@ -61,9 +63,10 @@ case class ZWorkerOptions private[zio] (
     maxConcurrentWorkflowTaskExecutionSize.foreach(builder.setMaxConcurrentWorkflowTaskExecutionSize)
     maxConcurrentLocalActivityExecutionSize.foreach(builder.setMaxConcurrentLocalActivityExecutionSize)
     maxTaskQueueActivitiesPerSecond.foreach(builder.setMaxTaskQueueActivitiesPerSecond)
-    workflowPollThreadCount.foreach(builder.setWorkflowPollThreadCount)
-    activityPollThreadCount.foreach(builder.setActivityPollThreadCount)
+    maxConcurrentWorkflowTaskPollers.foreach(builder.setMaxConcurrentWorkflowTaskPollers)
+    maxConcurrentActivityTaskPollers.foreach(builder.setMaxConcurrentActivityTaskPollers)
     localActivityWorkerOnly.foreach(builder.setLocalActivityWorkerOnly)
+    stickyQueueScheduleToStartTimeout.foreach(builder.setStickyQueueScheduleToStartTimeout)
 
     javaOptionsCustomization(builder).build()
   }
@@ -77,9 +80,10 @@ object ZWorkerOptions {
     maxConcurrentWorkflowTaskExecutionSize = None,
     maxConcurrentLocalActivityExecutionSize = None,
     maxTaskQueueActivitiesPerSecond = None,
-    workflowPollThreadCount = None,
-    activityPollThreadCount = None,
+    maxConcurrentWorkflowTaskPollers = None,
+    maxConcurrentActivityTaskPollers = None,
     localActivityWorkerOnly = None,
+    stickyQueueScheduleToStartTimeout = None,
     javaOptionsCustomization = identity
   )
 }

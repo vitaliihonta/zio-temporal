@@ -30,8 +30,8 @@ object HeartbeatingActivityBatchStarter extends ZIOAppDefault {
     } yield ()
 
     program.provideSome[Scope](
-      ZLayer.succeed(ZWorkflowServiceStubsOptions.default),
-      ZLayer.succeed(ZWorkflowClientOptions.default),
+      ZWorkflowServiceStubsOptions.make,
+      ZWorkflowClientOptions.make,
       // Services
       ZWorkflowClient.make,
       ZWorkflowServiceStubs.make

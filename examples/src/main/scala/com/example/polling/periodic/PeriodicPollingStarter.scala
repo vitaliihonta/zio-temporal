@@ -49,9 +49,9 @@ object PeriodicPollingStarter extends ZIOAppDefault {
 
     program
       .provideSome[Scope](
-        ZLayer.succeed(ZWorkflowServiceStubsOptions.default),
-        ZLayer.succeed(ZWorkflowClientOptions.default),
-        ZLayer.succeed(ZWorkerFactoryOptions.default),
+        ZWorkflowServiceStubsOptions.make,
+        ZWorkflowClientOptions.make,
+        ZWorkerFactoryOptions.make,
         // service layers
         TestService.make,
         PeriodicPollingActivityImpl.make,

@@ -13,7 +13,12 @@ object SafeMath {
     else ZIO.succeed(x / y)
 }
 
-class TypedArithmeticActivityImpl()(implicit options: ZActivityOptions[Any]) extends ArithmeticActivity {
+object TypedArithmeticActivityImpl {
+  val make: URLayer[ZActivityOptions[Any], ArithmeticActivity] =
+    ZLayer.fromFunction(TypedArithmeticActivityImpl()(_: ZActivityOptions[Any]))
+}
+
+case class TypedArithmeticActivityImpl()(implicit options: ZActivityOptions[Any]) extends ArithmeticActivity {
   override def divide(x: Int, y: Int): Int = {
     ZActivity.run {
       for {

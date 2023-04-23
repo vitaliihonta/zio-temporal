@@ -16,7 +16,7 @@ object Main extends ZIOAppDefault {
   override def run: ZIO[ZIOAppArgs with Scope, Any, Any] = {
     val registerWorkflows =
       ZWorkerFactory.newWorker(TaskQueue) @@
-        ZWorker.addActivityImplementationService[TypedArithmeticActivityImpl] @@
+        ZWorker.addActivityImplementationService[ArithmeticActivity] @@
         ZWorker.addWorkflow[MathWorkflow].from(new TypedMathWorkflowImpl)
 
     val invokeWorkflows = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
@@ -45,11 +45,11 @@ object Main extends ZIOAppDefault {
 
     program
       .provideSome[Scope](
-        ZLayer.succeed(ZWorkflowServiceStubsOptions.default),
-        ZLayer.succeed(ZWorkflowClientOptions.default),
-        ZLayer.succeed(ZWorkerFactoryOptions.default),
+        ZWorkflowServiceStubsOptions.make,
+        ZWorkflowClientOptions.make,
+        ZWorkerFactoryOptions.make,
         // NOTE: try typed/untyped activities
-        ZLayer.fromFunction(new TypedArithmeticActivityImpl()(_: ZActivityOptions[Any])),
+        TypedArithmeticActivityImpl.make,
         ZWorkflowClient.make,
         ZActivityOptions.default,
         ZWorkflowServiceStubs.make,

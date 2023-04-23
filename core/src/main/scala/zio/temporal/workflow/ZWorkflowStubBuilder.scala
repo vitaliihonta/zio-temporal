@@ -2,9 +2,12 @@ package zio.temporal.workflow
 
 import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowOptions
+import io.temporal.api.enums.v1.WorkflowIdReusePolicy
+import io.temporal.common.context.ContextPropagator
 import zio.*
 import zio.temporal.{ZRetryOptions, ZSearchAttribute, simpleNameOf}
 import scala.reflect.ClassTag
+import scala.jdk.CollectionConverters._
 
 object ZWorkflowStubBuilderTaskQueueDsl {
   type Of[A]   = ZWorkflowStubBuilderTaskQueueDsl[ZWorkflowStub.Of[A]]
@@ -72,6 +75,15 @@ final class ZWorkflowStubBuilder[Res] private[zio] (
 
   def withRetryOptions(options: ZRetryOptions): ZWorkflowStubBuilder[Res] =
     copy(_.setRetryOptions(options.toJava))
+
+  def withWorkflowIdReusePolicy(value: WorkflowIdReusePolicy): ZWorkflowStubBuilder[Res] =
+    copy(_.setWorkflowIdReusePolicy(value))
+
+  def withMemo(values: (String, AnyRef)*): ZWorkflowStubBuilder[Res] =
+    copy(_.setMemo(values.toMap.asJava))
+
+  def withContextPropagators(values: ContextPropagator*): ZWorkflowStubBuilder[Res] =
+    copy(_.setContextPropagators(values.asJava))
 
   /** Allows to specify options directly on the java SDK's [[WorkflowOptions]]. Use it in case an appropriate `withXXX`
     * method is missing
