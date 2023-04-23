@@ -99,23 +99,38 @@ object ZWorkflowClientOptions extends ConfigurationCompanion[ZWorkflowClientOpti
   ): Configure = configure(_.transformJavaOptions(f))
 
   private val workflowClientConfig =
-    (Config.string("namespace").optional ++
+    Config.string("namespace").optional ++
       Config.string("identity").optional ++
-      Config.string("binaryChecksum").optional)
-      .nested("zio", "temporal", "ZWorkflowClient")
+      Config.string("binaryChecksum").optional
 
-  val make: Layer[Config.Error, ZWorkflowClientOptions] = ZLayer.fromZIO {
-    ZIO.config(workflowClientConfig).map { case (namespace, identityCfg, binaryChecksum) =>
-      new ZWorkflowClientOptions(
-        namespace = namespace,
-        dataConverter = JacksonDataConverter.make(),
-        interceptors = Nil,
-        identity = identityCfg,
-        binaryChecksum = binaryChecksum,
-        contextPropagators = Nil,
-        queryRejectCondition = None,
-        javaOptionsCustomization = identity
-      )
+  /** Reads config from the default path `zio.temporal.ZWorkflowClient`
+    */
+  val make: Layer[Config.Error, ZWorkflowClientOptions] =
+    makeImpl(Nil)
+
+  /** Allows to specify custom path for the config
+    */
+  def forPath(name: String, names: String*): Layer[Config.Error, ZWorkflowClientOptions] =
+    makeImpl(List(name) ++ names)
+
+  private def makeImpl(additionalPath: List[String]): Layer[Config.Error, ZWorkflowClientOptions] = {
+    val config = additionalPath match {
+      case Nil          => workflowClientConfig.nested("zio", "temporal", "ZWorkflowClient")
+      case head :: tail => workflowClientConfig.nested(head, tail: _*)
+    }
+    ZLayer.fromZIO {
+      ZIO.config(config).map { case (namespace, identityCfg, binaryChecksum) =>
+        new ZWorkflowClientOptions(
+          namespace = namespace,
+          dataConverter = JacksonDataConverter.make(),
+          interceptors = Nil,
+          identity = identityCfg,
+          binaryChecksum = binaryChecksum,
+          contextPropagators = Nil,
+          queryRejectCondition = None,
+          javaOptionsCustomization = identity
+        )
+      }
     }
   }
 }

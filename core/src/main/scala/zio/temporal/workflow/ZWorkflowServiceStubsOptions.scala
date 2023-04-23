@@ -161,7 +161,7 @@ object ZWorkflowServiceStubsOptions extends ConfigurationCompanion[ZWorkflowServ
   ): Configure =
     configure(_.transformJavaOptions(f))
 
-  private val workflowServiceStubsConfig = (
+  private val workflowServiceStubsConfig =
     Config.string("serverUrl").withDefault("127.0.0.1:7233") ++
       Config.boolean("enableHttps").optional ++
       Config.boolean("enableKeepAlive").optional ++
@@ -173,11 +173,24 @@ object ZWorkflowServiceStubsOptions extends ConfigurationCompanion[ZWorkflowServ
       Config.duration("rpcQueryTimeout").optional ++
       Config.duration("connectionBackoffResetFrequency").optional ++
       Config.duration("grpcReconnectFrequency").optional
-  ).nested("zio", "temporal", "ZWorkflowServiceStubs")
 
+  /** Reads config from the default path `zio.temporal.ZWorkflowServiceStubs`
+    */
   val make: Layer[Config.Error, ZWorkflowServiceStubsOptions] =
+    makeImpl(Nil)
+
+  /** Allows to specify custom path for the config
+    */
+  def forPath(name: String, names: String*): Layer[Config.Error, ZWorkflowServiceStubsOptions] =
+    makeImpl(List(name) ++ names)
+
+  private def makeImpl(additionalPath: List[String]): Layer[Config.Error, ZWorkflowServiceStubsOptions] = {
+    val config = additionalPath match {
+      case Nil          => workflowServiceStubsConfig.nested("zio", "temporal", "ZWorkflowServiceStubs")
+      case head :: tail => workflowServiceStubsConfig.nested(head, tail: _*)
+    }
     ZLayer.fromZIO {
-      ZIO.config(workflowServiceStubsConfig).map {
+      ZIO.config(config).map {
         case (
               serverUrl,
               enableHttps,
@@ -211,4 +224,5 @@ object ZWorkflowServiceStubsOptions extends ConfigurationCompanion[ZWorkflowServ
           )
       }
     }
+  }
 }

@@ -71,25 +71,40 @@ object ZWorkerFactoryOptions extends ConfigurationCompanion[ZWorkerFactoryOption
     configure(_.transformJavaOptions(f))
 
   private val workerFactoryConfig =
-    (Config.int("workflowCacheSize").optional ++
+    Config.int("workflowCacheSize").optional ++
       Config.int("maxWorkflowThreadCount").optional ++
-      Config.boolean("enableLoggingInReplay").optional)
-      .nested("zio", "temporal", "ZWorkerFactory")
+      Config.boolean("enableLoggingInReplay").optional
 
-  val make: Layer[Config.Error, ZWorkerFactoryOptions] = ZLayer.fromZIO {
-    ZIO.config(workerFactoryConfig).map {
-      case (
-            workflowCacheSize,
-            maxWorkflowThreadCount,
-            enableLoggingInReplay
-          ) =>
-        new ZWorkerFactoryOptions(
-          workflowCacheSize = workflowCacheSize,
-          maxWorkflowThreadCount = maxWorkflowThreadCount,
-          workerInterceptors = Nil,
-          enableLoggingInReplay = enableLoggingInReplay,
-          javaOptionsCustomization = identity
-        )
+  /** Reads config from the default path `zio.temporal.ZWorkerFactory`
+    */
+  val make: Layer[Config.Error, ZWorkerFactoryOptions] =
+    makeImpl(Nil)
+
+  /** Allows to specify custom path for the config
+    */
+  def forPath(name: String, names: String*): Layer[Config.Error, ZWorkerFactoryOptions] =
+    makeImpl(List(name) ++ names)
+
+  private def makeImpl(additionalPath: List[String]): Layer[Config.Error, ZWorkerFactoryOptions] = {
+    val config = additionalPath match {
+      case Nil          => workerFactoryConfig.nested("zio", "temporal", "ZWorkerFactory")
+      case head :: tail => workerFactoryConfig.nested(head, tail: _*)
+    }
+    ZLayer.fromZIO {
+      ZIO.config(config).map {
+        case (
+              workflowCacheSize,
+              maxWorkflowThreadCount,
+              enableLoggingInReplay
+            ) =>
+          new ZWorkerFactoryOptions(
+            workflowCacheSize = workflowCacheSize,
+            maxWorkflowThreadCount = maxWorkflowThreadCount,
+            workerInterceptors = Nil,
+            enableLoggingInReplay = enableLoggingInReplay,
+            javaOptionsCustomization = identity
+          )
+      }
     }
   }
 }
