@@ -24,7 +24,7 @@ object ZWorkflowContinueAsNewStub extends Stubs[ZWorkflowContinueAsNewStub] with
   final implicit class Ops[A](private val self: ZWorkflowContinueAsNewStub.Of[A]) extends AnyVal {}
 }
 
-class ZWorkflowContinueAsNewStubBuilder[A: ClassTag: IsWorkflow](
+class ZWorkflowContinueAsNewStubBuilder[A: ClassTag: IsWorkflowInterface](
   configure: ContinueAsNewOptions.Builder => ContinueAsNewOptions.Builder) {
 
   private def copy(

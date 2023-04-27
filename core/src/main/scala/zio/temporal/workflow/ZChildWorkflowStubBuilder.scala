@@ -14,11 +14,14 @@ object ZChildWorkflowStubBuilder {
   type Of[A]   = ZChildWorkflowStubBuilder[ZChildWorkflowStub.Of[A]]
   type Untyped = ZChildWorkflowStubBuilder[ZChildWorkflowStub.Untyped]
 
-  private[temporal] def buildTyped[A: ClassTag]: ChildWorkflowOptions => ZChildWorkflowStub.Of[A] =
+  private[temporal] def buildTyped[A: ClassTag: IsWorkflowInterface]: ChildWorkflowOptions => ZChildWorkflowStub.Of[A] =
     options =>
       ZChildWorkflowStub.Of(
         new ZChildWorkflowStubImpl(
-          Workflow.newUntypedChildWorkflowStub(simpleNameOf[A], options)
+          Workflow.newUntypedChildWorkflowStub(
+            IsWorkflowInterface[A].workflowType,
+            options
+          )
         )
       )
 

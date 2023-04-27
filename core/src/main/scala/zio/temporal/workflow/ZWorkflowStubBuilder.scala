@@ -13,12 +13,14 @@ object ZWorkflowStubBuilderTaskQueueDsl {
   type Of[A]   = ZWorkflowStubBuilderTaskQueueDsl[ZWorkflowStub.Of[A]]
   type Untyped = ZWorkflowStubBuilderTaskQueueDsl[ZWorkflowStub.Untyped]
 
-  private[temporal] def typed[A: ClassTag]: (WorkflowClient, WorkflowOptions) => ZWorkflowStub.Of[A] =
+  private[temporal] def typed[
+    A: ClassTag: IsWorkflowInterface
+  ]: (WorkflowClient, WorkflowOptions) => ZWorkflowStub.Of[A] =
     (client, options) =>
       ZWorkflowStub.Of(
         new ZWorkflowStubImpl(
           client.newUntypedWorkflowStub(
-            simpleNameOf[A],
+            IsWorkflowInterface[A].workflowType,
             options
           )
         )

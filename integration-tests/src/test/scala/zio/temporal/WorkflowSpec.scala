@@ -39,6 +39,26 @@ object WorkflowSpec extends ZIOSpecDefault {
       } yield assertTrue(result == sampleOut)
 
     }.provideEnv,
+    test("runs simple workflow with custom name") {
+      val taskQueue = "sample-named-queue"
+      val sampleIn  = "Fooo"
+      val sampleOut = sampleIn
+
+      for {
+        _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
+               ZWorker.addWorkflow[SampleNamedWorkflowImpl].fromClass
+        _ <- ZTestWorkflowEnvironment.setup()
+        sampleWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
+                            _.newWorkflowStub[SampleNamedWorkflow]
+                              .withTaskQueue(taskQueue)
+                              .withWorkflowId(UUID.randomUUID().toString)
+                              .withWorkflowRunTimeout(10.second)
+                              .build
+                          )
+        result <- ZWorkflowStub.execute(sampleWorkflow.echo(sampleIn))
+      } yield assertTrue(result == sampleOut)
+
+    }.provideEnv,
     test("runs child workflows") {
       val taskQueue = "child-queue"
 
@@ -49,6 +69,25 @@ object WorkflowSpec extends ZIOSpecDefault {
         _ <- ZTestWorkflowEnvironment.setup()
         greetingWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
                               _.newWorkflowStub[GreetingWorkflow]
+                                .withTaskQueue(taskQueue)
+                                .withWorkflowId(UUID.randomUUID().toString)
+                                .withWorkflowRunTimeout(10.second)
+                                .build
+                            )
+        result <- ZWorkflowStub.execute(greetingWorkflow.getGreeting("Vitalii"))
+      } yield assertTrue(result == "Hello Vitalii!")
+
+    }.provideEnv,
+    test("runs child workflows with custom names") {
+      val taskQueue = "child-named-queue"
+
+      for {
+        _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
+               ZWorker.addWorkflow[GreetingWorkflowNamedImpl].fromClass @@
+               ZWorker.addWorkflow[GreetingNamedChildImpl].fromClass
+        _ <- ZTestWorkflowEnvironment.setup()
+        greetingWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
+                              _.newWorkflowStub[GreetingNamedWorkflow]
                                 .withTaskQueue(taskQueue)
                                 .withWorkflowId(UUID.randomUUID().toString)
                                 .withWorkflowRunTimeout(10.second)
@@ -289,6 +328,32 @@ object WorkflowSpec extends ZIOSpecDefault {
           _ <- ZTestWorkflowEnvironment.setup()
           workflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
                         _.newWorkflowStub[ContinueAsNewWorkflow]
+                          .withTaskQueue(taskQueue)
+                          .withWorkflowId(workflowId)
+                          .withWorkflowRunTimeout(30.seconds)
+                          .withWorkflowTaskTimeout(30.seconds)
+                          .withWorkflowExecutionTimeout(30.seconds)
+                          .build
+                      )
+          result <- ZWorkflowStub.execute(
+                      workflow.doSomething(0)
+                    )
+        } yield assertTrue(result == "Done")
+      }
+
+    }.provideEnv,
+    test("run custom-named workflow with continue as new") {
+      ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
+        val taskQueue  = "continue-as-new-named-queue"
+        val workflowId = UUID.randomUUID().toString + taskQueue
+
+        for {
+          _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
+                 ZWorker.addWorkflow[ContinueAsNewNamedWorkflowImpl].fromClass
+
+          _ <- ZTestWorkflowEnvironment.setup()
+          workflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
+                        _.newWorkflowStub[ContinueAsNewNamedWorkflow]
                           .withTaskQueue(taskQueue)
                           .withWorkflowId(workflowId)
                           .withWorkflowRunTimeout(30.seconds)

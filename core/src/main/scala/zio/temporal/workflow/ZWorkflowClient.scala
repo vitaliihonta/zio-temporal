@@ -27,7 +27,7 @@ final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) {
     * @return
     *   builder instance
     */
-  def newWorkflowStub[A: ClassTag: IsWorkflow]: ZWorkflowStubBuilderTaskQueueDsl.Of[A] =
+  def newWorkflowStub[A: ClassTag: IsWorkflowInterface]: ZWorkflowStubBuilderTaskQueueDsl.Of[A] =
     new ZWorkflowStubBuilderTaskQueueDsl.Of[A](toJava, ZWorkflowStubBuilderTaskQueueDsl.typed[A])
 
   /** Creates new untyped type workflow stub builder
@@ -40,13 +40,13 @@ final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) {
   def newUntypedWorkflowStub(workflowType: String): ZWorkflowStubBuilderTaskQueueDsl.Untyped =
     new ZWorkflowStubBuilderTaskQueueDsl.Untyped(toJava, ZWorkflowStubBuilderTaskQueueDsl.untyped(workflowType))
 
-  def newWorkflowStub[A: ClassTag: IsWorkflow](
+  def newWorkflowStub[A: ClassTag: IsWorkflowInterface](
     workflowId: String,
     runId:      Option[String] = None
   ): UIO[ZWorkflowStub.Of[A]] =
     ZIO.succeed {
       ZWorkflowStub.Of[A](
-        new ZWorkflowStubImpl(toJava.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava))
+        new ZWorkflowStubImpl(toJava.newUntypedWorkflowStub(workflowId, runId.toJava, Option.empty[String].toJava))
       )
     }
 
@@ -56,7 +56,7 @@ final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) {
   ): UIO[ZWorkflowStub.Untyped] =
     ZIO.succeed {
       new ZWorkflowStub.UntypedImpl(
-        toJava.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava)
+        toJava.newUntypedWorkflowStub(workflowId, runId.toJava, Option.empty[String].toJava)
       )
     }
 }
