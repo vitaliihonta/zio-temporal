@@ -122,7 +122,8 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
 
   protected def getWorkflowType(workflow: Type): String = {
     val interface = getWorkflowInterface(workflow)
-    interface.decls.iterator
+    // TODO: this doesn't work in some cases
+    interface.decls
       .filter(_.isMethod)
       .map(findWorkflowTypeInMethod)
       .find(_.isDefined)
@@ -134,12 +135,13 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
 
   private def findWorkflowTypeInMethod(method: Symbol): Option[String] = {
     findAnnotation(method, WorkflowMethod)
-      .flatMap(
-        _.children.tail
+      .flatMap { t =>
+        println(s"$method annotation is ${t}")
+        t.children.tail
           .collectFirst { case NamedArgVersionSpecific(_, Literal(Constant(workflowType: String))) =>
             workflowType
           }
-      )
+      }
   }
 
   protected def getSignalName(method: Symbol): String =

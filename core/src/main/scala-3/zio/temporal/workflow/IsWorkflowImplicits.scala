@@ -26,13 +26,13 @@ trait IsWorkflowInterfaceImplicits {
 object IsWorkflowInterfaceImplicits {
   def impl[A: Type](using q: Quotes): Expr[IsWorkflowInterface[A]] = {
     import q.reflect.*
-    val macroUtils   = new InvocationMacroUtils[q.type]
-    val workflowType = macroUtils.getWorkflowType(TypeRepr.of[A])
-    report.info(SharedCompileTimeMessages.foundWorkflowType + s" tree=$workflowType")
+    val macroUtils = new InvocationMacroUtils[q.type]
+    import macroUtils.*
+    val workflowType = getWorkflowType(TypeRepr.of[A])
 
     '{
       new IsWorkflowInterface.__zio_temporal_IsWorkflowInterfaceInstance(${ Expr(workflowType) })
         .asInstanceOf[IsWorkflowInterface[A]]
-    }
+    }.debugged(SharedCompileTimeMessages.foundWorkflowType)
   }
 }

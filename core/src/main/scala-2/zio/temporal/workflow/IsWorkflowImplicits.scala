@@ -32,16 +32,14 @@ private[zio] object IsWorkflowInterfaceImplicits {
   class IsWorkflowInterfaceMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
     import c.universe._
 
-    def materializeImpl[A: WeakTypeTag]: Expr[IsWorkflowInterface[A]] = {
+    def materializeImpl[A: WeakTypeTag]: Tree = {
+      val workflowType = getWorkflowType(weakTypeOf[A].dealias)
       val Res          = weakTypeOf[IsWorkflowInterface[A]].dealias
-      val workflowType = getWorkflowType(weakTypeOf[A].dealias).debugged(SharedCompileTimeMessages.foundWorkflowType)
 
-      c.Expr[IsWorkflowInterface[A]](
-        q"""
-           new _root_.zio.temporal.workflow.IsWorkflowInterface.__zio_temporal_IsWorkflowInterfaceInstance($workflowType)
-             .asInstanceOf[$Res]
-         """
-      )
+      q"""
+         new _root_.zio.temporal.workflow.IsWorkflowInterface.__zio_temporal_IsWorkflowInterfaceInstance($workflowType)
+           .asInstanceOf[$Res]
+       """.debugged(SharedCompileTimeMessages.foundWorkflowType)
     }
   }
 }
