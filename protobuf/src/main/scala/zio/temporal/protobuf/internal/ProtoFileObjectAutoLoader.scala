@@ -5,10 +5,8 @@ import org.reflections.util.ClasspathHelper
 import org.reflections.util.ConfigurationBuilder
 import org.slf4j.LoggerFactory
 import scalapb.GeneratedFileObject
-import zio.temporal.experimentalApi
 import scala.jdk.CollectionConverters.*
 
-@experimentalApi
 object ProtoFileObjectAutoLoader {
   private val logger           = LoggerFactory.getLogger(getClass)
   private val scalaModuleField = "MODULE$"

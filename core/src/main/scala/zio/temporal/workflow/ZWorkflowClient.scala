@@ -3,7 +3,6 @@ package zio.temporal.workflow
 import io.temporal.client.ActivityCompletionClient
 import io.temporal.client.WorkflowClient
 import zio.*
-import zio.temporal.internalApi
 import scala.jdk.OptionConverters.*
 import scala.reflect.ClassTag
 
@@ -12,7 +11,7 @@ import scala.reflect.ClassTag
   * @see
   *   [[WorkflowClient]]
   */
-final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) {
+final class ZWorkflowClient private[zio] (val toJava: WorkflowClient) {
 
   /** Creates new ActivityCompletionClient
     * @see
