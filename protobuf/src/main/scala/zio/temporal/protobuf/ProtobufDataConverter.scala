@@ -2,7 +2,6 @@ package zio.temporal.protobuf
 
 import io.temporal.common.converter._
 import scalapb.GeneratedFileObject
-import zio.temporal.experimentalApi
 import zio.temporal.protobuf.internal.ProtoFileObjectAutoLoader
 
 object ProtobufDataConverter {
@@ -33,7 +32,6 @@ object ProtobufDataConverter {
     * @return
     *   a [[DataConverter]] supporting given protobuf types
     */
-  @experimentalApi
   def makeAutoLoad(additionalFiles: Seq[GeneratedFileObject] = Nil): DataConverter = {
     val autoLoaded = ProtoFileObjectAutoLoader.loadFromClassPath(getClass.getClassLoader)
     make(autoLoaded ++ additionalFiles)
