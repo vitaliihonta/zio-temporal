@@ -1,6 +1,6 @@
 package zio.temporal.workflow
 
-import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages}
+import zio.temporal.internal.InvocationMacroUtils
 import scala.reflect.macros.blackbox
 import scala.language.experimental.macros
 
@@ -19,27 +19,6 @@ private[zio] object IsWorkflowImplicits {
       reify {
         IsWorkflow.__zio_temporal_IsWorkflowInstance.asInstanceOf[IsWorkflow[A]]
       }
-    }
-  }
-}
-
-trait IsWorkflowInterfaceImplicits {
-  implicit def materialize[A]: IsWorkflowInterface[A] =
-    macro IsWorkflowInterfaceImplicits.IsWorkflowInterfaceMacro.materializeImpl[A]
-}
-
-private[zio] object IsWorkflowInterfaceImplicits {
-  class IsWorkflowInterfaceMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
-    import c.universe._
-
-    def materializeImpl[A: WeakTypeTag]: Tree = {
-      val workflowType = getWorkflowType(weakTypeOf[A].dealias)
-      val Res          = weakTypeOf[IsWorkflowInterface[A]].dealias
-
-      q"""
-         new _root_.zio.temporal.workflow.IsWorkflowInterface.__zio_temporal_IsWorkflowInterfaceInstance($workflowType)
-           .asInstanceOf[$Res]
-       """.debugged(SharedCompileTimeMessages.foundWorkflowType)
     }
   }
 }

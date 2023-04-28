@@ -5,26 +5,26 @@ import io.temporal.client.WorkflowOptions
 import io.temporal.api.enums.v1.WorkflowIdReusePolicy
 import io.temporal.common.context.ContextPropagator
 import zio.*
-import zio.temporal.{ZRetryOptions, ZSearchAttribute, simpleNameOf}
+import zio.temporal.{ZRetryOptions, ZSearchAttribute}
 import scala.reflect.ClassTag
 import scala.jdk.CollectionConverters._
+import zio.temporal.internal.ClassTagUtils
 
 object ZWorkflowStubBuilderTaskQueueDsl {
   type Of[A]   = ZWorkflowStubBuilderTaskQueueDsl[ZWorkflowStub.Of[A]]
   type Untyped = ZWorkflowStubBuilderTaskQueueDsl[ZWorkflowStub.Untyped]
 
-  private[temporal] def typed[
-    A: ClassTag: IsWorkflowInterface
-  ]: (WorkflowClient, WorkflowOptions) => ZWorkflowStub.Of[A] =
-    (client, options) =>
-      ZWorkflowStub.Of(
+  private[temporal] def typed[A: ClassTag]: (WorkflowClient, WorkflowOptions) => ZWorkflowStub.Of[A] =
+    (client, options) => {
+      ZWorkflowStub.Of[A](
         new ZWorkflowStubImpl(
           client.newUntypedWorkflowStub(
-            IsWorkflowInterface[A].workflowType,
+            ClassTagUtils.getWorkflowType[A],
             options
           )
         )
       )
+    }
 
   private[temporal] def untyped(workflowType: String): (WorkflowClient, WorkflowOptions) => ZWorkflowStub.Untyped =
     (client, options) =>

@@ -136,7 +136,6 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
   private def findWorkflowTypeInMethod(method: Symbol): Option[String] = {
     findAnnotation(method, WorkflowMethod)
       .flatMap { t =>
-        println(s"$method annotation is ${t}")
         t.children.tail
           .collectFirst { case NamedArgVersionSpecific(_, Literal(Constant(workflowType: String))) =>
             workflowType

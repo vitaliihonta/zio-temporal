@@ -252,7 +252,7 @@ object ZWorkflow {
     * @return
     *   child workflow stub builder
     */
-  def newChildWorkflowStub[A: ClassTag: IsWorkflowInterface]: ZChildWorkflowStubBuilder.Of[A] =
+  def newChildWorkflowStub[A: ClassTag: IsWorkflow]: ZChildWorkflowStubBuilder.Of[A] =
     new ZChildWorkflowStubBuilder.Of[A](ZChildWorkflowStubBuilder.buildTyped[A], identity)
 
   /** Creates a builder of untyped client stub that can be used to start a child workflow that implements given
@@ -273,7 +273,7 @@ object ZWorkflow {
     * @return
     *   external workflow stub
     */
-  def newExternalWorkflowStub[A: ClassTag: IsWorkflowInterface](
+  def newExternalWorkflowStub[A: ClassTag: IsWorkflow](
     workflowId: String
   ): ZExternalWorkflowStub.Of[A] =
     ZExternalWorkflowStub.Of(
@@ -291,7 +291,7 @@ object ZWorkflow {
     * @return
     *   external workflow stub
     */
-  def newExternalWorkflowStub[A: ClassTag: IsWorkflowInterface](
+  def newExternalWorkflowStub[A: ClassTag: IsWorkflow](
     workflowExecution: ZWorkflowExecution
   ): ZExternalWorkflowStub.Of[A] =
     ZExternalWorkflowStub.Of(
@@ -333,7 +333,7 @@ object ZWorkflow {
     * @tparam A
     *   an interface type implemented by the next run of the workflow
     */
-  def newContinueAsNewStub[A: ClassTag: IsWorkflowInterface] =
+  def newContinueAsNewStub[A: ClassTag: IsWorkflow] =
     new ZWorkflowContinueAsNewStubBuilder[A](identity)
 
   /** Continues the current workflow execution as a new run possibly overriding the workflow type and options.

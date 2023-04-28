@@ -80,7 +80,7 @@ abstract class MacroUtils(val c: blackbox.Context) {
   def findAnnotation(sym: Symbol, annotationType: Type): Option[Tree] =
     sym.annotations
       .collectFirst {
-        case annotation if annotation.tree.tpe =:= annotationType =>
+        case annotation if annotation.tree.tpe <:< annotationType =>
           annotation.tree
       }
 
