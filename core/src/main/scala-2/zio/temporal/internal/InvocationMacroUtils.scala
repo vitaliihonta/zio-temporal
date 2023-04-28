@@ -120,9 +120,11 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
       )
       .getOrElse(method.name.toString.capitalize)
 
+  /** @note
+    *   Type method annotations are missing during Scala 2 macro expansion in case we have only a WeakTypeTag.
+    */
   protected def getWorkflowType(workflow: Type): String = {
     val interface = getWorkflowInterface(workflow)
-    // TODO: this doesn't work in some cases
     interface.decls
       .filter(_.isMethod)
       .map(findWorkflowTypeInMethod)

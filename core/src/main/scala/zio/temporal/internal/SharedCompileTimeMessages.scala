@@ -44,9 +44,6 @@ object SharedCompileTimeMessages {
   val generatedSignalWithStart: String =
     "Generated signalWithStart"
 
-  val foundWorkflowType: String =
-    "Found workflow type"
-
   def notWorkflow(what: String): String =
     s"$what is not a workflow!"
 

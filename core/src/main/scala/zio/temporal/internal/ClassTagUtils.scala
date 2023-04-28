@@ -17,6 +17,8 @@ private[zio] object ClassTagUtils {
 
   def classTagOf[A: ClassTag]: ClassTag[A] = implicitly[ClassTag[A]]
 
+  final class NoWorkflowMethodException(msg: String) extends RuntimeException(msg)
+
   /** Type method annotations are missing during Scala 2 macro expansion in case we have only a WeakTypeTag. Therefore,
     * we must use reflection to get the workflow name
     */
@@ -27,7 +29,7 @@ private[zio] object ClassTagUtils {
         .filter(withAnnotation(Predef.classOf[workflowMethod]))
         .as(Predef.classOf[Method])
     ).asScala.headOption.getOrElse {
-      throw new Exception(s"${classOf[A]} doesn't have a workflowMethod!")
+      throw new NoWorkflowMethodException(s"${classOf[A]} doesn't have a workflowMethod!")
     }
 
     val name = Option(wfMethod.getAnnotation(Predef.classOf[workflowMethod]).name())
