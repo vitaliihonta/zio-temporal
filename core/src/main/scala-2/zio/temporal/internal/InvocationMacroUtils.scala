@@ -114,11 +114,36 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
     findAnnotation(method, ActivityMethod)
       .flatMap(
         _.children.tail
-          .collectFirst { case NamedArgVersionSpecific(_, Literal(Constant(signalName: String))) =>
-            signalName
+          .collectFirst { case NamedArgVersionSpecific(_, Literal(Constant(activityName: String))) =>
+            activityName
           }
       )
       .getOrElse(method.name.toString.capitalize)
+
+  /** @note
+    *   Type method annotations are missing during Scala 2 macro expansion in case we have only a WeakTypeTag.
+    */
+  protected def getWorkflowType(workflow: Type): String = {
+    val interface = getWorkflowInterface(workflow)
+    interface.decls
+      .filter(_.isMethod)
+      .map(findWorkflowTypeInMethod)
+      .find(_.isDefined)
+      .flatten
+      .getOrElse(
+        interface.typeSymbol.name.toString
+      )
+  }
+
+  private def findWorkflowTypeInMethod(method: Symbol): Option[String] = {
+    findAnnotation(method, WorkflowMethod)
+      .flatMap { t =>
+        t.children.tail
+          .collectFirst { case NamedArgVersionSpecific(_, Literal(Constant(workflowType: String))) =>
+            workflowType
+          }
+      }
+  }
 
   protected def getSignalName(method: Symbol): String =
     getAnnotation(method, SignalMethod).children.tail

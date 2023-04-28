@@ -82,10 +82,7 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
 
-    val workflowType = {
-      val tpe = getWorkflowInterface(invocation.instance.tpe)
-      tpe.typeSymbol.name.toString
-    }
+    val workflowType = getWorkflowType(invocation.instance.tpe)
 
     val ret = weakTypeOf[R]
 

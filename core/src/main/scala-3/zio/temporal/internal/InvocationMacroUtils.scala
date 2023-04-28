@@ -29,7 +29,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
 
   // Asserts that this is a WorkflowInterface
   def getMethodInvocationOfWorkflow(tree: Term): MethodInvocation =
-    getMethodInvocation(tree, getWorkflowType)
+    getMethodInvocation(tree, getWorkflowInterface)
 
   // Asserts that this is a ActivityInterface
   def getMethodInvocationOfActivity(tree: Term): MethodInvocation =
@@ -148,7 +148,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     }
   }
 
-  def getWorkflowType(workflow: TypeRepr): TypeRepr =
+  def getWorkflowInterface(workflow: TypeRepr): TypeRepr =
     findWorkflowType(workflow).getOrElse(error(SharedCompileTimeMessages.notWorkflow(workflow.show)))
 
   def getActivityType(workflow: TypeRepr): TypeRepr =
@@ -179,6 +179,24 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     if (!isActivity(tpe.typeSymbol)) None
     else Some(tpe)
   }
+
+  def getWorkflowType(workflow: TypeRepr): String = {
+    val interface = getWorkflowInterface(workflow)
+    interface.typeSymbol.declaredMethods
+      .map(findWorkflowTypeInMethod)
+      .find(_.isDefined)
+      .flatten
+      .getOrElse(
+        interface.typeSymbol.name.toString
+      )
+  }
+
+  private def findWorkflowTypeInMethod(method: Symbol): Option[String] =
+    method.getAnnotation(WorkflowMethod) match {
+      case Some(Apply(Select(New(_), _), List(NamedArg(_, Literal(StringConstant(name)))))) =>
+        Some(name)
+      case _ => None
+    }
 
   def isWorkflow(sym: Symbol): Boolean =
     sym.hasAnnotation(WorkflowInterface)

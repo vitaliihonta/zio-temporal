@@ -46,7 +46,7 @@ final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) {
   ): UIO[ZWorkflowStub.Of[A]] =
     ZIO.succeed {
       ZWorkflowStub.Of[A](
-        new ZWorkflowStubImpl(toJava.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava))
+        new ZWorkflowStubImpl(toJava.newUntypedWorkflowStub(workflowId, runId.toJava, Option.empty[String].toJava))
       )
     }
 
@@ -56,7 +56,7 @@ final class ZWorkflowClient @internalApi() (val toJava: WorkflowClient) {
   ): UIO[ZWorkflowStub.Untyped] =
     ZIO.succeed {
       new ZWorkflowStub.UntypedImpl(
-        toJava.newUntypedWorkflowStub(workflowId, runId.asJava, Option.empty[String].asJava)
+        toJava.newUntypedWorkflowStub(workflowId, runId.toJava, Option.empty[String].toJava)
       )
     }
 }

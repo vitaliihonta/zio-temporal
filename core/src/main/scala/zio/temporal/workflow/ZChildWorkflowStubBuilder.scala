@@ -6,7 +6,8 @@ import io.temporal.workflow.ChildWorkflowCancellationType
 import io.temporal.workflow.ChildWorkflowOptions
 import io.temporal.workflow.Workflow
 import zio.*
-import zio.temporal.{ZRetryOptions, ZSearchAttribute, simpleNameOf}
+import zio.temporal.internal.ClassTagUtils
+import zio.temporal.{ZRetryOptions, ZSearchAttribute}
 import scala.jdk.CollectionConverters.*
 import scala.reflect.ClassTag
 
@@ -18,7 +19,10 @@ object ZChildWorkflowStubBuilder {
     options =>
       ZChildWorkflowStub.Of(
         new ZChildWorkflowStubImpl(
-          Workflow.newUntypedChildWorkflowStub(simpleNameOf[A], options)
+          Workflow.newUntypedChildWorkflowStub(
+            ClassTagUtils.getWorkflowType[A],
+            options
+          )
         )
       )
 
