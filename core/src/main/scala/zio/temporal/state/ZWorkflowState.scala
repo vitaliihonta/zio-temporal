@@ -170,7 +170,7 @@ sealed trait ZWorkflowState[A] {
   def toEither[E](left: => E): Either[E, A]
 }
 
-object ZWorkflowState {
+object ZWorkflowState extends ZWorkflowStateNumericSyntax with ZWorkflowStateMapSyntax {
 
   /** Initializes the state with a value
     *

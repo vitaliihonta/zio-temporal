@@ -30,7 +30,7 @@ case class ArithmeticActivityImpl()(implicit options: ZActivityOptions[Any]) ext
 }
 
 class MathWorkflowImpl extends MathWorkflow {
-  private lazy val logger = ZWorkflow.getLogger(getClass)
+  private lazy val logger = ZWorkflow.makeLogger
 
   private val activity: ZActivityStub.Of[ArithmeticActivity] = ZWorkflow
     .newActivityStub[ArithmeticActivity]

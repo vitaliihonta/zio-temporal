@@ -17,7 +17,7 @@ trait PollingChildWorkflow {
 class PeriodicPollingChildWorkflowImpl extends PollingChildWorkflow {
 
   private val singleWorkflowPollAttempts = 10
-  private val logger                     = ZWorkflow.getLogger(getClass)
+  private val logger                     = ZWorkflow.makeLogger
 
   private val continueAsNew = ZWorkflow.newContinueAsNewStub[PollingChildWorkflow].build
 

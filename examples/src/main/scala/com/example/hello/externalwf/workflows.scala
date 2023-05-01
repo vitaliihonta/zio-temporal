@@ -13,7 +13,7 @@ object OrderState {
 }
 
 class FoodOrderWorkflowImpl extends FoodOrderWorkflow {
-  private val logger = ZWorkflow.getLogger(getClass)
+  private val logger = ZWorkflow.makeLogger
 
   private val state = ZWorkflowState.make[OrderState](OrderState.Initial)
 
@@ -57,7 +57,7 @@ object DeliveryState {
 
 // Define the parent workflow implementation. It implements the getGreeting workflow method
 class FoodDeliveryWorkflowImpl extends FoodDeliveryWorkflow {
-  private val logger = ZWorkflow.getLogger(getClass)
+  private val logger = ZWorkflow.makeLogger
 
   private val state = ZWorkflowState.make[DeliveryState](DeliveryState.Initial)
 

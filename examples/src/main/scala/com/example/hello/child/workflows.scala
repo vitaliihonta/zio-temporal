@@ -6,7 +6,7 @@ import zio.temporal.state.ZWorkflowState
 import zio.temporal.workflow.*
 
 class GreetingChildImpl extends GreetingChild {
-  private val logger = ZWorkflow.getLogger(getClass)
+  private val logger = ZWorkflow.makeLogger
   private val prefix = ZWorkflowState.empty[String]
 
   override def composeGreeting(greeting: String, name: String): String = {
@@ -24,7 +24,7 @@ class GreetingChildImpl extends GreetingChild {
 
 // Define the parent workflow implementation. It implements the getGreeting workflow method
 class GreetingWorkflowImpl extends GreetingWorkflow {
-  private val logger = ZWorkflow.getLogger(getClass)
+  private val logger = ZWorkflow.makeLogger
   override def getGreeting(name: String): String = {
     /*
      * Define the child workflow stub. Since workflows are stateful,

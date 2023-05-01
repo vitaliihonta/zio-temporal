@@ -21,7 +21,7 @@ private[impl] case object ConfirmationTimeout extends Exception("Confirmation ti
 
 class PaymentWorkflowImpl extends PaymentWorkflow {
 
-  private lazy val logger = ZWorkflow.getLogger(getClass)
+  private lazy val logger = ZWorkflow.makeLogger
   MDC.put("transaction_id", ZWorkflow.info.workflowId)
 
   private val activity: ZActivityStub.Of[PaymentActivity] = ZWorkflow
