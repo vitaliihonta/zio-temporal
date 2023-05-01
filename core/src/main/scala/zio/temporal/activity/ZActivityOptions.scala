@@ -7,8 +7,9 @@ import zio.temporal.workflow.ZWorkflowClient
 /** Represents options required to run the effects in the activity implementation
   */
 class ZActivityOptions[+R](
-  val runtime:                  Runtime[R],
-  val activityCompletionClient: ActivityCompletionClient)
+  val runtime: Runtime[R],
+  // activity test environment doesn't support async completion
+  private[zio] val activityCompletionClientOpt: Option[ActivityCompletionClient])
 
 object ZActivityOptions {
 
@@ -26,6 +27,6 @@ object ZActivityOptions {
         runtime                  <- ZIO.runtime[R]
         client                   <- ZIO.environment[ZWorkflowClient]
         activityCompletionClient <- client.get.newActivityCompletionClient
-      } yield new ZActivityOptions(runtime, activityCompletionClient)
+      } yield new ZActivityOptions(runtime, Some(activityCompletionClient))
     }
 }

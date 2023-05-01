@@ -1,7 +1,8 @@
 package zio.temporal.activity
 
 import io.temporal.activity.Activity
-import io.temporal.client.ActivityCompletionException
+import io.temporal.activity.ActivityExecutionContext
+import io.temporal.client.{ActivityCompletionClient, ActivityCompletionException}
 import zio.*
 import zio.temporal.internal.ZioUnsafeFacade
 
@@ -64,8 +65,29 @@ object ZActivity {
   )(convertError:              E => Exception
   )(implicit zactivityOptions: ZActivityOptions[R]
   ): A = {
-    val ctx       = Activity.getExecutionContext
-    val taskToken = ctx.getTaskToken
+    zactivityOptions.activityCompletionClientOpt match {
+      case None => runSyncImpl(action, convertError)
+      case Some(activityCompletionClient) =>
+        val ctx = Activity.getExecutionContext
+        try {
+          val taskToken = ctx.getTaskToken
+          runAsyncImpl(action, convertError, ctx, activityCompletionClient, taskToken)
+        } catch {
+          // Local activities doesn't support async completion
+          case _: UnsupportedOperationException =>
+            runSyncImpl(action, convertError)
+        }
+    }
+  }
+
+  private def runAsyncImpl[R, E, A](
+    action:                    ZIO[R, E, A],
+    convertError:              E => Exception,
+    ctx:                       ActivityExecutionContext,
+    activityCompletionClient:  ActivityCompletionClient,
+    taskToken:                 Array[Byte]
+  )(implicit zactivityOptions: ZActivityOptions[R]
+  ): A = {
 
     ctx.doNotCompleteOnReturn()
 
@@ -77,7 +99,7 @@ object ZActivity {
         // don't need to handle it
         case _: ActivityCompletionException =>
         case cause =>
-          zactivityOptions.activityCompletionClient.completeExceptionally(
+          activityCompletionClient.completeExceptionally(
             taskToken,
             wrap(cause)
           )
@@ -86,18 +108,39 @@ object ZActivity {
         // don't need to handle it
         case _: ActivityCompletionException =>
         case error =>
-          zactivityOptions.activityCompletionClient.completeExceptionally(
+          activityCompletionClient.completeExceptionally(
             taskToken,
             convertError(error)
           )
       },
       onSuccess = value =>
-        zactivityOptions.activityCompletionClient.complete(
+        activityCompletionClient.complete(
           taskToken,
           value
         )
     )
 
     null.asInstanceOf[A]
+  }
+
+  private def runSyncImpl[R, E, A](
+    action:                    ZIO[R, E, A],
+    convertError:              E => Exception
+  )(implicit zactivityOptions: ZActivityOptions[R]
+  ): A = {
+    ZioUnsafeFacade.unsafeRunZIO[R, E, A](
+      zactivityOptions.runtime,
+      action,
+      convertError = {
+        // don't need to handle it
+        case e: ActivityCompletionException => e
+        case error                          => convertError(error)
+      },
+      convertDefect = {
+        // don't need to handle it
+        case e: ActivityCompletionException => e
+        case error                          => wrap(error)
+      }
+    )
   }
 }

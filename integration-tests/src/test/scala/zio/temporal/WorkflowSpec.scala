@@ -1,22 +1,21 @@
 package zio.temporal
 
 import zio.*
-import zio.temporal.activity.ZActivityOptions
+import zio.logging.backend.SLF4J
 import zio.temporal.fixture.*
-import zio.temporal.internal.TemporalWorkflowFacade
-import zio.temporal.signal.*
 import zio.temporal.testkit.*
 import zio.temporal.worker.*
 import zio.temporal.workflow.*
 import zio.test.*
 import zio.test.TestAspect.*
-
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import scala.collection.mutable.ListBuffer
 
 object WorkflowSpec extends ZIOSpecDefault {
+  override val bootstrap: ZLayer[Any, Any, TestEnvironment] =
+    testEnvironment ++ Runtime.removeDefaultLoggers ++ SLF4J.slf4j
 
   override def spec = suite("ZWorkflow")(
     test("runs simple workflow") {
@@ -28,13 +27,12 @@ object WorkflowSpec extends ZIOSpecDefault {
         _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
                ZWorker.addWorkflow[SampleWorkflowImpl].fromClass
         _ <- ZTestWorkflowEnvironment.setup()
-        sampleWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                            _.newWorkflowStub[SampleWorkflow]
-                              .withTaskQueue(taskQueue)
-                              .withWorkflowId(UUID.randomUUID().toString)
-                              .withWorkflowRunTimeout(10.second)
-                              .build
-                          )
+        sampleWorkflow <- ZTestWorkflowEnvironment
+                            .newWorkflowStub[SampleWorkflow]
+                            .withTaskQueue(taskQueue)
+                            .withWorkflowId(UUID.randomUUID().toString)
+                            .withWorkflowRunTimeout(10.second)
+                            .build
         result <- ZWorkflowStub.execute(sampleWorkflow.echo(sampleIn))
       } yield assertTrue(result == sampleOut)
 
@@ -48,13 +46,12 @@ object WorkflowSpec extends ZIOSpecDefault {
         _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
                ZWorker.addWorkflow[SampleNamedWorkflowImpl].fromClass
         _ <- ZTestWorkflowEnvironment.setup()
-        sampleWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                            _.newWorkflowStub[SampleNamedWorkflow]
-                              .withTaskQueue(taskQueue)
-                              .withWorkflowId(UUID.randomUUID().toString)
-                              .withWorkflowRunTimeout(10.second)
-                              .build
-                          )
+        sampleWorkflow <- ZTestWorkflowEnvironment
+                            .newWorkflowStub[SampleNamedWorkflow]
+                            .withTaskQueue(taskQueue)
+                            .withWorkflowId(UUID.randomUUID().toString)
+                            .withWorkflowRunTimeout(10.second)
+                            .build
         result <- ZWorkflowStub.execute(sampleWorkflow.echo(sampleIn))
       } yield assertTrue(result == sampleOut)
 
@@ -67,13 +64,12 @@ object WorkflowSpec extends ZIOSpecDefault {
                ZWorker.addWorkflow[GreetingWorkflowImpl].fromClass @@
                ZWorker.addWorkflow[GreetingChildImpl].fromClass
         _ <- ZTestWorkflowEnvironment.setup()
-        greetingWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                              _.newWorkflowStub[GreetingWorkflow]
-                                .withTaskQueue(taskQueue)
-                                .withWorkflowId(UUID.randomUUID().toString)
-                                .withWorkflowRunTimeout(10.second)
-                                .build
-                            )
+        greetingWorkflow <- ZTestWorkflowEnvironment
+                              .newWorkflowStub[GreetingWorkflow]
+                              .withTaskQueue(taskQueue)
+                              .withWorkflowId(UUID.randomUUID().toString)
+                              .withWorkflowRunTimeout(10.second)
+                              .build
         result <- ZWorkflowStub.execute(greetingWorkflow.getGreeting("Vitalii"))
       } yield assertTrue(result == "Hello Vitalii!")
 
@@ -86,13 +82,12 @@ object WorkflowSpec extends ZIOSpecDefault {
                ZWorker.addWorkflow[GreetingWorkflowNamedImpl].fromClass @@
                ZWorker.addWorkflow[GreetingNamedChildImpl].fromClass
         _ <- ZTestWorkflowEnvironment.setup()
-        greetingWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                              _.newWorkflowStub[GreetingNamedWorkflow]
-                                .withTaskQueue(taskQueue)
-                                .withWorkflowId(UUID.randomUUID().toString)
-                                .withWorkflowRunTimeout(10.second)
-                                .build
-                            )
+        greetingWorkflow <- ZTestWorkflowEnvironment
+                              .newWorkflowStub[GreetingNamedWorkflow]
+                              .withTaskQueue(taskQueue)
+                              .withWorkflowId(UUID.randomUUID().toString)
+                              .withWorkflowRunTimeout(10.second)
+                              .build
         result <- ZWorkflowStub.execute(greetingWorkflow.getGreeting("Vitalii"))
       } yield assertTrue(result == "Hello Vitalii!")
 
@@ -105,13 +100,12 @@ object WorkflowSpec extends ZIOSpecDefault {
                ZWorker.addWorkflow[GreetingUntypedWorkflowImpl].fromClass @@
                ZWorker.addWorkflow[GreetingUntypedChildImpl].fromClass
         _ <- ZTestWorkflowEnvironment.setup()
-        greetingWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                              _.newUntypedWorkflowStub("GreetingUntypedWorkflow")
-                                .withTaskQueue(taskQueue)
-                                .withWorkflowId(UUID.randomUUID().toString)
-                                .withWorkflowRunTimeout(10.second)
-                                .build
-                            )
+        greetingWorkflow <- ZTestWorkflowEnvironment
+                              .newUntypedWorkflowStub("GreetingUntypedWorkflow")
+                              .withTaskQueue(taskQueue)
+                              .withWorkflowId(UUID.randomUUID().toString)
+                              .withWorkflowRunTimeout(10.second)
+                              .build
         result <- greetingWorkflow.execute[String]("Vitalii")
       } yield assertTrue(result == "Hello Vitalii!")
 
@@ -127,21 +121,19 @@ object WorkflowSpec extends ZIOSpecDefault {
 
         _             <- ZTestWorkflowEnvironment.setup()
         fooWorkflowId <- ZIO.randomWith(_.nextUUID).map(_.toString)
-        fooWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                         _.newWorkflowStub[WorkflowFoo]
-                           .withTaskQueue(taskQueue)
-                           .withWorkflowId(fooWorkflowId)
-                           .withWorkflowRunTimeout(10.second)
-                           .build
-                       )
+        fooWorkflow <- ZTestWorkflowEnvironment
+                         .newWorkflowStub[WorkflowFoo]
+                         .withTaskQueue(taskQueue)
+                         .withWorkflowId(fooWorkflowId)
+                         .withWorkflowRunTimeout(10.second)
+                         .build
         barWorkflowId = fooWorkflowId + "-bar"
-        barWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                         _.newWorkflowStub[WorkflowBar]
-                           .withTaskQueue(taskQueue)
-                           .withWorkflowId(barWorkflowId)
-                           .withWorkflowRunTimeout(10.second)
-                           .build
-                       )
+        barWorkflow <- ZTestWorkflowEnvironment
+                         .newWorkflowStub[WorkflowBar]
+                         .withTaskQueue(taskQueue)
+                         .withWorkflowId(barWorkflowId)
+                         .withWorkflowRunTimeout(10.second)
+                         .build
         _ <- ZIO.collectAllParDiscard(
                List(
                  ZWorkflowStub.start(
@@ -167,21 +159,19 @@ object WorkflowSpec extends ZIOSpecDefault {
 
         _             <- ZTestWorkflowEnvironment.setup()
         fooWorkflowId <- ZIO.randomWith(_.nextUUID).map(_.toString)
-        fooWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                         _.newUntypedWorkflowStub("WorkflowFooUntyped")
-                           .withTaskQueue(taskQueue)
-                           .withWorkflowId(fooWorkflowId)
-                           .withWorkflowRunTimeout(10.second)
-                           .build
-                       )
+        fooWorkflow <- ZTestWorkflowEnvironment
+                         .newUntypedWorkflowStub("WorkflowFooUntyped")
+                         .withTaskQueue(taskQueue)
+                         .withWorkflowId(fooWorkflowId)
+                         .withWorkflowRunTimeout(10.second)
+                         .build
         barWorkflowId = fooWorkflowId + "-bar"
-        barWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                         _.newUntypedWorkflowStub("WorkflowBarUntyped")
-                           .withTaskQueue(taskQueue)
-                           .withWorkflowId(barWorkflowId)
-                           .withWorkflowRunTimeout(10.second)
-                           .build
-                       )
+        barWorkflow <- ZTestWorkflowEnvironment
+                         .newUntypedWorkflowStub("WorkflowBarUntyped")
+                         .withTaskQueue(taskQueue)
+                         .withWorkflowId(barWorkflowId)
+                         .withWorkflowRunTimeout(10.second)
+                         .build
         _ <- ZIO.collectAllParDiscard(
                List(
                  fooWorkflow.start(input),
@@ -200,24 +190,21 @@ object WorkflowSpec extends ZIOSpecDefault {
         _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
                ZWorker.addWorkflow[SignalWorkflowImpl].fromClass
         _ <- ZTestWorkflowEnvironment.setup()
-        signalWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                            _.newWorkflowStub[SignalWorkflow]
-                              .withTaskQueue(taskQueue)
-                              .withWorkflowId(workflowId)
-                              .withWorkflowRunTimeout(30.seconds)
-                              .withWorkflowTaskTimeout(30.seconds)
-                              .withWorkflowExecutionTimeout(30.seconds)
-                              .build
-                          )
+        signalWorkflow <- ZTestWorkflowEnvironment
+                            .newWorkflowStub[SignalWorkflow]
+                            .withTaskQueue(taskQueue)
+                            .withWorkflowId(workflowId)
+                            .withWorkflowRunTimeout(30.seconds)
+                            .withWorkflowTaskTimeout(30.seconds)
+                            .withWorkflowExecutionTimeout(30.seconds)
+                            .build
         _ <- ZIO.log("Before start")
         _ <- ZWorkflowStub.start(
                signalWorkflow.echoServer("ECHO")
              )
-        _ <- ZIO.log("Started")
-        workflowStub <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                          _.newWorkflowStub[SignalWorkflow](workflowId)
-                        )
-        _ <- ZIO.log("New stub created!")
+        _            <- ZIO.log("Started")
+        workflowStub <- ZTestWorkflowEnvironment.newWorkflowStub[SignalWorkflow](workflowId)
+        _            <- ZIO.log("New stub created!")
         progress <- ZWorkflowStub.query(
                       workflowStub.getProgress(default = None)
                     )
@@ -248,21 +235,18 @@ object WorkflowSpec extends ZIOSpecDefault {
         _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
                ZWorker.addWorkflow[SignalWorkflowImpl].fromClass
         _ <- ZTestWorkflowEnvironment.setup()
-        signalWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                            _.newUntypedWorkflowStub("SignalWorkflow")
-                              .withTaskQueue(taskQueue)
-                              .withWorkflowId(workflowId)
-                              .withWorkflowRunTimeout(30.seconds)
-                              .withWorkflowTaskTimeout(30.seconds)
-                              .withWorkflowExecutionTimeout(30.seconds)
-                              .build
-                          )
-        _ <- ZIO.log("Before start")
-        _ <- signalWorkflow.start("ECHO")
-        _ <- ZIO.log("Started")
-        workflowStub <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                          _.newUntypedWorkflowStub(workflowId, runId = None)
-                        )
+        signalWorkflow <- ZTestWorkflowEnvironment
+                            .newUntypedWorkflowStub("SignalWorkflow")
+                            .withTaskQueue(taskQueue)
+                            .withWorkflowId(workflowId)
+                            .withWorkflowRunTimeout(30.seconds)
+                            .withWorkflowTaskTimeout(30.seconds)
+                            .withWorkflowExecutionTimeout(30.seconds)
+                            .build
+        _               <- ZIO.log("Before start")
+        _               <- signalWorkflow.start("ECHO")
+        _               <- ZIO.log("Started")
+        workflowStub    <- ZTestWorkflowEnvironment.newUntypedWorkflowStub(workflowId, runId = None)
         _               <- ZIO.log("New stub created!")
         progress        <- workflowStub.query[Option[String]]("progress", None)
         _               <- ZIO.log(s"Progress=$progress")
@@ -293,21 +277,18 @@ object WorkflowSpec extends ZIOSpecDefault {
                  ZWorker.addWorkflow[ZioWorkflowImpl].fromClass @@
                  ZWorker.addActivityImplementation(new ZioActivityImpl()(activityOptions))
           _ <- ZTestWorkflowEnvironment.setup()
-          zioWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                           _.newWorkflowStub[ZioWorkflow]
-                             .withTaskQueue(taskQueue)
-                             .withWorkflowId(workflowId)
-                             .withWorkflowRunTimeout(30.seconds)
-                             .withWorkflowTaskTimeout(30.seconds)
-                             .withWorkflowExecutionTimeout(30.seconds)
-                             .build
-                         )
+          zioWorkflow <- ZTestWorkflowEnvironment
+                           .newWorkflowStub[ZioWorkflow]
+                           .withTaskQueue(taskQueue)
+                           .withWorkflowId(workflowId)
+                           .withWorkflowRunTimeout(30.seconds)
+                           .withWorkflowTaskTimeout(30.seconds)
+                           .withWorkflowExecutionTimeout(30.seconds)
+                           .build
           _ <- ZWorkflowStub.start(
                  zioWorkflow.echo("HELLO THERE")
                )
-          workflowStub <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                            _.newWorkflowStub[ZioWorkflow](workflowId)
-                          )
+          workflowStub <- ZTestWorkflowEnvironment.newWorkflowStub[ZioWorkflow](workflowId)
           _ <- ZWorkflowStub.signal(
                  workflowStub.complete()
                )
@@ -326,15 +307,14 @@ object WorkflowSpec extends ZIOSpecDefault {
                  ZWorker.addWorkflow[ContinueAsNewWorkflowImpl].fromClass
 
           _ <- ZTestWorkflowEnvironment.setup()
-          workflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                        _.newWorkflowStub[ContinueAsNewWorkflow]
-                          .withTaskQueue(taskQueue)
-                          .withWorkflowId(workflowId)
-                          .withWorkflowRunTimeout(30.seconds)
-                          .withWorkflowTaskTimeout(30.seconds)
-                          .withWorkflowExecutionTimeout(30.seconds)
-                          .build
-                      )
+          workflow <- ZTestWorkflowEnvironment
+                        .newWorkflowStub[ContinueAsNewWorkflow]
+                        .withTaskQueue(taskQueue)
+                        .withWorkflowId(workflowId)
+                        .withWorkflowRunTimeout(30.seconds)
+                        .withWorkflowTaskTimeout(30.seconds)
+                        .withWorkflowExecutionTimeout(30.seconds)
+                        .build
           result <- ZWorkflowStub.execute(
                       workflow.doSomething(0)
                     )
@@ -352,15 +332,14 @@ object WorkflowSpec extends ZIOSpecDefault {
                  ZWorker.addWorkflow[ContinueAsNewNamedWorkflowImpl].fromClass
 
           _ <- ZTestWorkflowEnvironment.setup()
-          workflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                        _.newWorkflowStub[ContinueAsNewNamedWorkflow]
-                          .withTaskQueue(taskQueue)
-                          .withWorkflowId(workflowId)
-                          .withWorkflowRunTimeout(30.seconds)
-                          .withWorkflowTaskTimeout(30.seconds)
-                          .withWorkflowExecutionTimeout(30.seconds)
-                          .build
-                      )
+          workflow <- ZTestWorkflowEnvironment
+                        .newWorkflowStub[ContinueAsNewNamedWorkflow]
+                        .withTaskQueue(taskQueue)
+                        .withWorkflowId(workflowId)
+                        .withWorkflowRunTimeout(30.seconds)
+                        .withWorkflowTaskTimeout(30.seconds)
+                        .withWorkflowExecutionTimeout(30.seconds)
+                        .build
           result <- ZWorkflowStub.execute(
                       workflow.doSomething(0)
                     )
@@ -378,15 +357,14 @@ object WorkflowSpec extends ZIOSpecDefault {
                  ZWorker.addWorkflow[ZioWorkflowUntypedImpl].fromClass @@
                  ZWorker.addActivityImplementation(new ZioUntypedActivityImpl())
           _ <- ZTestWorkflowEnvironment.setup()
-          zioWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                           _.newUntypedWorkflowStub("ZioWorkflowUntyped")
-                             .withTaskQueue(taskQueue)
-                             .withWorkflowId(workflowId)
-                             .withWorkflowRunTimeout(30.seconds)
-                             .withWorkflowTaskTimeout(30.seconds)
-                             .withWorkflowExecutionTimeout(30.seconds)
-                             .build
-                         )
+          zioWorkflow <- ZTestWorkflowEnvironment
+                           .newUntypedWorkflowStub("ZioWorkflowUntyped")
+                           .withTaskQueue(taskQueue)
+                           .withWorkflowId(workflowId)
+                           .withWorkflowRunTimeout(30.seconds)
+                           .withWorkflowTaskTimeout(30.seconds)
+                           .withWorkflowExecutionTimeout(30.seconds)
+                           .build
           _      <- zioWorkflow.start("HELLO THERE")
           _      <- zioWorkflow.signal("complete")
           result <- zioWorkflow.result[String]
@@ -402,13 +380,12 @@ object WorkflowSpec extends ZIOSpecDefault {
         _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
                ZWorker.addWorkflow[SignalWithStartWorkflowImpl].fromClass
         _ <- ZTestWorkflowEnvironment.setup()
-        workflowStub <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                          _.newWorkflowStub[SignalWithStartWorkflow]
-                            .withTaskQueue(taskQueue)
-                            .withWorkflowId(workflowId)
-                            .withWorkflowRunTimeout(10.seconds)
-                            .build
-                        )
+        workflowStub <- ZTestWorkflowEnvironment
+                          .newWorkflowStub[SignalWithStartWorkflow]
+                          .withTaskQueue(taskQueue)
+                          .withWorkflowId(workflowId)
+                          .withWorkflowRunTimeout(10.seconds)
+                          .build
         _ <- workflowStub.signalWithStart(
                workflowStub.echoServer(),
                workflowStub.echo("Hello")
@@ -452,13 +429,12 @@ object WorkflowSpec extends ZIOSpecDefault {
                  ZWorker.addWorkflow[SagaWorkflowImpl].fromClass @@
                  ZWorker.addActivityImplementation(new TransferActivityImpl(successFunc, successFunc))
           _ <- ZTestWorkflowEnvironment.setup()
-          sagaWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                            _.newWorkflowStub[SagaWorkflow]
-                              .withTaskQueue(taskQueue)
-                              .withWorkflowId(workflowId)
-                              .withWorkflowRunTimeout(10.seconds)
-                              .build
-                          )
+          sagaWorkflow <- ZTestWorkflowEnvironment
+                            .newWorkflowStub[SagaWorkflow]
+                            .withTaskQueue(taskQueue)
+                            .withWorkflowId(workflowId)
+                            .withWorkflowRunTimeout(10.seconds)
+                            .build
           result <- ZWorkflowStub.executeWithTimeout(5.seconds)(
                       sagaWorkflow.transfer(TransferCommand("from", "to", expectedResult))
                     )
@@ -494,13 +470,12 @@ object WorkflowSpec extends ZIOSpecDefault {
                  ZWorker.addWorkflow[SagaWorkflowImpl].fromClass @@
                  ZWorker.addActivityImplementation(new TransferActivityImpl(depositFunc, withdrawFunc))
           _ <- ZTestWorkflowEnvironment.setup()
-          sagaWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                            _.newWorkflowStub[SagaWorkflow]
-                              .withTaskQueue(taskQueue)
-                              .withWorkflowId(workflowId)
-                              .withWorkflowRunTimeout(10.seconds)
-                              .build
-                          )
+          sagaWorkflow <- ZTestWorkflowEnvironment
+                            .newWorkflowStub[SagaWorkflow]
+                            .withTaskQueue(taskQueue)
+                            .withWorkflowId(workflowId)
+                            .withWorkflowRunTimeout(10.seconds)
+                            .build
           result <- ZWorkflowStub
                       .execute(sagaWorkflow.transfer(TransferCommand(From, To, amount)))
                       .either
@@ -535,13 +510,12 @@ object WorkflowSpec extends ZIOSpecDefault {
 
       val tests = for {
         workflowId <- ZIO.randomWith(_.nextUUID)
-        promiseWorkflow <- ZTestWorkflowEnvironment.workflowClientWithZIO(
-                             _.newWorkflowStub[PromiseWorkflow]
-                               .withTaskQueue(taskQueue)
-                               .withWorkflowId(workflowId.toString)
-                               .withWorkflowRunTimeout(10.seconds)
-                               .build
-                           )
+        promiseWorkflow <- ZTestWorkflowEnvironment
+                             .newWorkflowStub[PromiseWorkflow]
+                             .withTaskQueue(taskQueue)
+                             .withWorkflowId(workflowId.toString)
+                             .withWorkflowRunTimeout(10.seconds)
+                             .build
         result <- ZWorkflowStub.execute(promiseWorkflow.fooBar(x, y))
       } yield {
         assertTrue(result == x + y)
@@ -574,6 +548,6 @@ object WorkflowSpec extends ZIOSpecDefault {
       thunk.provideSome[Scope](
         ZTestEnvironmentOptions.default,
         ZTestWorkflowEnvironment.make[Any]
-      )
+      ) @@ TestAspect.withLiveClock
   }
 }

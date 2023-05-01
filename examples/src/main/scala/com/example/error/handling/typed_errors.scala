@@ -40,7 +40,7 @@ class TypedMathWorkflowImpl extends MathWorkflow {
   private lazy val logger = ZWorkflow.makeLogger
 
   private val activity: ZActivityStub.Of[ArithmeticActivity] = ZWorkflow
-    .newActivityStub[ArithmeticActivity]
+    .newLocalActivityStub[ArithmeticActivity]
     .withStartToCloseTimeout(10.seconds)
     .withRetryOptions(
       ZRetryOptions.default

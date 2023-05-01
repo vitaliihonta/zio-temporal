@@ -11,54 +11,57 @@ import scala.jdk.CollectionConverters._
 import zio.temporal.internal.ClassTagUtils
 
 object ZWorkflowStubBuilderTaskQueueDsl {
-  type Of[A]   = ZWorkflowStubBuilderTaskQueueDsl[ZWorkflowStub.Of[A]]
-  type Untyped = ZWorkflowStubBuilderTaskQueueDsl[ZWorkflowStub.Untyped]
+  type Of[A]   = ZWorkflowStubBuilderTaskQueueDsl[UIO[ZWorkflowStub.Of[A]]]
+  type Untyped = ZWorkflowStubBuilderTaskQueueDsl[UIO[ZWorkflowStub.Untyped]]
 
-  private[temporal] def typed[A: ClassTag]: (WorkflowClient, WorkflowOptions) => ZWorkflowStub.Of[A] =
-    (client, options) => {
-      ZWorkflowStub.Of[A](
-        new ZWorkflowStubImpl(
-          client.newUntypedWorkflowStub(
-            ClassTagUtils.getWorkflowType[A],
-            options
+  private[temporal] def typed[A: ClassTag](client: WorkflowClient): WorkflowOptions => UIO[ZWorkflowStub.Of[A]] =
+    options =>
+      ZIO.succeed {
+        ZWorkflowStub.Of[A](
+          new ZWorkflowStubImpl(
+            client.newUntypedWorkflowStub(
+              ClassTagUtils.getWorkflowType[A],
+              options
+            )
           )
         )
-      )
-    }
+      }
 
-  private[temporal] def untyped(workflowType: String): (WorkflowClient, WorkflowOptions) => ZWorkflowStub.Untyped =
-    (client, options) =>
-      new ZWorkflowStub.UntypedImpl(
-        client.newUntypedWorkflowStub(workflowType, options)
-      )
+  private[temporal] def untyped(
+    workflowType: String,
+    client:       WorkflowClient
+  ): WorkflowOptions => UIO[ZWorkflowStub.Untyped] =
+    options =>
+      ZIO.succeed {
+        new ZWorkflowStub.UntypedImpl(
+          client.newUntypedWorkflowStub(workflowType, options)
+        )
+      }
 }
 
 final class ZWorkflowStubBuilderTaskQueueDsl[Res] private[zio] (
-  client:    WorkflowClient,
-  buildImpl: (WorkflowClient, WorkflowOptions) => Res) {
+  buildImpl: WorkflowOptions => Res) {
 
   def withTaskQueue(taskQueue: String): ZWorkflowStubBuilderWorkflowIdDsl[Res] =
-    new ZWorkflowStubBuilderWorkflowIdDsl[Res](client, buildImpl, taskQueue)
+    new ZWorkflowStubBuilderWorkflowIdDsl[Res](buildImpl, taskQueue)
 }
 
 final class ZWorkflowStubBuilderWorkflowIdDsl[Res] private[zio] (
-  client:    WorkflowClient,
-  buildImpl: (WorkflowClient, WorkflowOptions) => Res,
+  buildImpl: WorkflowOptions => Res,
   taskQueue: String) {
 
   def withWorkflowId(workflowId: String): ZWorkflowStubBuilder[Res] =
-    new ZWorkflowStubBuilder[Res](client, buildImpl, taskQueue, workflowId, additionalConfig = identity)
+    new ZWorkflowStubBuilder[Res](buildImpl, taskQueue, workflowId, additionalConfig = identity)
 }
 
 final class ZWorkflowStubBuilder[Res] private[zio] (
-  client:           WorkflowClient,
-  buildImpl:        (WorkflowClient, WorkflowOptions) => Res,
+  buildImpl:        WorkflowOptions => Res,
   taskQueue:        String,
   workflowId:       String,
   additionalConfig: WorkflowOptions.Builder => WorkflowOptions.Builder) {
 
   private def copy(config: WorkflowOptions.Builder => WorkflowOptions.Builder): ZWorkflowStubBuilder[Res] =
-    new ZWorkflowStubBuilder[Res](client, buildImpl, taskQueue, workflowId, additionalConfig andThen config)
+    new ZWorkflowStubBuilder[Res](buildImpl, taskQueue, workflowId, additionalConfig andThen config)
 
   def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZWorkflowStubBuilder[Res] =
     copy(_.setSearchAttributes(attrs))
@@ -101,16 +104,15 @@ final class ZWorkflowStubBuilder[Res] private[zio] (
     * @return
     *   typed workflow stub
     */
-  def build: UIO[Res] =
-    ZIO.succeed {
-      val options =
-        additionalConfig {
-          WorkflowOptions
-            .newBuilder()
-            .setTaskQueue(taskQueue)
-            .setWorkflowId(workflowId)
-        }.build()
+  def build: Res = {
+    val options =
+      additionalConfig {
+        WorkflowOptions
+          .newBuilder()
+          .setTaskQueue(taskQueue)
+          .setWorkflowId(workflowId)
+      }.build()
 
-      buildImpl(client, options)
-    }
+    buildImpl(options)
+  }
 }

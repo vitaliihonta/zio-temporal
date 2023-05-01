@@ -6,10 +6,9 @@ import zio.temporal.ZAwaitTerminationOptions
 import zio.temporal.activity.ZActivityOptions
 import zio.temporal.worker.ZWorker
 import zio.temporal.worker.ZWorkerOptions
-import zio.temporal.workflow.ZWorkflowClient
-import zio.temporal.workflow.ZWorkflowServiceStubs
-
+import zio.temporal.workflow.*
 import java.util.concurrent.TimeUnit
+import scala.reflect.ClassTag
 
 /** TestWorkflowEnvironment provides workflow unit testing capabilities.
   *
@@ -38,13 +37,13 @@ class ZTestWorkflowEnvironment[+R] private[zio] (val toJava: TestWorkflowEnviron
     )
 
   /** Creates a WorkflowClient that is connected to the in-memory test Temporal service. */
-  lazy val workflowClient = new ZWorkflowClient(toJava.getWorkflowClient)
+  lazy val workflowClient: ZWorkflowClient = new ZWorkflowClient(toJava.getWorkflowClient)
 
   /** Returns the in-memory test Temporal service that is owned by this. */
-  lazy val workflowServiceStubs = new ZWorkflowServiceStubs(toJava.getWorkflowServiceStubs)
+  lazy val workflowServiceStubs: ZWorkflowServiceStubs = new ZWorkflowServiceStubs(toJava.getWorkflowServiceStubs)
 
   implicit lazy val activityOptions: ZActivityOptions[R] =
-    new ZActivityOptions[R](runtime, workflowClient.toJava.newActivityCompletionClient())
+    new ZActivityOptions[R](runtime, Some(workflowClient.toJava.newActivityCompletionClient()))
 
   /** Setup test environment with a guaranteed finalization.
     *
@@ -149,6 +148,50 @@ object ZTestWorkflowEnvironment {
     ): ZIO[R2, E, A] =
       ZIO.serviceWithZIO[ZTestWorkflowEnvironment[R]](testEnv => f(testEnv.activityOptions))
   }
+
+  /** Creates new typed workflow stub builder
+    *
+    * @tparam A
+    *   workflow interface
+    * @return
+    *   builder instance
+    */
+  def newWorkflowStub[
+    A: ClassTag: IsWorkflow
+  ]: ZWorkflowStubBuilderTaskQueueDsl[URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Of[A]]] =
+    new ZWorkflowStubBuilderTaskQueueDsl[URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Of[A]]](options =>
+      ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
+        ZWorkflowStubBuilderTaskQueueDsl.typed[A](testEnv.workflowClient.toJava).apply(options)
+      }
+    )
+
+  /** Creates new untyped type workflow stub builder
+    *
+    * @param workflowType
+    *   name of the workflow type
+    * @return
+    *   builder instance
+    */
+  def newUntypedWorkflowStub(
+    workflowType: String
+  ): ZWorkflowStubBuilderTaskQueueDsl[URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Untyped]] =
+    new ZWorkflowStubBuilderTaskQueueDsl[URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Untyped]](options =>
+      ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
+        ZWorkflowStubBuilderTaskQueueDsl.untyped(workflowType, testEnv.workflowClient.toJava).apply(options)
+      }
+    )
+
+  def newWorkflowStub[A: ClassTag: IsWorkflow](
+    workflowId: String,
+    runId:      Option[String] = None
+  ): URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Of[A]] =
+    ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]](_.workflowClient.newWorkflowStub[A](workflowId, runId))
+
+  def newUntypedWorkflowStub(
+    workflowId: String,
+    runId:      Option[String]
+  ): URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Untyped] =
+    ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]](_.workflowClient.newUntypedWorkflowStub(workflowId, runId))
 
   /** Creates a new instance of [[ZTestWorkflowEnvironment]]
     *

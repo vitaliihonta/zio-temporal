@@ -40,7 +40,7 @@ trait EchoActivity {
 trait EchoWorkflow {
   @workflowMethod
   def echoWorkflow(what: String): String
-  
+
   @signalMethod
   def signalSomething(): Unit
 }
@@ -69,7 +69,7 @@ class EchoWorkflowImpl extends EchoWorkflow {
 }
 ```
 
-On the other hand, an untyped workflow signal must be invoked with the same lower-cased name:  
+On the other hand, an untyped workflow signal must be invoked with the same lower-cased name:
 
 ```scala mdoc:silent
 ZIO.serviceWithZIO[ZWorkflowClient] { workflowClient =>
@@ -83,4 +83,31 @@ ZIO.serviceWithZIO[ZWorkflowClient] { workflowClient =>
     _ <- echoWorkflow.signal("signalSomething")
   } yield ()
 }
+```
+
+## Typical problems when using zio-temporal-testkit with zio-test
+
+### Test clock doesn't work well
+
+If test is failing with such an error:
+
+```
+ERROR i.t.t.TestActivityEnvironmentInternal - Timeout trying execute activity task task_token: "test-task-token"
+```
+
+Try to look for ZIO warnings like this one:
+
+```
+Warning: A test is using time, but is not advancing the test clock, which may result in the test hanging. Use TestClock.adjust to manually advance the time.
+```
+
+It is likely that the Activity code is running ZIO with `ZIO.sleep`.  
+In a combination with Temporal and zio-test, it may hand due to `TestClock`.
+
+**You can easily fix it** by replacing `TestClock` with real one:
+
+```scala
+test("my test") {
+  /*...*/
+} @@ TestAspect.withLiveClock // Add the aspect
 ```

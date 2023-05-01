@@ -30,7 +30,9 @@ object BuildConfig extends Dependencies {
   val testLibs = baseLibs ++ Seq(
     Zio.test,
     Zio.testSbt,
-    Logging.zio % Test,
+    Logging.zio      % Test,
+    Logging.zioSlf4j % Test,
+    Logging.logback  % Test,
     Testing.scalatest
   )
 
