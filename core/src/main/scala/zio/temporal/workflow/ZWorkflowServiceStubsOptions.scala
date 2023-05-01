@@ -3,8 +3,7 @@ package zio.temporal.workflow
 import io.grpc.ManagedChannel
 import io.grpc.Metadata
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext
-import io.temporal.serviceclient.RpcRetryOptions
-import io.temporal.serviceclient.WorkflowServiceStubsOptions
+import io.temporal.serviceclient.{GrpcMetadataProvider, RpcRetryOptions, WorkflowServiceStubsOptions}
 import zio.*
 import zio.temporal.internal.ConfigurationCompanion
 
@@ -29,6 +28,7 @@ case class ZWorkflowServiceStubsOptions private[zio] (
   connectionBackoffResetFrequency:      Option[Duration],
   grpcReconnectFrequency:               Option[Duration],
   headers:                              Option[Metadata],
+  grpcMetadataProvider:                 Option[GrpcMetadataProvider],
   private val javaOptionsCustomization: WorkflowServiceStubsOptions.Builder => WorkflowServiceStubsOptions.Builder) {
 
   def withServiceUrl(value: String): ZWorkflowServiceStubsOptions =
@@ -76,6 +76,12 @@ case class ZWorkflowServiceStubsOptions private[zio] (
   def withHeaders(value: Metadata): ZWorkflowServiceStubsOptions =
     copy(headers = Some(value))
 
+  /** @param grpcMetadataProvider
+    *   gRPC metadata/headers provider to be called on each gRPC request to supply additional headers
+    */
+  def withGrpcMetadataProvider(grpcMetadataProvider: GrpcMetadataProvider): ZWorkflowServiceStubsOptions =
+    copy(grpcMetadataProvider = Some(grpcMetadataProvider))
+
   /** Allows to specify options directly on the java SDK's [[WorkflowServiceStubsOptions]]. Use it in case an
     * appropriate `withXXX` method is missing
     *
@@ -105,6 +111,8 @@ case class ZWorkflowServiceStubsOptions private[zio] (
     connectionBackoffResetFrequency.foreach(t => builder.setConnectionBackoffResetFrequency(t.asJava))
     grpcReconnectFrequency.foreach(t => builder.setGrpcReconnectFrequency(t.asJava))
     headers.foreach(builder.setHeaders)
+    grpcMetadataProvider.foreach(builder.addGrpcMetadataProvider)
+
     javaOptionsCustomization(builder).build()
   }
 }
@@ -155,6 +163,9 @@ object ZWorkflowServiceStubsOptions extends ConfigurationCompanion[ZWorkflowServ
 
   def withHeaders(value: Metadata): Configure =
     configure(_.withHeaders(value))
+
+  def withGrpcMetadataProvider(grpcMetadataProvider: GrpcMetadataProvider): Configure =
+    configure(_.withGrpcMetadataProvider(grpcMetadataProvider))
 
   def transformJavaOptions(
     f: WorkflowServiceStubsOptions.Builder => WorkflowServiceStubsOptions.Builder
@@ -220,6 +231,7 @@ object ZWorkflowServiceStubsOptions extends ConfigurationCompanion[ZWorkflowServ
             connectionBackoffResetFrequency = connectionBackoffResetFrequency,
             grpcReconnectFrequency = grpcReconnectFrequency,
             headers = None,
+            grpcMetadataProvider = None,
             javaOptionsCustomization = identity
           )
       }
