@@ -1,0 +1,170 @@
+package zio.temporal.testkit
+
+import io.temporal.testing.TestActivityEnvironment
+import zio.temporal.activity.ZActivityOptions
+import zio.*
+import zio.temporal.activity.{IsActivity, ZActivityStubBuilderInitial}
+import zio.temporal.internal.ClassTagUtils
+import scala.reflect.ClassTag
+
+class ZTestActivityEnvironment[+R] private[zio] (
+  val toJava: TestActivityEnvironment,
+  runtime:    zio.Runtime[R]) {
+
+  implicit lazy val activityOptions: ZActivityOptions[R] =
+    new ZActivityOptions[R](runtime, None)
+
+  /** Registers activity implementations to test. Use [[newActivityStub]] to create stubs that can be used to invoke
+    * them.
+    *
+    * <p>Implementations that share a worker must implement different interfaces as an activity type is identified by
+    * the activity interface, not by the implementation.
+    *
+    * @throws TypeAlreadyRegisteredException
+    *   if one of the activity types is already registered
+    */
+  def addActivityImplementation[A <: AnyRef: IsActivity](activity: A): UIO[Unit] =
+    ZIO.succeed {
+      toJava.registerActivitiesImplementations(activity)
+    }
+
+  /** Creates a stub that can be used to invoke activities registered through [[addActivityImplementation]]
+    *
+    * @note
+    *   it's not a [[zio.temporal.activity.ZActivityStub]] because the activity is invoked locally. Wrapping method
+    *   invocation into [[zio.temporal.activity.ZActivityStub.execute]] is not required
+    * @tparam A
+    *   Type of the activity interface.
+    * @return
+    *   The stub builder for the activity.
+    */
+  def newActivityStub[A <: AnyRef: IsActivity: ClassTag]: ZActivityStubBuilderInitial[UIO[A]] =
+    new ZActivityStubBuilderInitial[UIO[A]](
+      buildImpl = options => ZIO.succeed(toJava.newActivityStub(ClassTagUtils.classOf[A], options))
+    )
+
+  /** Sets a listener that is called every time an activity implementation heartbeats through
+    * [[zio.temporal.activity.ZActivityExecutionContext.heartbeat]]
+    *
+    * @tparam T
+    *   type of the details passed to the [[zio.temporal.activity.ZActivityExecutionContext.heartbeat]]
+    * @param listener
+    *   listener to register.
+    */
+  def setActivityHeartbeatListener[T: ClassTag](listener: T => Unit): UIO[Unit] =
+    ZIO.succeed(
+      toJava.setActivityHeartbeatListener[T](ClassTagUtils.classOf[T], (heartbeat: T) => listener(heartbeat))
+    )
+
+  /** Sets heartbeat details for the next activity execution. The next activity called from this TestActivityEnvironment
+    * will be able to access this value using [[zio.temporal.activity.ZActivityExecutionContext.heartbeat]]. This value
+    * is cleared upon execution.
+    *
+    * @tparam T
+    *   Type of the heartbeat details.
+    *
+    * @param details
+    *   The details object to make available to the next activity call.
+    */
+  def setHeartbeatDetails[T](details: T): UIO[Unit] =
+    ZIO.succeed(toJava.setHeartbeatDetails(details))
+
+  /** Requests activity cancellation. The cancellation is going to be delivered to the activity on the next heartbeat.
+    */
+  def requestCancelActivity(): UIO[Unit] =
+    ZIO.succeed(toJava.requestCancelActivity())
+}
+
+object ZTestActivityEnvironment {
+  def activityOptions[R: Tag]: URIO[ZTestActivityEnvironment[R], ZActivityOptions[R]] =
+    ZIO.serviceWith[ZTestActivityEnvironment[R]](_.activityOptions)
+
+  /** Registers activity implementations to test. Use [[newActivityStub]] to create stubs that can be used to invoke
+    * them.
+    *
+    * <p>Implementations that share a worker must implement different interfaces as an activity type is identified by
+    * the activity interface, not by the implementation.
+    *
+    * @throws TypeAlreadyRegisteredException
+    *   if one of the activity types is already registered
+    */
+  def addActivityImplementation[A <: AnyRef: IsActivity](activity: A): URIO[ZTestActivityEnvironment[Any], Unit] =
+    ZIO.serviceWithZIO[ZTestActivityEnvironment[Any]](_.addActivityImplementation(activity))
+
+  /** Creates a stub that can be used to invoke activities registered through [[addActivityImplementation]]
+    *
+    * @note
+    *   it's not a [[zio.temporal.activity.ZActivityStub]] because the activity is invoked locally. Wrapping method
+    *   invocation into [[zio.temporal.activity.ZActivityStub.execute]] is not required
+    * @tparam A
+    *   Type of the activity interface.
+    * @return
+    *   The stub builder for the activity.
+    */
+  def newActivityStub[
+    A <: AnyRef: IsActivity: ClassTag
+  ]: ZActivityStubBuilderInitial[URIO[ZTestActivityEnvironment[Any], A]] =
+    new ZActivityStubBuilderInitial[URIO[ZTestActivityEnvironment[Any], A]](
+      buildImpl = options =>
+        ZIO.serviceWithZIO[ZTestActivityEnvironment[Any]] { testEnv =>
+          ZIO.succeed(testEnv.toJava.newActivityStub(ClassTagUtils.classOf[A], options))
+        }
+    )
+
+  /** Sets a listener that is called every time an activity implementation heartbeats through
+    * [[zio.temporal.activity.ZActivityExecutionContext.heartbeat]]
+    *
+    * @tparam T
+    *   type of the details passed to the [[zio.temporal.activity.ZActivityExecutionContext.heartbeat]]
+    * @param listener
+    *   listener to register.
+    */
+  def setActivityHeartbeatListener[T: ClassTag](listener: T => Unit): URIO[ZTestActivityEnvironment[Any], Unit] =
+    ZIO.serviceWithZIO[ZTestActivityEnvironment[Any]](_.setActivityHeartbeatListener(listener))
+
+  /** Sets heartbeat details for the next activity execution. The next activity called from this TestActivityEnvironment
+    * will be able to access this value using [[zio.temporal.activity.ZActivityExecutionContext.heartbeat]]. This value
+    * is cleared upon execution.
+    *
+    * @tparam T
+    *   Type of the heartbeat details.
+    * @param details
+    *   The details object to make available to the next activity call.
+    */
+  def setHeartbeatDetails[T](details: T): URIO[ZTestActivityEnvironment[Any], Unit] =
+    ZIO.serviceWithZIO[ZTestActivityEnvironment[Any]](_.setHeartbeatDetails(details))
+
+  /** Requests activity cancellation. The cancellation is going to be delivered to the activity on the next heartbeat.
+    */
+  def requestCancelActivity(): URIO[ZTestActivityEnvironment[Any], Unit] =
+    ZIO.serviceWithZIO[ZTestActivityEnvironment[Any]](_.requestCancelActivity())
+
+  /** Creates a new instance of [[ZTestActivityEnvironment]]
+    *
+    * @see
+    *   [[TestActivityEnvironment.newInstance]]
+    * @return
+    *   managed instance of test activity environment
+    */
+  def make[R: Tag]: URLayer[R with ZTestEnvironmentOptions, ZTestActivityEnvironment[R]] =
+    ZLayer.scoped[R with ZTestEnvironmentOptions] {
+      ZIO.runtime[R with ZTestEnvironmentOptions].flatMap { runtime =>
+        ZIO
+          .blocking(
+            ZIO.succeed(
+              new ZTestActivityEnvironment[R](
+                TestActivityEnvironment.newInstance(runtime.environment.get[ZTestEnvironmentOptions].toJava),
+                runtime
+              )
+            )
+          )
+          .flatMap { env =>
+            ZIO
+              .addFinalizer(
+                ZIO.attempt(env.toJava.close()).ignore
+              )
+              .as(env)
+          }
+      }
+    }
+}

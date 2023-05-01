@@ -28,4 +28,22 @@ object ZioUnsafeFacade {
         case Exit.Success(value) => onSuccess(value)
       }
     }
+
+  def unsafeRunZIO[R, E, A](
+    runtime:       Runtime[R],
+    action:        ZIO[R, E, A],
+    convertError:  E => Exception,
+    convertDefect: Throwable => Exception
+  ): A = {
+    Unsafe.unsafe { implicit unsafe: Unsafe =>
+      // Handle defects to avoid noisy error logs
+      val errorsHandled: ZIO[R, Exception, A] = action
+        .mapError(convertError)
+        .catchAllDefect(defect => ZIO.fail(convertDefect(defect)))
+
+      runtime.unsafe
+        .run(errorsHandled)
+        .getOrThrow()
+    }
+  }
 }

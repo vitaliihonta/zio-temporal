@@ -25,9 +25,10 @@ private[zio] object StubProxies {
         } else {
           logger.warn(s"Stub $method called, usually this shouldn't happen")
           throw new IllegalStubProxyInvocationException(
-            s"$Proxied.$method should not be invoked at runtime!\n" +
-              s"It's likely that you forgot to wrap Workflow/Activity calls " +
-              s"into ZWorkflowStub.execute/ZActivityStub.execute blocks, etc."
+            s"$Proxied methods should not be invoked at runtime!\n" +
+              s"It's likely that you forgot to wrap Workflow/Activity calls\n" +
+              s"into ZWorkflowStub.execute/ZActivityStub.execute blocks, etc.\n" +
+              s"Method was invoked: $method"
           )
         }
     )
