@@ -33,7 +33,7 @@ object TripBookingSaga extends ZIOAppDefault {
              .execute(
                trip.bookTrip(name)
              )
-             .catchAll { case e: WorkflowException =>
+             .catchAll { e: WorkflowException =>
                ZIO.logInfo(s"Workflow execution failed (as expected): $e")
              }
     } yield ()
