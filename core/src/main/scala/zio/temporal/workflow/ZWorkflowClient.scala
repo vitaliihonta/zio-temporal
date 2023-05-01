@@ -3,7 +3,9 @@ package zio.temporal.workflow
 import io.temporal.client.ActivityCompletionClient
 import io.temporal.client.WorkflowClient
 import zio.*
+import zio.temporal.{ZWorkflowExecutionMetadata, experimentalApi}
 import scala.jdk.OptionConverters.*
+import scala.jdk.CollectionConverters.*
 import scala.reflect.ClassTag
 
 /** Represents temporal workflow client
@@ -58,6 +60,22 @@ final class ZWorkflowClient private[zio] (val toJava: WorkflowClient) {
         toJava.newUntypedWorkflowStub(workflowId, runId.toJava, Option.empty[String].toJava)
       )
     }
+
+  /** TODO: should it use zio.stream?
+    *
+    * @see
+    *   [[WorkflowClient.listExecutions]]
+    */
+  @experimentalApi
+  def listExecutions(query: Option[String] = None): Task[Vector[ZWorkflowExecutionMetadata]] =
+    ZIO.attempt(
+      toJava
+        .listExecutions(query.orNull)
+        .iterator()
+        .asScala
+        .map(new ZWorkflowExecutionMetadata(_))
+        .toVector
+    )
 }
 
 object ZWorkflowClient {

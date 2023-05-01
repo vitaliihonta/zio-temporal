@@ -162,17 +162,17 @@ object ZWorkflowServiceStubsOptions extends ConfigurationCompanion[ZWorkflowServ
     configure(_.transformJavaOptions(f))
 
   private val workflowServiceStubsConfig =
-    Config.string("serverUrl").withDefault("127.0.0.1:7233") ++
-      Config.boolean("enableHttps").optional ++
-      Config.boolean("enableKeepAlive").optional ++
-      Config.duration("keepAliveTime").optional ++
-      Config.duration("keepAliveTimeout").optional ++
-      Config.boolean("keepAlivePermitWithoutStream").optional ++
-      Config.duration("rpcTimeout").optional ++
-      Config.duration("rpcLongPollTimeout").optional ++
-      Config.duration("rpcQueryTimeout").optional ++
-      Config.duration("connectionBackoffResetFrequency").optional ++
-      Config.duration("grpcReconnectFrequency").optional
+    Config.string("server_url").withDefault("127.0.0.1:7233") ++
+      Config.boolean("enable_https").optional ++
+      Config.boolean("enable_keep_alive").optional ++
+      Config.duration("keep_alive_time").optional ++
+      Config.duration("keep_alive_timeout").optional ++
+      Config.boolean("keep_alive_permit_without_stream").optional ++
+      Config.duration("rpc_timeout").optional ++
+      Config.duration("rpc_long_poll_timeout").optional ++
+      Config.duration("rpc_query_timeout").optional ++
+      Config.duration("connection_backoff_reset_frequency").optional ++
+      Config.duration("grpc_reconnect_frequency").optional
 
   /** Reads config from the default path `zio.temporal.ZWorkflowServiceStubs`
     */
@@ -186,7 +186,7 @@ object ZWorkflowServiceStubsOptions extends ConfigurationCompanion[ZWorkflowServ
 
   private def makeImpl(additionalPath: List[String]): Layer[Config.Error, ZWorkflowServiceStubsOptions] = {
     val config = additionalPath match {
-      case Nil          => workflowServiceStubsConfig.nested("zio", "temporal", "ZWorkflowServiceStubs")
+      case Nil          => workflowServiceStubsConfig.nested("zio", "temporal", "zworkflow_service_stubs")
       case head :: tail => workflowServiceStubsConfig.nested(head, tail: _*)
     }
     ZLayer.fromZIO {

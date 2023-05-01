@@ -56,6 +56,31 @@ sealed trait ZAsync[+A] { self =>
 
   final def zipWith[B, C](that: => ZAsync[B])(f: (A, B) => C): ZAsync[C] =
     self.flatMap(a => that.map(f(a, _)))
+
+  /** The only difference with `zipWith` is that `that` is by-value. Therefore, left ZAsync is already started
+    */
+  final def zipPar[B, C](that: ZAsync[B])(f: (A, B) => C): ZAsync[C] =
+    self.flatMap(a => that.map(f(a, _)))
+
+  /** Return None if error occurred */
+  final def option: ZAsync[Option[A]] =
+    self.map(Some(_)).catchAll(_ => ZAsync.succeed(None))
+
+  /** Ignore any errors */
+  final def ignore: ZAsync[Unit] =
+    self.unit.catchAll(_ => ZAsync.unit)
+
+  final def tap(f: A => Unit): ZAsync[A] =
+    self.map { a =>
+      f(a)
+      a
+    }
+
+  final def tapError(f: Throwable => Unit): ZAsync[A] =
+    self.catchAll { e =>
+      f(e)
+      ZAsync.fail(e)
+    }
 }
 
 object ZAsync {
@@ -109,6 +134,9 @@ object ZAsync {
     */
   def succeed[A](value: A): ZAsync[A] =
     new Impl[A](Async.function(() => value))
+
+  def unit: ZAsync[Unit] =
+    ZAsync.succeed(())
 
   /** Creates failed [[ZAsync]]
     *
@@ -200,6 +228,64 @@ object ZAsync {
   ): ZAsync[Collection[B]] =
     in.foldLeft[ZAsync[mutable.Builder[B, Collection[B]]]](succeed(bf(in)))((io, a) => io.zipWith(f(a))(_ += _))
       .map(_.result())
+
+  /** Similar to [[zio.ZIO.foreachPar]] for collections
+    *
+    * @param in
+    *   sequence of values
+    * @param f
+    *   value handler
+    * @return
+    *   promise with collected results or failure
+    */
+  def foreachPar[A, B, Collection[+Element] <: Iterable[Element]](
+    in: Collection[A]
+  )(f:  A => ZAsync[B]
+  )(implicit
+    bf: BuildFrom[Collection[A], B, Collection[B]]
+  ): ZAsync[Collection[B]] = {
+    val started = in.map(f)
+    ZAsync
+      .collectAllDiscard(started)
+      .map { _ =>
+        (bf.newBuilder(in) ++= started.map(_.run.getOrThrow)).result()
+      }
+  }
+
+  /** Similar to [[zio.ZIO.foreachParDiscard]] for collections
+    *
+    * @param in
+    *   sequence of values
+    * @param f
+    *   value handler
+    * @return
+    *   promise which succeeds if all [[ZAsync]] succeed
+    */
+  def foreachParDiscard[A](
+    in: Iterable[A]
+  )(f:  A => ZAsync[Any]
+  ): ZAsync[Unit] = {
+    val started = in.map(f)
+    ZAsync.collectAllDiscard(started)
+  }
+
+  /** Similar to [[zio.ZIO.collectAll]] for collections
+    *
+    * @param in
+    *   sequence of [[ZAsync]]
+    * @return
+    *   promise with collected results or failure
+    */
+  def collectAll[A, Collection[+Element] <: Iterable[Element]](
+    in: Collection[ZAsync[A]]
+  )(implicit
+    bf: BuildFrom[Collection[ZAsync[A]], A, Collection[A]]
+  ): ZAsync[Collection[A]] =
+    ZAsync
+      .collectAllDiscard(in)
+      .map { _ =>
+        (bf.newBuilder(in) ++= in.map(_.run.getOrThrow)).result()
+      }
 
   private[zio] final class Impl[A] private[zio] (override val underlying: Promise[A]) extends ZAsync[A] {
 

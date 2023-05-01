@@ -1,9 +1,11 @@
 package zio.temporal
 
-import zio._
+import io.temporal.api.common.v1.Payload
+import zio.*
 import io.temporal.workflow.WorkflowInfo
-import scala.jdk.OptionConverters._
-import scala.jdk.CollectionConverters._
+
+import scala.jdk.OptionConverters.*
+import scala.jdk.CollectionConverters.*
 
 /** Represents current workflow information
   * @see
@@ -26,6 +28,11 @@ final class ZWorkflowInfo private[zio] (val toJava: WorkflowInfo) {
 
   def runStartedTimestampMillis: Long = toJava.getRunStartedTimestampMillis
 
-  def searchAttributes: Map[String, String] =
-    toJava.getSearchAttributes.getIndexedFieldsMap.asScala.map { case (k, v) => k -> v.getData.toStringUtf8 }.toMap
+  def searchAttributes: Map[String, Payload] =
+    toJava.getSearchAttributes.getIndexedFieldsMap.asScala.toMap
+
+  override def toString: String = toJava.toString
+    .replace("WorkflowInfo", "ZWorkflowInfo")
+    .replace("{", "(")
+    .replace("}", ")")
 }

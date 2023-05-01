@@ -71,9 +71,9 @@ object ZWorkerFactoryOptions extends ConfigurationCompanion[ZWorkerFactoryOption
     configure(_.transformJavaOptions(f))
 
   private val workerFactoryConfig =
-    Config.int("workflowCacheSize").optional ++
-      Config.int("maxWorkflowThreadCount").optional ++
-      Config.boolean("enableLoggingInReplay").optional
+    Config.int("workflow_cache_size").optional ++
+      Config.int("max_workflow_thread_count").optional ++
+      Config.boolean("enable_logging_in_replay").optional
 
   /** Reads config from the default path `zio.temporal.ZWorkerFactory`
     */
@@ -87,7 +87,7 @@ object ZWorkerFactoryOptions extends ConfigurationCompanion[ZWorkerFactoryOption
 
   private def makeImpl(additionalPath: List[String]): Layer[Config.Error, ZWorkerFactoryOptions] = {
     val config = additionalPath match {
-      case Nil          => workerFactoryConfig.nested("zio", "temporal", "ZWorkerFactory")
+      case Nil          => workerFactoryConfig.nested("zio", "temporal", "zworker_factory")
       case head :: tail => workerFactoryConfig.nested(head, tail: _*)
     }
     ZLayer.fromZIO {
