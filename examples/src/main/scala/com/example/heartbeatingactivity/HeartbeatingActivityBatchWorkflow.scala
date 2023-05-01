@@ -36,7 +36,7 @@ class HeartbeatingActivityBatchWorkflowImpl extends HeartbeatingActivityBatchWor
     .withHeartbeatTimeout(10.seconds)
     .build
 
-  private val logger = ZWorkflow.getLogger(getClass)
+  private val logger = ZWorkflow.makeLogger
 
   // No special logic needed here as activity is retried automatically by the service.
   override def processBatch(): Int = {

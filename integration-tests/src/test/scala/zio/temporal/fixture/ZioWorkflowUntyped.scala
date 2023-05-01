@@ -34,7 +34,7 @@ trait ZioWorkflowUntyped {
 /** Untyped version of [[ZioWorkflow]] */
 class ZioWorkflowUntypedImpl extends ZioWorkflowUntyped {
   private val state  = ZWorkflowState.empty[Unit]
-  private val logger = ZWorkflow.getLogger(getClass)
+  private val logger = ZWorkflow.makeLogger
 
   private val activity = ZWorkflow.newUntypedActivityStub
     .withStartToCloseTimeout(5.seconds)

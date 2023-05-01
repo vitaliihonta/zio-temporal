@@ -9,13 +9,13 @@ import zio.temporal.ZSearchAttribute
 import zio.temporal.ZWorkflowExecution
 import zio.temporal.ZWorkflowInfo
 import zio.*
-
 import java.util.UUID
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
 import scala.reflect.ClassTag
+import zio.temporal.internal.ZWorkflowVersionSpecific
 
-object ZWorkflow {
+object ZWorkflow extends ZWorkflowVersionSpecific {
 
   val DefaultVersion: Int = Workflow.DEFAULT_VERSION
 

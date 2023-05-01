@@ -21,7 +21,7 @@ trait WorkflowBarUntyped {
 }
 
 class WorkflowFooUntypedImpl extends WorkflowFooUntyped {
-  private val logger = ZWorkflow.getLogger(getClass)
+  private val logger = ZWorkflow.makeLogger
   override def doSomething(name: String): String = {
     ZWorkflow.sleep(1.second)
     val bar = ZWorkflow.newUntypedExternalWorkflowStub(ZWorkflow.info.workflowId + "-bar")
@@ -33,7 +33,7 @@ class WorkflowFooUntypedImpl extends WorkflowFooUntyped {
 }
 
 class WorkflowBarUntypedImpl extends WorkflowBarUntyped {
-  private val logger = ZWorkflow.getLogger(getClass)
+  private val logger = ZWorkflow.makeLogger
 
   private val state = ZWorkflowState.empty[String]
 

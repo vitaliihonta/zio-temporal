@@ -31,7 +31,7 @@ trait ZioWorkflow {
 
 class ZioWorkflowImpl extends ZioWorkflow {
   private val state  = ZWorkflowState.empty[Unit]
-  private val logger = ZWorkflow.getLogger(getClass)
+  private val logger = ZWorkflow.makeLogger
 
   private val activity = ZWorkflow
     .newActivityStub[ZioActivity]
