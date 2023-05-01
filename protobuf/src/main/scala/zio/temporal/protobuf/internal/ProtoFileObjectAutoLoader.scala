@@ -19,7 +19,10 @@ object ProtoFileObjectAutoLoader {
     val reflections = new Reflections(
       new ConfigurationBuilder()
         .filterInputsBy((s: String) => excludeRule(excludePrefixes)(s))
-        .setUrls(ClasspathHelper.forClassLoader(classLoader))
+        .setUrls(
+          (ClasspathHelper.forClassLoader(classLoader).asScala ++
+            ClasspathHelper.forJavaClassPath().asScala).asJavaCollection
+        )
     )
 
     val loadedSubTypes = reflections.getSubTypesOf(classOf[GeneratedFileObject]).asScala.toList
