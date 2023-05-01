@@ -10,4 +10,7 @@ final class ZWorkflowExecution(val toJava: WorkflowExecution) {
   def workflowId: String     = toJava.getWorkflowId
   def runId: String          = toJava.getRunId
   def isInitialized: Boolean = toJava.isInitialized
+
+  override def toString: String =
+    s"ZWorkflowExecution(workflowId=$workflowId, runId=$runId, isInitialized=$isInitialized)"
 }

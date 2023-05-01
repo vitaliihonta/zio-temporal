@@ -3,8 +3,7 @@ package zio.temporal.workflow
 import io.grpc.ManagedChannel
 import io.grpc.Metadata
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext
-import io.temporal.serviceclient.RpcRetryOptions
-import io.temporal.serviceclient.WorkflowServiceStubsOptions
+import io.temporal.serviceclient.{GrpcMetadataProvider, RpcRetryOptions, WorkflowServiceStubsOptions}
 import zio.*
 import zio.temporal.internal.ConfigurationCompanion
 
@@ -29,6 +28,7 @@ case class ZWorkflowServiceStubsOptions private[zio] (
   connectionBackoffResetFrequency:      Option[Duration],
   grpcReconnectFrequency:               Option[Duration],
   headers:                              Option[Metadata],
+  grpcMetadataProvider:                 Option[GrpcMetadataProvider],
   private val javaOptionsCustomization: WorkflowServiceStubsOptions.Builder => WorkflowServiceStubsOptions.Builder) {
 
   def withServiceUrl(value: String): ZWorkflowServiceStubsOptions =
@@ -76,6 +76,12 @@ case class ZWorkflowServiceStubsOptions private[zio] (
   def withHeaders(value: Metadata): ZWorkflowServiceStubsOptions =
     copy(headers = Some(value))
 
+  /** @param grpcMetadataProvider
+    *   gRPC metadata/headers provider to be called on each gRPC request to supply additional headers
+    */
+  def withGrpcMetadataProvider(grpcMetadataProvider: GrpcMetadataProvider): ZWorkflowServiceStubsOptions =
+    copy(grpcMetadataProvider = Some(grpcMetadataProvider))
+
   /** Allows to specify options directly on the java SDK's [[WorkflowServiceStubsOptions]]. Use it in case an
     * appropriate `withXXX` method is missing
     *
@@ -105,6 +111,8 @@ case class ZWorkflowServiceStubsOptions private[zio] (
     connectionBackoffResetFrequency.foreach(t => builder.setConnectionBackoffResetFrequency(t.asJava))
     grpcReconnectFrequency.foreach(t => builder.setGrpcReconnectFrequency(t.asJava))
     headers.foreach(builder.setHeaders)
+    grpcMetadataProvider.foreach(builder.addGrpcMetadataProvider)
+
     javaOptionsCustomization(builder).build()
   }
 }
@@ -156,23 +164,26 @@ object ZWorkflowServiceStubsOptions extends ConfigurationCompanion[ZWorkflowServ
   def withHeaders(value: Metadata): Configure =
     configure(_.withHeaders(value))
 
+  def withGrpcMetadataProvider(grpcMetadataProvider: GrpcMetadataProvider): Configure =
+    configure(_.withGrpcMetadataProvider(grpcMetadataProvider))
+
   def transformJavaOptions(
     f: WorkflowServiceStubsOptions.Builder => WorkflowServiceStubsOptions.Builder
   ): Configure =
     configure(_.transformJavaOptions(f))
 
   private val workflowServiceStubsConfig =
-    Config.string("serverUrl").withDefault("127.0.0.1:7233") ++
-      Config.boolean("enableHttps").optional ++
-      Config.boolean("enableKeepAlive").optional ++
-      Config.duration("keepAliveTime").optional ++
-      Config.duration("keepAliveTimeout").optional ++
-      Config.boolean("keepAlivePermitWithoutStream").optional ++
-      Config.duration("rpcTimeout").optional ++
-      Config.duration("rpcLongPollTimeout").optional ++
-      Config.duration("rpcQueryTimeout").optional ++
-      Config.duration("connectionBackoffResetFrequency").optional ++
-      Config.duration("grpcReconnectFrequency").optional
+    Config.string("server_url").withDefault("127.0.0.1:7233") ++
+      Config.boolean("enable_https").optional ++
+      Config.boolean("enable_keep_alive").optional ++
+      Config.duration("keep_alive_time").optional ++
+      Config.duration("keep_alive_timeout").optional ++
+      Config.boolean("keep_alive_permit_without_stream").optional ++
+      Config.duration("rpc_timeout").optional ++
+      Config.duration("rpc_long_poll_timeout").optional ++
+      Config.duration("rpc_query_timeout").optional ++
+      Config.duration("connection_backoff_reset_frequency").optional ++
+      Config.duration("grpc_reconnect_frequency").optional
 
   /** Reads config from the default path `zio.temporal.ZWorkflowServiceStubs`
     */
@@ -186,7 +197,7 @@ object ZWorkflowServiceStubsOptions extends ConfigurationCompanion[ZWorkflowServ
 
   private def makeImpl(additionalPath: List[String]): Layer[Config.Error, ZWorkflowServiceStubsOptions] = {
     val config = additionalPath match {
-      case Nil          => workflowServiceStubsConfig.nested("zio", "temporal", "ZWorkflowServiceStubs")
+      case Nil          => workflowServiceStubsConfig.nested("zio", "temporal", "zworkflow_service_stubs")
       case head :: tail => workflowServiceStubsConfig.nested(head, tail: _*)
     }
     ZLayer.fromZIO {
@@ -220,6 +231,7 @@ object ZWorkflowServiceStubsOptions extends ConfigurationCompanion[ZWorkflowServ
             connectionBackoffResetFrequency = connectionBackoffResetFrequency,
             grpcReconnectFrequency = grpcReconnectFrequency,
             headers = None,
+            grpcMetadataProvider = None,
             javaOptionsCustomization = identity
           )
       }
