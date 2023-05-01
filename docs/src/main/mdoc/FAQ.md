@@ -1,5 +1,54 @@
 # FAQ
 
+<head>
+  <meta charset="UTF-8" />
+  <meta name="author" content="Vitalii Honta" />
+  <meta name="description" content="ZIO Temporal FAQ" />
+  <meta name="keywords" content="scala, zio, temporal, zio-temporal, workflow management" />
+</head>
+
+## What's zio.temporal.internal.StubProxies$IllegalStubProxyInvocationException?
+
+An exception like this one
+```
+zio.temporal.internal.StubProxies$IllegalStubProxyInvocationException: interface com.example.payments.workflows.PaymentActivity methods should not be invoked at runtime!
+It's likely that you forgot to wrap Workflow/Activity calls
+into ZWorkflowStub.execute/ZActivityStub.execute blocks, etc.
+Method was invoked: public abstract com.example.transactions.TransactionView com.example.payments.workflows.PaymentActivity.proceed(com.example.transactions.ProceedTransactionCommand) throws com.example.payments.workflows.BankError
+```
+Actually means what it says: **you forgot to wrap** Workflow or Activity interaction.  
+Reminder: **you must always** wrap the workflow/activity interactions into `ZWorkflowStub.execute`, `ZActivityStub.execute`, `ZWorkflowStub.signal`, `ZWorkflowStub.query` methods, etc.
+- The `ZWorkflowStub.Of[A]`, `ZChildWorkflowStub.Of[A]`, `ZActivityStub.Of[A]`, etc. are all compile-time stubs, so their method invocations are only valid in compile-time
+- Scala's method invocation would be re-written into an untyped Temporal's activity invocation
+
+
+## Typical problems when using zio-temporal-testkit with zio-test
+
+### Test clock doesn't work well
+
+If test is failing with such an error:
+
+```
+ERROR i.t.t.TestActivityEnvironmentInternal - Timeout trying execute activity task task_token: "test-task-token"
+```
+
+Try to look for ZIO warnings like this one:
+
+```
+Warning: A test is using time, but is not advancing the test clock, which may result in the test hanging. Use TestClock.adjust to manually advance the time.
+```
+
+It is likely that the Activity code is running ZIO with `ZIO.sleep`.  
+In a combination with Temporal and zio-test, it may hang due to `TestClock`.
+
+**You can easily fix it** by replacing `TestClock` with a real one:
+
+```scala
+test("my test") {
+  /*...*/
+} @@ TestAspect.withLiveClock // Add the aspect
+```
+
 ## ZIO-Temporal uses Scala macros heavily. How to inspect the generated code?
 
 Add the following VM parameter to SBT:
@@ -83,31 +132,4 @@ ZIO.serviceWithZIO[ZWorkflowClient] { workflowClient =>
     _ <- echoWorkflow.signal("signalSomething")
   } yield ()
 }
-```
-
-## Typical problems when using zio-temporal-testkit with zio-test
-
-### Test clock doesn't work well
-
-If test is failing with such an error:
-
-```
-ERROR i.t.t.TestActivityEnvironmentInternal - Timeout trying execute activity task task_token: "test-task-token"
-```
-
-Try to look for ZIO warnings like this one:
-
-```
-Warning: A test is using time, but is not advancing the test clock, which may result in the test hanging. Use TestClock.adjust to manually advance the time.
-```
-
-It is likely that the Activity code is running ZIO with `ZIO.sleep`.  
-In a combination with Temporal and zio-test, it may hand due to `TestClock`.
-
-**You can easily fix it** by replacing `TestClock` with real one:
-
-```scala
-test("my test") {
-  /*...*/
-} @@ TestAspect.withLiveClock // Add the aspect
 ```
