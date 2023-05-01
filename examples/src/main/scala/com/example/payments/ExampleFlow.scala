@@ -43,7 +43,7 @@ class ExampleFlow(paymentService: PaymentService) {
       // Options to play with to see what happens:
       // 1. Try to change the confirmation code
       // 2. Try to comment the confirmPayment invocation
-      _ <- paymentService.confirmPayment(transactionId, confirmationCode = "42")
+      _ <- paymentService.confirmPayment(transactionId, confirmationCode = "41")
     } yield ()
 
   private def simulateUserActivity: UIO[Unit] =

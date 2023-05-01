@@ -7,6 +7,8 @@ import zio.temporal.activity.ZActivity
 import zio.temporal.activity.ZActivityOptions
 import zio.temporal.protobuf.syntax.*
 
+import java.util.UUID
+
 object PaymentActivityImpl {
   val make: URLayer[ZActivityOptions[Any], PaymentActivity] =
     ZLayer.fromFunction(new PaymentActivityImpl()(_: ZActivityOptions[Any]))
@@ -54,6 +56,7 @@ class PaymentActivityImpl(implicit options: ZActivityOptions[Any]) extends Payme
     else
       ZIO.logInfo(s"Successfully processed transaction_id=${command.id.fromProto}")
 
-  private def cancelTransactionImpl(command: CancelTransactionCommand): UIO[Unit] =
+  private def cancelTransactionImpl(command: CancelTransactionCommand): UIO[Unit] = {
     ZIO.logInfo(s"Cancelled transaction_id=${command.id.fromProto}")
+  }
 }
