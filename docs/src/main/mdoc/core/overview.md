@@ -13,8 +13,8 @@ Example projects using `zio-temporal`:
 - [Booking saga](https://github.com/vitaliihonta/zio-temporal/tree/main/examples/src/main/scala/com/example/bookingsaga)
 - [Payments](https://github.com/vitaliihonta/zio-temporal/tree/main/examples/src/main/scala/com/example/payments)
 - [Long-running workflows](https://github.com/vitaliihonta/zio-temporal/tree/main/examples/src/main/scala/com/example/heartbeatingactivity)
-- [Functional Scala 2022: Cryptocurrency exchange](https://github.com/vitaliihonta/func-scala-2022-zio-temporal)
-- [End-to-end samples](https://github.com/vitaliihonta/zio-temporal-samples)
+- [Functional Scala 2022: Cryptocurrency exchange](https://github.com/vitaliihonta/zio-temporal-samples/tree/main/cryptostock)
+- [News Sync](https://github.com/vitaliihonta/zio-temporal-samples/tree/main/news-sync)
 
 <head>
   <meta charset="UTF-8" />
