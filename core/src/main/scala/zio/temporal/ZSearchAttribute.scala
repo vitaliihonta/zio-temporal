@@ -52,7 +52,7 @@ or provide a reasonable instance of Convert[${A}] using .contramap""")
     def contramap[B](f: B => A): Convert[B]
   }
 
-  final object Convert extends EnumSearchAttributes {
+  final object Convert {
     def create[A](f: A => ZSearchAttribute): Convert[A] = new ConvertImpl[A](f)
 
     implicit val string: Convert[String]          = create(new StringAttr(_))

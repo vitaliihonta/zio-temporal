@@ -19,17 +19,19 @@ final class ZWorkflowInfo private[zio] (val toJava: WorkflowInfo) {
   def taskQueue: String    = toJava.getTaskQueue
   def attempt: Int         = toJava.getAttempt
 
-  def continuedExecutionRunId: Option[String] = toJava.getContinuedExecutionRunId.asScala
-  def parentWorkflowId: Option[String]        = toJava.getParentWorkflowId.asScala
-  def parentRunId: Option[String]             = toJava.getParentRunId.asScala
+  def continuedExecutionRunId: Option[String] = toJava.getContinuedExecutionRunId.toScala
+  def parentWorkflowId: Option[String]        = toJava.getParentWorkflowId.toScala
+  def parentRunId: Option[String]             = toJava.getParentRunId.toScala
 
   def workflowRunTimeout: Duration       = Duration.fromJava(toJava.getWorkflowRunTimeout)
   def workflowExecutionTimeout: Duration = Duration.fromJava(toJava.getWorkflowExecutionTimeout)
 
   def runStartedTimestampMillis: Long = toJava.getRunStartedTimestampMillis
 
-  def searchAttributes: Map[String, Payload] =
-    toJava.getSearchAttributes.getIndexedFieldsMap.asScala.toMap
+  def searchAttributes: Map[String, Payload] = {
+    val attrsOpt = Option(toJava.getSearchAttributes) // nullable
+    attrsOpt.map(_.getIndexedFieldsMap.asScala.toMap).getOrElse(Map.empty)
+  }
 
   override def toString: String = toJava.toString
     .replace("WorkflowInfo", "ZWorkflowInfo")

@@ -14,3 +14,5 @@ trait EnumSearchAttributes {
   implicit def stringEnumAttribute[E <: StringEnumEntry]: ZSearchAttribute.Convert[E] =
     ZSearchAttribute.Convert.string.contramap(_.value)
 }
+
+object EnumSearchAttributes extends EnumSearchAttributes
