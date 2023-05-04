@@ -19,10 +19,11 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   private val SignalMethod      = typeSymbolOf[signalMethod]
   private val ActivityMethod    = typeSymbolOf[activityMethod]
 
-  private val zworkflowStub         = TypeRepr.of[ZWorkflowStub]
-  private val zchildWorkflowStub    = TypeRepr.of[ZChildWorkflowStub]
-  private val zexternalWorkflowStub = TypeRepr.of[ZExternalWorkflowStub]
-  private val zactivityStub         = TypeRepr.of[ZActivityStub]
+  private val zworkflowStub              = TypeRepr.of[ZWorkflowStub]
+  private val zchildWorkflowStub         = TypeRepr.of[ZChildWorkflowStub]
+  private val zexternalWorkflowStub      = TypeRepr.of[ZExternalWorkflowStub]
+  private val zworkflowContinueAsNewStub = TypeRepr.of[ZWorkflowContinueAsNewStub]
+  private val zactivityStub              = TypeRepr.of[ZActivityStub]
 
   def betaReduceExpression[A: Type](f: Expr[A]): Expr[A] =
     Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
@@ -56,7 +57,8 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     args:            List[Term],
     disassembleType: TypeRepr => TypeRepr) {
 
-    private val tpe = disassembleType(instance.tpe.widen)
+    val tpe: TypeRepr         = instance.tpe.widen
+    private val unwrappedType = disassembleType(instance.tpe.widen)
 
     def selectJavaReprOf[T: Type]: Expr[T] =
       instance
@@ -64,7 +66,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
         .asExprOf[T]
 
     def getMethod(errorDetails: => String): MethodInfo =
-      tpe.typeSymbol
+      unwrappedType.typeSymbol
         .methodMember(methodName)
         .headOption
         .map(MethodInfo(methodName, _, args))
@@ -155,29 +157,47 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     findActivityType(workflow).getOrElse(error(SharedCompileTimeMessages.notActivity(workflow.show)))
 
   def findWorkflowType(workflow: TypeRepr): Option[TypeRepr] = {
-    val tpe = workflow match {
-      case AndType(left, wf)
-          if left =:= zworkflowStub ||
-            left =:= zchildWorkflowStub ||
-            left =:= zexternalWorkflowStub =>
-        wf
-
-      case AppliedType(_, List(wf)) => wf
-      case _                        => workflow
+    val tpe = workflow.dealias match {
+      case AndType(left, wf) => wf
+      case other             => other
     }
     if (!isWorkflow(tpe.typeSymbol)) None
     else Some(tpe)
   }
 
+  def assertTypedWorkflowStub(workflow: TypeRepr, stubType: String, method: String): TypeRepr = {
+    workflow.dealias match {
+      case AndType(left, wf)
+          if left =:= zworkflowStub ||
+            left =:= zchildWorkflowStub ||
+            left =:= zexternalWorkflowStub ||
+            left =:= zworkflowContinueAsNewStub =>
+        wf
+      case other =>
+        error(
+          SharedCompileTimeMessages.usingNonStubOf(stubType, method, other.show)
+        )
+    }
+  }
+
   def findActivityType(activity: TypeRepr): Option[TypeRepr] = {
-    val tpe = activity match {
-      case AndType(left, act) if left =:= zactivityStub =>
-        act
-      case AppliedType(_, List(act)) => act
-      case _                         => activity
+    val tpe = activity.dealias match {
+      case AndType(left, act) => act
+      case other              => other
     }
     if (!isActivity(tpe.typeSymbol)) None
     else Some(tpe)
+  }
+
+  def assertTypedActivityStub(activity: TypeRepr, method: String): TypeRepr = {
+    activity.dealias match {
+      case AndType(left, act) if left =:= zactivityStub =>
+        act
+      case other =>
+        error(
+          SharedCompileTimeMessages.usingNonStubOf("ZActivityStub", method, other.show)
+        )
+    }
   }
 
   def getWorkflowType(workflow: TypeRepr): String = {

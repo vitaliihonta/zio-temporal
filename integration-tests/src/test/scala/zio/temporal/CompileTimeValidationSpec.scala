@@ -1,14 +1,25 @@
 package zio.temporal
 
 import org.scalatest.wordspec.AnyWordSpec
-import zio.temporal.fixture.SignalWorkflow
+import zio.temporal.activity.ZActivityStub
+import zio.temporal.fixture.{SignalWorkflow, ZioActivity}
 import zio.temporal.worker.ZWorker
-import zio.temporal.workflow.{ZWorkflowClient, ZWorkflowStub}
+import zio.temporal.workflow.{
+  ZChildWorkflowStub,
+  ZExternalWorkflowStub,
+  ZWorkflowClient,
+  ZWorkflowContinueAsNewStub,
+  ZWorkflowStub
+}
+import zio._
 
 class CompileTimeValidationSpec extends AnyWordSpec {
   private val testStub: ZWorkflowStub.Of[SignalWorkflow] = null
   private val workflowClient: ZWorkflowClient            = null
   private val worker: ZWorker                            = null
+
+  private val wf: SignalWorkflow = null
+  private val act: ZioActivity   = null
 
   @workflowInterface
   trait SampleWorkflow
@@ -88,6 +99,78 @@ class CompileTimeValidationSpec extends AnyWordSpec {
         """
           worker.addActivityImplementation("fooo")
           """
+      )
+    }
+
+    "not allow using non-workflows in ZWorkflowStub.xxx methods" in {
+      assertDoesNotCompile(
+        """
+        ZWorkflowStub.execute(
+          wf.echoServer("hello")
+        )
+        """
+      )
+
+      assertDoesNotCompile(
+        """
+        ZWorkflowStub.executeWithTimeout(5.seconds)(
+          wf.echoServer("hello")
+        )
+        """
+      )
+
+      assertDoesNotCompile(
+        """
+          ZWorkflowStub.signal(
+            wf.echo("hello")
+          )
+        """
+      )
+
+      assertDoesNotCompile(
+        """
+          ZWorkflowStub.query(
+            wf.getProgress(None)
+          )
+          """
+      )
+    }
+
+    "not allow using non-workflows in ZWorkflowContinueAsNewStub.xxx methods" in {
+      assertDoesNotCompile(
+        """
+        ZWorkflowContinueAsNewStub.execute(
+          wf.echoServer("hello 2")
+        )
+      """
+      )
+    }
+
+    "not allow using non-workflows in ZExternalWorkflowStub.xxx methods" in {
+      assertDoesNotCompile(
+        """
+        ZExternalWorkflowStub.signal(
+          wf.echo("hello 2")
+        )
+      """
+      )
+    }
+
+    "not allow using non-activities in ZActivityStub.xxx methods" in {
+      assertDoesNotCompile(
+        """
+          ZActivityStub.execute(
+            act.echo("hello")
+          )
+        """
+      )
+
+      assertDoesNotCompile(
+        """
+          ZActivityStub.executeAsync(
+            act.echo("hello 2")
+          )
+        """
       )
     }
   }

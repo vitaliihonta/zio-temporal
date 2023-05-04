@@ -2,6 +2,8 @@ package zio.temporal.internal
 
 import izumi.reflect.Tag
 import zio.temporal.*
+import zio.temporal.workflow.ZWorkflowStub
+
 import scala.reflect.macros.blackbox
 
 abstract class InvocationMacroUtils(override val c: blackbox.Context)
@@ -159,11 +161,41 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
     workflow
   }
 
+  protected def assertTypedWorkflowStub(workflow: Type, stubType: String, method: String): Type = {
+    assertWorkflow(workflow)
+    workflow.dealias match {
+      case SingleType(_, sym) =>
+        sym.typeSignature.finalResultType.dealias match {
+          case RefinedType(List(stub, wf), _) =>
+            workflow
+          case other =>
+            error(SharedCompileTimeMessages.usingNonStubOf(stubType, method, other.toString))
+        }
+      case other =>
+        error(SharedCompileTimeMessages.usingNonStubOf(stubType, method, other.toString))
+    }
+  }
+
   protected def assertActivity(activity: Type): Type = {
     if (!isActivity(activity)) {
       error(SharedCompileTimeMessages.notActivity(activity.toString))
     }
     activity
+  }
+
+  protected def assertTypedActivityStub(activity: Type, method: String): Type = {
+    assertActivity(activity)
+    activity.dealias match {
+      case SingleType(_, sym) =>
+        sym.typeSignature.finalResultType.dealias match {
+          case RefinedType(List(stub, wf), _) =>
+            activity
+          case other =>
+            error(SharedCompileTimeMessages.usingNonStubOf("ZActivityStub", method, other.toString))
+        }
+      case other =>
+        error(SharedCompileTimeMessages.usingNonStubOf("ZActivityStub", method, other.toString))
+    }
   }
 
   protected def assertExtendsWorkflow(workflow: Type): Type = {

@@ -20,6 +20,7 @@ object ZWorkflowStubQuerySyntax {
     import macroUtils.*
 
     val invocation = getMethodInvocationOfWorkflow(f.asTerm)
+    assertTypedWorkflowStub(invocation.tpe, "ZWorkflowStub", "query")
 
     val method = invocation.getMethod(SharedCompileTimeMessages.qrMethodShouldntBeExtMethod)
     method.assertQueryMethod()

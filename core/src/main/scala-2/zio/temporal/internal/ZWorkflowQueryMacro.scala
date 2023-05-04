@@ -26,7 +26,7 @@ class ZWorkflowQueryMacro(override val c: blackbox.Context) extends InvocationMa
   private def buildQueryInvocation(f: Tree, ret: Type): Tree = {
     val invocation = getMethodInvocation(f)
 
-    assertWorkflow(invocation.instance.tpe)
+    assertTypedWorkflowStub(invocation.instance.tpe, "ZWorkflowStub", "query")
 
     val method = invocation.getMethod(SharedCompileTimeMessages.qrMethodShouldntBeExtMethod)
     method.assertQueryMethod()

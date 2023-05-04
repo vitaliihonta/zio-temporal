@@ -24,6 +24,7 @@ object ZActivityExecutionSyntax {
     import macroUtils.*
 
     val invocation = getMethodInvocationOfActivity(f.asTerm)
+    assertTypedActivityStub(invocation.tpe, "execute")
 
     val method       = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
     val activityName = getActivityName(method.symbol)
@@ -45,6 +46,7 @@ object ZActivityExecutionSyntax {
     import macroUtils.*
 
     val invocation = getMethodInvocationOfActivity(f.asTerm)
+    assertTypedActivityStub(invocation.tpe, "executeAsync")
 
     val method       = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
     val activityName = getActivityName(method.symbol)
