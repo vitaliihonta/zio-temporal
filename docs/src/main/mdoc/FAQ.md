@@ -108,7 +108,7 @@ class EchoWorkflowImpl extends EchoWorkflow {
     .build
 
   override def echoWorkflow(what: String): String = {
-    activity.execute("Echo", what)
+    activity.execute[String]("Echo", what)
   }
 
   @signalMethod
@@ -130,6 +130,8 @@ ZIO.serviceWithZIO[ZWorkflowClient] { workflowClient =>
 
     _ <- echoWorkflow.start("HELLO THERE")
     _ <- echoWorkflow.signal("signalSomething")
+    // get result
+    result <- echoWorkflow.result[String]
   } yield ()
 }
 ```

@@ -1,9 +1,5 @@
 package zio.temporal
 
-import zio.temporal.internal.ClassTagUtils
-
-import scala.reflect.ClassTag
-
 package object failure {
   type ApplicationFailure   = io.temporal.failure.ApplicationFailure
   type ActivityFailure      = io.temporal.failure.ActivityFailure

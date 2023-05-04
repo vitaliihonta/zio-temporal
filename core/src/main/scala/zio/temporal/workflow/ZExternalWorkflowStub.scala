@@ -1,9 +1,8 @@
 package zio.temporal.workflow
 
 import io.temporal.workflow.ExternalWorkflowStub
-import zio.temporal.internal.TemporalInteraction
 import zio.temporal.internal.Stubs
-import zio.temporal.{TemporalIO, internalApi}
+import zio.temporal.internalApi
 import zio.temporal.signal.ZExternalWorkflowStubSignalSyntax
 
 /** Represents untyped external workflow stub

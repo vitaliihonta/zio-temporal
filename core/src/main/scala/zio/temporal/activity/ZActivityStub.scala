@@ -1,12 +1,9 @@
 package zio.temporal.activity
 
 import io.temporal.workflow.ActivityStub
-import zio.temporal.internal.ClassTagUtils
-import zio.temporal.{JavaTypeTag, internalApi}
+import zio.temporal.{JavaTypeTag, TypeIsSpecified, internalApi}
 import zio.temporal.internal.Stubs
 import zio.temporal.workflow.ZAsync
-
-import scala.reflect.ClassTag
 
 sealed trait ZActivityStub {
   def toJava: ActivityStub
@@ -36,7 +33,7 @@ object ZActivityStub extends Stubs[ZActivityStub] with ZActivityExecutionSyntax 
       * @return
       *   an activity result.
       */
-    def execute[R: JavaTypeTag](activityName: String, args: Any*): R
+    def execute[R: TypeIsSpecified: JavaTypeTag](activityName: String, args: Any*): R
 
     /** Executes an activity asynchronously by its type name and arguments.
       *
@@ -49,15 +46,19 @@ object ZActivityStub extends Stubs[ZActivityStub] with ZActivityExecutionSyntax 
       * @return
       *   Promise to the activity result.
       */
-    def executeAsync[R: JavaTypeTag](activityName: String, args: Any*): ZAsync[R]
+    def executeAsync[R: TypeIsSpecified: JavaTypeTag](activityName: String, args: Any*): ZAsync[R]
   }
 
   private[temporal] class UntypedImpl(val toJava: ActivityStub) extends Untyped {
-    override def execute[R: JavaTypeTag](activityName: String, args: Any*): R =
-      toJava
-        .execute[R](activityName, JavaTypeTag[R].klass, JavaTypeTag[R].genericType, args.asInstanceOf[Seq[AnyRef]]: _*)
+    override def execute[R: TypeIsSpecified: JavaTypeTag](activityName: String, args: Any*): R =
+      toJava.execute[R](
+        activityName,
+        JavaTypeTag[R].klass,
+        JavaTypeTag[R].genericType,
+        args.asInstanceOf[Seq[AnyRef]]: _*
+      )
 
-    override def executeAsync[R: JavaTypeTag](activityName: String, args: Any*): ZAsync[R] =
+    override def executeAsync[R: TypeIsSpecified: JavaTypeTag](activityName: String, args: Any*): ZAsync[R] =
       ZAsync.fromJava(
         toJava.executeAsync[R](
           activityName,

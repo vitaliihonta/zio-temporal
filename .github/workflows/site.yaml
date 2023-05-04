@@ -23,7 +23,7 @@ jobs:
             ~/.coursier
           key: sbt-cache-${{ runner.os }}-${{ matrix.target-platform }}-${{ hashFiles('project/build.properties') }}
       - name: Compile
-        run: sbt +compile
+        run: sbt compile
       - name: Generate site
         run: make build-site
       - name: Publish

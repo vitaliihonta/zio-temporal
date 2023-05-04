@@ -1,4 +1,4 @@
-package zio.temporal.failure
+package zio.temporal
 
 import scala.annotation.implicitAmbiguous
 
