@@ -1,7 +1,8 @@
-package zio.temporal
+package zio.temporal.enumeratum
 
-import enumeratum._
-import enumeratum.values._
+import _root_.enumeratum.*
+import _root_.enumeratum.values.*
+import zio.temporal.{VersionSpecificConverters, ZSearchAttribute}
 
 /** Provides automatic instance derivation for enumeratum types. It's an optional dependency which won't be added to the
   * classpath unless you use it
@@ -15,4 +16,4 @@ trait EnumSearchAttributes {
     ZSearchAttribute.Convert.string.contramap(_.value)
 }
 
-object EnumSearchAttributes extends EnumSearchAttributes
+object EnumSearchAttributes extends VersionSpecificConverters
