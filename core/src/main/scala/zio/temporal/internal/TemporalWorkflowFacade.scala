@@ -11,10 +11,12 @@ import io.temporal.workflow.{
   Promise,
   Workflow
 }
+
 import java.util.concurrent.{CompletableFuture, TimeUnit}
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import zio.Duration
+import zio.temporal.JavaTypeTag
 
 object TemporalWorkflowFacade {
   import FunctionConverters.*
@@ -22,40 +24,67 @@ object TemporalWorkflowFacade {
   def start(stub: WorkflowStub, args: List[Any]): WorkflowExecution =
     stub.start(args.asInstanceOf[List[AnyRef]]: _*)
 
-  def execute[R](stub: WorkflowStub, args: List[Any])(implicit ctg: ClassTag[R]): CompletableFuture[R] = {
+  def execute[R](
+    stub:                 WorkflowStub,
+    args:                 List[Any]
+  )(implicit javaTypeTag: JavaTypeTag[R]
+  ): CompletableFuture[R] = {
     start(stub, args)
-    stub.getResultAsync(ClassTagUtils.classOf[R])
+    stub.getResultAsync(javaTypeTag.klass, javaTypeTag.genericType)
   }
 
   def executeWithTimeout[R](
-    stub:         WorkflowStub,
-    timeout:      Duration,
-    args:         List[Any]
-  )(implicit ctg: ClassTag[R]
+    stub:                 WorkflowStub,
+    timeout:              Duration,
+    args:                 List[Any]
+  )(implicit javaTypeTag: JavaTypeTag[R]
   ): CompletableFuture[R] = {
     start(stub, args)
-    stub.getResultAsync(timeout.toNanos, TimeUnit.NANOSECONDS, ClassTagUtils.classOf[R])
+    stub.getResultAsync(timeout.toNanos, TimeUnit.NANOSECONDS, javaTypeTag.klass, javaTypeTag.genericType)
   }
 
-  def executeChild[R](stub: ChildWorkflowStub, args: List[Any])(implicit ctg: ClassTag[R]): R = {
-    stub.execute(ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
+  def executeChild[R](
+    stub:                 ChildWorkflowStub,
+    args:                 List[Any]
+  )(implicit javaTypeTag: JavaTypeTag[R]
+  ): R = {
+    stub.execute(javaTypeTag.klass, javaTypeTag.genericType, args.asInstanceOf[List[AnyRef]]: _*)
   }
 
-  def executeChildAsync[R](stub: ChildWorkflowStub, args: List[Any])(implicit ctg: ClassTag[R]): Promise[R] = {
-    stub.executeAsync(ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
+  def executeChildAsync[R](
+    stub:                 ChildWorkflowStub,
+    args:                 List[Any]
+  )(implicit javaTypeTag: JavaTypeTag[R]
+  ): Promise[R] = {
+    stub.executeAsync(javaTypeTag.klass, javaTypeTag.genericType, args.asInstanceOf[List[AnyRef]]: _*)
   }
 
-  def executeActivity[R](stub: ActivityStub, activityName: String, args: List[Any])(implicit ctg: ClassTag[R]): R = {
-    stub.execute[R](activityName, ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
+  def executeActivity[R](
+    stub:                 ActivityStub,
+    activityName:         String,
+    args:                 List[Any]
+  )(implicit javaTypeTag: JavaTypeTag[R]
+  ): R = {
+    stub.execute[R](
+      activityName,
+      javaTypeTag.klass,
+      javaTypeTag.genericType,
+      args.asInstanceOf[List[AnyRef]]: _*
+    )
   }
 
   def executeActivityAsync[R](
-    stub:         ActivityStub,
-    activityName: String,
-    args:         List[Any]
-  )(implicit ctg: ClassTag[R]
+    stub:                 ActivityStub,
+    activityName:         String,
+    args:                 List[Any]
+  )(implicit javaTypeTag: JavaTypeTag[R]
   ): Promise[R] = {
-    stub.executeAsync[R](activityName, ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
+    stub.executeAsync[R](
+      activityName,
+      javaTypeTag.klass,
+      javaTypeTag.genericType,
+      args.asInstanceOf[List[AnyRef]]: _*
+    )
   }
 
   def signal(
@@ -91,8 +120,18 @@ object TemporalWorkflowFacade {
     stub.signalWithStart(signalName, signalArgs.asInstanceOf[Array[AnyRef]], startArgs.asInstanceOf[Array[AnyRef]])
   }
 
-  def query[R](stub: WorkflowStub, name: String, args: List[Any])(implicit ctg: ClassTag[R]): R =
-    stub.query[R](name, ClassTagUtils.classOf[R], args.asInstanceOf[List[AnyRef]]: _*)
+  def query[R](
+    stub:                 WorkflowStub,
+    name:                 String,
+    args:                 List[Any]
+  )(implicit javaTypeTag: JavaTypeTag[R]
+  ): R =
+    stub.query[R](
+      name,
+      javaTypeTag.klass,
+      javaTypeTag.genericType,
+      args.asInstanceOf[List[AnyRef]]: _*
+    )
 
   def continueAsNew[R](workflowType: String, options: ContinueAsNewOptions, args: List[Any]): R = {
     Workflow.continueAsNew(workflowType, options, args.asInstanceOf[List[AnyRef]]: _*)

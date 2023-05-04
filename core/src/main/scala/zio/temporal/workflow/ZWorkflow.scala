@@ -4,11 +4,9 @@ import io.temporal.workflow.{CancellationScope, ContinueAsNewOptions, Workflow}
 import org.slf4j.Logger
 import zio.temporal.activity.*
 import zio.temporal.internal.{ClassTagUtils, TemporalWorkflowFacade}
-import zio.temporal.ZCurrentTimeMillis
-import zio.temporal.ZSearchAttribute
-import zio.temporal.ZWorkflowExecution
-import zio.temporal.ZWorkflowInfo
+import zio.temporal.{JavaTypeTag, ZCurrentTimeMillis, ZSearchAttribute, ZWorkflowExecution, ZWorkflowInfo}
 import zio.*
+
 import java.util.UUID
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
@@ -361,8 +359,8 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @see
     *   io.temporal.client.WorkflowOptions.Builder#setCronSchedule(String)
     */
-  def getLastCompletionResult[R: ClassTag]: R =
-    Workflow.getLastCompletionResult(ClassTagUtils.classOf[R])
+  def getLastCompletionResult[R: JavaTypeTag]: R =
+    Workflow.getLastCompletionResult(JavaTypeTag[R].klass, JavaTypeTag[R].genericType)
 
   /** Extract the latest failure from a previous run of this workflow. If any previous run of this workflow has failed,
     * this function returns that failure. If no previous runs have failed, an empty optional is returned. The run you

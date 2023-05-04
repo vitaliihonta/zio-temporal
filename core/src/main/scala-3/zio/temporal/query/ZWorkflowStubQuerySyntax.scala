@@ -1,20 +1,19 @@
 package zio.temporal.query
 
-import zio.temporal.TemporalIO
+import zio.temporal.{JavaTypeTag, TemporalIO}
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
 import scala.quoted.*
-import scala.reflect.ClassTag
 
 trait ZWorkflowStubQuerySyntax {
-  inline def query[R](inline f: R)(using ctg: ClassTag[R]): TemporalIO[R] =
-    ${ ZWorkflowStubQuerySyntax.queryImpl[R]('f, 'ctg) }
+  inline def query[R](inline f: R)(using javaTypeTag: JavaTypeTag[R]): TemporalIO[R] =
+    ${ ZWorkflowStubQuerySyntax.queryImpl[R]('f, 'javaTypeTag) }
 }
 
 object ZWorkflowStubQuerySyntax {
   def queryImpl[R: Type](
-    f:       Expr[R],
-    ctg:     Expr[ClassTag[R]]
-  )(using q: Quotes
+    f:           Expr[R],
+    javaTypeTag: Expr[JavaTypeTag[R]]
+  )(using q:     Quotes
   ): Expr[TemporalIO[R]] = {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
@@ -30,7 +29,7 @@ object ZWorkflowStubQuerySyntax {
 
     '{
       _root_.zio.temporal.internal.TemporalInteraction.from[R] {
-        TemporalWorkflowFacade.query[R]($stub, ${ Expr(queryName) }, ${ method.argsExpr })($ctg)
+        TemporalWorkflowFacade.query[R]($stub, ${ Expr(queryName) }, ${ method.argsExpr })($javaTypeTag)
       }
     }.debugged(SharedCompileTimeMessages.generatedQueryInvoke)
   }

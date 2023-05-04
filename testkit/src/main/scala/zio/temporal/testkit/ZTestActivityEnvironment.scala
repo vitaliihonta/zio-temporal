@@ -3,6 +3,7 @@ package zio.temporal.testkit
 import io.temporal.testing.TestActivityEnvironment
 import zio.temporal.activity.ZActivityOptions
 import zio.*
+import zio.temporal.JavaTypeTag
 import zio.temporal.activity.{IsActivity, ZActivityStubBuilderInitial}
 import zio.temporal.internal.ClassTagUtils
 import scala.reflect.ClassTag
@@ -51,9 +52,13 @@ class ZTestActivityEnvironment[+R] private[zio] (
     * @param listener
     *   listener to register.
     */
-  def setActivityHeartbeatListener[T: ClassTag](listener: T => Unit): UIO[Unit] =
+  def setActivityHeartbeatListener[T: JavaTypeTag](listener: T => Unit): UIO[Unit] =
     ZIO.succeed(
-      toJava.setActivityHeartbeatListener[T](ClassTagUtils.classOf[T], (heartbeat: T) => listener(heartbeat))
+      toJava.setActivityHeartbeatListener[T](
+        JavaTypeTag[T].klass,
+        JavaTypeTag[T].genericType,
+        (heartbeat: T) => listener(heartbeat)
+      )
     )
 
   /** Sets heartbeat details for the next activity execution. The next activity called from this TestActivityEnvironment
@@ -119,7 +124,7 @@ object ZTestActivityEnvironment {
     * @param listener
     *   listener to register.
     */
-  def setActivityHeartbeatListener[T: ClassTag](listener: T => Unit): URIO[ZTestActivityEnvironment[Any], Unit] =
+  def setActivityHeartbeatListener[T: JavaTypeTag](listener: T => Unit): URIO[ZTestActivityEnvironment[Any], Unit] =
     ZIO.serviceWithZIO[ZTestActivityEnvironment[Any]](_.setActivityHeartbeatListener(listener))
 
   /** Sets heartbeat details for the next activity execution. The next activity called from this TestActivityEnvironment

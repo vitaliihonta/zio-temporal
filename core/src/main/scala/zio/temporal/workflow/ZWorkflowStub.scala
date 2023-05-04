@@ -2,12 +2,13 @@ package zio.temporal.workflow
 
 import zio.Duration
 import io.temporal.client.WorkflowStub
-import zio.temporal.{TemporalIO, ZWorkflowExecution, internalApi}
+import zio.temporal.{JavaTypeTag, TemporalIO, ZWorkflowExecution, internalApi}
 import zio.temporal.internal.ClassTagUtils
 import zio.temporal.internal.TemporalInteraction
 import zio.temporal.internal.Stubs
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.{ZWorkflowClientSignalWithStartSyntax, ZWorkflowStubSignalSyntax}
+
 import java.util.concurrent.TimeUnit
 import scala.reflect.ClassTag
 
@@ -23,10 +24,10 @@ sealed trait ZWorkflowStub extends ZWorkflowClientSignalWithStartSyntax {
     * @return
     *   either interaction error or the workflow result
     */
-  def result[V: ClassTag]: TemporalIO[V] =
+  def result[V: JavaTypeTag]: TemporalIO[V] =
     untyped.result[V]
 
-  def result[V: ClassTag](timeout: Duration): TemporalIO[Option[V]] =
+  def result[V: JavaTypeTag](timeout: Duration): TemporalIO[Option[V]] =
     untyped.result[V](timeout)
 
   /** Request cancellation of a workflow execution.
@@ -120,7 +121,7 @@ object ZWorkflowStub
       * @throws WorkflowServiceException
       *   for all other failures including networking and service availability issues
       */
-    def query[R: ClassTag](queryType: String, args: Any*): TemporalIO[R]
+    def query[R: JavaTypeTag](queryType: String, args: Any*): TemporalIO[R]
 
     /** Fetches workflow result
       *
@@ -129,14 +130,14 @@ object ZWorkflowStub
       * @return
       *   either interaction error or the workflow result
       */
-    def result[V: ClassTag]: TemporalIO[V]
+    def result[V: JavaTypeTag]: TemporalIO[V]
 
-    def execute[V: ClassTag](args: Any*): TemporalIO[V] =
+    def execute[V: JavaTypeTag](args: Any*): TemporalIO[V] =
       start(args: _*) *> result[V]
 
-    def result[V: ClassTag](timeout: Duration): TemporalIO[Option[V]]
+    def result[V: JavaTypeTag](timeout: Duration): TemporalIO[Option[V]]
 
-    def executeWithTimeout[V: ClassTag](timeout: Duration, args: Any*): TemporalIO[Option[V]] =
+    def executeWithTimeout[V: JavaTypeTag](timeout: Duration, args: Any*): TemporalIO[Option[V]] =
       start(args: _*) *> result[V](timeout)
 
     /** Request cancellation of a workflow execution.
@@ -198,20 +199,26 @@ object ZWorkflowStub
       }
     }
 
-    override def query[R: ClassTag](queryType: String, args: Any*): TemporalIO[R] = {
+    override def query[R: JavaTypeTag](queryType: String, args: Any*): TemporalIO[R] = {
       TemporalInteraction.from {
-        toJava.query[R](queryType, ClassTagUtils.classOf[R], args.asInstanceOf[Seq[AnyRef]]: _*)
+        toJava
+          .query[R](queryType, JavaTypeTag[R].klass, JavaTypeTag[R].genericType, args.asInstanceOf[Seq[AnyRef]]: _*)
       }
     }
 
-    override def result[V: ClassTag]: TemporalIO[V] =
+    override def result[V: JavaTypeTag]: TemporalIO[V] =
       TemporalInteraction.fromFuture {
-        toJava.getResultAsync(ClassTagUtils.classOf[V])
+        toJava.getResultAsync(JavaTypeTag[V].klass, JavaTypeTag[V].genericType)
       }
 
-    override def result[V: ClassTag](timeout: Duration): TemporalIO[Option[V]] =
+    override def result[V: JavaTypeTag](timeout: Duration): TemporalIO[Option[V]] =
       TemporalInteraction.fromFutureTimeout {
-        toJava.getResultAsync(timeout.toNanos, TimeUnit.NANOSECONDS, ClassTagUtils.classOf[V])
+        toJava.getResultAsync(
+          timeout.toNanos,
+          TimeUnit.NANOSECONDS,
+          JavaTypeTag[V].klass,
+          JavaTypeTag[V].genericType
+        )
       }
 
     override def cancel: TemporalIO[Unit] =
