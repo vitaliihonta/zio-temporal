@@ -14,7 +14,7 @@ class ZActivityStubMacro(override val c: blackbox.Context) extends InvocationMac
     assertPrefixType(zactivityStub)
 
     val invocation = getMethodInvocation(f.tree)
-    assertActivity(invocation.instance.tpe)
+    assertTypedActivityStub(invocation.instance.tpe, "execute")
 
     val method       = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
     val activityName = getActivityName(method.symbol)
@@ -29,7 +29,7 @@ class ZActivityStubMacro(override val c: blackbox.Context) extends InvocationMac
     assertPrefixType(zactivityStub)
 
     val invocation = getMethodInvocation(f.tree)
-    assertActivity(invocation.instance.tpe)
+    assertTypedActivityStub(invocation.instance.tpe, "executeAsync")
 
     val method       = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
     val activityName = getActivityName(method.symbol)

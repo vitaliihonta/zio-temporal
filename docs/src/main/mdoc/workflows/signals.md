@@ -140,3 +140,11 @@ val runWorkflow = for {
   - `paymentWorkflow.confirmPayment(code = "1234")` invocation would be re-written into an untyped Temporal's signal invocation
   - A direct method invocation will throw an exception
 - Reminder: signalling workflow state = calling a remote server
+
+**NOTE**: Do not annotate workflow stubs with the workflow interface type. It must be `ZWorkflowStub.Of[EchoWorkflow]`.  
+Otherwise, you'll get a compile-time error:
+
+```scala mdoc:fail
+def doSomething(paymentWorkflow: PaymentWorkflow): TemporalIO[Unit] =
+  ZWorkflowStub.signal(paymentWorkflow.confirmPayment("42"))
+```

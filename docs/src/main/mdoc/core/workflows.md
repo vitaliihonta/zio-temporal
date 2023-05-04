@@ -92,6 +92,14 @@ Important notes:
   - A direct method invocation will throw an exception
 - The `ZWorkflowStub` is basically a proxy, which executes the Workflow via Temporal cluster
 
+**NOTE**: Do not annotate workflow stubs with the workflow interface type. It must be `ZWorkflowStub.Of[EchoWorkflow]`.  
+Otherwise, you'll get a compile-time error:  
+
+```scala mdoc:fail
+def doSomething(echoWorkflow: EchoWorkflow): TemporalIO[String] =
+  ZWorkflowStub.execute(echoWorkflow.echo("Hello there"))
+```
+
 ## Workers
 
 In this section, we'll be referring to Worker Entity as a Worker.  

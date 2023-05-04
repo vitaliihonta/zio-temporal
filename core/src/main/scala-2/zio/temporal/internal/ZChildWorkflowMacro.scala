@@ -13,7 +13,7 @@ class ZChildWorkflowMacro(override val c: blackbox.Context) extends InvocationMa
     assertPrefixType(zchildWorkflowStub)
 
     val invocation = getMethodInvocation(f.tree)
-    assertWorkflow(invocation.instance.tpe)
+    assertTypedWorkflowStub(invocation.instance.tpe, "ZChildWorkflowStub", "execute")
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
@@ -28,7 +28,7 @@ class ZChildWorkflowMacro(override val c: blackbox.Context) extends InvocationMa
     assertPrefixType(zchildWorkflowStub)
 
     val invocation = getMethodInvocation(f.tree)
-    assertWorkflow(invocation.instance.tpe)
+    assertTypedWorkflowStub(invocation.instance.tpe, "ZChildWorkflowStub", "executeAsync")
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
