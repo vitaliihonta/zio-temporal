@@ -11,7 +11,7 @@ package object failure {
 
   implicit class ZioTemporalApplicationFailureSyntax(private val self: io.temporal.failure.ApplicationFailure)
       extends AnyVal {
-    def getDetailsAs[E: TypeIsSpecified: ClassTag]: E =
-      self.getDetails.get(ClassTagUtils.classOf[E])
+    def getDetailsAs[E: TypeIsSpecified: JavaTypeTag]: E =
+      self.getDetails.get(JavaTypeTag[E].klass, JavaTypeTag[E].genericType)
   }
 }

@@ -3,9 +3,11 @@ package zio.temporal.activity
 import zio.*
 import io.temporal.activity.*
 import io.temporal.client.ActivityCompletionException
+import zio.temporal.JavaTypeTag
 import zio.temporal.internal.ClassTagUtils
+
 import scala.reflect.ClassTag
-import scala.jdk.OptionConverters._
+import scala.jdk.OptionConverters.*
 
 class ZActivityExecutionContext private[zio] (val toJava: ActivityExecutionContext) extends AnyVal {
 
@@ -38,8 +40,8 @@ class ZActivityExecutionContext private[zio] (val toJava: ActivityExecutionConte
     * @tparam V
     *   type of the Heartbeat details
     */
-  def getHeartbeatDetails[V: ClassTag]: UIO[Option[V]] =
+  def getHeartbeatDetails[V: JavaTypeTag]: UIO[Option[V]] =
     ZIO.succeed {
-      toJava.getHeartbeatDetails(ClassTagUtils.classOf[V]).toScala
+      toJava.getHeartbeatDetails(JavaTypeTag[V].klass, JavaTypeTag[V].genericType).toScala
     }
 }

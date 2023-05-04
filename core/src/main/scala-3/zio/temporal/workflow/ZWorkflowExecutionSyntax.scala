@@ -5,17 +5,20 @@ import zio.temporal.*
 import zio.temporal.ZWorkflowExecution
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
 import scala.quoted.*
-import scala.reflect.ClassTag
 
 trait ZWorkflowExecutionSyntax {
   inline def start[A](inline f: A): TemporalIO[ZWorkflowExecution] =
     ${ ZWorkflowExecutionSyntax.startImpl[A]('f) }
 
-  inline def execute[R](inline f: R)(using ctg: ClassTag[R]): TemporalIO[R] =
-    ${ ZWorkflowExecutionSyntax.executeImpl[R]('f, 'ctg) }
+  inline def execute[R](inline f: R)(using javaTypeTag: JavaTypeTag[R]): TemporalIO[R] =
+    ${ ZWorkflowExecutionSyntax.executeImpl[R]('f, 'javaTypeTag) }
 
-  inline def executeWithTimeout[R](timeout: Duration)(inline f: R)(using ctg: ClassTag[R]): TemporalIO[R] =
-    ${ ZWorkflowExecutionSyntax.executeWithTimeoutImpl[R]('timeout, 'f, 'ctg) }
+  inline def executeWithTimeout[R](
+    timeout:           Duration
+  )(inline f:          R
+  )(using javaTypeTag: JavaTypeTag[R]
+  ): TemporalIO[R] =
+    ${ ZWorkflowExecutionSyntax.executeWithTimeoutImpl[R]('timeout, 'f, 'javaTypeTag) }
 }
 
 object ZWorkflowExecutionSyntax {
@@ -41,9 +44,9 @@ object ZWorkflowExecutionSyntax {
   }
 
   def executeImpl[R: Type](
-    f:       Expr[R],
-    ctg:     Expr[ClassTag[R]]
-  )(using q: Quotes
+    f:           Expr[R],
+    javaTypeTag: Expr[JavaTypeTag[R]]
+  )(using q:     Quotes
   ): Expr[TemporalIO[R]] = {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
@@ -58,16 +61,16 @@ object ZWorkflowExecutionSyntax {
 
     '{
       zio.temporal.internal.TemporalInteraction.fromFuture {
-        TemporalWorkflowFacade.execute($stub, ${ method.argsExpr })($ctg)
+        TemporalWorkflowFacade.execute($stub, ${ method.argsExpr })($javaTypeTag)
       }
     }.debugged(SharedCompileTimeMessages.generatedWorkflowExecute)
   }
 
   def executeWithTimeoutImpl[R: Type](
-    timeout: Expr[Duration],
-    f:       Expr[R],
-    ctg:     Expr[ClassTag[R]]
-  )(using q: Quotes
+    timeout:     Expr[Duration],
+    f:           Expr[R],
+    javaTypeTag: Expr[JavaTypeTag[R]]
+  )(using q:     Quotes
   ): Expr[TemporalIO[R]] = {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
@@ -82,7 +85,7 @@ object ZWorkflowExecutionSyntax {
 
     '{
       zio.temporal.internal.TemporalInteraction.fromFuture {
-        TemporalWorkflowFacade.executeWithTimeout($stub, $timeout, ${ method.argsExpr })($ctg)
+        TemporalWorkflowFacade.executeWithTimeout($stub, $timeout, ${ method.argsExpr })($javaTypeTag)
       }
     }.debugged(SharedCompileTimeMessages.generatedWorkflowExecute)
   }
