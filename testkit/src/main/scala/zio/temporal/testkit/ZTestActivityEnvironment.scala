@@ -3,7 +3,7 @@ package zio.temporal.testkit
 import io.temporal.testing.TestActivityEnvironment
 import zio.temporal.activity.ZActivityOptions
 import zio.*
-import zio.temporal.JavaTypeTag
+import zio.temporal.{JavaTypeTag, TypeIsSpecified}
 import zio.temporal.activity.{IsActivity, ZActivityStubBuilderInitial}
 import zio.temporal.internal.ClassTagUtils
 import scala.reflect.ClassTag
@@ -52,7 +52,7 @@ class ZTestActivityEnvironment[+R] private[zio] (
     * @param listener
     *   listener to register.
     */
-  def setActivityHeartbeatListener[T: JavaTypeTag](listener: T => Unit): UIO[Unit] =
+  def setActivityHeartbeatListener[T: TypeIsSpecified: JavaTypeTag](listener: T => Unit): UIO[Unit] =
     ZIO.succeed(
       toJava.setActivityHeartbeatListener[T](
         JavaTypeTag[T].klass,

@@ -2,7 +2,7 @@ package zio.temporal.workflow
 
 import io.temporal.workflow.ChildWorkflowStub
 import zio.temporal.internal.Stubs
-import zio.temporal.{JavaTypeTag, ZWorkflowExecution, internalApi}
+import zio.temporal.{JavaTypeTag, TypeIsSpecified, ZWorkflowExecution, internalApi}
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.ZChildWorkflowStubSignalSyntax
 
@@ -47,9 +47,9 @@ object ZChildWorkflowStub
       */
     def getExecution: ZAsync[ZWorkflowExecution]
 
-    def execute[R: JavaTypeTag](args: Any*): R
+    def execute[R: TypeIsSpecified: JavaTypeTag](args: Any*): R
 
-    def executeAsync[R: JavaTypeTag](args: Any*): ZAsync[R]
+    def executeAsync[R: TypeIsSpecified: JavaTypeTag](args: Any*): ZAsync[R]
 
     def signal(signalName: String, args: Any*): Unit
 
@@ -62,10 +62,10 @@ object ZChildWorkflowStub
         .fromJava(toJava.getExecution)
         .map(new ZWorkflowExecution(_))
 
-    override def execute[R: JavaTypeTag](args: Any*): R =
+    override def execute[R: TypeIsSpecified: JavaTypeTag](args: Any*): R =
       toJava.execute[R](JavaTypeTag[R].klass, JavaTypeTag[R].genericType, args.asInstanceOf[Seq[AnyRef]]: _*)
 
-    override def executeAsync[R: JavaTypeTag](args: Any*): ZAsync[R] =
+    override def executeAsync[R: TypeIsSpecified: JavaTypeTag](args: Any*): ZAsync[R] =
       ZAsync.fromJava[R](
         toJava.executeAsync[R](JavaTypeTag[R].klass, JavaTypeTag[R].genericType, args.asInstanceOf[Seq[AnyRef]]: _*)
       )
