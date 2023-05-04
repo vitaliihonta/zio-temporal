@@ -136,3 +136,11 @@ Important notes:
   - `paymentWorkflow.getPaymentState()` invocation would be re-written into an untyped Temporal's query invocation
   - A direct method invocation will throw an exception
 - Reminder: querying workflow state = calling a remote server
+
+**NOTE**: Do not annotate workflow stubs with the workflow interface type. It must be `ZWorkflowStub.Of[EchoWorkflow]`.  
+Otherwise, you'll get a compile-time error:
+
+```scala mdoc:fail
+def doSomething(paymentWorkflow: PaymentWorkflow): TemporalIO[PaymentState] =
+  ZWorkflowStub.query(paymentWorkflow.getPaymentState())
+```

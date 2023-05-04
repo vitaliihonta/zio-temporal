@@ -47,7 +47,6 @@ object SharedCompileTimeMessages {
   def notWorkflow(what: String): String =
     s"$what is not a workflow!"
 
-  // TODO: use simple tpe name instead of dealiased?
   def usingNonStubOf(stubType: String, method: String, tpe: String): String =
     s"$stubType.$method must be used only with typed $stubType.Of[A],\n" +
       s"but $tpe found. Perhaps you added an explicit type annotation?\n" +

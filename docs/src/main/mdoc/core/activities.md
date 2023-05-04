@@ -133,6 +133,13 @@ Important notes:
 - Persisting the result allows the workflow to retry in case of any failures, starting from the closest successful activity invocation
 - We'll cover retries later
 
+**NOTE**: Do not annotate activity stubs with the activty interface type. It must be `ZActivityStub.Of[BookingActivity]`.  
+Otherwise, you'll get a compile-time error:
+
+```scala mdoc:fail
+def doSomething(bookingActivity: BookingActivity): UUID =
+  ZActivityStub.execute(bookingActivity.bookFlight("John", "Doe", "4242"))
+```
 
 ## Adding activities into the worker
 
