@@ -18,11 +18,23 @@ class FoodOrderWorkflowImpl extends FoodOrderWorkflow {
   private val state = ZWorkflowState.make[OrderState](OrderState.Initial)
 
   override def order(goods: List[String], deliveryAddress: String): Boolean = {
+
+    /** NOTE: make sure to add a search attribute
+      * {{{
+      *    docker exec -it temporal-admin-tools bash
+      *    temporal-admin-tools> temporal operator search-attribute create --namespace default --name DeliveryAddress --type Text
+      * }}}
+      */
+    ZWorkflow.upsertSearchAttributes(
+      Map("DeliveryAddress" -> deliveryAddress)
+    )
+
     logger.info("Waiting until payment received or cancel or timeout...")
     val touched = ZWorkflow.awaitWhile(2.minutes)(state =:= OrderState.Initial)
     val deliveryWorkflow = ZWorkflow.newExternalWorkflowStub[FoodDeliveryWorkflow](
       FoodDeliveryWorkflow.makeId(ZWorkflow.info.workflowId)
     )
+    logger.info(s"Search attrs: ${ZWorkflow.info.searchAttributes}")
     if (!touched || state =:= OrderState.Cancelled) {
       ZExternalWorkflowStub.signal(
         deliveryWorkflow.cancelDelivery()
