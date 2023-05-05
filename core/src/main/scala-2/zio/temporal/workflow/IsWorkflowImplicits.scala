@@ -14,7 +14,7 @@ private[zio] object IsWorkflowImplicits {
     import c.universe._
 
     def materializeImpl[A: WeakTypeTag]: Expr[IsWorkflow[A]] = {
-      assertExtendsWorkflow(weakTypeOf[A].dealias)
+      assertWorkflow(weakTypeOf[A].dealias, isFromImplicit = true)
 
       reify {
         IsWorkflow.__zio_temporal_IsWorkflowInstance.asInstanceOf[IsWorkflow[A]]

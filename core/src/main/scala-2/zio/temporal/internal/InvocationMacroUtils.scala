@@ -2,7 +2,8 @@ package zio.temporal.internal
 
 import izumi.reflect.Tag
 import zio.temporal.*
-import zio.temporal.workflow.ZWorkflowStub
+import zio.temporal.activity.IsActivity
+import zio.temporal.workflow.{IsWorkflow, ZWorkflowStub}
 
 import scala.reflect.macros.blackbox
 
@@ -17,6 +18,9 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
   protected val QueryMethod       = typeOf[queryMethod].dealias
   protected val SignalMethod      = typeOf[signalMethod].dealias
   protected val ActivityMethod    = typeOf[activityMethod].dealias
+
+  protected val IsWorkflowImplicitTC = typeOf[IsWorkflow[Any]].typeConstructor
+  protected val IsActivityImplicitC  = typeOf[IsActivity[Any]].typeConstructor
 
   protected case class MethodInfo(name: Name, symbol: Symbol, appliedArgs: List[Tree]) {
     validateCalls()
@@ -154,24 +158,28 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
       }
       .getOrElse(method.name.toString)
 
-  protected def assertWorkflow(workflow: Type): Type = {
-    if (!isWorkflow(workflow)) {
+  protected def assertWorkflow(workflow: Type, isFromImplicit: Boolean): Type = {
+    if (isWorkflow(workflow) || isWorkflowImplicitProvided(workflow, isFromImplicit)) {
+      workflow
+    } else {
       error(SharedCompileTimeMessages.notWorkflow(workflow.toString))
     }
-    workflow
+  }
+
+  private def isWorkflowImplicitProvided(workflow: Type, isFromImplicit: Boolean): Boolean = {
+    // Don't infer implicit IsWorkflow in case that the IsWorkflow derivation
+    !isFromImplicit && c.inferImplicitValue(appliedType(IsWorkflowImplicitTC, workflow), silent = true) != EmptyTree
   }
 
   protected def assertTypedWorkflowStub(workflow: Type, stubType: String, method: String): Type = {
-    assertWorkflow(workflow)
     workflow.dealias match {
       case SingleType(_, sym) =>
-        sym.typeSignature.finalResultType.dealias match {
-          case RefinedType(List(stub, wf), _) =>
-            workflow
-          case other =>
-            error(SharedCompileTimeMessages.usingNonStubOf(stubType, method, other.toString))
-        }
+        assertTypedWorkflowStub(sym.typeSignature.finalResultType.dealias, stubType, method)
+      case RefinedType(List(stub, wf), _) =>
+        assertWorkflow(wf, isFromImplicit = false)
+        workflow
       case other =>
+        println(other.getClass)
         error(SharedCompileTimeMessages.usingNonStubOf(stubType, method, other.toString))
     }
   }
@@ -215,6 +223,11 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
       error(SharedCompileTimeMessages.notWorkflow(workflow.toString))
     )
 
+  protected def isWorkflow(tpe: Type): Boolean = {
+    c.info(c.enclosingPosition, s"Annotations: ${tpe.typeSymbol.annotations}", force = false)
+    hasAnnotation(tpe.typeSymbol, WorkflowInterface)
+  }
+
   protected def findWorkflowInterface(workflow: Type): Option[Type] =
     workflow match {
       case SingleType(_, sym) =>
@@ -223,11 +236,8 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
           .headOption
 
       case _ =>
-        if (hasAnnotation(workflow.typeSymbol, WorkflowInterface)) Some(workflow) else None
+        Some(workflow).filter(isWorkflow)
     }
-
-  protected def isWorkflow(tpe: Type): Boolean =
-    findWorkflowInterface(tpe).nonEmpty
 
   protected def extendsWorkflow(tpe: Type): Boolean =
     isWorkflow(tpe) || tpe.baseClasses.exists(sym => isWorkflow(sym.typeSignature))

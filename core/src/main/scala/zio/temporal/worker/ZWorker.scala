@@ -4,8 +4,9 @@ import zio.*
 import zio.temporal.internal.ClassTagUtils
 import io.temporal.worker.Worker
 import zio.temporal.activity.IsActivity
-import zio.temporal.workflow.{HasPublicNullaryConstructor, IsConcreteClass, IsWorkflow}
+import zio.temporal.workflow.{ExtendsWorkflow, HasPublicNullaryConstructor, IsConcreteClass, IsWorkflow}
 import io.temporal.worker.WorkerFactory
+
 import scala.reflect.ClassTag
 
 /** Hosts activity and workflow implementations. Uses long poll to receive activity and workflow tasks and processes
@@ -41,7 +42,7 @@ class ZWorker private[zio] (
 
   /** Allows to add workflow to this worker
     */
-  def addWorkflow[I: IsWorkflow]: ZWorker.AddWorkflowDsl[I] =
+  def addWorkflow[I: ExtendsWorkflow]: ZWorker.AddWorkflowDsl[I] =
     new ZWorker.AddWorkflowDsl[I](this)
 
   /** Registers activity implementation objects with a worker. An implementation object can implement one or more
@@ -72,8 +73,8 @@ object ZWorker {
 
   type Add[+LowerR, -UpperR] = ZIOAspect[LowerR, UpperR, Nothing, Any, ZWorker, ZWorker]
 
-  def addWorkflow[I: IsWorkflow]: ZWorker.AddWorkflowAspectDsl[I] =
-    new AddWorkflowAspectDsl[I](implicitly[IsWorkflow[I]])
+  def addWorkflow[I: ExtendsWorkflow]: ZWorker.AddWorkflowAspectDsl[I] =
+    new AddWorkflowAspectDsl[I](implicitly[ExtendsWorkflow[I]])
 
   def addActivityImplementation[Activity <: AnyRef: IsActivity](activity: Activity): ZWorker.Add[Nothing, Any] =
     new ZIOAspect[Nothing, Any, Nothing, Any, ZWorker, ZWorker] {
@@ -95,9 +96,9 @@ object ZWorker {
 
   /** Allows building workers using [[ZIOAspect]]
     */
-  final class AddWorkflowAspectDsl[I] private[zio] (private val isWorkflow: IsWorkflow[I]) extends AnyVal {
+  final class AddWorkflowAspectDsl[I] private[zio] (private val extendsWorkflow: ExtendsWorkflow[I]) extends AnyVal {
     // for internal use only
-    private implicit def _isWorkflow: IsWorkflow[I] = isWorkflow
+    private implicit def _extendsWorkflow: ExtendsWorkflow[I] = extendsWorkflow
 
     /** Registers workflow implementation classes with a worker. Can be called multiple times to add more types.
       *
