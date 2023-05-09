@@ -3,7 +3,7 @@ package zio.temporal.worker
 import zio.*
 import zio.temporal.internal.ClassTagUtils
 import io.temporal.worker.Worker
-import zio.temporal.activity.IsActivity
+import zio.temporal.activity.{ExtendsActivity, IsActivity}
 import zio.temporal.workflow.{ExtendsWorkflow, HasPublicNullaryConstructor, IsConcreteClass, IsWorkflow}
 import io.temporal.worker.WorkerFactory
 
@@ -51,7 +51,7 @@ class ZWorker private[zio] (
     * @see
     *   [[Worker#registerActivitiesImplementations]]
     */
-  def addActivityImplementation[A <: AnyRef: IsActivity](activity: A): UIO[ZWorker] = ZIO.succeed {
+  def addActivityImplementation[A <: AnyRef: ExtendsActivity](activity: A): UIO[ZWorker] = ZIO.succeed {
     toJava.registerActivitiesImplementations(activity)
     this
   }
@@ -62,7 +62,7 @@ class ZWorker private[zio] (
     * @see
     *   [[Worker#registerActivitiesImplementations]]
     */
-  def addActivityImplementationService[A <: AnyRef: IsActivity: Tag]: URIO[A, ZWorker] = {
+  def addActivityImplementationService[A <: AnyRef: ExtendsActivity: Tag]: URIO[A, ZWorker] = {
     ZIO.serviceWithZIO[A] { activity =>
       addActivityImplementation[A](activity)
     }
@@ -76,7 +76,7 @@ object ZWorker {
   def addWorkflow[I: ExtendsWorkflow]: ZWorker.AddWorkflowAspectDsl[I] =
     new AddWorkflowAspectDsl[I](implicitly[ExtendsWorkflow[I]])
 
-  def addActivityImplementation[Activity <: AnyRef: IsActivity](activity: Activity): ZWorker.Add[Nothing, Any] =
+  def addActivityImplementation[Activity <: AnyRef: ExtendsActivity](activity: Activity): ZWorker.Add[Nothing, Any] =
     new ZIOAspect[Nothing, Any, Nothing, Any, ZWorker, ZWorker] {
       override def apply[R >: Nothing <: Any, E >: Nothing <: Any, A >: ZWorker <: ZWorker](
         zio:            ZIO[R, E, A]
@@ -85,7 +85,7 @@ object ZWorker {
         zio.flatMap(_.addActivityImplementation[Activity](activity))
     }
 
-  def addActivityImplementationService[Activity <: AnyRef: IsActivity: Tag]: ZWorker.Add[Nothing, Activity] =
+  def addActivityImplementationService[Activity <: AnyRef: ExtendsActivity: Tag]: ZWorker.Add[Nothing, Activity] =
     new ZIOAspect[Nothing, Activity, Nothing, Any, ZWorker, ZWorker] {
       override def apply[R >: Nothing <: Activity, E >: Nothing <: Any, A >: ZWorker <: ZWorker](
         zio:            ZIO[R, E, A]

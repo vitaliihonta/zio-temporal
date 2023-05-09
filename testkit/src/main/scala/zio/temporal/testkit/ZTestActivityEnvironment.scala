@@ -1,11 +1,11 @@
 package zio.temporal.testkit
 
 import io.temporal.testing.TestActivityEnvironment
-import zio.temporal.activity.ZActivityOptions
+import zio.temporal.activity.{ExtendsActivity, IsActivity, ZActivityOptions, ZActivityStubBuilderInitial}
 import zio.*
 import zio.temporal.{JavaTypeTag, TypeIsSpecified}
-import zio.temporal.activity.{IsActivity, ZActivityStubBuilderInitial}
 import zio.temporal.internal.ClassTagUtils
+
 import scala.reflect.ClassTag
 
 class ZTestActivityEnvironment[+R] private[zio] (
@@ -24,10 +24,25 @@ class ZTestActivityEnvironment[+R] private[zio] (
     * @throws TypeAlreadyRegisteredException
     *   if one of the activity types is already registered
     */
-  def addActivityImplementation[A <: AnyRef: IsActivity](activity: A): UIO[Unit] =
+  def addActivityImplementation[A <: AnyRef: ExtendsActivity](activity: A): UIO[Unit] =
     ZIO.succeed {
       toJava.registerActivitiesImplementations(activity)
     }
+
+  /** Registers activity implementations to test. Use [[newActivityStub]] to create stubs that can be used to invoke
+    * them.
+    *
+    * <p>Implementations that share a worker must implement different interfaces as an activity type is identified by
+    * the activity interface, not by the implementation.
+    *
+    * @throws TypeAlreadyRegisteredException
+    *   if one of the activity types is already registered
+    */
+  def addActivityImplementationService[A <: AnyRef: ExtendsActivity: Tag]: URIO[A, Unit] = {
+    ZIO.serviceWithZIO[A] { activity =>
+      addActivityImplementation[A](activity)
+    }
+  }
 
   /** Creates a stub that can be used to invoke activities registered through [[addActivityImplementation]]
     *
@@ -93,8 +108,22 @@ object ZTestActivityEnvironment {
     * @throws TypeAlreadyRegisteredException
     *   if one of the activity types is already registered
     */
-  def addActivityImplementation[A <: AnyRef: IsActivity](activity: A): URIO[ZTestActivityEnvironment[Any], Unit] =
+  def addActivityImplementation[A <: AnyRef: ExtendsActivity](activity: A): URIO[ZTestActivityEnvironment[Any], Unit] =
     ZIO.serviceWithZIO[ZTestActivityEnvironment[Any]](_.addActivityImplementation(activity))
+
+  /** Registers activity implementations to test. Use [[newActivityStub]] to create stubs that can be used to invoke
+    * them.
+    *
+    * <p>Implementations that share a worker must implement different interfaces as an activity type is identified by
+    * the activity interface, not by the implementation.
+    *
+    * @throws TypeAlreadyRegisteredException
+    *   if one of the activity types is already registered
+    */
+  def addActivityImplementationService[
+    A <: AnyRef: ExtendsActivity: Tag
+  ]: URIO[ZTestActivityEnvironment[Any] with A, Unit] =
+    ZIO.serviceWithZIO[ZTestActivityEnvironment[Any]](_.addActivityImplementationService)
 
   /** Creates a stub that can be used to invoke activities registered through [[addActivityImplementation]]
     *

@@ -2,7 +2,6 @@ package zio.temporal.activity
 
 import zio.temporal.internalApi
 
-// TODO: add ExtendsActivity
 trait IsActivity[A] {}
 
 object IsActivity extends IsActivityImplicits {

@@ -184,15 +184,21 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
     }
   }
 
-  protected def assertActivity(activity: Type): Type = {
-    if (!isActivity(activity)) {
+  protected def assertActivity(activity: Type, isFromImplicit: Boolean): Type = {
+    if (isActivity(activity) || isActivityImplicitProvided(activity, isFromImplicit)) {
+      activity
+    } else {
       error(SharedCompileTimeMessages.notActivity(activity.toString))
     }
-    activity
+  }
+
+  private def isActivityImplicitProvided(workflow: Type, isFromImplicit: Boolean): Boolean = {
+    // Don't infer implicit IsActivity in case that the IsActivity derivation
+    !isFromImplicit && c.inferImplicitValue(appliedType(IsActivityImplicitC, workflow), silent = true) != EmptyTree
   }
 
   protected def assertTypedActivityStub(activity: Type, method: String): Type = {
-    assertActivity(activity)
+    assertActivity(activity, isFromImplicit = false)
     activity.dealias match {
       case SingleType(_, sym) =>
         sym.typeSignature.finalResultType.dealias match {
@@ -224,7 +230,6 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
     )
 
   protected def isWorkflow(tpe: Type): Boolean = {
-    c.info(c.enclosingPosition, s"Annotations: ${tpe.typeSymbol.annotations}", force = false)
     hasAnnotation(tpe.typeSymbol, WorkflowInterface)
   }
 

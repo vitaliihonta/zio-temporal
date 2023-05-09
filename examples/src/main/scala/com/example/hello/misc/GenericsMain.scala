@@ -1,17 +1,17 @@
 package com.example.hello.misc
 
-import zio._
+import zio.*
 import zio.logging.backend.SLF4J
-import zio.temporal._
+import zio.temporal.*
 import zio.temporal.worker.{ZWorker, ZWorkerFactory, ZWorkerFactoryOptions}
-import zio.temporal.workflow._
+import zio.temporal.workflow.*
 
-@workflowInterface
 trait WorkflowMixin {
   @workflowMethod
   def baseMethod(n: Int): Int
 }
 
+@workflowInterface
 trait WorkflowFoo extends WorkflowMixin
 
 class WorkflowFooImpl extends WorkflowFoo {
@@ -26,7 +26,6 @@ class WorkflowBarImpl extends WorkflowBar {
 }
 
 object GenericsMain extends ZIOAppDefault {
-  // TODO: make it compile
   def basicExecute[W <: WorkflowMixin](stub: ZWorkflowStub.Of[W]): TemporalIO[Int] = {
     ZIO.logInfo("Executing generic workflows") *>
       ZWorkflowStub.execute(stub.baseMethod(40))

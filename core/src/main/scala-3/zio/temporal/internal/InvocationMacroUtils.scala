@@ -2,7 +2,7 @@ package zio.temporal.internal
 
 import io.temporal.api.common.v1.WorkflowExecution
 import zio.temporal.*
-import zio.temporal.activity.ZActivityStub
+import zio.temporal.activity.{IsActivity, ZActivityStub}
 import zio.temporal.workflow.*
 
 import java.util.concurrent.CompletableFuture
@@ -25,14 +25,19 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   private val zworkflowContinueAsNewStub = TypeRepr.of[ZWorkflowContinueAsNewStub]
   private val zactivityStub              = TypeRepr.of[ZActivityStub]
 
+  protected val IsWorkflowImplicitTC = TypeRepr.of[IsWorkflow[Any]]
+  protected val IsActivityImplicitC  = TypeRepr.of[IsActivity[Any]]
+
   def betaReduceExpression[A: Type](f: Expr[A]): Expr[A] =
     Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
 
   // Asserts that this is a WorkflowInterface
+  // TODO: make it work for generics
   def getMethodInvocationOfWorkflow(tree: Term): MethodInvocation =
     getMethodInvocation(tree, getWorkflowInterface)
 
   // Asserts that this is a ActivityInterface
+  // TODO: make it work for generics
   def getMethodInvocationOfActivity(tree: Term): MethodInvocation =
     getMethodInvocation(tree, getActivityType)
 
@@ -221,8 +226,26 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   def isWorkflow(sym: Symbol): Boolean =
     sym.hasAnnotation(WorkflowInterface)
 
+  def assertWorkflow(workflow: TypeRepr, isFromImplicit: Boolean): TypeRepr = {
+    if (isWorkflow(workflow.typeSymbol) || isWorkflowImplicitProvided(workflow, isFromImplicit)) {
+      workflow
+    } else {
+      error(SharedCompileTimeMessages.notWorkflow(workflow.show))
+    }
+  }
+
+  private def isWorkflowImplicitProvided(workflow: TypeRepr, isFromImplicit: Boolean): Boolean = {
+    // Don't infer implicit IsWorkflow in case that the IsWorkflow derivation
+    !isFromImplicit && {
+      Implicits.search(IsWorkflowImplicitTC.appliedTo(workflow)) match {
+        case _: ImplicitSearchSuccess => true
+        case _: ImplicitSearchFailure => false
+      }
+    }
+  }
+
   def extendsWorkflow(tpe: TypeRepr): Boolean =
-    findWorkflowType(tpe).isDefined || tpe.baseClasses.exists(isWorkflow)
+    isWorkflow(tpe.typeSymbol) || tpe.baseClasses.exists(isWorkflow)
 
   def assertExtendsWorkflow(workflow: TypeRepr): Unit =
     if (!extendsWorkflow(workflow)) {
@@ -232,8 +255,26 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   def isActivity(sym: Symbol): Boolean =
     sym.hasAnnotation(ActivityInterface)
 
+  def assertActivity(activity: TypeRepr, isFromImplicit: Boolean): TypeRepr = {
+    if (isActivity(activity.typeSymbol) || isActivityImplicitProvided(activity, isFromImplicit)) {
+      activity
+    } else {
+      error(SharedCompileTimeMessages.notActivity(activity.show))
+    }
+  }
+
+  private def isActivityImplicitProvided(activity: TypeRepr, isFromImplicit: Boolean): Boolean = {
+    // Don't infer implicit IsActivity in case that the IsActivity derivation
+    !isFromImplicit && {
+      Implicits.search(IsActivityImplicitC.appliedTo(activity)) match {
+        case _: ImplicitSearchSuccess => true
+        case _: ImplicitSearchFailure => false
+      }
+    }
+  }
+
   def extendsActivity(tpe: TypeRepr): Boolean =
-    findActivityType(tpe).isDefined || tpe.baseClasses.exists(isActivity)
+    isActivity(tpe.typeSymbol) || tpe.baseClasses.exists(isActivity)
 
   def assertExtendsActivity(activity: TypeRepr): Unit =
     if (!extendsActivity(activity)) {
