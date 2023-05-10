@@ -3,8 +3,11 @@ package zio.temporal.protobuf.internal
 import org.reflections.Reflections
 import org.reflections.util.ClasspathHelper
 import org.reflections.util.ConfigurationBuilder
+import org.reflections.vfs.Vfs
 import org.slf4j.LoggerFactory
 import scalapb.GeneratedFileObject
+
+import java.net.URL
 import scala.jdk.CollectionConverters.*
 
 object ProtoFileObjectAutoLoader {
@@ -19,10 +22,7 @@ object ProtoFileObjectAutoLoader {
     val reflections = new Reflections(
       new ConfigurationBuilder()
         .filterInputsBy((s: String) => excludeRule(excludePrefixes)(s))
-        .setUrls(
-          (ClasspathHelper.forClassLoader(classLoader).asScala ++
-            ClasspathHelper.forJavaClassPath().asScala).asJavaCollection
-        )
+        .setUrls(buildScanPath(classLoader))
     )
 
     val loadedSubTypes = reflections.getSubTypesOf(classOf[GeneratedFileObject]).asScala.toList
@@ -32,6 +32,16 @@ object ProtoFileObjectAutoLoader {
       s"Loaded ${results.size} GeneratedFileObject(s): ${results.map(showGeneratedFileObject).mkString("[", ",", "]")}"
     )
     results
+  }
+
+  private def buildScanPath(classLoader: ClassLoader): java.util.Collection[URL] = {
+    val base = ClasspathHelper.forClassLoader(classLoader).asScala.toList ++
+      ClasspathHelper.forJavaClassPath().asScala
+
+    val defaultSupportedURLTypes = Vfs.getDefaultUrlTypes.asScala.toList
+
+    // Filter out unsupported ClassPath URLs in order to avoid noisy Reflections logs
+    base.filter(url => defaultSupportedURLTypes.exists(_.matches(url))).asJavaCollection
   }
 
   def standardExcludePackages: Set[String] =
