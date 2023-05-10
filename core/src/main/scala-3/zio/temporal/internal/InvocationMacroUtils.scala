@@ -2,7 +2,7 @@ package zio.temporal.internal
 
 import io.temporal.api.common.v1.WorkflowExecution
 import zio.temporal.*
-import zio.temporal.activity.ZActivityStub
+import zio.temporal.activity.{IsActivity, ZActivityStub}
 import zio.temporal.workflow.*
 
 import java.util.concurrent.CompletableFuture
@@ -25,45 +25,47 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   private val zworkflowContinueAsNewStub = TypeRepr.of[ZWorkflowContinueAsNewStub]
   private val zactivityStub              = TypeRepr.of[ZActivityStub]
 
+  protected val IsWorkflowImplicitTC = TypeRepr.typeConstructorOf(classOf[IsWorkflow[Any]])
+  protected val IsActivityImplicitC  = TypeRepr.typeConstructorOf(classOf[IsActivity[Any]])
+
   def betaReduceExpression[A: Type](f: Expr[A]): Expr[A] =
     Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
 
-  // Asserts that this is a WorkflowInterface
-  def getMethodInvocationOfWorkflow(tree: Term): MethodInvocation =
-    getMethodInvocation(tree, getWorkflowInterface)
-
-  // Asserts that this is a ActivityInterface
-  def getMethodInvocationOfActivity(tree: Term): MethodInvocation =
-    getMethodInvocation(tree, getActivityType)
-
-  private def getMethodInvocation(tree: Term, disassembleType: TypeRepr => TypeRepr): MethodInvocation =
+  // NOTE: used assertWorkflow/assertActivity before, but it's too restrictive.
+  // Checking the stubType instead allows usage of polymorphic workflow interfaces.
+  // The fact that the stub was built guarantees that the workflow/signal/query/activity method was invoked on a valid stub
+  def getMethodInvocation(tree: Term): MethodInvocation =
     tree match {
       case Inlined(_, _, body) =>
-        getMethodInvocation(body, disassembleType)
+        getMethodInvocation(body)
       case Select(instance, methodName) =>
-        MethodInvocation(instance, methodName, Nil, disassembleType)
+        MethodInvocation(instance, methodName, Nil)
       case Apply(Select(instance, methodName), args) =>
-        MethodInvocation(instance, methodName, args, disassembleType)
+        MethodInvocation(instance, methodName, args)
       case TypeApply(inner, _) =>
-        getMethodInvocation(inner, disassembleType)
+        getMethodInvocation(inner)
       case Block(List(inner: Term), _) =>
-        getMethodInvocation(inner, disassembleType)
+        getMethodInvocation(inner)
       case _ => sys.error(s"Expected simple method invocation, got tree of class ${tree.getClass}: $tree")
     }
 
   case class MethodInvocation(
-    instance:        Term,
-    methodName:      String,
-    args:            List[Term],
-    disassembleType: TypeRepr => TypeRepr) {
+    instance:   Term,
+    methodName: String,
+    args:       List[Term]) {
 
     val tpe: TypeRepr         = instance.tpe.widen
-    private val unwrappedType = disassembleType(instance.tpe.widen)
+    private val unwrappedType = unwrapStub(instance.tpe.widen)
 
     def selectJavaReprOf[T: Type]: Expr[T] =
       instance
         .select(instance.symbol.methodMember("toJava").head)
         .asExprOf[T]
+
+    def selectStubbedClass: Expr[Class[_]] =
+      instance
+        .select(instance.symbol.methodMember("stubbedClass").head)
+        .asExprOf[Class[_]]
 
     def getMethod(errorDetails: => String): MethodInfo =
       unwrappedType.typeSymbol
@@ -73,7 +75,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
         .getOrElse(
           error(
             SharedCompileTimeMessages.methodNotFound(
-              instance.tpe.toString,
+              instance.tpe.show,
               methodName,
               errorDetails
             )
@@ -150,49 +152,29 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     }
   }
 
-  def getWorkflowInterface(workflow: TypeRepr): TypeRepr =
-    findWorkflowType(workflow).getOrElse(error(SharedCompileTimeMessages.notWorkflow(workflow.show)))
-
-  def getActivityType(workflow: TypeRepr): TypeRepr =
-    findActivityType(workflow).getOrElse(error(SharedCompileTimeMessages.notActivity(workflow.show)))
-
-  def findWorkflowType(workflow: TypeRepr): Option[TypeRepr] = {
-    val tpe = workflow.dealias match {
-      case AndType(left, wf) => wf
-      case other             => other
-    }
-    if (!isWorkflow(tpe.typeSymbol)) None
-    else Some(tpe)
+  def getWorkflowInterface(workflow: TypeRepr): TypeRepr = {
+    assertWorkflow(workflow, isFromImplicit = false)
   }
 
-  def assertTypedWorkflowStub(workflow: TypeRepr, stubType: String, method: String): TypeRepr = {
+  def assertTypedWorkflowStub(workflow: TypeRepr, stubType: TypeRepr, method: String): TypeRepr = {
     workflow.dealias match {
-      case AndType(left, wf)
-          if left =:= zworkflowStub ||
-            left =:= zchildWorkflowStub ||
-            left =:= zexternalWorkflowStub ||
-            left =:= zworkflowContinueAsNewStub =>
+      case AndType(stub, wf) =>
+        if (!(stub =:= stubType))
+          error(SharedCompileTimeMessages.usingNonStubOf(stubType.show, method, workflow.toString))
         wf
       case other =>
         error(
-          SharedCompileTimeMessages.usingNonStubOf(stubType, method, other.show)
+          SharedCompileTimeMessages.usingNonStubOf(stubType.show, method, other.show)
         )
     }
   }
 
-  def findActivityType(activity: TypeRepr): Option[TypeRepr] = {
-    val tpe = activity.dealias match {
-      case AndType(left, act) => act
-      case other              => other
-    }
-    if (!isActivity(tpe.typeSymbol)) None
-    else Some(tpe)
-  }
-
   def assertTypedActivityStub(activity: TypeRepr, method: String): TypeRepr = {
     activity.dealias match {
-      case AndType(left, act) if left =:= zactivityStub =>
-        act
+      case AndType(stub, act) =>
+        if (!(stub =:= zactivityStub))
+          error(SharedCompileTimeMessages.usingNonStubOf("ZActivityStub", method, activity.show))
+        else act
       case other =>
         error(
           SharedCompileTimeMessages.usingNonStubOf("ZActivityStub", method, other.show)
@@ -221,8 +203,40 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   def isWorkflow(sym: Symbol): Boolean =
     sym.hasAnnotation(WorkflowInterface)
 
+  def unwrapStub(stub: TypeRepr): TypeRepr = {
+    stub.dealias match {
+      case AndType(stub, wrapped)
+          if stub =:= zworkflowStub ||
+            stub =:= zchildWorkflowStub ||
+            stub =:= zexternalWorkflowStub ||
+            stub =:= zworkflowContinueAsNewStub ||
+            stub =:= zactivityStub =>
+        wrapped
+      case other => other
+    }
+  }
+
+  def assertWorkflow(workflow: TypeRepr, isFromImplicit: Boolean): TypeRepr = {
+    val tpe = unwrapStub(workflow)
+    if (isWorkflow(tpe.typeSymbol) || isWorkflowImplicitProvided(tpe, isFromImplicit)) {
+      tpe
+    } else {
+      error(SharedCompileTimeMessages.notWorkflow(tpe.show))
+    }
+  }
+
+  private def isWorkflowImplicitProvided(workflow: TypeRepr, isFromImplicit: Boolean): Boolean = {
+    // Don't infer implicit IsWorkflow in case that the IsWorkflow derivation
+    !isFromImplicit && {
+      Implicits.search(IsWorkflowImplicitTC.appliedTo(workflow)) match {
+        case _: ImplicitSearchSuccess => true
+        case _: ImplicitSearchFailure => false
+      }
+    }
+  }
+
   def extendsWorkflow(tpe: TypeRepr): Boolean =
-    findWorkflowType(tpe).isDefined || tpe.baseClasses.exists(isWorkflow)
+    isWorkflow(tpe.typeSymbol) || tpe.baseClasses.exists(isWorkflow)
 
   def assertExtendsWorkflow(workflow: TypeRepr): Unit =
     if (!extendsWorkflow(workflow)) {
@@ -232,8 +246,30 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   def isActivity(sym: Symbol): Boolean =
     sym.hasAnnotation(ActivityInterface)
 
+  def assertActivity(activity: TypeRepr, isFromImplicit: Boolean): TypeRepr = {
+    val tpe = activity.dealias match {
+      case AndType(_, act) => act
+      case other           => other
+    }
+    if (isActivity(tpe.typeSymbol) || isActivityImplicitProvided(tpe, isFromImplicit)) {
+      tpe
+    } else {
+      error(SharedCompileTimeMessages.notActivity(tpe.show))
+    }
+  }
+
+  private def isActivityImplicitProvided(activity: TypeRepr, isFromImplicit: Boolean): Boolean = {
+    // Don't infer implicit IsActivity in case that the IsActivity derivation
+    !isFromImplicit && {
+      Implicits.search(IsActivityImplicitC.appliedTo(activity)) match {
+        case _: ImplicitSearchSuccess => true
+        case _: ImplicitSearchFailure => false
+      }
+    }
+  }
+
   def extendsActivity(tpe: TypeRepr): Boolean =
-    findActivityType(tpe).isDefined || tpe.baseClasses.exists(isActivity)
+    isActivity(tpe.typeSymbol) || tpe.baseClasses.exists(isActivity)
 
   def assertExtendsActivity(activity: TypeRepr): Unit =
     if (!extendsActivity(activity)) {
@@ -246,19 +282,6 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
       case Some(Apply(Select(New(_), _), List(NamedArg(_, Literal(StringConstant(name)))))) =>
         name
       case _ => method.name
-    }
-  }
-
-  def getActivityName(method: Symbol): String = {
-    def methodNameCap = method.name.capitalize
-    if (!method.hasAnnotation(ActivityMethod)) {
-      methodNameCap
-    } else {
-      method.getAnnotation(ActivityMethod) match {
-        case Some(Apply(Select(New(_), _), List(NamedArg(_, Literal(StringConstant(name)))))) =>
-          name
-        case _ => methodNameCap
-      }
     }
   }
 

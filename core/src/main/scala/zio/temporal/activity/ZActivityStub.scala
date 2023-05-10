@@ -2,16 +2,17 @@ package zio.temporal.activity
 
 import io.temporal.workflow.ActivityStub
 import zio.temporal.{JavaTypeTag, TypeIsSpecified, internalApi}
-import zio.temporal.internal.Stubs
+import zio.temporal.internal.{BasicStubOps, Stubs}
 import zio.temporal.workflow.ZAsync
 
-sealed trait ZActivityStub {
+sealed trait ZActivityStub extends BasicStubOps {
   def toJava: ActivityStub
 
   def untyped: ZActivityStub.Untyped
 }
 
-final class ZActivityStubImpl @internalApi() (val toJava: ActivityStub) extends ZActivityStub {
+final class ZActivityStubImpl @internalApi() (val toJava: ActivityStub, val stubbedClass: Class[_])
+    extends ZActivityStub {
   override val untyped: ZActivityStub.Untyped = new ZActivityStub.UntypedImpl(toJava)
 }
 

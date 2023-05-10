@@ -12,6 +12,7 @@ object JacksonDataConverter {
       .builder()
       .addModule(DefaultScalaModule)
       .addModule(new JavaTimeModule)
+      .addModule(BoxedUnitModule)
       .build()
 
   def make(objectMapper: ObjectMapper = DefaultObjectMapper): DataConverter = {

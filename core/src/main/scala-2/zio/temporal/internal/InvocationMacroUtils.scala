@@ -2,13 +2,14 @@ package zio.temporal.internal
 
 import izumi.reflect.Tag
 import zio.temporal.*
-import zio.temporal.workflow.ZWorkflowStub
-
+import zio.temporal.activity.{IsActivity, ZActivityStub}
+import zio.temporal.workflow.IsWorkflow
 import scala.reflect.macros.blackbox
 
 abstract class InvocationMacroUtils(override val c: blackbox.Context)
     extends MacroUtils(c)
     with VersionSpecificMacroUtils {
+
   import c.universe._
 
   protected val ActivityInterface = typeOf[activityInterface].dealias
@@ -17,6 +18,11 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
   protected val QueryMethod       = typeOf[queryMethod].dealias
   protected val SignalMethod      = typeOf[signalMethod].dealias
   protected val ActivityMethod    = typeOf[activityMethod].dealias
+
+  protected val ZActivityStubType = typeOf[ZActivityStub].dealias
+
+  protected val IsWorkflowImplicitTC = typeOf[IsWorkflow[Any]].typeConstructor
+  protected val IsActivityImplicitC  = typeOf[IsActivity[Any]].typeConstructor
 
   protected case class MethodInfo(name: Name, symbol: Symbol, appliedArgs: List[Tree]) {
     validateCalls()
@@ -112,16 +118,6 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
     findImplicit(tagTpe, SharedCompileTimeMessages.notFound(tagTpe.toString))
   }
 
-  protected def getActivityName(method: Symbol): String =
-    findAnnotation(method, ActivityMethod)
-      .flatMap(
-        _.children.tail
-          .collectFirst { case NamedArgVersionSpecific(_, Literal(Constant(activityName: String))) =>
-            activityName
-          }
-      )
-      .getOrElse(method.name.toString.capitalize)
-
   /** @note
     *   Type method annotations are missing during Scala 2 macro expansion in case we have only a WeakTypeTag.
     */
@@ -154,42 +150,75 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
       }
       .getOrElse(method.name.toString)
 
-  protected def assertWorkflow(workflow: Type): Type = {
-    if (!isWorkflow(workflow)) {
+  protected def assertWorkflow(workflow: Type, isFromImplicit: Boolean): Type = {
+    if (isWorkflow(workflow) || isWorkflowImplicitProvided(workflow, isFromImplicit)) {
+      workflow
+    } else {
       error(SharedCompileTimeMessages.notWorkflow(workflow.toString))
     }
-    workflow
   }
 
-  protected def assertTypedWorkflowStub(workflow: Type, stubType: String, method: String): Type = {
-    assertWorkflow(workflow)
+  private def isWorkflowImplicitProvided(workflow: Type, isFromImplicit: Boolean): Boolean = {
+    // Don't infer implicit IsWorkflow in case that the IsWorkflow derivation
+    if (isFromImplicit) false
+    else {
+      val searchRes = {
+        c.typecheck(
+          c.inferImplicitValue(appliedType(IsWorkflowImplicitTC, workflow), silent = true),
+          silent = true
+        )
+      }
+      searchRes != EmptyTree
+    }
+  }
+
+  protected def assertTypedWorkflowStub(workflow: Type, stubType: Type, method: String): Type = {
     workflow.dealias match {
       case SingleType(_, sym) =>
-        sym.typeSignature.finalResultType.dealias match {
-          case RefinedType(List(stub, wf), _) =>
-            workflow
-          case other =>
-            error(SharedCompileTimeMessages.usingNonStubOf(stubType, method, other.toString))
-        }
+        assertTypedWorkflowStub(sym.typeSignature.finalResultType.dealias, stubType, method)
+      case RefinedType(List(stub, wf), _) =>
+        // NOTE: used assertWorkflow before, but it's too restrictive.
+        // Checking the stubType instead allows usage of polymorphic workflow interfaces.
+        // The fact that the stub was built guarantees that the workflow/signal/query method was invoked on a valid stub
+        if (!(stub =:= stubType))
+          error(SharedCompileTimeMessages.usingNonStubOf(stubType.toString, method, workflow.toString))
+        else workflow
       case other =>
-        error(SharedCompileTimeMessages.usingNonStubOf(stubType, method, other.toString))
+        error(SharedCompileTimeMessages.usingNonStubOf(stubType.toString, method, other.toString))
     }
   }
 
-  protected def assertActivity(activity: Type): Type = {
-    if (!isActivity(activity)) {
+  protected def assertActivity(activity: Type, isFromImplicit: Boolean): Type = {
+    if (isActivity(activity) || isActivityImplicitProvided(activity, isFromImplicit)) {
+      activity
+    } else {
       error(SharedCompileTimeMessages.notActivity(activity.toString))
     }
-    activity
+  }
+
+  private def isActivityImplicitProvided(workflow: Type, isFromImplicit: Boolean): Boolean = {
+    // Don't infer implicit IsActivity in case that the IsActivity derivation
+    if (isFromImplicit) false
+    else {
+      val searchRes = c.typecheck(
+        c.inferImplicitValue(appliedType(IsActivityImplicitC, workflow), silent = true),
+        silent = true
+      )
+      searchRes != EmptyTree
+    }
   }
 
   protected def assertTypedActivityStub(activity: Type, method: String): Type = {
-    assertActivity(activity)
     activity.dealias match {
       case SingleType(_, sym) =>
         sym.typeSignature.finalResultType.dealias match {
-          case RefinedType(List(stub, wf), _) =>
-            activity
+          case RefinedType(List(stub, act), _) =>
+            // NOTE: used assertActivity before, but it's too restrictive.
+            // Checking the stubType instead allows usage of polymorphic workflow interfaces.
+            // The fact that the stub was built guarantees that the activity method was invoked on a valid stub
+            if (!(stub =:= ZActivityStubType))
+              error(SharedCompileTimeMessages.usingNonStubOf("ZActivityStub", method, activity.toString))
+            else act
           case other =>
             error(SharedCompileTimeMessages.usingNonStubOf("ZActivityStub", method, other.toString))
         }
@@ -215,6 +244,10 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
       error(SharedCompileTimeMessages.notWorkflow(workflow.toString))
     )
 
+  protected def isWorkflow(tpe: Type): Boolean = {
+    hasAnnotation(tpe.typeSymbol, WorkflowInterface)
+  }
+
   protected def findWorkflowInterface(workflow: Type): Option[Type] =
     workflow match {
       case SingleType(_, sym) =>
@@ -223,11 +256,8 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
           .headOption
 
       case _ =>
-        if (hasAnnotation(workflow.typeSymbol, WorkflowInterface)) Some(workflow) else None
+        Some(workflow).filter(isWorkflow)
     }
-
-  protected def isWorkflow(tpe: Type): Boolean =
-    findWorkflowInterface(tpe).nonEmpty
 
   protected def extendsWorkflow(tpe: Type): Boolean =
     isWorkflow(tpe) || tpe.baseClasses.exists(sym => isWorkflow(sym.typeSignature))

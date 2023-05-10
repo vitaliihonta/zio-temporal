@@ -45,7 +45,10 @@ object SharedCompileTimeMessages {
     "Generated signalWithStart"
 
   def notWorkflow(what: String): String =
-    s"$what is not a workflow!"
+    s"$what is not a workflow.\n" +
+      s"Workflow interface must have @workflowInterface annotation.\n" +
+      s"Hint: if the workflow type is used as a type parameter,\n" +
+      s"add implicit IsWorkflow[$what] do the class or method definition"
 
   def usingNonStubOf(stubType: String, method: String, tpe: String): String =
     s"$stubType.$method must be used only with typed $stubType.Of[A],\n" +
@@ -53,7 +56,10 @@ object SharedCompileTimeMessages {
       s"The actual type must be $stubType.Of[$tpe]"
 
   def notActivity(what: String): String =
-    s"$what is not an activity!"
+    s"$what is not an activity.\n" +
+      s"Activity interface must have @activityInterface annotation.\n" +
+      s"Hint: if the workflow type is used as a type parameter,\n" +
+      s"add implicit IsActivity[$what] do the class or method definition"
 
   def notWorkflowMethod(what: String): String =
     s"The method is not a @workflowMethod: $what"

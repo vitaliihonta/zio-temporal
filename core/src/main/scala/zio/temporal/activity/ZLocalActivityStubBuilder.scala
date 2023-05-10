@@ -4,6 +4,8 @@ import zio.*
 import io.temporal.activity.LocalActivityOptions
 import io.temporal.workflow.Workflow
 import zio.temporal.ZRetryOptions
+import zio.temporal.internal.ClassTagUtils
+
 import scala.reflect.ClassTag
 
 object ZLocalActivityStubBuilderInitial {
@@ -14,7 +16,8 @@ object ZLocalActivityStubBuilderInitial {
     options =>
       ZActivityStub.Of[A](
         new ZActivityStubImpl(
-          Workflow.newUntypedLocalActivityStub(options)
+          Workflow.newUntypedLocalActivityStub(options),
+          ClassTagUtils.classOf[A]
         )
       )
 

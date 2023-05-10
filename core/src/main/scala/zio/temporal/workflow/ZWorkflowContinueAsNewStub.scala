@@ -4,9 +4,7 @@ import zio.Duration
 import io.temporal.client.WorkflowStub
 import io.temporal.workflow.ContinueAsNewOptions
 import zio.temporal.{TemporalIO, ZWorkflowExecution, internalApi}
-import zio.temporal.internal.ClassTagUtils
-import zio.temporal.internal.TemporalInteraction
-import zio.temporal.internal.Stubs
+import zio.temporal.internal.{BasicStubOps, ClassTagUtils, Stubs, TemporalInteraction}
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.{ZWorkflowClientSignalWithStartSyntax, ZWorkflowStubSignalSyntax}
 
@@ -14,11 +12,12 @@ import java.util.concurrent.TimeUnit
 import scala.reflect.ClassTag
 import io.temporal.workflow.Workflow
 
-sealed trait ZWorkflowContinueAsNewStub {
+sealed trait ZWorkflowContinueAsNewStub extends BasicStubOps {
   def options: ContinueAsNewOptions
 }
 
-class ZWorkflowContinueAsNewStubImpl(val options: ContinueAsNewOptions) extends ZWorkflowContinueAsNewStub
+class ZWorkflowContinueAsNewStubImpl(val options: ContinueAsNewOptions, val stubbedClass: Class[_])
+    extends ZWorkflowContinueAsNewStub
 
 object ZWorkflowContinueAsNewStub extends Stubs[ZWorkflowContinueAsNewStub] with ZWorkflowContinueAsNewStubSyntax {
   final implicit class Ops[A](private val self: ZWorkflowContinueAsNewStub.Of[A]) extends AnyVal {}
@@ -46,7 +45,10 @@ class ZWorkflowContinueAsNewStubBuilder[A: ClassTag: IsWorkflow](
       ContinueAsNewOptions.newBuilder()
     ).build()
     ZWorkflowContinueAsNewStub.Of[A](
-      new ZWorkflowContinueAsNewStubImpl(options)
+      new ZWorkflowContinueAsNewStubImpl(
+        options,
+        ClassTagUtils.classOf[A]
+      )
     )
   }
 }

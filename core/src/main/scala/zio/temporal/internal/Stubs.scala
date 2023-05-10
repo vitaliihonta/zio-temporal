@@ -2,7 +2,14 @@ package zio.temporal.internal
 
 import scala.reflect.ClassTag
 
-private[zio] trait Stubs[A] {
+trait BasicStubOps {
+
+  /** Retrieves the runtime class of a stubbed type
+    */
+  def stubbedClass: Class[_]
+}
+
+private[zio] trait Stubs[A <: BasicStubOps] {
 
   /** Stub is a compile-time view of temporal's runtime abstractions, such as Workflows.
     *

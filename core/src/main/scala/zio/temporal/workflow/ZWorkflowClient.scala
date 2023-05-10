@@ -3,7 +3,9 @@ package zio.temporal.workflow
 import io.temporal.client.ActivityCompletionClient
 import io.temporal.client.WorkflowClient
 import zio.*
+import zio.temporal.internal.ClassTagUtils
 import zio.temporal.{ZWorkflowExecutionMetadata, experimentalApi}
+
 import scala.jdk.OptionConverters.*
 import scala.jdk.CollectionConverters.*
 import scala.reflect.ClassTag
@@ -47,7 +49,10 @@ final class ZWorkflowClient private[zio] (val toJava: WorkflowClient) {
   ): UIO[ZWorkflowStub.Of[A]] =
     ZIO.succeed {
       ZWorkflowStub.Of[A](
-        new ZWorkflowStubImpl(toJava.newUntypedWorkflowStub(workflowId, runId.toJava, Option.empty[String].toJava))
+        new ZWorkflowStubImpl(
+          toJava.newUntypedWorkflowStub(workflowId, runId.toJava, Option.empty[String].toJava),
+          ClassTagUtils.classOf[A]
+        )
       )
     }
 

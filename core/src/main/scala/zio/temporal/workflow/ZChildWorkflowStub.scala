@@ -1,7 +1,7 @@
 package zio.temporal.workflow
 
 import io.temporal.workflow.ChildWorkflowStub
-import zio.temporal.internal.Stubs
+import zio.temporal.internal.{BasicStubOps, Stubs}
 import zio.temporal.{JavaTypeTag, TypeIsSpecified, ZWorkflowExecution, internalApi}
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.ZChildWorkflowStubSignalSyntax
@@ -11,7 +11,7 @@ import zio.temporal.signal.ZChildWorkflowStubSignalSyntax
   * @see
   *   [[ChildWorkflowStub]]
   */
-sealed trait ZChildWorkflowStub {
+sealed trait ZChildWorkflowStub extends BasicStubOps {
   def toJava: ChildWorkflowStub
 
   def untyped: ZChildWorkflowStub.Untyped
@@ -25,7 +25,8 @@ sealed trait ZChildWorkflowStub {
     untyped.getExecution
 }
 
-final class ZChildWorkflowStubImpl @internalApi() (val toJava: ChildWorkflowStub) extends ZChildWorkflowStub {
+final class ZChildWorkflowStubImpl @internalApi() (val toJava: ChildWorkflowStub, val stubbedClass: Class[_])
+    extends ZChildWorkflowStub {
   override val untyped: ZChildWorkflowStub.Untyped = new ZChildWorkflowStub.UntypedImpl(toJava)
 }
 

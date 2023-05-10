@@ -3,7 +3,7 @@ package zio.temporal.workflow
 import io.temporal.workflow.{CancellationScope, ContinueAsNewOptions, Workflow}
 import org.slf4j.Logger
 import zio.temporal.activity.*
-import zio.temporal.internal.TemporalWorkflowFacade
+import zio.temporal.internal.{ClassTagUtils, TemporalWorkflowFacade, ZWorkflowVersionSpecific}
 import zio.temporal.{
   JavaTypeTag,
   TypeIsSpecified,
@@ -17,7 +17,6 @@ import java.util.UUID
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
 import scala.reflect.ClassTag
-import zio.temporal.internal.ZWorkflowVersionSpecific
 
 object ZWorkflow extends ZWorkflowVersionSpecific {
 
@@ -282,7 +281,8 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
   ): ZExternalWorkflowStub.Of[A] =
     ZExternalWorkflowStub.Of(
       new ZExternalWorkflowStubImpl(
-        Workflow.newUntypedExternalWorkflowStub(workflowId)
+        Workflow.newUntypedExternalWorkflowStub(workflowId),
+        ClassTagUtils.classOf[A]
       )
     )
 
@@ -300,7 +300,8 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
   ): ZExternalWorkflowStub.Of[A] =
     ZExternalWorkflowStub.Of(
       new ZExternalWorkflowStubImpl(
-        Workflow.newUntypedExternalWorkflowStub(workflowExecution.toJava)
+        Workflow.newUntypedExternalWorkflowStub(workflowExecution.toJava),
+        ClassTagUtils.classOf[A]
       )
     )
 

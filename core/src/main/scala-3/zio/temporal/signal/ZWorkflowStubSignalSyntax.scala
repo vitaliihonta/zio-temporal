@@ -33,7 +33,6 @@ trait ZWorkflowClientSignalWithStartSyntax { self: ZWorkflowStub =>
 }
 
 object ZWorkflowStubSignalSyntax {
-  private val ZWorkflowStubType          = "ZWorkflowStub"
   private val TemporalWorkflowFacadeType = "TemporalWorkflowFacade"
   private val Init                       = "<init>"
 
@@ -41,8 +40,8 @@ object ZWorkflowStubSignalSyntax {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
-    val invocation = getMethodInvocationOfWorkflow(f.asTerm)
-    assertTypedWorkflowStub(invocation.tpe, "ZWorkflowStub", "signal")
+    val invocation = getMethodInvocation(f.asTerm)
+    assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZWorkflowStub], "signal")
 
     val method = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     method.assertSignalMethod()
@@ -67,12 +66,12 @@ object ZWorkflowStubSignalSyntax {
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val startInvocation = getMethodInvocationOfWorkflow(start.asTerm)
+    val startInvocation = getMethodInvocation(start.asTerm)
 
     val startMethod = startInvocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     startMethod.assertWorkflowMethod()
 
-    val signalInvocation = getMethodInvocationOfWorkflow(signal.asTerm)
+    val signalInvocation = getMethodInvocation(signal.asTerm)
 
     val signalMethod = signalInvocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     signalMethod.assertSignalMethod()

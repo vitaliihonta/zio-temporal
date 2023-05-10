@@ -2,6 +2,7 @@ package zio.temporal.signal
 
 import scala.quoted.*
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
+import zio.temporal.workflow.ZChildWorkflowStub
 
 trait ZChildWorkflowStubSignalSyntax {
   inline def signal(inline f: Unit): Unit =
@@ -13,8 +14,8 @@ object ZChildWorkflowStubSignalSyntax {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
-    val invocation = getMethodInvocationOfWorkflow(f.asTerm)
-    assertTypedWorkflowStub(invocation.tpe, "ZChildWorkflowStub", "signal")
+    val invocation = getMethodInvocation(f.asTerm)
+    assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZChildWorkflowStub], "signal")
 
     val method = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     method.assertSignalMethod()

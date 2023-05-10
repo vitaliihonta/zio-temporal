@@ -3,13 +3,13 @@ package zio.temporal.workflow
 import zio.Duration
 import io.temporal.client.WorkflowStub
 import zio.temporal.{JavaTypeTag, TemporalIO, TypeIsSpecified, ZWorkflowExecution, internalApi}
-import zio.temporal.internal.TemporalInteraction
-import zio.temporal.internal.Stubs
+import zio.temporal.internal.{BasicStubOps, Stubs, TemporalInteraction}
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.{ZWorkflowClientSignalWithStartSyntax, ZWorkflowStubSignalSyntax}
+
 import java.util.concurrent.TimeUnit
 
-sealed trait ZWorkflowStub extends ZWorkflowClientSignalWithStartSyntax {
+sealed trait ZWorkflowStub extends BasicStubOps with ZWorkflowClientSignalWithStartSyntax {
   def toJava: WorkflowStub
 
   def untyped: ZWorkflowStub.Untyped
@@ -63,7 +63,8 @@ sealed trait ZWorkflowStub extends ZWorkflowClientSignalWithStartSyntax {
   * @see
   *   [[WorkflowStub]]
   */
-final class ZWorkflowStubImpl @internalApi() (val toJava: WorkflowStub) extends ZWorkflowStub { self =>
+final class ZWorkflowStubImpl @internalApi() (val toJava: WorkflowStub, val stubbedClass: Class[_])
+    extends ZWorkflowStub { self =>
   override val untyped: ZWorkflowStub.Untyped = new ZWorkflowStub.UntypedImpl(toJava)
 }
 

@@ -1,7 +1,7 @@
 package zio.temporal.workflow
 
 import io.temporal.workflow.ExternalWorkflowStub
-import zio.temporal.internal.Stubs
+import zio.temporal.internal.{BasicStubOps, Stubs}
 import zio.temporal.internalApi
 import zio.temporal.signal.ZExternalWorkflowStubSignalSyntax
 
@@ -10,7 +10,7 @@ import zio.temporal.signal.ZExternalWorkflowStubSignalSyntax
   * @see
   *   [[ExternalWorkflowStub]]
   */
-sealed trait ZExternalWorkflowStub {
+sealed trait ZExternalWorkflowStub extends BasicStubOps {
   def toJava: ExternalWorkflowStub
 
   def untyped: ZExternalWorkflowStub.Untyped
@@ -19,7 +19,8 @@ sealed trait ZExternalWorkflowStub {
     untyped.cancel()
 }
 
-final class ZExternalWorkflowStubImpl @internalApi() (val toJava: ExternalWorkflowStub) extends ZExternalWorkflowStub {
+final class ZExternalWorkflowStubImpl @internalApi() (val toJava: ExternalWorkflowStub, val stubbedClass: Class[_])
+    extends ZExternalWorkflowStub {
   override val untyped: ZExternalWorkflowStub.Untyped = new ZExternalWorkflowStub.UntypedImpl(toJava)
 }
 

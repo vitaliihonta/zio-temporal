@@ -14,7 +14,7 @@ private[zio] object IsActivityImplicits {
     import c.universe._
 
     def materializeImpl[A: WeakTypeTag]: Expr[IsActivity[A]] = {
-      assertExtendsActivity(weakTypeOf[A].dealias)
+      assertActivity(weakTypeOf[A].dealias, isFromImplicit = true)
 
       reify {
         IsActivity.__zio_temporal_IsActivityInstance.asInstanceOf[IsActivity[A]]

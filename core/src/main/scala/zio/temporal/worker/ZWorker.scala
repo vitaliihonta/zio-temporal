@@ -3,9 +3,10 @@ package zio.temporal.worker
 import zio.*
 import zio.temporal.internal.ClassTagUtils
 import io.temporal.worker.Worker
-import zio.temporal.activity.IsActivity
-import zio.temporal.workflow.{HasPublicNullaryConstructor, IsConcreteClass, IsWorkflow}
+import zio.temporal.activity.{ExtendsActivity, IsActivity}
+import zio.temporal.workflow.{ExtendsWorkflow, HasPublicNullaryConstructor, IsConcreteClass, IsWorkflow}
 import io.temporal.worker.WorkerFactory
+
 import scala.reflect.ClassTag
 
 /** Hosts activity and workflow implementations. Uses long poll to receive activity and workflow tasks and processes
@@ -41,7 +42,7 @@ class ZWorker private[zio] (
 
   /** Allows to add workflow to this worker
     */
-  def addWorkflow[I: IsWorkflow]: ZWorker.AddWorkflowDsl[I] =
+  def addWorkflow[I: ExtendsWorkflow]: ZWorker.AddWorkflowDsl[I] =
     new ZWorker.AddWorkflowDsl[I](this)
 
   /** Registers activity implementation objects with a worker. An implementation object can implement one or more
@@ -50,7 +51,7 @@ class ZWorker private[zio] (
     * @see
     *   [[Worker#registerActivitiesImplementations]]
     */
-  def addActivityImplementation[A <: AnyRef: IsActivity](activity: A): UIO[ZWorker] = ZIO.succeed {
+  def addActivityImplementation[A <: AnyRef: ExtendsActivity](activity: A): UIO[ZWorker] = ZIO.succeed {
     toJava.registerActivitiesImplementations(activity)
     this
   }
@@ -61,7 +62,7 @@ class ZWorker private[zio] (
     * @see
     *   [[Worker#registerActivitiesImplementations]]
     */
-  def addActivityImplementationService[A <: AnyRef: IsActivity: Tag]: URIO[A, ZWorker] = {
+  def addActivityImplementationService[A <: AnyRef: ExtendsActivity: Tag]: URIO[A, ZWorker] = {
     ZIO.serviceWithZIO[A] { activity =>
       addActivityImplementation[A](activity)
     }
@@ -72,10 +73,10 @@ object ZWorker {
 
   type Add[+LowerR, -UpperR] = ZIOAspect[LowerR, UpperR, Nothing, Any, ZWorker, ZWorker]
 
-  def addWorkflow[I: IsWorkflow]: ZWorker.AddWorkflowAspectDsl[I] =
-    new AddWorkflowAspectDsl[I](implicitly[IsWorkflow[I]])
+  def addWorkflow[I: ExtendsWorkflow]: ZWorker.AddWorkflowAspectDsl[I] =
+    new AddWorkflowAspectDsl[I](implicitly[ExtendsWorkflow[I]])
 
-  def addActivityImplementation[Activity <: AnyRef: IsActivity](activity: Activity): ZWorker.Add[Nothing, Any] =
+  def addActivityImplementation[Activity <: AnyRef: ExtendsActivity](activity: Activity): ZWorker.Add[Nothing, Any] =
     new ZIOAspect[Nothing, Any, Nothing, Any, ZWorker, ZWorker] {
       override def apply[R >: Nothing <: Any, E >: Nothing <: Any, A >: ZWorker <: ZWorker](
         zio:            ZIO[R, E, A]
@@ -84,7 +85,7 @@ object ZWorker {
         zio.flatMap(_.addActivityImplementation[Activity](activity))
     }
 
-  def addActivityImplementationService[Activity <: AnyRef: IsActivity: Tag]: ZWorker.Add[Nothing, Activity] =
+  def addActivityImplementationService[Activity <: AnyRef: ExtendsActivity: Tag]: ZWorker.Add[Nothing, Activity] =
     new ZIOAspect[Nothing, Activity, Nothing, Any, ZWorker, ZWorker] {
       override def apply[R >: Nothing <: Activity, E >: Nothing <: Any, A >: ZWorker <: ZWorker](
         zio:            ZIO[R, E, A]
@@ -95,9 +96,9 @@ object ZWorker {
 
   /** Allows building workers using [[ZIOAspect]]
     */
-  final class AddWorkflowAspectDsl[I] private[zio] (private val isWorkflow: IsWorkflow[I]) extends AnyVal {
+  final class AddWorkflowAspectDsl[I] private[zio] (private val extendsWorkflow: ExtendsWorkflow[I]) extends AnyVal {
     // for internal use only
-    private implicit def _isWorkflow: IsWorkflow[I] = isWorkflow
+    private implicit def _extendsWorkflow: ExtendsWorkflow[I] = extendsWorkflow
 
     /** Registers workflow implementation classes with a worker. Can be called multiple times to add more types.
       *
