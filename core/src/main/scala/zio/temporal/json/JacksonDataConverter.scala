@@ -11,8 +11,8 @@ object JacksonDataConverter {
     JsonMapper
       .builder()
       .addModule(DefaultScalaModule)
-      // TODO: add BoxedUnit deserializer
       .addModule(new JavaTimeModule)
+      .addModule(BoxedUnitModule)
       .build()
 
   def make(objectMapper: ObjectMapper = DefaultObjectMapper): DataConverter = {

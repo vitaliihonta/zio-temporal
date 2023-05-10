@@ -56,7 +56,7 @@ private[zio] object ClassTagUtils {
       throw new NoActivityMethodException(s"$cls doesn't have an activity method '$methodName'!")
     }
 
-    logger.info(s"Found activity methods with name=$methodName: $actMethods")
+    logger.trace(s"Found activity methods with name=$methodName: $actMethods")
 
     val name = actMethods
       // It may have overrides
@@ -66,8 +66,7 @@ private[zio] object ClassTagUtils {
       .filter(_.nonEmpty)
       .getOrElse(methodName.capitalize)
 
-    // TODO: make debug
-    logger.info(s"Activity interface's $cls method=$methodName has activity name $name")
+    logger.trace(s"Activity interface's $cls method=$methodName has activity name $name")
     name
   }
 }
