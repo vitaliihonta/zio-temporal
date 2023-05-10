@@ -5,7 +5,6 @@ import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, T
 import scala.quoted.*
 import zio.temporal.workflow.ZAsync
 
-// TODO: do the same as in scala 2
 trait ZActivityExecutionSyntax {
   inline def execute[R](inline f: R)(using javaTypeTag: JavaTypeTag[R]): R =
     ${ ZActivityExecutionSyntax.executeImpl[R]('f, 'javaTypeTag) }
@@ -27,13 +26,19 @@ object ZActivityExecutionSyntax {
     val invocation = getMethodInvocationOfActivity(f.asTerm)
     assertTypedActivityStub(invocation.tpe, "execute")
 
-    val method       = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
-    val activityName = getActivityName(method.symbol)
+    val method     = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
+    val methodName = method.symbol.name
 
-    val stub = invocation.selectJavaReprOf[io.temporal.workflow.ActivityStub]
+    val stub         = invocation.selectJavaReprOf[io.temporal.workflow.ActivityStub]
+    val stubbedClass = invocation.selectStubbedClass
 
     '{
-      TemporalWorkflowFacade.executeActivity($stub, ${ Expr(activityName) }, ${ method.argsExpr })($javaTypeTag)
+      TemporalWorkflowFacade.executeActivity(
+        $stub,
+        $stubbedClass,
+        ${ Expr(methodName) },
+        ${ method.argsExpr }
+      )($javaTypeTag)
     }.debugged(SharedCompileTimeMessages.generatedActivityExecute)
   }
 
@@ -49,16 +54,20 @@ object ZActivityExecutionSyntax {
     val invocation = getMethodInvocationOfActivity(f.asTerm)
     assertTypedActivityStub(invocation.tpe, "executeAsync")
 
-    val method       = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
-    val activityName = getActivityName(method.symbol)
+    val method     = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
+    val methodName = method.symbol.name
 
-    val stub = invocation.selectJavaReprOf[io.temporal.workflow.ActivityStub]
+    val stub         = invocation.selectJavaReprOf[io.temporal.workflow.ActivityStub]
+    val stubbedClass = invocation.selectStubbedClass
 
     '{
       ZAsync.fromJava(
-        TemporalWorkflowFacade.executeActivityAsync($stub, ${ Expr(activityName) }, ${ method.argsExpr })(
-          $javaTypeTag
-        )
+        TemporalWorkflowFacade.executeActivityAsync(
+          $stub,
+          $stubbedClass,
+          ${ Expr(methodName) },
+          ${ method.argsExpr }
+        )($javaTypeTag)
       )
     }.debugged(SharedCompileTimeMessages.generatedActivityExecuteAsync)
   }

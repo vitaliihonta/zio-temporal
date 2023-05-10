@@ -40,8 +40,12 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   }
 
   // Asserts that this is a ActivityInterface
-  def getMethodInvocationOfActivity(tree: Term): MethodInvocation =
-    getMethodInvocation(tree, getActivityInterface)
+  def getMethodInvocationOfActivity(tree: Term): MethodInvocation = {
+    // NOTE: used assertActivity before, but it's too restrictive.
+    // Checking the stubType instead allows usage of polymorphic workflow interfaces.
+    // The fact that the stub was built guarantees that the activity method was invoked on a valid stub
+    getMethodInvocation(tree, unwrapStub)
+  }
 
   private def getMethodInvocation(tree: Term, disassembleType: TypeRepr => TypeRepr): MethodInvocation =
     tree match {
@@ -72,6 +76,11 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
         .select(instance.symbol.methodMember("toJava").head)
         .asExprOf[T]
 
+    def selectStubbedClass: Expr[Class[_]] =
+      instance
+        .select(instance.symbol.methodMember("stubbedClass").head)
+        .asExprOf[Class[_]]
+
     def getMethod(errorDetails: => String): MethodInfo =
       unwrappedType.typeSymbol
         .methodMember(methodName)
@@ -80,7 +89,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
         .getOrElse(
           error(
             SharedCompileTimeMessages.methodNotFound(
-              instance.tpe.toString,
+              instance.tpe.show,
               methodName,
               errorDetails
             )
@@ -178,11 +187,12 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     }
   }
 
-  // TODO: do the same as in scala 2
   def assertTypedActivityStub(activity: TypeRepr, method: String): TypeRepr = {
     activity.dealias match {
-      case AndType(left, act) if left =:= zactivityStub =>
-        act
+      case AndType(stub, act) =>
+        if (!(stub =:= zactivityStub))
+          error(SharedCompileTimeMessages.usingNonStubOf("ZActivityStub", method, activity.show))
+        else act
       case other =>
         error(
           SharedCompileTimeMessages.usingNonStubOf("ZActivityStub", method, other.show)
@@ -217,7 +227,8 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
           if stub =:= zworkflowStub ||
             stub =:= zchildWorkflowStub ||
             stub =:= zexternalWorkflowStub ||
-            stub =:= zworkflowContinueAsNewStub =>
+            stub =:= zworkflowContinueAsNewStub ||
+            stub =:= zactivityStub =>
         wrapped
       case other => other
     }
@@ -289,19 +300,6 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
       case Some(Apply(Select(New(_), _), List(NamedArg(_, Literal(StringConstant(name)))))) =>
         name
       case _ => method.name
-    }
-  }
-
-  def getActivityName(method: Symbol): String = {
-    def methodNameCap = method.name.capitalize
-    if (!method.hasAnnotation(ActivityMethod)) {
-      methodNameCap
-    } else {
-      method.getAnnotation(ActivityMethod) match {
-        case Some(Apply(Select(New(_), _), List(NamedArg(_, Literal(StringConstant(name)))))) =>
-          name
-        case _ => methodNameCap
-      }
     }
   }
 
