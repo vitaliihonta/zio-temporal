@@ -14,7 +14,7 @@ class ZChildSignalMacro(override val c: blackbox.Context) extends InvocationMacr
 
     val tree       = f.tree
     val invocation = getMethodInvocation(tree)
-    assertTypedWorkflowStub(invocation.instance.tpe, "ZChildWorkflowStub", "signal")
+    assertTypedWorkflowStub(invocation.instance.tpe, typeOf[ZChildWorkflowStub], "signal")
 
     val method = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     method.assertSignalMethod()

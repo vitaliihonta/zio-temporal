@@ -1,4 +1,4 @@
-package com.example.hello.misc
+package com.example.hello.misc.generics
 
 import zio.*
 import zio.logging.backend.SLF4J
@@ -25,7 +25,7 @@ class WorkflowBarImpl extends WorkflowBar {
   override def baseMethod(n: Int): Int = n + 2
 }
 
-object GenericsMain extends ZIOAppDefault {
+object GenericWorkflowsClientStubMain extends ZIOAppDefault {
   def basicExecute[W <: WorkflowMixin: IsWorkflow](stub: ZWorkflowStub.Of[W]): TemporalIO[Int] = {
     ZIO.logInfo("Executing generic workflows") *>
       ZWorkflowStub.execute(stub.baseMethod(40))

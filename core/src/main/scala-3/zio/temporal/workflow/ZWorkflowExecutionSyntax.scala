@@ -28,7 +28,7 @@ object ZWorkflowExecutionSyntax {
     import macroUtils.*
 
     val invocation = getMethodInvocationOfWorkflow(f.asTerm)
-    assertTypedWorkflowStub(invocation.tpe, "ZWorkflowStub", "start")
+    assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZWorkflowStub], "start")
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
@@ -54,7 +54,7 @@ object ZWorkflowExecutionSyntax {
     import macroUtils.*
 
     val invocation = getMethodInvocationOfWorkflow(f.asTerm)
-    assertTypedWorkflowStub(invocation.tpe, "ZWorkflowStub", "execute")
+    assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZWorkflowStub], "execute")
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
@@ -79,7 +79,7 @@ object ZWorkflowExecutionSyntax {
     import macroUtils.*
 
     val invocation = getMethodInvocationOfWorkflow(f.asTerm)
-    assertTypedWorkflowStub(invocation.tpe, "ZWorkflowStub", "executeWithTimeout")
+    assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZWorkflowStub], "executeWithTimeout")
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()

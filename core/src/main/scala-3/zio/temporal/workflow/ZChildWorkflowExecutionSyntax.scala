@@ -24,7 +24,7 @@ object ZChildWorkflowExecutionSyntax {
     import macroUtils.*
 
     val invocation = getMethodInvocationOfWorkflow(f.asTerm)
-    assertTypedWorkflowStub(invocation.tpe, "ZChildWorkflowStub", "execute")
+    assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZChildWorkflowStub], "execute")
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
@@ -46,7 +46,7 @@ object ZChildWorkflowExecutionSyntax {
     import macroUtils.*
 
     val invocation = getMethodInvocationOfWorkflow(f.asTerm)
-    assertTypedWorkflowStub(invocation.tpe, "ZChildWorkflowStub", "executeAsync")
+    assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZChildWorkflowStub], "executeAsync")
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()

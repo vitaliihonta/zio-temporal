@@ -2,7 +2,6 @@ package zio.temporal.workflow
 
 import zio.temporal.internalApi
 
-// TODO: add for scala 3
 trait ExtendsWorkflow[A] {}
 
 object ExtendsWorkflow extends ExtendsWorkflowImplicits {

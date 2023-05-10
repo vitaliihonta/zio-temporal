@@ -179,16 +179,20 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
     }
   }
 
-  protected def assertTypedWorkflowStub(workflow: Type, stubType: String, method: String): Type = {
+  protected def assertTypedWorkflowStub(workflow: Type, stubType: Type, method: String): Type = {
     workflow.dealias match {
       case SingleType(_, sym) =>
         assertTypedWorkflowStub(sym.typeSignature.finalResultType.dealias, stubType, method)
       case RefinedType(List(stub, wf), _) =>
-        assertWorkflow(wf, isFromImplicit = false)
-        workflow
+        // NOTE: used assertWorkflow before, but it's too restrictive.
+        // Checking the stubType instead allows usage of polymorphic workflow interfaces.
+        // The fact that the stub was built guarantees that the workflow/signal/query method was invoked on a valid stub
+        if (!(stub =:= stubType))
+          error(SharedCompileTimeMessages.usingNonStubOf(stubType.toString, method, workflow.toString))
+        else workflow
       case other =>
         println(other.getClass)
-        error(SharedCompileTimeMessages.usingNonStubOf(stubType, method, other.toString))
+        error(SharedCompileTimeMessages.usingNonStubOf(stubType.toString, method, other.toString))
     }
   }
 

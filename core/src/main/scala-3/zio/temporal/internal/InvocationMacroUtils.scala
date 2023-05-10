@@ -32,14 +32,16 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
 
   // Asserts that this is a WorkflowInterface
-  // TODO: make it work for generics
-  def getMethodInvocationOfWorkflow(tree: Term): MethodInvocation =
-    getMethodInvocation(tree, getWorkflowInterface)
+  def getMethodInvocationOfWorkflow(tree: Term): MethodInvocation = {
+    // NOTE: used assertWorkflow before, but it's too restrictive.
+    // Checking the stubType instead allows usage of polymorphic workflow interfaces.
+    // The fact that the stub was built guarantees that the workflow/signal/query method was invoked on a valid stub
+    getMethodInvocation(tree, unwrapStub)
+  }
 
   // Asserts that this is a ActivityInterface
-  // TODO: make it work for generics
   def getMethodInvocationOfActivity(tree: Term): MethodInvocation =
-    getMethodInvocation(tree, getActivityType)
+    getMethodInvocation(tree, getActivityInterface)
 
   private def getMethodInvocation(tree: Term, disassembleType: TypeRepr => TypeRepr): MethodInvocation =
     tree match {
@@ -159,32 +161,21 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     assertWorkflow(workflow, isFromImplicit = false)
   }
 
-  // TODO: follow the same approach as getWorkflowInterface
-  def getActivityType(workflow: TypeRepr): TypeRepr =
-    findActivityType(workflow).getOrElse(error(SharedCompileTimeMessages.notActivity(workflow.show)))
+  def getActivityInterface(activity: TypeRepr): TypeRepr = {
+    assertActivity(activity, isFromImplicit = false)
+  }
 
-  def assertTypedWorkflowStub(workflow: TypeRepr, stubType: String, method: String): TypeRepr = {
+  def assertTypedWorkflowStub(workflow: TypeRepr, stubType: TypeRepr, method: String): TypeRepr = {
     workflow.dealias match {
-      case AndType(left, wf)
-          if left =:= zworkflowStub ||
-            left =:= zchildWorkflowStub ||
-            left =:= zexternalWorkflowStub ||
-            left =:= zworkflowContinueAsNewStub =>
+      case AndType(stub, wf) =>
+        if (!(stub =:= stubType))
+          error(SharedCompileTimeMessages.usingNonStubOf(stubType.show, method, workflow.toString))
         wf
       case other =>
         error(
-          SharedCompileTimeMessages.usingNonStubOf(stubType, method, other.show)
+          SharedCompileTimeMessages.usingNonStubOf(stubType.show, method, other.show)
         )
     }
-  }
-
-  def findActivityType(activity: TypeRepr): Option[TypeRepr] = {
-    val tpe = activity.dealias match {
-      case AndType(left, act) => act
-      case other              => other
-    }
-    if (!isActivity(tpe.typeSymbol)) None
-    else Some(tpe)
   }
 
   def assertTypedActivityStub(activity: TypeRepr, method: String): TypeRepr = {
@@ -219,11 +210,20 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   def isWorkflow(sym: Symbol): Boolean =
     sym.hasAnnotation(WorkflowInterface)
 
-  def assertWorkflow(workflow: TypeRepr, isFromImplicit: Boolean): TypeRepr = {
-    val tpe = workflow.dealias match {
-      case AndType(_, wf) => wf
-      case other          => other
+  def unwrapStub(stub: TypeRepr): TypeRepr = {
+    stub.dealias match {
+      case AndType(stub, wrapped)
+          if stub =:= zworkflowStub ||
+            stub =:= zchildWorkflowStub ||
+            stub =:= zexternalWorkflowStub ||
+            stub =:= zworkflowContinueAsNewStub =>
+        wrapped
+      case other => other
     }
+  }
+
+  def assertWorkflow(workflow: TypeRepr, isFromImplicit: Boolean): TypeRepr = {
+    val tpe = unwrapStub(workflow)
     if (isWorkflow(tpe.typeSymbol) || isWorkflowImplicitProvided(tpe, isFromImplicit)) {
       tpe
     } else {
@@ -253,10 +253,14 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     sym.hasAnnotation(ActivityInterface)
 
   def assertActivity(activity: TypeRepr, isFromImplicit: Boolean): TypeRepr = {
-    if (isActivity(activity.typeSymbol) || isActivityImplicitProvided(activity, isFromImplicit)) {
-      activity
+    val tpe = activity.dealias match {
+      case AndType(_, act) => act
+      case other           => other
+    }
+    if (isActivity(tpe.typeSymbol) || isActivityImplicitProvided(tpe, isFromImplicit)) {
+      tpe
     } else {
-      error(SharedCompileTimeMessages.notActivity(activity.show))
+      error(SharedCompileTimeMessages.notActivity(tpe.show))
     }
   }
 
