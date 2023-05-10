@@ -31,45 +31,31 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   def betaReduceExpression[A: Type](f: Expr[A]): Expr[A] =
     Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
 
-  // Asserts that this is a WorkflowInterface
-  def getMethodInvocationOfWorkflow(tree: Term): MethodInvocation = {
-    // NOTE: used assertWorkflow before, but it's too restrictive.
-    // Checking the stubType instead allows usage of polymorphic workflow interfaces.
-    // The fact that the stub was built guarantees that the workflow/signal/query method was invoked on a valid stub
-    getMethodInvocation(tree, unwrapStub)
-  }
-
-  // Asserts that this is a ActivityInterface
-  def getMethodInvocationOfActivity(tree: Term): MethodInvocation = {
-    // NOTE: used assertActivity before, but it's too restrictive.
-    // Checking the stubType instead allows usage of polymorphic workflow interfaces.
-    // The fact that the stub was built guarantees that the activity method was invoked on a valid stub
-    getMethodInvocation(tree, unwrapStub)
-  }
-
-  private def getMethodInvocation(tree: Term, disassembleType: TypeRepr => TypeRepr): MethodInvocation =
+  // NOTE: used assertWorkflow/assertActivity before, but it's too restrictive.
+  // Checking the stubType instead allows usage of polymorphic workflow interfaces.
+  // The fact that the stub was built guarantees that the workflow/signal/query/activity method was invoked on a valid stub
+  def getMethodInvocation(tree: Term): MethodInvocation =
     tree match {
       case Inlined(_, _, body) =>
-        getMethodInvocation(body, disassembleType)
+        getMethodInvocation(body)
       case Select(instance, methodName) =>
-        MethodInvocation(instance, methodName, Nil, disassembleType)
+        MethodInvocation(instance, methodName, Nil)
       case Apply(Select(instance, methodName), args) =>
-        MethodInvocation(instance, methodName, args, disassembleType)
+        MethodInvocation(instance, methodName, args)
       case TypeApply(inner, _) =>
-        getMethodInvocation(inner, disassembleType)
+        getMethodInvocation(inner)
       case Block(List(inner: Term), _) =>
-        getMethodInvocation(inner, disassembleType)
+        getMethodInvocation(inner)
       case _ => sys.error(s"Expected simple method invocation, got tree of class ${tree.getClass}: $tree")
     }
 
   case class MethodInvocation(
-    instance:        Term,
-    methodName:      String,
-    args:            List[Term],
-    disassembleType: TypeRepr => TypeRepr) {
+    instance:   Term,
+    methodName: String,
+    args:       List[Term]) {
 
     val tpe: TypeRepr         = instance.tpe.widen
-    private val unwrappedType = disassembleType(instance.tpe.widen)
+    private val unwrappedType = unwrapStub(instance.tpe.widen)
 
     def selectJavaReprOf[T: Type]: Expr[T] =
       instance
@@ -168,10 +154,6 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
 
   def getWorkflowInterface(workflow: TypeRepr): TypeRepr = {
     assertWorkflow(workflow, isFromImplicit = false)
-  }
-
-  def getActivityInterface(activity: TypeRepr): TypeRepr = {
-    assertActivity(activity, isFromImplicit = false)
   }
 
   def assertTypedWorkflowStub(workflow: TypeRepr, stubType: TypeRepr, method: String): TypeRepr = {

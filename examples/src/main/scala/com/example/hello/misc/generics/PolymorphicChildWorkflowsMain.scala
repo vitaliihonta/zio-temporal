@@ -8,10 +8,13 @@ import zio.temporal.worker.{ZWorker, ZWorkerFactory, ZWorkerFactoryOptions}
 import zio.temporal.workflow.*
 
 trait NotificationsSenderWorkflow {
+  // NOTE: must have a @workflowMethod annotation WITHOUT an explicit name.
+  // Otherwise, workflow subtypes will have the same workflowType
   @workflowMethod
   def send(msg: String): Unit
 }
 
+// NOTE: must have a @workflowInterface annotation
 @workflowInterface
 trait SmsNotificationsSenderWorkflow extends NotificationsSenderWorkflow
 class SmsNotificationsSenderWorkflowImpl extends SmsNotificationsSenderWorkflow {
@@ -22,6 +25,7 @@ class SmsNotificationsSenderWorkflowImpl extends SmsNotificationsSenderWorkflow 
   }
 }
 
+// NOTE: must have a @workflowInterface annotation
 @workflowInterface
 trait PushNotificationsSenderWorkflow extends NotificationsSenderWorkflow
 
@@ -46,6 +50,7 @@ trait NotificationChildBasedWorkflow {
 class NotificationChildBasedWorkflowImpl extends NotificationChildBasedWorkflow {
   private val logger = ZWorkflow.makeLogger
 
+  // Using base Workflow type here
   private val senders: List[ZChildWorkflowStub.Of[NotificationsSenderWorkflow]] =
     List(
       ZWorkflow
@@ -66,6 +71,7 @@ class NotificationChildBasedWorkflowImpl extends NotificationChildBasedWorkflow 
       case (_, sender) =>
         try {
           // try to send
+          logger.info(s"Trying ${sender.stubbedClass}...")
           ZChildWorkflowStub.execute(sender.send(msg))
           true
         } catch {
@@ -86,6 +92,7 @@ object PolymorphicChildWorkflowsMain extends ZIOAppDefault {
   override val run: ZIO[ZIOAppArgs with Scope, Any, Any] = {
     val registerWorkflow =
       ZWorkerFactory.newWorker(TaskQueue) @@
+        // register concrete workflow types
         ZWorker.addWorkflow[NotificationChildBasedWorkflowImpl].fromClass @@
         ZWorker.addWorkflow[SmsNotificationsSenderWorkflowImpl].fromClass @@
         ZWorker.addWorkflow[PushNotificationsSenderWorkflowImpl].fromClass

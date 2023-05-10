@@ -14,7 +14,7 @@ object ZExternalWorkflowStubSignalSyntax {
     import q.reflect.*
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
-    val invocation = getMethodInvocationOfWorkflow(f.asTerm)
+    val invocation = getMethodInvocation(f.asTerm)
     assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZExternalWorkflowStub], "signal")
 
     val method = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)

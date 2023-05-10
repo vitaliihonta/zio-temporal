@@ -23,7 +23,7 @@ object ZWorkflowContinueAsNewStubSyntax {
     val macroUtils = new InvocationMacroUtils[q.type]
     import macroUtils.*
 
-    val invocation = getMethodInvocationOfWorkflow(f.asTerm)
+    val invocation = getMethodInvocation(f.asTerm)
     assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZWorkflowContinueAsNewStub], "executeAsync")
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)

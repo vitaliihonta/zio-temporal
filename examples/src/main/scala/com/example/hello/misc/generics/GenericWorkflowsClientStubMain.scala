@@ -26,7 +26,8 @@ class WorkflowBarImpl extends WorkflowBar {
 }
 
 object GenericWorkflowsClientStubMain extends ZIOAppDefault {
-  def basicExecute[W <: WorkflowMixin: IsWorkflow](stub: ZWorkflowStub.Of[W]): TemporalIO[Int] = {
+  // Using base Workflow type here
+  def basicExecute[W <: WorkflowMixin](stub: ZWorkflowStub.Of[W]): TemporalIO[Int] = {
     ZIO.logInfo("Executing generic workflows") *>
       ZWorkflowStub.execute(stub.baseMethod(40))
   }

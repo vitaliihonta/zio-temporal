@@ -13,7 +13,6 @@ import zio.temporal.workflow.{
 }
 import zio._
 
-// TODO: add GenericsMain test here
 class CompileTimeValidationSpec extends AnyWordSpec {
   private val testStub: ZWorkflowStub.Of[SignalWorkflow] = null
   private val workflowClient: ZWorkflowClient            = null

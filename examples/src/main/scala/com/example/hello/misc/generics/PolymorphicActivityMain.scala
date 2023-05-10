@@ -4,7 +4,7 @@ import zio.*
 import zio.logging.backend.SLF4J
 import zio.temporal.*
 import zio.temporal.activity.{ZActivity, ZActivityOptions, ZActivityStub}
-import zio.temporal.failure.{ActivityFailure, ApplicationFailure, ChildWorkflowFailure}
+import zio.temporal.failure.{ActivityFailure, ApplicationFailure}
 import zio.temporal.worker.{ZWorker, ZWorkerFactory, ZWorkerFactoryOptions}
 import zio.temporal.workflow.*
 
@@ -14,6 +14,7 @@ trait NotificationsSenderActivity {
 
 @activityInterface
 trait SmsNotificationsSenderActivity extends NotificationsSenderActivity {
+  // NOTE: must override the method signature & provide a UNIQUE activity name
   @activityMethod(name = "SendSMS")
   override def send(msg: String): Unit
 }
@@ -34,6 +35,7 @@ class SmsNotificationsSenderActivityImpl(implicit options: ZActivityOptions[Any]
 
 @activityInterface
 trait PushNotificationsSenderActivity extends NotificationsSenderActivity {
+  // NOTE: must override the method signature & provide a UNIQUE activity name
   @activityMethod(name = "SendPush")
   override def send(msg: String): Unit
 }
@@ -64,6 +66,7 @@ trait NotificationActivityBasedWorkflow {
 class NotificationActivityBasedWorkflowImpl extends NotificationActivityBasedWorkflow {
   private val logger = ZWorkflow.makeLogger
 
+  // Using base Workflow type here
   private val senders: List[ZActivityStub.Of[NotificationsSenderActivity]] =
     List(
       ZWorkflow
@@ -81,12 +84,12 @@ class NotificationActivityBasedWorkflowImpl extends NotificationActivityBasedWor
     )
 
   override def send(msg: String): Unit = {
-    senders.map(_.stubbedClass)
     senders.foldLeft(false) {
       case (sent @ true, _) => sent
       case (_, sender) =>
         try {
           // try to send
+          logger.info(s"Trying ${sender.stubbedClass}...")
           ZActivityStub.execute(sender.send(msg))
           true
         } catch {
