@@ -184,7 +184,6 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
           error(SharedCompileTimeMessages.usingNonStubOf(stubType.toString, method, workflow.toString))
         else workflow
       case other =>
-        println(other.getClass)
         error(SharedCompileTimeMessages.usingNonStubOf(stubType.toString, method, other.toString))
     }
   }

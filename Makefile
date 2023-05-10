@@ -38,3 +38,7 @@ run-heartbeatingactivity-starter:
 .PHONY: run-heartbeatingactivity-cancel
 run-heartbeatingactivity-cancel:
 	sbt "examples/runMain com.example.heartbeatingactivity.HeartbeatingActivityBatchCancelling"
+
+.PHONY: run-payments-example
+run-payments-example:
+	sbt "examples/runMain com.example.payments.Main"
