@@ -25,8 +25,8 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   private val zworkflowContinueAsNewStub = TypeRepr.of[ZWorkflowContinueAsNewStub]
   private val zactivityStub              = TypeRepr.of[ZActivityStub]
 
-  protected val IsWorkflowImplicitTC = TypeRepr.of[IsWorkflow[Any]]
-  protected val IsActivityImplicitC  = TypeRepr.of[IsActivity[Any]]
+  protected val IsWorkflowImplicitTC = TypeRepr.typeConstructorOf(classOf[IsWorkflow[Any]])
+  protected val IsActivityImplicitC  = TypeRepr.typeConstructorOf(classOf[IsActivity[Any]])
 
   def betaReduceExpression[A: Type](f: Expr[A]): Expr[A] =
     Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
@@ -155,20 +155,13 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     }
   }
 
-  def getWorkflowInterface(workflow: TypeRepr): TypeRepr =
-    findWorkflowType(workflow).getOrElse(error(SharedCompileTimeMessages.notWorkflow(workflow.show)))
+  def getWorkflowInterface(workflow: TypeRepr): TypeRepr = {
+    assertWorkflow(workflow, isFromImplicit = false)
+  }
 
+  // TODO: follow the same approach as getWorkflowInterface
   def getActivityType(workflow: TypeRepr): TypeRepr =
     findActivityType(workflow).getOrElse(error(SharedCompileTimeMessages.notActivity(workflow.show)))
-
-  def findWorkflowType(workflow: TypeRepr): Option[TypeRepr] = {
-    val tpe = workflow.dealias match {
-      case AndType(left, wf) => wf
-      case other             => other
-    }
-    if (!isWorkflow(tpe.typeSymbol)) None
-    else Some(tpe)
-  }
 
   def assertTypedWorkflowStub(workflow: TypeRepr, stubType: String, method: String): TypeRepr = {
     workflow.dealias match {
@@ -227,10 +220,14 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     sym.hasAnnotation(WorkflowInterface)
 
   def assertWorkflow(workflow: TypeRepr, isFromImplicit: Boolean): TypeRepr = {
-    if (isWorkflow(workflow.typeSymbol) || isWorkflowImplicitProvided(workflow, isFromImplicit)) {
-      workflow
+    val tpe = workflow.dealias match {
+      case AndType(_, wf) => wf
+      case other          => other
+    }
+    if (isWorkflow(tpe.typeSymbol) || isWorkflowImplicitProvided(tpe, isFromImplicit)) {
+      tpe
     } else {
-      error(SharedCompileTimeMessages.notWorkflow(workflow.show))
+      error(SharedCompileTimeMessages.notWorkflow(tpe.show))
     }
   }
 

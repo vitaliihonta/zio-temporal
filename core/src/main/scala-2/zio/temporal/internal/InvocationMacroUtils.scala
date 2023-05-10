@@ -3,8 +3,7 @@ package zio.temporal.internal
 import izumi.reflect.Tag
 import zio.temporal.*
 import zio.temporal.activity.IsActivity
-import zio.temporal.workflow.{IsWorkflow, ZWorkflowStub}
-
+import zio.temporal.workflow.IsWorkflow
 import scala.reflect.macros.blackbox
 
 abstract class InvocationMacroUtils(override val c: blackbox.Context)
@@ -168,7 +167,16 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
 
   private def isWorkflowImplicitProvided(workflow: Type, isFromImplicit: Boolean): Boolean = {
     // Don't infer implicit IsWorkflow in case that the IsWorkflow derivation
-    !isFromImplicit && c.inferImplicitValue(appliedType(IsWorkflowImplicitTC, workflow), silent = true) != EmptyTree
+    if (isFromImplicit) false
+    else {
+      val searchRes = {
+        c.typecheck(
+          c.inferImplicitValue(appliedType(IsWorkflowImplicitTC, workflow), silent = true),
+          silent = true
+        )
+      }
+      searchRes != EmptyTree
+    }
   }
 
   protected def assertTypedWorkflowStub(workflow: Type, stubType: String, method: String): Type = {
@@ -194,7 +202,14 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
 
   private def isActivityImplicitProvided(workflow: Type, isFromImplicit: Boolean): Boolean = {
     // Don't infer implicit IsActivity in case that the IsActivity derivation
-    !isFromImplicit && c.inferImplicitValue(appliedType(IsActivityImplicitC, workflow), silent = true) != EmptyTree
+    if (isFromImplicit) false
+    else {
+      val searchRes = c.typecheck(
+        c.inferImplicitValue(appliedType(IsActivityImplicitC, workflow), silent = true),
+        silent = true
+      )
+      searchRes != EmptyTree
+    }
   }
 
   protected def assertTypedActivityStub(activity: Type, method: String): Type = {
