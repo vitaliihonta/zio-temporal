@@ -5,6 +5,7 @@ import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, T
 import scala.quoted.*
 import zio.temporal.workflow.ZAsync
 
+// TODO: do the same as in scala 2
 trait ZActivityExecutionSyntax {
   inline def execute[R](inline f: R)(using javaTypeTag: JavaTypeTag[R]): R =
     ${ ZActivityExecutionSyntax.executeImpl[R]('f, 'javaTypeTag) }

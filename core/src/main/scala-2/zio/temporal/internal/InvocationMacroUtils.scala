@@ -2,13 +2,14 @@ package zio.temporal.internal
 
 import izumi.reflect.Tag
 import zio.temporal.*
-import zio.temporal.activity.IsActivity
+import zio.temporal.activity.{IsActivity, ZActivityStub}
 import zio.temporal.workflow.IsWorkflow
 import scala.reflect.macros.blackbox
 
 abstract class InvocationMacroUtils(override val c: blackbox.Context)
     extends MacroUtils(c)
     with VersionSpecificMacroUtils {
+
   import c.universe._
 
   protected val ActivityInterface = typeOf[activityInterface].dealias
@@ -17,6 +18,8 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
   protected val QueryMethod       = typeOf[queryMethod].dealias
   protected val SignalMethod      = typeOf[signalMethod].dealias
   protected val ActivityMethod    = typeOf[activityMethod].dealias
+
+  protected val ZActivityStubType = typeOf[ZActivityStub].dealias
 
   protected val IsWorkflowImplicitTC = typeOf[IsWorkflow[Any]].typeConstructor
   protected val IsActivityImplicitC  = typeOf[IsActivity[Any]].typeConstructor
@@ -115,16 +118,6 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
     findImplicit(tagTpe, SharedCompileTimeMessages.notFound(tagTpe.toString))
   }
 
-  protected def getActivityName(method: Symbol): String =
-    findAnnotation(method, ActivityMethod)
-      .flatMap(
-        _.children.tail
-          .collectFirst { case NamedArgVersionSpecific(_, Literal(Constant(activityName: String))) =>
-            activityName
-          }
-      )
-      .getOrElse(method.name.toString.capitalize)
-
   /** @note
     *   Type method annotations are missing during Scala 2 macro expansion in case we have only a WeakTypeTag.
     */
@@ -217,12 +210,16 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
   }
 
   protected def assertTypedActivityStub(activity: Type, method: String): Type = {
-    assertActivity(activity, isFromImplicit = false)
     activity.dealias match {
       case SingleType(_, sym) =>
         sym.typeSignature.finalResultType.dealias match {
-          case RefinedType(List(stub, wf), _) =>
-            activity
+          case RefinedType(List(stub, act), _) =>
+            // NOTE: used assertActivity before, but it's too restrictive.
+            // Checking the stubType instead allows usage of polymorphic workflow interfaces.
+            // The fact that the stub was built guarantees that the activity method was invoked on a valid stub
+            if (!(stub =:= ZActivityStubType))
+              error(SharedCompileTimeMessages.usingNonStubOf("ZActivityStub", method, activity.toString))
+            else act
           case other =>
             error(SharedCompileTimeMessages.usingNonStubOf("ZActivityStub", method, other.toString))
         }

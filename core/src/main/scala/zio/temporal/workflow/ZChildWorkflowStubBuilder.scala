@@ -22,7 +22,8 @@ object ZChildWorkflowStubBuilder {
           Workflow.newUntypedChildWorkflowStub(
             ClassTagUtils.getWorkflowType[A],
             options
-          )
+          ),
+          ClassTagUtils.classOf[A]
         )
       )
 

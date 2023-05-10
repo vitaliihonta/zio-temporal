@@ -11,6 +11,7 @@ object JacksonDataConverter {
     JsonMapper
       .builder()
       .addModule(DefaultScalaModule)
+      // TODO: add BoxedUnit deserializer
       .addModule(new JavaTimeModule)
       .build()
 

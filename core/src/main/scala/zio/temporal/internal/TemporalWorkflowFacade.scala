@@ -61,12 +61,13 @@ object TemporalWorkflowFacade {
 
   def executeActivity[R](
     stub:                 ActivityStub,
-    activityName:         String,
+    stubbedClass:         Class[_],
+    methodName:           String,
     args:                 List[Any]
   )(implicit javaTypeTag: JavaTypeTag[R]
   ): R = {
     stub.execute[R](
-      activityName,
+      ClassTagUtils.getActivityType(stubbedClass, methodName),
       javaTypeTag.klass,
       javaTypeTag.genericType,
       args.asInstanceOf[List[AnyRef]]: _*
@@ -75,12 +76,13 @@ object TemporalWorkflowFacade {
 
   def executeActivityAsync[R](
     stub:                 ActivityStub,
-    activityName:         String,
+    stubbedClass:         Class[_],
+    methodName:           String,
     args:                 List[Any]
   )(implicit javaTypeTag: JavaTypeTag[R]
   ): Promise[R] = {
     stub.executeAsync[R](
-      activityName,
+      ClassTagUtils.getActivityType(stubbedClass, methodName),
       javaTypeTag.klass,
       javaTypeTag.genericType,
       args.asInstanceOf[List[AnyRef]]: _*

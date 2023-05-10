@@ -16,10 +16,10 @@ class ZActivityStubMacro(override val c: blackbox.Context) extends InvocationMac
     val invocation = getMethodInvocation(f.tree)
     assertTypedActivityStub(invocation.instance.tpe, "execute")
 
-    val method       = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
-    val activityName = getActivityName(method.symbol)
+    val method     = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
+    val methodName = method.symbol.name.toString
 
-    val executeInvocation = activityExecuteInvocation(invocation, method, activityName, weakTypeOf[R])
+    val executeInvocation = activityExecuteInvocation(invocation, method, methodName, weakTypeOf[R])
 
     executeInvocation.debugged(SharedCompileTimeMessages.generatedActivityExecute)
   }
@@ -31,10 +31,10 @@ class ZActivityStubMacro(override val c: blackbox.Context) extends InvocationMac
     val invocation = getMethodInvocation(f.tree)
     assertTypedActivityStub(invocation.instance.tpe, "executeAsync")
 
-    val method       = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
-    val activityName = getActivityName(method.symbol)
+    val method     = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
+    val methodName = method.symbol.name.toString
 
-    val executeAsyncInvocation = activityExecuteAsyncInvocation(invocation, method, activityName, weakTypeOf[R])
+    val executeAsyncInvocation = activityExecuteAsyncInvocation(invocation, method, methodName, weakTypeOf[R])
 
     q"""
        _root_.zio.temporal.workflow.ZAsync.fromJava($executeAsyncInvocation)
@@ -42,22 +42,24 @@ class ZActivityStubMacro(override val c: blackbox.Context) extends InvocationMac
   }
 
   private def activityExecuteInvocation(
-    invocation:   MethodInvocation,
-    method:       MethodInfo,
-    activityName: String,
-    ret:          Type
+    invocation: MethodInvocation,
+    method:     MethodInfo,
+    methodName: String,
+    ret:        Type
   ): Tree = {
-    val stub = q"""${invocation.instance}.toJava"""
-    q"""_root_.zio.temporal.internal.TemporalWorkflowFacade.executeActivity[$ret]($stub, $activityName, List(..${method.appliedArgs}))"""
+    val stub         = q"""${invocation.instance}.toJava"""
+    val stubbedClass = q"""${invocation.instance}.stubbedClass"""
+    q"""_root_.zio.temporal.internal.TemporalWorkflowFacade.executeActivity[$ret]($stub, $stubbedClass, $methodName, List(..${method.appliedArgs}))"""
   }
 
   private def activityExecuteAsyncInvocation(
-    invocation:   MethodInvocation,
-    method:       MethodInfo,
-    activityName: String,
-    ret:          Type
+    invocation: MethodInvocation,
+    method:     MethodInfo,
+    methodName: String,
+    ret:        Type
   ): Tree = {
-    val stub = q"""${invocation.instance}.toJava"""
-    q"""_root_.zio.temporal.internal.TemporalWorkflowFacade.executeActivityAsync[$ret]($stub, $activityName, List(..${method.appliedArgs}))"""
+    val stub         = q"""${invocation.instance}.toJava"""
+    val stubbedClass = q"""${invocation.instance}.stubbedClass"""
+    q"""_root_.zio.temporal.internal.TemporalWorkflowFacade.executeActivityAsync[$ret]($stub, $stubbedClass, $methodName, List(..${method.appliedArgs}))"""
   }
 }

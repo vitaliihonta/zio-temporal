@@ -22,7 +22,8 @@ object ZWorkflowStubBuilderTaskQueueDsl {
             client.newUntypedWorkflowStub(
               ClassTagUtils.getWorkflowType[A],
               options
-            )
+            ),
+            ClassTagUtils.classOf[A]
           )
         )
       }

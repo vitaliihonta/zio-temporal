@@ -178,6 +178,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     }
   }
 
+  // TODO: do the same as in scala 2
   def assertTypedActivityStub(activity: TypeRepr, method: String): TypeRepr = {
     activity.dealias match {
       case AndType(left, act) if left =:= zactivityStub =>

@@ -7,14 +7,14 @@ import zio.temporal.failure.{ApplicationFailure, ChildWorkflowFailure}
 import zio.temporal.worker.{ZWorker, ZWorkerFactory, ZWorkerFactoryOptions}
 import zio.temporal.workflow.*
 
-trait NotificationsSender {
+trait NotificationsSenderWorkflow {
   @workflowMethod
   def send(msg: String): Unit
 }
 
 @workflowInterface
-trait SmsNotificationsSender extends NotificationsSender
-class SmsNotificationsSenderImpl extends SmsNotificationsSender {
+trait SmsNotificationsSenderWorkflow extends NotificationsSenderWorkflow
+class SmsNotificationsSenderWorkflowImpl extends SmsNotificationsSenderWorkflow {
   private val logger = ZWorkflow.makeLogger
 
   override def send(msg: String): Unit = {
@@ -23,9 +23,9 @@ class SmsNotificationsSenderImpl extends SmsNotificationsSender {
 }
 
 @workflowInterface
-trait PushNotificationsSender extends NotificationsSender
+trait PushNotificationsSenderWorkflow extends NotificationsSenderWorkflow
 
-class PushNotificationsSenderImpl extends PushNotificationsSender {
+class PushNotificationsSenderWorkflowImpl extends PushNotificationsSenderWorkflow {
   private val logger = ZWorkflow.makeLogger
 
   override def send(msg: String): Unit = {
@@ -38,24 +38,24 @@ class PushNotificationsSenderImpl extends PushNotificationsSender {
 }
 
 @workflowInterface
-trait NotificationWorkflow {
+trait NotificationChildBasedWorkflow {
   @workflowMethod
   def send(msg: String): Unit
 }
 
-class NotificationWorkflowImpl extends NotificationWorkflow {
+class NotificationChildBasedWorkflowImpl extends NotificationChildBasedWorkflow {
   private val logger = ZWorkflow.makeLogger
 
-  private val senders: List[ZChildWorkflowStub.Of[NotificationsSender]] =
+  private val senders: List[ZChildWorkflowStub.Of[NotificationsSenderWorkflow]] =
     List(
       ZWorkflow
-        .newChildWorkflowStub[PushNotificationsSender]
+        .newChildWorkflowStub[PushNotificationsSenderWorkflow]
         .withRetryOptions(
           ZRetryOptions.default.withMaximumAttempts(2)
         )
         .build,
       ZWorkflow
-        .newChildWorkflowStub[SmsNotificationsSender]
+        .newChildWorkflowStub[SmsNotificationsSenderWorkflow]
         .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(2))
         .build
     )
@@ -78,7 +78,7 @@ class NotificationWorkflowImpl extends NotificationWorkflow {
 }
 
 object PolymorphicChildWorkflowsMain extends ZIOAppDefault {
-  private val TaskQueue = "PolymorphicExample"
+  private val TaskQueue = "PolymorphicWorkflowExample"
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
     Runtime.removeDefaultLoggers ++ SLF4J.slf4j
@@ -86,14 +86,14 @@ object PolymorphicChildWorkflowsMain extends ZIOAppDefault {
   override val run: ZIO[ZIOAppArgs with Scope, Any, Any] = {
     val registerWorkflow =
       ZWorkerFactory.newWorker(TaskQueue) @@
-        ZWorker.addWorkflow[NotificationWorkflowImpl].fromClass @@
-        ZWorker.addWorkflow[SmsNotificationsSenderImpl].fromClass @@
-        ZWorker.addWorkflow[PushNotificationsSenderImpl].fromClass
+        ZWorker.addWorkflow[NotificationChildBasedWorkflowImpl].fromClass @@
+        ZWorker.addWorkflow[SmsNotificationsSenderWorkflowImpl].fromClass @@
+        ZWorker.addWorkflow[PushNotificationsSenderWorkflowImpl].fromClass
 
     def sendMsg(client: ZWorkflowClient, msg: String): TemporalIO[Unit] = for {
       workflowId <- ZIO.randomWith(_.nextUUID)
       notificationsWorkflow <- client
-                                 .newWorkflowStub[NotificationWorkflow]
+                                 .newWorkflowStub[NotificationChildBasedWorkflow]
                                  .withTaskQueue(TaskQueue)
                                  .withWorkflowId(workflowId.toString)
                                  .build
