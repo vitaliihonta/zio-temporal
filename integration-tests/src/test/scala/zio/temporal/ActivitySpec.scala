@@ -64,7 +64,7 @@ object ActivitySpec extends ZIOSpecDefault {
         }
       }
     }.provideEnv
-  )
+  ) @@ TestAspect.sequential
 
   private implicit class ProvidedTestkit[E, A](thunk: Spec[ZTestActivityEnvironment[Any] with Scope, E]) {
     def provideEnv: Spec[Scope, E] =

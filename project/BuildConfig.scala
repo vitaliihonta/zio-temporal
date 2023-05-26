@@ -65,7 +65,7 @@ trait Dependencies {
     val zio        = "2.0.12"
     val zioLogging = "2.1.12"
     val enumeratum = "1.7.2"
-    val jackson    = "2.14.2"
+    val jackson    = "2.15.1"
   }
 
   object org {
@@ -103,7 +103,7 @@ trait Dependencies {
 
   object Utility {
     val scalaJava8Compat  = "org.scala-lang.modules" %% "scala-java8-compat"      % "1.0.2"
-    val collectionsCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.9.0"
+    val collectionsCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.10.0"
     val izumiReflect      = org.zio                  %% "izumi-reflect"           % "2.3.1" // the same one used in ZIO
     val reflections       = "org.reflections"         % "reflections"             % "0.10.2"
   }
@@ -112,12 +112,6 @@ trait Dependencies {
     val macros = Def.setting {
       "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided
     }
-  }
-
-  object Typelevel {
-    val kindProjector = compilerPlugin(
-      "org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full
-    )
   }
 
   object Logging {

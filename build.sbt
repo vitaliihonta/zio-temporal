@@ -2,14 +2,14 @@ import BuildConfig._
 
 val scala212 = "2.12.17"
 val scala213 = "2.13.10"
-val scala3   = "3.2.2"
+val scala3   = "3.3.0"
 
 val allScalaVersions          = List(scala212, scala213, scala3)
 val documentationScalaVersion = scala213
 
 ThisBuild / scalaVersion           := scala213
 ThisBuild / organization           := "dev.vhonta"
-ThisBuild / version                := "0.2.0-RC3"
+ThisBuild / version                := "0.2.0-RC4"
 ThisBuild / versionScheme          := Some("early-semver")
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 ThisBuild / sonatypeRepository     := "https://s01.oss.sonatype.org/service/local"
@@ -18,7 +18,7 @@ val publishSettings = Seq(
   publishTo            := sonatypePublishToBundle.value,
   publishMavenStyle    := true,
   organizationHomepage := Some(url("https://vhonta.dev")),
-  homepage             := Some(url("https://vhonta.dev")),
+  homepage             := Some(url("https://zio-temporal.vhonta.dev")),
   licenses := Seq(
     "Apache 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
   ),
@@ -61,13 +61,6 @@ lazy val baseProjectSettings = Seq(
       case _                      => Seq.empty[String]
     }
     baseOptions ++ crossVersionOptions
-  },
-  libraryDependencies ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, _)) =>
-        List(Typelevel.kindProjector)
-      case _ => Nil
-    }
   }
 )
 
@@ -183,6 +176,7 @@ lazy val `integration-tests` = projectMatrix
       }
     },
     testFrameworks ++= Zio.testFrameworks,
+    (Test / parallelExecution) := false,
     Compile / PB.targets := Seq(
       scalapb.gen(
         flatPackage = true,

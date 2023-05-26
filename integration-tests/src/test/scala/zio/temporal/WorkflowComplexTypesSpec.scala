@@ -85,7 +85,7 @@ object WorkflowComplexTypesSpec extends ZIOSpecDefault {
           }
         }
       }
-    ).provideEnv @@ TestAspect.flaky
+    ).provideEnv @@ TestAspect.flaky @@ TestAspect.sequential
 
   private implicit class ProvidedTestkit[E, A](thunk: Spec[ZTestWorkflowEnvironment[Any] with Scope, E]) {
     def provideEnv: Spec[Scope, E] =
