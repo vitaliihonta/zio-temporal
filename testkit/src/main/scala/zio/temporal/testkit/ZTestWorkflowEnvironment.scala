@@ -4,6 +4,7 @@ import io.temporal.testing.TestWorkflowEnvironment
 import zio.*
 import zio.temporal.ZAwaitTerminationOptions
 import zio.temporal.activity.ZActivityOptions
+import zio.temporal.ZCurrentTimeMillis
 import zio.temporal.worker.ZWorker
 import zio.temporal.worker.ZWorkerOptions
 import zio.temporal.workflow.*
@@ -23,6 +24,8 @@ import scala.reflect.ClassTag
   *   [[TestWorkflowEnvironment]]
   */
 class ZTestWorkflowEnvironment[+R] private[zio] (val toJava: TestWorkflowEnvironment, runtime: zio.Runtime[R]) {
+
+  def namespace: String = toJava.getNamespace
 
   /** Creates a new Worker instance that is connected to the in-memory test Temporal service.
     *
@@ -99,6 +102,35 @@ class ZTestWorkflowEnvironment[+R] private[zio] (val toJava: TestWorkflowEnviron
       }
       .repeat(Schedule.recurUntil((_: Unit) => true) && Schedule.fixed(options.pollDelay))
       .unit
+
+  /** This time might not be equal to [[java.lang.System.currentTimeMillis()]] due to time skipping.
+    *
+    * @return
+    *   the current in-memory test Temporal service time in milliseconds or [[java.lang.System.currentTimeMillis()]] if
+    *   an external service without time skipping support is used
+    */
+  def currentTimeMillis: UIO[ZCurrentTimeMillis] =
+    ZIO.succeed(new ZCurrentTimeMillis(toJava.currentTimeMillis()))
+
+  /** Wait until internal test Temporal service time passes the specified duration. This call also indicates that
+    * workflow time might jump forward (if none of the activities are running) up to the specified duration.
+    *
+    * <p>This method falls back to [[Thread.sleep]] if an external service without time skipping support is used
+    */
+  def sleep(duration: Duration): UIO[Unit] = ZIO.blocking(
+    ZIO.succeed(
+      toJava.sleep(duration)
+    )
+  )
+
+  /** Currently prints histories of all workflow instances stored in the service. This is useful information to print in
+    * the case of a unit test failure.
+    *
+    * @return
+    *   the diagnostic data about the internal service state.
+    */
+  def getDiagnostics: UIO[String] =
+    ZIO.succeed(toJava.getDiagnostics)
 }
 
 object ZTestWorkflowEnvironment {
