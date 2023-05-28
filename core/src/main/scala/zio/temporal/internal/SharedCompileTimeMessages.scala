@@ -73,17 +73,6 @@ object SharedCompileTimeMessages {
   def notFound(what: String): String =
     s"$what not found"
 
-  def methodArgumentsMismatch(
-    name:       String,
-    expected:   String,
-    argumentNo: Int,
-    actual:     String,
-    actualTpe:  String
-  ): String =
-    s"Provided arguments for method $name doesn't confirm to it's signature:\n" +
-      s"\tExpected: $expected (argument #${argumentNo + 1})\n" +
-      s"\tGot: $actual (of type $actualTpe)"
-
   def defaultArgumentsNotSupported(names: List[String]): String =
     s"\nCurrently, methods with default arguments are not supported.\n" +
       s"Found the following default arguments: ${names.mkString(", ")}.\n" +

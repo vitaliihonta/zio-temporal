@@ -7,6 +7,8 @@ import zio.temporal.workflow.*
 import zio.temporal.worker.*
 import scala.reflect.ClassTag
 
+// NOTE: compiles, but doesn't work because 'Input' is erased.
+// Therefore, jackson can't pick up the proper deserializer
 trait ParameterizedChildWorkflow[Input] {
   @workflowMethod
   def childTask(input: Input): Unit

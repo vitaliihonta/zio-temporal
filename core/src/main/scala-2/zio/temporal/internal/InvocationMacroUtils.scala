@@ -25,7 +25,6 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
   protected val IsActivityImplicitC  = typeOf[IsActivity[Any]].typeConstructor
 
   protected case class MethodInfo(name: Name, symbol: Symbol, appliedArgs: List[Tree]) {
-    validateCalls()
     validateNoDefaultArgs()
 
     def assertWorkflowMethod(): Unit =
@@ -41,23 +40,6 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
     def assertQueryMethod(): Unit =
       if (!hasAnnotation(symbol, QueryMethod)) {
         error(SharedCompileTimeMessages.notQueryMethod(symbol.toString))
-      }
-
-    private def validateCalls(): Unit =
-      symbol.typeSignature.paramLists.headOption.foreach { expectedArgs =>
-        appliedArgs.zip(expectedArgs).zipWithIndex.foreach { case ((actual, expected), argumentNo) =>
-          if (!(actual.tpe <:< expected.typeSignature)) {
-            error(
-              SharedCompileTimeMessages.methodArgumentsMismatch(
-                name = name.toString,
-                expected = expected.toString,
-                argumentNo = argumentNo,
-                actual = actual.toString,
-                actualTpe = actual.tpe.toString
-              )
-            )
-          }
-        }
       }
 
     private def validateNoDefaultArgs(): Unit = {
@@ -78,9 +60,8 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
 
   protected case class MethodInvocation(instance: Tree, methodName: Name, args: List[Tree]) {
 
-    def getMethod(errorDetails: => String): MethodInfo =
-      instance.tpe.baseClasses
-        .map(_.asClass.typeSignature.decl(methodName))
+    def getMethod(errorDetails: => String): MethodInfo = {
+      Some(instance.tpe.member(methodName))
         .find(_ != NoSymbol)
         .map(MethodInfo(methodName, _, args))
         .getOrElse(
@@ -92,6 +73,7 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
             )
           )
         )
+    }
   }
 
   protected def getMethodInvocation(tree: Tree): MethodInvocation =

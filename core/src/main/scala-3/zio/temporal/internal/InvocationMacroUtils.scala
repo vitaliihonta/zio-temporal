@@ -84,8 +84,6 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   }
 
   case class MethodInfo(name: String, symbol: Symbol, appliedArgs: List[Term]) {
-
-    validateCalls()
     validateNoDefaultArgs()
 
     def assertWorkflowMethod(): Unit =
@@ -106,36 +104,6 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     def argsExpr: Expr[List[Any]] = Expr.ofList(
       appliedArgs.map(_.asExprOf[Any])
     )
-
-    private def validateCalls(): Unit =
-      symbol.paramSymss.headOption.foreach { expectedArgs =>
-        appliedArgs.zip(expectedArgs).zipWithIndex.foreach { case ((actual, expected), argumentNo) =>
-          expected.tree match {
-            case vd: ValDef =>
-              val expectedType = vd.tpt.tpe
-              if (!(actual.tpe <:< expectedType)) {
-                error(
-                  SharedCompileTimeMessages.methodArgumentsMismatch(
-                    name = name.toString,
-                    expected = expected.toString,
-                    argumentNo = argumentNo,
-                    actual = actual.toString,
-                    actualTpe = actual.tpe.toString
-                  )
-                )
-              }
-            case other =>
-              error(
-                SharedCompileTimeMessages.unexpectedLibraryError(
-                  s"error while validating method invocation arguments: " +
-                    s"unexpected tree in `expected arguments` symbol:\n" +
-                    s"class: ${other.getClass}\n" +
-                    s"tree: $other"
-                )
-              )
-          }
-        }
-      }
 
     private def validateNoDefaultArgs(): Unit = {
       val paramsWithDefault = symbol.paramSymss
