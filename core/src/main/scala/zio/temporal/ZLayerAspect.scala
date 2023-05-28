@@ -1,10 +1,6 @@
-package zio.temporal.extras
+package zio.temporal
 
 import zio.*
-import zio.metrics.{Metric, MetricLabel}
-import zio.stacktracer.TracingImplicits.disableAutoTrace
-
-import scala.concurrent.ExecutionContext
 
 /** Copy-paste of [[ZIOAspect]], but for [[ZLayer]]. Intended to use with various temporal's options in order to
   * override them
@@ -45,4 +41,14 @@ trait ZLayerAspect[+LowerRIn, -UpperRIn, +LowerE, -UpperE, +LowerROut, -UpperROu
       ): ZLayer[R, E, A] =
         that(self(layer))
     }
+}
+
+object ZLayerAspect {
+  final class Syntax[RIn, E, ROut](private val self: ZLayer[RIn, E, ROut]) extends AnyVal {
+    def @@[LowerR <: UpperR, UpperR <: RIn, LowerE >: E, UpperE >: LowerE, LowerA >: ROut, UpperA >: LowerA](
+      aspect:         => ZLayerAspect[LowerR, UpperR, LowerE, UpperE, LowerA, UpperA]
+    )(implicit trace: Trace
+    ): ZLayer[UpperR, LowerE, LowerA] =
+      ZLayer.suspend(aspect(self))
+  }
 }
