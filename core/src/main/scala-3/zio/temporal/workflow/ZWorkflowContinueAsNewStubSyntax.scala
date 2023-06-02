@@ -28,6 +28,7 @@ object ZWorkflowContinueAsNewStubSyntax {
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
+    method.warnPossibleSerializationIssues()
 
     val options = invocation.instance
       .select(invocation.instance.symbol.methodMember("options").head)

@@ -19,6 +19,8 @@ object ZExternalWorkflowStubSignalSyntax {
 
     val method = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     method.assertSignalMethod()
+    method.warnPossibleSerializationIssues()
+
     val signalName = getSignalName(method.symbol)
 
     val stub = invocation.selectJavaReprOf[io.temporal.workflow.ExternalWorkflowStub]

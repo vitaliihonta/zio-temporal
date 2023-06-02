@@ -26,7 +26,9 @@ object ZActivityExecutionSyntax {
     val invocation = getMethodInvocation(f.asTerm)
     assertTypedActivityStub(invocation.tpe, "execute")
 
-    val method     = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
+    val method = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
+    method.warnPossibleSerializationIssues()
+
     val methodName = method.symbol.name
 
     val stub         = invocation.selectJavaReprOf[io.temporal.workflow.ActivityStub]
@@ -54,7 +56,9 @@ object ZActivityExecutionSyntax {
     val invocation = getMethodInvocation(f.asTerm)
     assertTypedActivityStub(invocation.tpe, "executeAsync")
 
-    val method     = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
+    val method = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
+    method.warnPossibleSerializationIssues()
+
     val methodName = method.symbol.name
 
     val stub         = invocation.selectJavaReprOf[io.temporal.workflow.ActivityStub]

@@ -28,6 +28,9 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   protected val IsWorkflowImplicitTC = TypeRepr.typeConstructorOf(classOf[IsWorkflow[Any]])
   protected val IsActivityImplicitC  = TypeRepr.typeConstructorOf(classOf[IsActivity[Any]])
 
+  private val lowestBaseTypes: List[Symbol] =
+    List(typeSymbolOf[java.lang.Object], typeSymbolOf[Matchable], typeSymbolOf[Any])
+
   def betaReduceExpression[A: Type](f: Expr[A]): Expr[A] =
     Expr.betaReduce(f).asTerm.underlying.asExprOf[A]
 
@@ -104,6 +107,51 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     def argsExpr: Expr[List[Any]] = Expr.ofList(
       appliedArgs.map(_.asExprOf[Any])
     )
+
+    def warnPossibleSerializationIssues(): Unit = {
+      def findIssues(param: Symbol): Option[SharedCompileTimeMessages.TemporalMethodParameterIssue] = {
+        param.tree match {
+          case vd: ValDef =>
+            val t = vd.tpt.tpe
+            if (t =:= TypeRepr.of[Any] || t =:= TypeRepr.of[java.lang.Object])
+              Some(SharedCompileTimeMessages.TemporalMethodParameterIssue.isJavaLangObject(param.name.toString))
+              /*only if all base classes are "primitive"*/
+            else if (t.baseClasses.forall(lowestBaseTypes.contains)) {
+              Some(
+                SharedCompileTimeMessages.TemporalMethodParameterIssue.erasedToJavaLangObject(
+                  name = param.name.toString,
+                  tpe = t.show
+                )
+              )
+            } else {
+              None
+            }
+          case other =>
+            // The whole check is a warning, better not to fail the compilation
+            warning(
+              SharedCompileTimeMessages.unexpectedLibraryError(
+                s"failed to check method's $name parameter ${param.name} type: " +
+                  s"unexpected Symbol.tree:\n" +
+                  s"class: ${other.getClass}\n" +
+                  s"tree: $other"
+              )
+            )
+            None
+        }
+      }
+
+      val paramsWithIssues = symbol.paramSymss.flatMap(
+        _.flatMap(findIssues)
+      )
+      for (issue <- paramsWithIssues) {
+        warning(
+          SharedCompileTimeMessages.temporalMethodParameterTypesHasIssue(
+            method = name.toString,
+            issue = issue
+          )
+        )
+      }
+    }
 
     private def validateNoDefaultArgs(): Unit = {
       val paramsWithDefault = symbol.paramSymss

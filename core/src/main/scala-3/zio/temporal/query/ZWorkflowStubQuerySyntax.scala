@@ -25,6 +25,8 @@ object ZWorkflowStubQuerySyntax {
 
     val method = invocation.getMethod(SharedCompileTimeMessages.qrMethodShouldntBeExtMethod)
     method.assertQueryMethod()
+    method.warnPossibleSerializationIssues()
+
     val queryName = getQueryName(method.symbol)
 
     val stub = invocation.selectJavaReprOf[io.temporal.client.WorkflowStub]
