@@ -1,4 +1,4 @@
-package com.example.hello.child
+package com.example.child
 
 import zio.temporal.*
 

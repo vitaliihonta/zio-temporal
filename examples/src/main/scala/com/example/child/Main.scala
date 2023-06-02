@@ -1,4 +1,4 @@
-package com.example.hello.cancellation
+package com.example.child
 
 import zio.*
 import zio.temporal.*
@@ -8,7 +8,7 @@ import zio.temporal.workflow.*
 import zio.logging.backend.SLF4J
 
 object Main extends ZIOAppDefault {
-  val TaskQueue = "hello-cancellation"
+  val TaskQueue = "hello-child-workflows"
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
     Runtime.removeDefaultLoggers ++ SLF4J.slf4j
@@ -16,8 +16,8 @@ object Main extends ZIOAppDefault {
   override def run: ZIO[ZIOAppArgs with Scope, Any, Any] = {
     val registerWorkflows =
       ZWorkerFactory.newWorker(TaskQueue) @@
-        ZWorker.addActivityImplementationService[GreetingActivities] @@
-        ZWorker.addWorkflow[GreetingWorkflowImpl].fromClass
+        ZWorker.addWorkflow[GreetingWorkflowImpl].fromClass @@
+        ZWorker.addWorkflow[GreetingChildImpl].fromClass
 
     val invokeWorkflows = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
@@ -27,7 +27,7 @@ object Main extends ZIOAppDefault {
                               .withTaskQueue(TaskQueue)
                               .withWorkflowId(workflowId.toString)
                               .build
-        _ <- ZIO.logInfo("Running greeting with cancellation workflow!")
+        _ <- ZIO.logInfo("Running greeting with child workflow!")
         res <- ZWorkflowStub.execute(
                  greetingWorkflow.getGreeting("World")
                )
@@ -47,9 +47,7 @@ object Main extends ZIOAppDefault {
         ZWorkflowServiceStubsOptions.make,
         ZWorkflowClientOptions.make,
         ZWorkerFactoryOptions.make,
-        GreetingActivitiesImpl.make,
         ZWorkflowClient.make,
-        ZActivityOptions.default,
         ZWorkflowServiceStubs.make,
         ZWorkerFactory.make
       )

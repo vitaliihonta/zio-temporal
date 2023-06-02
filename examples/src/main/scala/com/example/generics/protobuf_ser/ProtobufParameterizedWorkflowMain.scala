@@ -1,27 +1,28 @@
-package com.example.hello.misc.generics
+package com.example.generics.protobuf_ser
 
 import zio.*
 import zio.logging.backend.SLF4J
 import zio.temporal.*
-import zio.temporal.workflow.*
+import zio.temporal.protobuf.ProtobufDataConverter
 import zio.temporal.worker.*
+import zio.temporal.workflow.*
 import scala.reflect.ClassTag
 
-// NOTE: compiles, but doesn't work because 'Input' is erased.
-// Therefore, jackson can't pick up the proper deserializer
-trait ParameterizedChildWorkflow[Input] {
+// NOTE: temporal won't deserialize correctly without the lower-bound type
+trait ParameterizedChildWorkflow[Input <: ChildWorkflowInput] {
   @workflowMethod
   def childTask(input: Input): Unit
 }
 
-trait ParameterizedWorkflow[Input] {
+// NOTE: temporal won't deserialize correctly without the lower-bound type
+trait ParameterizedWorkflow[Input <: WorkflowInput] {
   @workflowMethod
   def parentTask(input: Input): Unit
 }
 
 abstract class DelegatingParameterizedWorkflow[
-  Input,
-  ChildInput,
+  Input <: WorkflowInput,
+  ChildInput <: ChildWorkflowInput,
   ChildWorkflow <: ParameterizedChildWorkflow[ChildInput]: IsWorkflow: ClassTag]
     extends ParameterizedWorkflow[Input] {
 
@@ -47,7 +48,6 @@ abstract class DelegatingParameterizedWorkflow[
 
       logger.info(s"Starting child workflow input=$input...")
       ZChildWorkflowStub.executeAsync(
-        // TODO: make it work
         child.childTask(input)
       )
     }
@@ -57,73 +57,72 @@ abstract class DelegatingParameterizedWorkflow[
   }
 }
 
-case class CocaColaChildInput(kind: String)
-case class PepsiChildInput(kind: String, volume: Int)
-
 @workflowInterface
-trait CocaColaChildWorkflow extends ParameterizedChildWorkflow[CocaColaChildInput]
+trait CocaColaChildWorkflow extends ParameterizedChildWorkflow[ChildWorkflowCocaColaInput]
 
 class CocaColaChildWorkflowImpl extends CocaColaChildWorkflow {
   private val logger = ZWorkflow.makeLogger
 
-  override def childTask(input: CocaColaChildInput): Unit = {
+  override def childTask(input: ChildWorkflowCocaColaInput): Unit = {
     logger.info(s"Providing with Coca Cola ${input.kind}")
   }
 }
 
 @workflowInterface
-trait PepsiChildWorkflow extends ParameterizedChildWorkflow[PepsiChildInput]
+trait PepsiChildWorkflow extends ParameterizedChildWorkflow[ChildWorkflowPepsiInput]
 
 class PepsiChildWorkflowImpl extends PepsiChildWorkflow {
   private val logger = ZWorkflow.makeLogger
 
-  override def childTask(input: PepsiChildInput): Unit = {
-    logger.info(s"Providing with Pepsi ${input.kind} (${input}L)")
+  override def childTask(input: ChildWorkflowPepsiInput): Unit = {
+    logger.info(s"Providing with Pepsi ${input.kind} (${input.volume}L)")
   }
 }
 
-case class CocaColaInput(kind: String)
-case class PepsiInput(kind: String)
-
 @workflowInterface
-trait CocaColaWorkflow extends ParameterizedWorkflow[CocaColaInput]
+trait CocaColaWorkflow extends ParameterizedWorkflow[WorkflowCocaColaInput]
 
 class CocaColaWorkflowImpl
     extends DelegatingParameterizedWorkflow[
-      CocaColaInput,
-      CocaColaChildInput,
+      WorkflowCocaColaInput,
+      ChildWorkflowCocaColaInput,
       CocaColaChildWorkflow
     ]
     with CocaColaWorkflow {
 
-  override protected def constructChildInput(input: CocaColaInput, randomData: Int): CocaColaChildInput =
-    CocaColaChildInput(input.kind)
+  override protected def constructChildInput(
+    input:      WorkflowCocaColaInput,
+    randomData: Int
+  ): ChildWorkflowCocaColaInput =
+    ChildWorkflowCocaColaInput(input.kind)
 }
 
 @workflowInterface
-trait PepsiWorkflow extends ParameterizedWorkflow[PepsiInput]
+trait PepsiWorkflow extends ParameterizedWorkflow[WorkflowPepsiInput]
 
 class PepsiWorkflowImpl
     extends DelegatingParameterizedWorkflow[
-      PepsiInput,
-      PepsiChildInput,
+      WorkflowPepsiInput,
+      ChildWorkflowPepsiInput,
       PepsiChildWorkflow
     ]
     with PepsiWorkflow {
 
-  override protected def constructChildInput(input: PepsiInput, randomData: Int): PepsiChildInput =
-    PepsiChildInput(input.kind, randomData)
+  override protected def constructChildInput(
+    input:      WorkflowPepsiInput,
+    randomData: Int
+  ): ChildWorkflowPepsiInput =
+    ChildWorkflowPepsiInput(input.kind, randomData)
 }
 
-object ParameterizedWorkflowMain extends ZIOAppDefault {
-  val TaskQueue = "parameterized"
+object ProtobufParameterizedWorkflowMain extends ZIOAppDefault {
+  val TaskQueue = "proto-parameterized"
 
-  private def runWorkflow[Input](
+  private def runWorkflow[Input <: WorkflowInput](
     stub:  ZWorkflowStub.Of[ParameterizedWorkflow[Input]]
   )(input: Input
   ): TemporalIO[Unit] = {
     ZIO.logInfo("Executing parameterized workflow") *>
-      // TODO: make it work
       ZWorkflowStub.execute(stub.parentTask(input))
   }
 
@@ -144,19 +143,18 @@ object ParameterizedWorkflowMain extends ZIOAppDefault {
         cocaCola <- client
                       .newWorkflowStub[CocaColaWorkflow]
                       .withTaskQueue(TaskQueue)
-                      .withWorkflowId(s"coca-cola/$uuid")
+                      .withWorkflowId(s"proto-coca-cola/$uuid")
                       .build
 
         pepsi <- client
                    .newWorkflowStub[PepsiWorkflow]
                    .withTaskQueue(TaskQueue)
-                   .withWorkflowId(s"pepsi/$uuid")
+                   .withWorkflowId(s"proto-pepsi/$uuid")
                    .build
 
-        _ <- runWorkflow(cocaCola)(CocaColaInput("zero"))
-               .zip(runWorkflow(pepsi)(PepsiInput("classic")))
+        _ <- runWorkflow(cocaCola)(WorkflowCocaColaInput("zero"))
+               .zip(runWorkflow(pepsi)(WorkflowPepsiInput("classic")))
                .unit
-
         _ <- ZIO.logInfo("Executed both!")
       } yield ()
     }
@@ -176,7 +174,8 @@ object ParameterizedWorkflowMain extends ZIOAppDefault {
         ZWorkerFactory.make,
         // options
         ZWorkflowServiceStubsOptions.make,
-        ZWorkflowClientOptions.make,
+        ZWorkflowClientOptions.make @@
+          ZWorkflowClientOptions.withDataConverter(ProtobufDataConverter.makeAutoLoad()),
         ZWorkerFactoryOptions.make
       )
   }

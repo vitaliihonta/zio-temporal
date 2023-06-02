@@ -1,4 +1,4 @@
-package com.example.hello.externalwf
+package com.example.externalwf
 
 import zio.*
 import zio.logging.backend.SLF4J
