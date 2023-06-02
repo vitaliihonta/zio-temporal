@@ -66,9 +66,7 @@ final class ZWorkflowClient private[zio] (val toJava: WorkflowClient) {
       )
     }
 
-  /** TODO: should it use zio.stream?
-    *
-    * @see
+  /** @see
     *   [[WorkflowClient.listExecutions]]
     */
   @experimentalApi

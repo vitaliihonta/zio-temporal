@@ -23,7 +23,6 @@ object ParameterizedChildWorkflowInput {
 }
 
 // NOTE: temporal won't deserialize correctly without the lower-bound type
-// TODO: add warning about the missing type bound
 trait ParameterizedChildWorkflow[Input <: ParameterizedChildWorkflowInput] {
   @workflowMethod
   def childTask(input: Input): ParameterizedWorkflowOutput
