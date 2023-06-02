@@ -18,6 +18,8 @@ class ZExternalSignalMacro(override val c: blackbox.Context) extends InvocationM
 
     val method = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     method.assertSignalMethod()
+    method.warnPossibleSerializationIssues()
+
     val signalName = getSignalName(method.symbol)
 
     q"""

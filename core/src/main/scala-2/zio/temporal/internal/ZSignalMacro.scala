@@ -15,10 +15,12 @@ class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtil
     val startInvocation = getMethodInvocation(start.tree)
     val startMethod     = startInvocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     startMethod.assertWorkflowMethod()
+    startMethod.warnPossibleSerializationIssues()
 
     val signalInvocation = getMethodInvocation(signal.tree)
     val signalMethod     = signalInvocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     signalMethod.assertSignalMethod()
+    signalMethod.warnPossibleSerializationIssues()
 
     val signalName = getSignalName(signalMethod.symbol)
 
@@ -46,6 +48,8 @@ class ZSignalMacro(override val c: blackbox.Context) extends InvocationMacroUtil
 
     val method = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     method.assertSignalMethod()
+    method.warnPossibleSerializationIssues()
+
     val signalName = getSignalName(method.symbol)
 
     q"""

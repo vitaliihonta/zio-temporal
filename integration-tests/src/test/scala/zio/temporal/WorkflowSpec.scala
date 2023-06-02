@@ -555,39 +555,39 @@ object WorkflowSpec extends ZIOSpecDefault {
         for {
           uuid <- ZIO.randomWith(_.nextUUID)
           _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
-                 ZWorker.addWorkflow[CocaColaWorkflow].from(new CocaColaWorkflowImpl) @@
-                 ZWorker.addWorkflow[CocaColaChildWorkflow].from(new CocaColaChildWorkflowImpl) @@
-                 ZWorker.addWorkflow[PepsiWorkflow].from(new PepsiWorkflowImpl) @@
-                 ZWorker.addWorkflow[PepsiChildWorkflow].from(new PepsiChildWorkflowImpl)
+                 ZWorker.addWorkflow[SodaWorkflow].from(new SodaWorkflowImpl) @@
+                 ZWorker.addWorkflow[SodaChildWorkflow].from(new SodaChildWorkflowImpl) @@
+                 ZWorker.addWorkflow[JuiceWorkflow].from(new JuiceWorkflowImpl) @@
+                 ZWorker.addWorkflow[JuiceChildWorkflow].from(new JuiceChildChildWorkflowImpl)
 
           _ <- ZTestWorkflowEnvironment.setup()
 
-          cocaCola <- ZTestWorkflowEnvironment
-                        .newWorkflowStub[CocaColaWorkflow]
-                        .withTaskQueue(taskQueue)
-                        .withWorkflowId(s"coca-cola/$uuid")
-                        .build
+          sodaWf <- ZTestWorkflowEnvironment
+                      .newWorkflowStub[SodaWorkflow]
+                      .withTaskQueue(taskQueue)
+                      .withWorkflowId(s"soda/$uuid")
+                      .build
 
-          pepsi <- ZTestWorkflowEnvironment
-                     .newWorkflowStub[PepsiWorkflow]
-                     .withTaskQueue(taskQueue)
-                     .withWorkflowId(s"pepsi/$uuid")
-                     .build
+          juiceWf <- ZTestWorkflowEnvironment
+                       .newWorkflowStub[JuiceWorkflow]
+                       .withTaskQueue(taskQueue)
+                       .withWorkflowId(s"juice/$uuid")
+                       .build
 
-          colaResult  <- runWorkflow(cocaCola)(ParameterizedWorkflowInput.CocaCola("zero"))
-          pepsiResult <- runWorkflow(pepsi)(ParameterizedWorkflowInput.Pepsi("classic"))
+          sodaResult  <- runWorkflow(sodaWf)(ParameterizedWorkflowInput.Soda("coke"))
+          juiceResult <- runWorkflow(juiceWf)(ParameterizedWorkflowInput.Juice("orange"))
 
         } yield {
           assertTrue(
-            colaResult.sortBy(_.message) == List(
-              ParameterizedWorkflowOutput("Providing with Coca Cola zero"),
-              ParameterizedWorkflowOutput("Providing with Coca Cola zero"),
-              ParameterizedWorkflowOutput("Providing with Coca Cola zero")
+            sodaResult.sortBy(_.message) == List(
+              ParameterizedWorkflowOutput("Providing with soda: coke"),
+              ParameterizedWorkflowOutput("Providing with soda: coke"),
+              ParameterizedWorkflowOutput("Providing with soda: coke")
             ),
-            pepsiResult.sortBy(_.message) == List(
-              ParameterizedWorkflowOutput("Providing with Pepsi classic (1L)"),
-              ParameterizedWorkflowOutput("Providing with Pepsi classic (2L)"),
-              ParameterizedWorkflowOutput("Providing with Pepsi classic (3L)")
+            juiceResult.sortBy(_.message) == List(
+              ParameterizedWorkflowOutput("Providing with orange juice (1L)"),
+              ParameterizedWorkflowOutput("Providing with orange juice (2L)"),
+              ParameterizedWorkflowOutput("Providing with orange juice (3L)")
             )
           )
         }

@@ -22,6 +22,7 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
+    method.warnPossibleSerializationIssues()
 
     val startInvocation = workflowStartInvocation(invocation, method)
 
@@ -43,6 +44,7 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
+    method.warnPossibleSerializationIssues()
 
     val executeInvocation = workflowExecuteInvocation(invocation, method, weakTypeOf[R])
 
@@ -62,6 +64,7 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
+    method.warnPossibleSerializationIssues()
 
     val executeInvocation = workflowExecuteWithTimeoutInvocation(invocation, method, timeout, weakTypeOf[R])
 
@@ -81,6 +84,7 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
+    method.warnPossibleSerializationIssues()
 
     val workflowType = getWorkflowType(invocation.instance.tpe)
 

@@ -95,4 +95,30 @@ object SharedCompileTimeMessages {
 
   def shouldHavePublicNullaryConstructor(tpe: String): String =
     s"$tpe should have a public zero-argument constructor"
+
+  case class TemporalMethodParameterIssue(name: String, issue: String)
+  object TemporalMethodParameterIssue {
+    private val noteMoreSpecificType =
+      "It would likely cause an error because Temporal client requires more specific type information for deserialization"
+
+    def erasedToJavaLangObject(name: String, tpe: String): TemporalMethodParameterIssue =
+      TemporalMethodParameterIssue(
+        name,
+        issue = s"type `$tpe` will be erased to java.lang.Object in runtime!\n$noteMoreSpecificType\n" +
+          s"Hint: if `$tpe` is a type parameter of the workflow interface, provide an upper-bound for the type parameter"
+      )
+
+    def isJavaLangObject(name: String): TemporalMethodParameterIssue =
+      TemporalMethodParameterIssue(
+        name,
+        issue = s"type is java.lang.Object!\n$noteMoreSpecificType"
+      )
+  }
+
+  def temporalMethodParameterTypesHasIssue(
+    method: String,
+    issue:  TemporalMethodParameterIssue
+  ): String = {
+    s"method $method parameter `${issue.name}` ${issue.issue}"
+  }
 }

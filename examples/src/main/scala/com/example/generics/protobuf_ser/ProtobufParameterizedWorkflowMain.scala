@@ -8,13 +8,13 @@ import zio.temporal.worker.*
 import zio.temporal.workflow.*
 import scala.reflect.ClassTag
 
-// NOTE: temporal won't deserialize correctly without the lower-bound type
+// NOTE: temporal won't deserialize correctly without the upper-bound type
 trait ParameterizedChildWorkflow[Input <: ChildWorkflowInput] {
   @workflowMethod
   def childTask(input: Input): Unit
 }
 
-// NOTE: temporal won't deserialize correctly without the lower-bound type
+// NOTE: temporal won't deserialize correctly without the upper-bound type
 trait ParameterizedWorkflow[Input <: WorkflowInput] {
   @workflowMethod
   def parentTask(input: Input): Unit
@@ -58,61 +58,61 @@ abstract class DelegatingParameterizedWorkflow[
 }
 
 @workflowInterface
-trait CocaColaChildWorkflow extends ParameterizedChildWorkflow[ChildWorkflowCocaColaInput]
+trait SodaChildWorkflow extends ParameterizedChildWorkflow[ChildWorkflowSodaInput]
 
-class CocaColaChildWorkflowImpl extends CocaColaChildWorkflow {
+class SodaChildWorkflowImpl extends SodaChildWorkflow {
   private val logger = ZWorkflow.makeLogger
 
-  override def childTask(input: ChildWorkflowCocaColaInput): Unit = {
-    logger.info(s"Providing with Coca Cola ${input.kind}")
+  override def childTask(input: ChildWorkflowSodaInput): Unit = {
+    logger.info(s"Providing with soda: ${input.kind}")
   }
 }
 
 @workflowInterface
-trait PepsiChildWorkflow extends ParameterizedChildWorkflow[ChildWorkflowPepsiInput]
+trait JuiceChildWorkflow extends ParameterizedChildWorkflow[ChildWorkflowJuiceInput]
 
-class PepsiChildWorkflowImpl extends PepsiChildWorkflow {
+class JuiceChildWorkflowImpl extends JuiceChildWorkflow {
   private val logger = ZWorkflow.makeLogger
 
-  override def childTask(input: ChildWorkflowPepsiInput): Unit = {
-    logger.info(s"Providing with Pepsi ${input.kind} (${input.volume}L)")
+  override def childTask(input: ChildWorkflowJuiceInput): Unit = {
+    logger.info(s"Providing with ${input.kind} juice (${input.volume}L)")
   }
 }
 
 @workflowInterface
-trait CocaColaWorkflow extends ParameterizedWorkflow[WorkflowCocaColaInput]
+trait SodaWorkflow extends ParameterizedWorkflow[WorkflowSodaInput]
 
-class CocaColaWorkflowImpl
+class SodaWorkflowImpl
     extends DelegatingParameterizedWorkflow[
-      WorkflowCocaColaInput,
-      ChildWorkflowCocaColaInput,
-      CocaColaChildWorkflow
+      WorkflowSodaInput,
+      ChildWorkflowSodaInput,
+      SodaChildWorkflow
     ]
-    with CocaColaWorkflow {
+    with SodaWorkflow {
 
   override protected def constructChildInput(
-    input:      WorkflowCocaColaInput,
+    input:      WorkflowSodaInput,
     randomData: Int
-  ): ChildWorkflowCocaColaInput =
-    ChildWorkflowCocaColaInput(input.kind)
+  ): ChildWorkflowSodaInput =
+    ChildWorkflowSodaInput(input.kind)
 }
 
 @workflowInterface
-trait PepsiWorkflow extends ParameterizedWorkflow[WorkflowPepsiInput]
+trait JuiceWorkflow extends ParameterizedWorkflow[WorkflowJuiceInput]
 
-class PepsiWorkflowImpl
+class JuiceWorkflowImpl
     extends DelegatingParameterizedWorkflow[
-      WorkflowPepsiInput,
-      ChildWorkflowPepsiInput,
-      PepsiChildWorkflow
+      WorkflowJuiceInput,
+      ChildWorkflowJuiceInput,
+      JuiceChildWorkflow
     ]
-    with PepsiWorkflow {
+    with JuiceWorkflow {
 
   override protected def constructChildInput(
-    input:      WorkflowPepsiInput,
+    input:      WorkflowJuiceInput,
     randomData: Int
-  ): ChildWorkflowPepsiInput =
-    ChildWorkflowPepsiInput(input.kind, randomData)
+  ): ChildWorkflowJuiceInput =
+    ChildWorkflowJuiceInput(input.kind, randomData)
 }
 
 object ProtobufParameterizedWorkflowMain extends ZIOAppDefault {
@@ -132,28 +132,28 @@ object ProtobufParameterizedWorkflowMain extends ZIOAppDefault {
   override val run: ZIO[ZIOAppArgs with Scope, Any, Any] = {
     val registerWorkflow =
       ZWorkerFactory.newWorker(TaskQueue) @@
-        ZWorker.addWorkflow[CocaColaWorkflow].from(new CocaColaWorkflowImpl) @@
-        ZWorker.addWorkflow[CocaColaChildWorkflow].from(new CocaColaChildWorkflowImpl) @@
-        ZWorker.addWorkflow[PepsiWorkflow].from(new PepsiWorkflowImpl) @@
-        ZWorker.addWorkflow[PepsiChildWorkflow].from(new PepsiChildWorkflowImpl)
+        ZWorker.addWorkflow[SodaWorkflow].from(new SodaWorkflowImpl) @@
+        ZWorker.addWorkflow[SodaChildWorkflow].from(new SodaChildWorkflowImpl) @@
+        ZWorker.addWorkflow[JuiceWorkflow].from(new JuiceWorkflowImpl) @@
+        ZWorker.addWorkflow[JuiceChildWorkflow].from(new JuiceChildWorkflowImpl)
 
     val flow = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
         uuid <- ZIO.randomWith(_.nextUUID)
-        cocaCola <- client
-                      .newWorkflowStub[CocaColaWorkflow]
-                      .withTaskQueue(TaskQueue)
-                      .withWorkflowId(s"proto-coca-cola/$uuid")
-                      .build
+        sodaWf <- client
+                    .newWorkflowStub[SodaWorkflow]
+                    .withTaskQueue(TaskQueue)
+                    .withWorkflowId(s"proto-soda/$uuid")
+                    .build
 
-        pepsi <- client
-                   .newWorkflowStub[PepsiWorkflow]
-                   .withTaskQueue(TaskQueue)
-                   .withWorkflowId(s"proto-pepsi/$uuid")
-                   .build
+        juiceWf <- client
+                     .newWorkflowStub[JuiceWorkflow]
+                     .withTaskQueue(TaskQueue)
+                     .withWorkflowId(s"proto-juice/$uuid")
+                     .build
 
-        _ <- runWorkflow(cocaCola)(WorkflowCocaColaInput("zero"))
-               .zip(runWorkflow(pepsi)(WorkflowPepsiInput("classic")))
+        _ <- runWorkflow(sodaWf)(WorkflowSodaInput("coke"))
+               .zip(runWorkflow(juiceWf)(WorkflowJuiceInput("orange")))
                .unit
         _ <- ZIO.logInfo("Executed both!")
       } yield ()

@@ -11,15 +11,15 @@ case class ParameterizedWorkflowOutput(message: String)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(
   Array(
-    new JsonSubTypes.Type(value = classOf[ParameterizedChildWorkflowInput.CocaCola], name = "CocaCola"),
-    new JsonSubTypes.Type(value = classOf[ParameterizedChildWorkflowInput.Pepsi], name = "Pepsi")
+    new JsonSubTypes.Type(value = classOf[ParameterizedChildWorkflowInput.Soda], name = "Soda"),
+    new JsonSubTypes.Type(value = classOf[ParameterizedChildWorkflowInput.Juice], name = "Juice")
   )
 )
 sealed trait ParameterizedChildWorkflowInput
 object ParameterizedChildWorkflowInput {
 
-  case class CocaCola(kind: String)           extends ParameterizedChildWorkflowInput
-  case class Pepsi(kind: String, volume: Int) extends ParameterizedChildWorkflowInput
+  case class Soda(kind: String)               extends ParameterizedChildWorkflowInput
+  case class Juice(kind: String, volume: Int) extends ParameterizedChildWorkflowInput
 }
 
 // NOTE: temporal won't deserialize correctly without the lower-bound type
@@ -33,15 +33,15 @@ trait ParameterizedChildWorkflow[Input <: ParameterizedChildWorkflowInput] {
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(
   Array(
-    new JsonSubTypes.Type(value = classOf[ParameterizedWorkflowInput.CocaCola], name = "CocaCola"),
-    new JsonSubTypes.Type(value = classOf[ParameterizedWorkflowInput.Pepsi], name = "Pepsi")
+    new JsonSubTypes.Type(value = classOf[ParameterizedWorkflowInput.Soda], name = "Soda"),
+    new JsonSubTypes.Type(value = classOf[ParameterizedWorkflowInput.Juice], name = "Juice")
   )
 )
 sealed trait ParameterizedWorkflowInput
 object ParameterizedWorkflowInput {
 
-  case class CocaCola(kind: String) extends ParameterizedWorkflowInput
-  case class Pepsi(kind: String)    extends ParameterizedWorkflowInput
+  case class Soda(kind: String)  extends ParameterizedWorkflowInput
+  case class Juice(kind: String) extends ParameterizedWorkflowInput
 }
 
 // NOTE: temporal won't deserialize correctly without the lower-bound type
@@ -88,55 +88,55 @@ abstract class DelegatingParameterizedWorkflow[
 }
 
 @workflowInterface
-trait CocaColaChildWorkflow extends ParameterizedChildWorkflow[ParameterizedChildWorkflowInput.CocaCola]
+trait SodaChildWorkflow extends ParameterizedChildWorkflow[ParameterizedChildWorkflowInput.Soda]
 
-class CocaColaChildWorkflowImpl extends CocaColaChildWorkflow {
-  override def childTask(input: ParameterizedChildWorkflowInput.CocaCola): ParameterizedWorkflowOutput = {
-    ParameterizedWorkflowOutput(s"Providing with Coca Cola ${input.kind}")
+class SodaChildWorkflowImpl extends SodaChildWorkflow {
+  override def childTask(input: ParameterizedChildWorkflowInput.Soda): ParameterizedWorkflowOutput = {
+    ParameterizedWorkflowOutput(s"Providing with soda: ${input.kind}")
   }
 }
 
 @workflowInterface
-trait PepsiChildWorkflow extends ParameterizedChildWorkflow[ParameterizedChildWorkflowInput.Pepsi]
+trait JuiceChildWorkflow extends ParameterizedChildWorkflow[ParameterizedChildWorkflowInput.Juice]
 
-class PepsiChildWorkflowImpl extends PepsiChildWorkflow {
-  override def childTask(input: ParameterizedChildWorkflowInput.Pepsi): ParameterizedWorkflowOutput = {
-    ParameterizedWorkflowOutput(s"Providing with Pepsi ${input.kind} (${input.volume}L)")
+class JuiceChildChildWorkflowImpl extends JuiceChildWorkflow {
+  override def childTask(input: ParameterizedChildWorkflowInput.Juice): ParameterizedWorkflowOutput = {
+    ParameterizedWorkflowOutput(s"Providing with ${input.kind} juice (${input.volume}L)")
   }
 }
 
 @workflowInterface
-trait CocaColaWorkflow extends ParameterizedWorkflow[ParameterizedWorkflowInput.CocaCola]
+trait SodaWorkflow extends ParameterizedWorkflow[ParameterizedWorkflowInput.Soda]
 
-class CocaColaWorkflowImpl
+class SodaWorkflowImpl
     extends DelegatingParameterizedWorkflow[
-      ParameterizedWorkflowInput.CocaCola,
-      ParameterizedChildWorkflowInput.CocaCola,
-      CocaColaChildWorkflow
+      ParameterizedWorkflowInput.Soda,
+      ParameterizedChildWorkflowInput.Soda,
+      SodaChildWorkflow
     ]
-    with CocaColaWorkflow {
+    with SodaWorkflow {
 
   override protected def constructChildInput(
-    input:      ParameterizedWorkflowInput.CocaCola,
+    input:      ParameterizedWorkflowInput.Soda,
     randomData: Int
-  ): ParameterizedChildWorkflowInput.CocaCola =
-    ParameterizedChildWorkflowInput.CocaCola(input.kind)
+  ): ParameterizedChildWorkflowInput.Soda =
+    ParameterizedChildWorkflowInput.Soda(input.kind)
 }
 
 @workflowInterface
-trait PepsiWorkflow extends ParameterizedWorkflow[ParameterizedWorkflowInput.Pepsi]
+trait JuiceWorkflow extends ParameterizedWorkflow[ParameterizedWorkflowInput.Juice]
 
-class PepsiWorkflowImpl
+class JuiceWorkflowImpl
     extends DelegatingParameterizedWorkflow[
-      ParameterizedWorkflowInput.Pepsi,
-      ParameterizedChildWorkflowInput.Pepsi,
-      PepsiChildWorkflow
+      ParameterizedWorkflowInput.Juice,
+      ParameterizedChildWorkflowInput.Juice,
+      JuiceChildWorkflow
     ]
-    with PepsiWorkflow {
+    with JuiceWorkflow {
 
   override protected def constructChildInput(
-    input:      ParameterizedWorkflowInput.Pepsi,
+    input:      ParameterizedWorkflowInput.Juice,
     randomData: Int
-  ): ParameterizedChildWorkflowInput.Pepsi =
-    ParameterizedChildWorkflowInput.Pepsi(input.kind, randomData)
+  ): ParameterizedChildWorkflowInput.Juice =
+    ParameterizedChildWorkflowInput.Juice(input.kind, randomData)
 }
