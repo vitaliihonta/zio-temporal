@@ -1,4 +1,4 @@
-package com.example.hello.misc.generics
+package com.example.generics
 
 import zio.*
 import zio.logging.backend.SLF4J

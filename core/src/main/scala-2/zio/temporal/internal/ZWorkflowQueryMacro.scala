@@ -30,6 +30,7 @@ class ZWorkflowQueryMacro(override val c: blackbox.Context) extends InvocationMa
 
     val method = invocation.getMethod(SharedCompileTimeMessages.qrMethodShouldntBeExtMethod)
     method.assertQueryMethod()
+    method.warnPossibleSerializationIssues()
 
     val queryName = getQueryName(method.symbol)
 

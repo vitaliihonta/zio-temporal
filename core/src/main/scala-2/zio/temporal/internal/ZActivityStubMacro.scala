@@ -16,7 +16,9 @@ class ZActivityStubMacro(override val c: blackbox.Context) extends InvocationMac
     val invocation = getMethodInvocation(f.tree)
     assertTypedActivityStub(invocation.instance.tpe, "execute")
 
-    val method     = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
+    val method = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
+    method.warnPossibleSerializationIssues()
+
     val methodName = method.symbol.name.toString
 
     val executeInvocation = activityExecuteInvocation(invocation, method, methodName, weakTypeOf[R])
@@ -31,7 +33,9 @@ class ZActivityStubMacro(override val c: blackbox.Context) extends InvocationMac
     val invocation = getMethodInvocation(f.tree)
     assertTypedActivityStub(invocation.instance.tpe, "executeAsync")
 
-    val method     = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
+    val method = invocation.getMethod(SharedCompileTimeMessages.actMethodShouldntBeExtMethod)
+    method.warnPossibleSerializationIssues()
+
     val methodName = method.symbol.name.toString
 
     val executeAsyncInvocation = activityExecuteAsyncInvocation(invocation, method, methodName, weakTypeOf[R])

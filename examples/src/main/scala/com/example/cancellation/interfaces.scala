@@ -1,4 +1,4 @@
-package com.example.hello.cancellation
+package com.example.cancellation
 
 import zio.*
 import zio.temporal.*

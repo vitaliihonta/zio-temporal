@@ -1,0 +1,36 @@
+syntax = "proto2";
+
+package com.example.generics.protobuf_ser;
+
+message ChildWorkflowSodaInput {
+  required string kind = 1;
+}
+
+message ChildWorkflowJuiceInput {
+  required string kind = 1;
+  required int32 volume = 2;
+}
+
+message ChildWorkflowInput {
+  // NOTE: sealed_value is a special case in scalapb
+  oneof sealed_value {
+    ChildWorkflowSodaInput soda = 1;
+    ChildWorkflowJuiceInput juice = 2;
+  }
+}
+
+message WorkflowSodaInput {
+  required string kind = 1;
+}
+
+message WorkflowJuiceInput {
+  required string kind = 1;
+}
+
+message WorkflowInput {
+  // NOTE: sealed_value is a special case in scalapb
+  oneof sealed_value {
+    WorkflowSodaInput soda = 1;
+    WorkflowJuiceInput juice = 2;
+  }
+}

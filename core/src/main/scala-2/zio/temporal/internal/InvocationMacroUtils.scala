@@ -24,14 +24,14 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
   protected val IsWorkflowImplicitTC = typeOf[IsWorkflow[Any]].typeConstructor
   protected val IsActivityImplicitC  = typeOf[IsActivity[Any]].typeConstructor
 
-  protected case class MethodInfo(name: Name, symbol: Symbol, appliedArgs: List[Tree]) {
-    validateCalls()
+  protected case class MethodInfo(name: Name, symbol: MethodSymbol, appliedArgs: List[Tree]) {
     validateNoDefaultArgs()
 
-    def assertWorkflowMethod(): Unit =
+    def assertWorkflowMethod(): Unit = {
       if (!hasAnnotation(symbol, WorkflowMethod)) {
         error(SharedCompileTimeMessages.notWorkflowMethod(symbol.toString))
       }
+    }
 
     def assertSignalMethod(): Unit =
       if (!hasAnnotation(symbol, SignalMethod)) {
@@ -43,22 +43,33 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
         error(SharedCompileTimeMessages.notQueryMethod(symbol.toString))
       }
 
-    private def validateCalls(): Unit =
-      symbol.typeSignature.paramLists.headOption.foreach { expectedArgs =>
-        appliedArgs.zip(expectedArgs).zipWithIndex.foreach { case ((actual, expected), argumentNo) =>
-          if (!(actual.tpe <:< expected.typeSignature)) {
-            error(
-              SharedCompileTimeMessages.methodArgumentsMismatch(
-                name = name.toString,
-                expected = expected.toString,
-                argumentNo = argumentNo,
-                actual = actual.toString,
-                actualTpe = actual.tpe.toString
-              )
+    def warnPossibleSerializationIssues(): Unit = {
+      def findIssues(param: Symbol): Option[SharedCompileTimeMessages.TemporalMethodParameterIssue] = {
+        val t = param.typeSignature
+        if (t.dealias =:= typeOf[java.lang.Object])
+          Some(SharedCompileTimeMessages.TemporalMethodParameterIssue.isJavaLangObject(param.name.toString))
+        else if (t.erasure =:= typeOf[java.lang.Object])
+          Some(
+            SharedCompileTimeMessages.TemporalMethodParameterIssue.erasedToJavaLangObject(
+              name = param.name.toString,
+              tpe = t.toString
             )
-          }
-        }
+          )
+        else None
       }
+
+      val paramsWithIssues = symbol.paramLists.flatMap(
+        _.flatMap(findIssues)
+      )
+      for (issue <- paramsWithIssues) {
+        warning(
+          SharedCompileTimeMessages.temporalMethodParameterTypesHasIssue(
+            method = name.toString,
+            issue = issue
+          )
+        )
+      }
+    }
 
     private def validateNoDefaultArgs(): Unit = {
       val paramsWithDefault = symbol.asMethod.paramLists
@@ -78,10 +89,10 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
 
   protected case class MethodInvocation(instance: Tree, methodName: Name, args: List[Tree]) {
 
-    def getMethod(errorDetails: => String): MethodInfo =
-      instance.tpe.baseClasses
-        .map(_.asClass.typeSignature.decl(methodName))
+    def getMethod(errorDetails: => String): MethodInfo = {
+      Some(instance.tpe.member(methodName))
         .find(_ != NoSymbol)
+        .map(_.asMethod)
         .map(MethodInfo(methodName, _, args))
         .getOrElse(
           error(
@@ -92,6 +103,7 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
             )
           )
         )
+    }
   }
 
   protected def getMethodInvocation(tree: Tree): MethodInvocation =

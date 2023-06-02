@@ -108,6 +108,8 @@ abstract class MacroUtils(val c: blackbox.Context) {
 
   def error(message: String): Nothing = c.abort(c.enclosingPosition, message)
 
+  def warning(message: String): Unit = c.warning(c.enclosingPosition, message)
+
   def isConcreteClass(tpe: Type): Boolean =
     tpe.typeSymbol.isClass && !tpe.typeSymbol.asClass.isTrait && !tpe.typeSymbol.asClass.isAbstract
 

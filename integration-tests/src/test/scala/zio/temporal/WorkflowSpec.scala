@@ -539,8 +539,61 @@ object WorkflowSpec extends ZIOSpecDefault {
                           assertTrue(actualResult != List.fill(20)(List("foo" -> x, "bar" -> y)))
                         }
       } yield assertions
+    }.provideEnv @@ TestAspect.flaky,
+    test("run parameterized workflow") {
+      ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
+        val taskQueue = "parameterized-queue"
 
-    }.provideEnv @@ TestAspect.flaky
+        def runWorkflow[Input <: ParameterizedWorkflowInput](
+          stub:  ZWorkflowStub.Of[ParameterizedWorkflow[Input]]
+        )(input: Input
+        ): TemporalIO[List[ParameterizedWorkflowOutput]] = {
+          ZIO.logInfo("Executing parameterized workflow") *>
+            ZWorkflowStub.execute(stub.parentTask(input))
+        }
+
+        for {
+          uuid <- ZIO.randomWith(_.nextUUID)
+          _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
+                 ZWorker.addWorkflow[SodaWorkflow].from(new SodaWorkflowImpl) @@
+                 ZWorker.addWorkflow[SodaChildWorkflow].from(new SodaChildWorkflowImpl) @@
+                 ZWorker.addWorkflow[JuiceWorkflow].from(new JuiceWorkflowImpl) @@
+                 ZWorker.addWorkflow[JuiceChildWorkflow].from(new JuiceChildChildWorkflowImpl)
+
+          _ <- ZTestWorkflowEnvironment.setup()
+
+          sodaWf <- ZTestWorkflowEnvironment
+                      .newWorkflowStub[SodaWorkflow]
+                      .withTaskQueue(taskQueue)
+                      .withWorkflowId(s"soda/$uuid")
+                      .build
+
+          juiceWf <- ZTestWorkflowEnvironment
+                       .newWorkflowStub[JuiceWorkflow]
+                       .withTaskQueue(taskQueue)
+                       .withWorkflowId(s"juice/$uuid")
+                       .build
+
+          sodaResult  <- runWorkflow(sodaWf)(ParameterizedWorkflowInput.Soda("coke"))
+          juiceResult <- runWorkflow(juiceWf)(ParameterizedWorkflowInput.Juice("orange"))
+
+        } yield {
+          assertTrue(
+            sodaResult.sortBy(_.message) == List(
+              ParameterizedWorkflowOutput("Providing with soda: coke"),
+              ParameterizedWorkflowOutput("Providing with soda: coke"),
+              ParameterizedWorkflowOutput("Providing with soda: coke")
+            ),
+            juiceResult.sortBy(_.message) == List(
+              ParameterizedWorkflowOutput("Providing with orange juice (1L)"),
+              ParameterizedWorkflowOutput("Providing with orange juice (2L)"),
+              ParameterizedWorkflowOutput("Providing with orange juice (3L)")
+            )
+          )
+        }
+      }
+
+    }.provideEnv
   ) @@ TestAspect.sequential
 
   private implicit class ProvidedTestkit[E, A](thunk: Spec[ZTestWorkflowEnvironment[Any] with Scope, E]) {

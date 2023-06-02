@@ -45,6 +45,8 @@ object ZWorkflowStubSignalSyntax {
 
     val method = invocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     method.assertSignalMethod()
+    method.warnPossibleSerializationIssues()
+
     val signalName = getSignalName(method.symbol)
 
     val stub = invocation.selectJavaReprOf[io.temporal.client.WorkflowStub]
@@ -70,11 +72,14 @@ object ZWorkflowStubSignalSyntax {
 
     val startMethod = startInvocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     startMethod.assertWorkflowMethod()
+    startMethod.warnPossibleSerializationIssues()
 
     val signalInvocation = getMethodInvocation(signal.asTerm)
 
     val signalMethod = signalInvocation.getMethod(SharedCompileTimeMessages.sgnlMethodShouldntBeExtMethod)
     signalMethod.assertSignalMethod()
+    signalMethod.warnPossibleSerializationIssues()
+
     val signalName = getSignalName(signalMethod.symbol)
 
     val startArgs = exprsToArray(

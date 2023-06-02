@@ -1,4 +1,4 @@
-package com.example.hello.cancellation
+package com.example.cancellation
 
 import io.temporal.activity.ActivityCancellationType
 import io.temporal.client.ActivityCompletionException

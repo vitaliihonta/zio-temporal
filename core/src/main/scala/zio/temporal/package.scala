@@ -3,16 +3,15 @@ package zio
 import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityMethod
 import io.temporal.client.WorkflowException
-import io.temporal.failure.TemporalException
 import io.temporal.workflow.QueryMethod
 import io.temporal.workflow.SignalMethod
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
 import zio.temporal.internal.ClassTagUtils
-import zio.temporal.extras.ZLayerAspects
 import scala.reflect.ClassTag
+import scala.language.implicitConversions
 
-package object temporal extends ZLayerAspects {
+package object temporal {
 
   // Convenient aliases
   final type activityInterface = ActivityInterface
@@ -48,4 +47,9 @@ package object temporal extends ZLayerAspects {
   /** Retrieves simple class name of a given type. Useful when specifying creating untyped stubs.
     */
   def simpleNameOf[A: ClassTag]: String = ClassTagUtils.classOf[A].getSimpleName
+
+  /** Brings aspects `@@` to [[zio.ZLayer]]
+    */
+  implicit def ZLayerAspectSyntax[RIn, E, ROut](self: ZLayer[RIn, E, ROut]): ZLayerAspect.Syntax[RIn, E, ROut] =
+    new ZLayerAspect.Syntax[RIn, E, ROut](self)
 }

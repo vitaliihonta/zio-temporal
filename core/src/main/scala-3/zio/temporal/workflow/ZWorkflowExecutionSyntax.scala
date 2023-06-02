@@ -32,6 +32,7 @@ object ZWorkflowExecutionSyntax {
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
+    method.warnPossibleSerializationIssues()
 
     val stub = invocation.selectJavaReprOf[io.temporal.client.WorkflowStub]
 
@@ -58,6 +59,7 @@ object ZWorkflowExecutionSyntax {
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
+    method.warnPossibleSerializationIssues()
 
     val stub = invocation.selectJavaReprOf[io.temporal.client.WorkflowStub]
 
@@ -83,6 +85,7 @@ object ZWorkflowExecutionSyntax {
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
+    method.warnPossibleSerializationIssues()
 
     val stub = invocation.selectJavaReprOf[io.temporal.client.WorkflowStub]
 

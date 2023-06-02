@@ -17,6 +17,7 @@ class ZChildWorkflowMacro(override val c: blackbox.Context) extends InvocationMa
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
+    method.warnPossibleSerializationIssues()
 
     val executeInvocation = workflowExecuteInvocation(invocation, method, weakTypeOf[R])
 
@@ -32,6 +33,7 @@ class ZChildWorkflowMacro(override val c: blackbox.Context) extends InvocationMa
 
     val method = invocation.getMethod(SharedCompileTimeMessages.wfMethodShouldntBeExtMethod)
     method.assertWorkflowMethod()
+    method.warnPossibleSerializationIssues()
 
     val executeAsyncInvocation = workflowExecuteAsyncInvocation(invocation, method, weakTypeOf[R])
 

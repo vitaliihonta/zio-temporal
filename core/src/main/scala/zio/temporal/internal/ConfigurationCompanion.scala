@@ -1,8 +1,7 @@
 package zio.temporal.internal
 
 import zio.*
-import zio.temporal.extras.ZLayerAspect
-import zio.temporal.internalApi
+import zio.temporal.{ZLayerAspect, internalApi}
 
 @internalApi
 abstract class ConfigurationCompanion[Configurable: Tag] {
