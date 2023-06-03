@@ -70,9 +70,6 @@ object SharedCompileTimeMessages {
   def notQueryMethod(what: String): String =
     s"The method is not a @queryMethod: $what"
 
-  def notFound(what: String): String =
-    s"$what not found"
-
   def defaultArgumentsNotSupported(names: List[String]): String =
     s"\nCurrently, methods with default arguments are not supported.\n" +
       s"Found the following default arguments: ${names.mkString(", ")}.\n" +

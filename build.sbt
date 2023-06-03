@@ -37,15 +37,10 @@ val publishSettings = Seq(
     )
   )
 )
-val coverageSettings = Seq(
-  //  Keys.fork in org.jacoco.core.
-  jacocoAggregateReportSettings := JacocoReportSettings(
-    title = "ZIO Temporal Coverage Report",
-    subDirectory = None,
-    thresholds = JacocoThresholds(),
-    formats = Seq(JacocoReportFormats.ScalaHTML, JacocoReportFormats.XML), // note XML formatter
-    fileEncoding = "utf-8"
-  )
+
+lazy val coverageSettings = Seq(
+  coverageExcludedPackages := "com\\.example\\..*;.*\\.JavaTypeTag;.*\\.JavaTypeTag\\..*;.*\\.TypeIsSpecified;" +
+    "zio\\.temporal\\.internal\\.*Macro*;"
 )
 
 lazy val baseProjectSettings = Seq(
@@ -80,8 +75,8 @@ val crossCompileSettings: Seq[Def.Setting[_]] = {
   )
 }
 
-val baseSettings    = baseProjectSettings
-val baseLibSettings = baseSettings ++ publishSettings ++ coverageSettings
+val baseSettings    = baseProjectSettings ++ coverageSettings
+val baseLibSettings = baseSettings ++ publishSettings
 
 lazy val root = project
   .in(file("."))
@@ -120,16 +115,6 @@ lazy val docs = project
   )
   .enablePlugins(MdocPlugin, DocusaurusPlugin)
 
-lazy val coverage = project
-  .in(file("./.coverage"))
-  .settings(baseSettings, coverageSettings, noPublishSettings)
-  .aggregate(
-    core.jvm(scala213),
-    testkit.jvm(scala213),
-    protobuf.jvm(scala213),
-    `integration-tests`.jvm(scala213)
-  )
-
 lazy val core = projectMatrix
   .in(file("core"))
   .settings(baseLibSettings)
@@ -166,7 +151,7 @@ lazy val `integration-tests` = projectMatrix
     testkit % "compile->compile;test->test",
     protobuf
   )
-  .settings(baseSettings, coverageSettings, noPublishSettings, crossCompileSettings)
+  .settings(baseSettings, noPublishSettings, crossCompileSettings)
   .settings(
     libraryDependencies ++= testLibs ++ {
       CrossVersion.partialVersion(scalaVersion.value) match {
@@ -211,6 +196,7 @@ lazy val examples = projectMatrix
   .in(file("examples"))
   .settings(baseSettings, noPublishSettings)
   .settings(
+    coverageEnabled := false,
     Compile / PB.targets := Seq(
       scalapb.gen(
         flatPackage = true,
@@ -285,7 +271,3 @@ lazy val noPublishSettings =
     publish / skip  := true,
     publishArtifact := false
   )
-
-Global / excludeLintKeys ++= Set(
-  jacocoAggregateReportSettings
-)

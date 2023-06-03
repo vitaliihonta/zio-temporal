@@ -13,10 +13,14 @@ import scala.reflect.ClassTag
 import io.temporal.workflow.Workflow
 
 sealed trait ZWorkflowContinueAsNewStub extends BasicStubOps {
+  def workflowType: String
   def options: ContinueAsNewOptions
 }
 
-class ZWorkflowContinueAsNewStubImpl(val options: ContinueAsNewOptions, val stubbedClass: Class[_])
+class ZWorkflowContinueAsNewStubImpl(
+  val workflowType: String,
+  val options:      ContinueAsNewOptions,
+  val stubbedClass: Class[_])
     extends ZWorkflowContinueAsNewStub
 
 object ZWorkflowContinueAsNewStub extends Stubs[ZWorkflowContinueAsNewStub] with ZWorkflowContinueAsNewStubSyntax {
@@ -46,6 +50,7 @@ class ZWorkflowContinueAsNewStubBuilder[A: ClassTag: IsWorkflow](
     ).build()
     ZWorkflowContinueAsNewStub.Of[A](
       new ZWorkflowContinueAsNewStubImpl(
+        ClassTagUtils.getWorkflowType[A],
         options,
         ClassTagUtils.classOf[A]
       )

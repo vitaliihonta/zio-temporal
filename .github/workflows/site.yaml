@@ -1,7 +1,8 @@
 name: Site publish
 on:
   push:
-    branches: [ "main", "site/*" ]
+    tags: [ "*" ]
+    branches: [ "site/*" ]
   workflow_dispatch:
 jobs:
   publish:
