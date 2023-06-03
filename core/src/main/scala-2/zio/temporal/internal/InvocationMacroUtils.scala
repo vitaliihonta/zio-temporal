@@ -1,6 +1,5 @@
 package zio.temporal.internal
 
-import izumi.reflect.Tag
 import zio.temporal.*
 import zio.temporal.activity.{IsActivity, ZActivityStub}
 import zio.temporal.workflow.IsWorkflow
@@ -125,36 +124,6 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
         )
     }
 
-  protected def getTag[A: WeakTypeTag] = {
-    val tagTpe = weakTypeOf[Tag[A]]
-    findImplicit(tagTpe, SharedCompileTimeMessages.notFound(tagTpe.toString))
-  }
-
-  /** @note
-    *   Type method annotations are missing during Scala 2 macro expansion in case we have only a WeakTypeTag.
-    */
-  protected def getWorkflowType(workflow: Type): String = {
-    val interface = getWorkflowInterface(workflow)
-    interface.decls
-      .filter(_.isMethod)
-      .map(findWorkflowTypeInMethod)
-      .find(_.isDefined)
-      .flatten
-      .getOrElse(
-        interface.typeSymbol.name.toString
-      )
-  }
-
-  private def findWorkflowTypeInMethod(method: Symbol): Option[String] = {
-    findAnnotation(method, WorkflowMethod)
-      .flatMap { t =>
-        t.children.tail
-          .collectFirst { case NamedArgVersionSpecific(_, Literal(Constant(workflowType: String))) =>
-            workflowType
-          }
-      }
-  }
-
   protected def getSignalName(method: Symbol): String =
     getAnnotation(method, SignalMethod).children.tail
       .collectFirst { case NamedArgVersionSpecific(_, Literal(Constant(signalName: String))) =>
@@ -251,25 +220,9 @@ abstract class InvocationMacroUtils(override val c: blackbox.Context)
       error(SharedCompileTimeMessages.notActivity(workflow.toString))
     }
 
-  protected def getWorkflowInterface(workflow: Type): Type =
-    findWorkflowInterface(workflow).getOrElse(
-      error(SharedCompileTimeMessages.notWorkflow(workflow.toString))
-    )
-
   protected def isWorkflow(tpe: Type): Boolean = {
     hasAnnotation(tpe.typeSymbol, WorkflowInterface)
   }
-
-  protected def findWorkflowInterface(workflow: Type): Option[Type] =
-    workflow match {
-      case SingleType(_, sym) =>
-        sym.typeSignature.baseClasses
-          .flatMap(sym => findAnnotation(sym, WorkflowInterface).map(_ => sym.asType.toType))
-          .headOption
-
-      case _ =>
-        Some(workflow).filter(isWorkflow)
-    }
 
   protected def extendsWorkflow(tpe: Type): Boolean =
     isWorkflow(tpe) || tpe.baseClasses.exists(sym => isWorkflow(sym.typeSignature))

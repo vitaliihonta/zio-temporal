@@ -168,10 +168,6 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     }
   }
 
-  def getWorkflowInterface(workflow: TypeRepr): TypeRepr = {
-    assertWorkflow(workflow, isFromImplicit = false)
-  }
-
   def assertTypedWorkflowStub(workflow: TypeRepr, stubType: TypeRepr, method: String): TypeRepr = {
     workflow.dealias match {
       case AndType(stub, wf) =>
@@ -197,24 +193,6 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
         )
     }
   }
-
-  def getWorkflowType(workflow: TypeRepr): String = {
-    val interface = getWorkflowInterface(workflow)
-    interface.typeSymbol.declaredMethods
-      .map(findWorkflowTypeInMethod)
-      .find(_.isDefined)
-      .flatten
-      .getOrElse(
-        interface.typeSymbol.name.toString
-      )
-  }
-
-  private def findWorkflowTypeInMethod(method: Symbol): Option[String] =
-    method.getAnnotation(WorkflowMethod) match {
-      case Some(Apply(Select(New(_), _), List(NamedArg(_, Literal(StringConstant(name)))))) =>
-        Some(name)
-      case _ => None
-    }
 
   def isWorkflow(sym: Symbol): Boolean =
     sym.hasAnnotation(WorkflowInterface)

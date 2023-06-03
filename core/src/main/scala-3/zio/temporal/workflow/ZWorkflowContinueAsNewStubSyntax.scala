@@ -30,15 +30,17 @@ object ZWorkflowContinueAsNewStubSyntax {
     method.assertWorkflowMethod()
     method.warnPossibleSerializationIssues()
 
+    val workflowType = invocation.instance
+      .select(invocation.instance.symbol.methodMember("workflowType").head)
+      .asExprOf[String]
+
     val options = invocation.instance
       .select(invocation.instance.symbol.methodMember("options").head)
       .asExprOf[ContinueAsNewOptions]
 
-    val workflowType = getWorkflowType(invocation.instance.tpe.widen)
-
     '{
       zio.temporal.internal.TemporalWorkflowFacade.continueAsNew[R](
-        ${ Expr(workflowType) },
+        $workflowType,
         $options,
         ${ method.argsExpr }
       )

@@ -86,11 +86,10 @@ class ZWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUt
     method.assertWorkflowMethod()
     method.warnPossibleSerializationIssues()
 
-    val workflowType = getWorkflowType(invocation.instance.tpe)
-
     val ret = weakTypeOf[R]
 
-    val options = q"""${invocation.instance}.options"""
+    val workflowType = q"""${invocation.instance}.workflowType"""
+    val options      = q"""${invocation.instance}.options"""
     q"""
       _root_.zio.temporal.internal.TemporalWorkflowFacade.continueAsNew[$ret]($workflowType, $options, List(..${method.appliedArgs}))
      """.debugged(SharedCompileTimeMessages.generatedContinueAsNewExecute)
