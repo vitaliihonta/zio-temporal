@@ -11,23 +11,6 @@ import zio.temporal.workflow.ZWorkflowClient
   */
 final class ZWorkerFactory private[zio] (val toJava: WorkerFactory) {
 
-  /** Allows to run arbitrary effect ensuring a shutdown on effect completion.
-    *
-    * Shutdown will be initiated when effect either completes successfully or fails (with error or defect) The effect
-    * will return after shutdown completed
-    *
-    * @param thunk
-    *   the effect to run
-    */
-  @deprecated("Use scope-based 'setup' or explicit start/shutdown", since = "0.2.0")
-  def use[R, E, A](thunk: ZIO[R, E, A]): ZIO[R, E, A] =
-    for {
-      _ <- start
-      result <- thunk.onExit { _ =>
-                  shutdownNow
-                }
-    } yield result
-
   /** Allows to setup [[ZWorkerFactory]] with guaranteed finalization.
     */
   def setup: URIO[Scope, Unit] =
