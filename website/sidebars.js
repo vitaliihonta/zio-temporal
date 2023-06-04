@@ -16,7 +16,11 @@ const sidebars = {
         "workflows/state",
         "workflows/queries",
         "workflows/signals",
-        "workflows/child-workflows"
+        "workflows/timers",
+        "workflows/child-workflows",
+        "workflows/external-workflows",
+        "workflows/continue-as-new",
+        "workflows/advanced"
       ]
     },
     {
@@ -24,22 +28,26 @@ const sidebars = {
       label: "Resilience",
       items: [
         "resilience/retries",
-        "resilience/sagas"
+        "resilience/sagas",
+        "resilience/heartbeats"
       ]
     },
     {
       type: "category",
-      label: "Protobuf",
+      label: "Serialization",
       items: [
-        "protobuf/overview",
-        "protobuf/usage"
+        "serialization/overview",
+        "serialization/jackson",
+        "serialization/protobuf"
       ]
     },
     {
       type: "category",
       label: "Testing",
       items: [
-        "testing/overview"
+        "testing/overview",
+        "testing/testing-activities",
+        "testing/testing-workflows"
       ]
     },
     {
