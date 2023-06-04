@@ -9,26 +9,6 @@ import java.util.concurrent.TimeUnit
   */
 final class ZWorkflowServiceStubs private[zio] (val toJava: WorkflowServiceStubs) {
 
-  /** Allows to run arbitrary effect ensuring a shutdown on effect completion.
-    *
-    * Shutdown will be initiated when effect either completes successfully or fails (with error or defect) The effect
-    * will return after shutdown completed
-    *
-    * @param options
-    *   await options with polling interval and poll delay
-    */
-  @deprecated("Use scope-based 'setup' or explicit shutdown/awaitTermination", since = "0.2.0")
-  def use[R, E, A](
-    options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.default
-  )(thunk:   ZIO[R, E, A]
-  ): ZIO[R, E, A] =
-    for {
-      awaitFiber <- awaitTermination(options).fork
-      result <- thunk.onExit { _ =>
-                  shutdownNow *> awaitFiber.join
-                }
-    } yield result
-
   /** Allows to setup [[ZWorkflowServiceStubs]] with guaranteed finalization.
     */
   def setup(

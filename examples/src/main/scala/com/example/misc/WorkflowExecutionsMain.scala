@@ -1,7 +1,8 @@
 package com.example.misc
 
-import zio._
+import zio.*
 import zio.logging.backend.SLF4J
+import zio.temporal.ZWorkflowExecutionMetadata
 import zio.temporal.workflow.*
 
 object WorkflowExecutionsMain extends ZIOAppDefault {
@@ -12,15 +13,15 @@ object WorkflowExecutionsMain extends ZIOAppDefault {
     val program = for {
       _ <- ZWorkflowServiceStubs.setup()
       executions <- ZIO.serviceWithZIO[ZWorkflowClient] { client =>
-                      client.listExecutions(
-                        // try with/without query
-                        query = Some(""" WorkflowType = "PaymentWorkflow" """)
-                      )
+                      client
+                        .streamExecutions(
+                          // try with/without query
+                          query = Some(""" WorkflowType = "PaymentWorkflow" """)
+                        )
+                        .runCollect
                     }
       _ <- ZIO.logInfo(s"Found ${executions.size} executions")
-      _ <- ZIO.foreach(executions) { exec =>
-             ZIO.logInfo(s"Exec: $exec")
-           }
+      _ <- ZIO.foreach(executions)(printExecutionInfo)
     } yield ()
 
     program.provideSome[Scope](
@@ -30,4 +31,12 @@ object WorkflowExecutionsMain extends ZIOAppDefault {
       ZWorkflowServiceStubs.make
     )
   }
+
+  private def printExecutionInfo(exec: ZWorkflowExecutionMetadata): ZIO[ZWorkflowClient, Throwable, Unit] =
+    ZIO.serviceWithZIO[ZWorkflowClient] { workflowClient =>
+      ZIO.logInfo(s"Found execution=$exec") *> workflowClient
+        .streamHistory(exec.execution.workflowId)
+        .tap(historyEvent => ZIO.logInfo(s"Event: $historyEvent"))
+        .runDrain
+    }
 }

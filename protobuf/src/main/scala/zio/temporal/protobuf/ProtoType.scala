@@ -80,6 +80,9 @@ sealed trait LowPriorityProtoTypes {
   implicit val localDateProtoType: ProtoType.Of[LocalDate, Long] =
     localDateTimeType.convertTo(_.toLocalDate)(_.atStartOfDay())
 
+  implicit val zioDurationProtoType: ProtoType.Of[zio.Duration, Long] =
+    LongType.convertTo(zio.Duration.fromNanos)(_.toNanos)
+
   implicit def optionProtoType[A](implicit protoType: ProtoType[A]): ProtoType.Of[Option[A], Option[protoType.Repr]] =
     new OptionType[A, protoType.Repr](protoType)
 }
