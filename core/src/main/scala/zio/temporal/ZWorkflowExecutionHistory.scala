@@ -16,6 +16,6 @@ final class ZWorkflowExecutionHistory(val toJava: WorkflowExecutionHistory) {
   override def toString: String =
     s"ZWorkflowExecutionHistory(workflowExecution=$workflowExecution, " +
       s"events=$events, " +
-      s"lastEvent=$lastEvent, " +
+      s"lastEvent=$lastEvent" +
       s")"
 }
