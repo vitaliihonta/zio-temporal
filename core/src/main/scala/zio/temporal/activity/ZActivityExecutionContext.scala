@@ -1,10 +1,10 @@
 package zio.temporal.activity
 
-import zio.*
-import io.temporal.activity.*
+import zio._
+import io.temporal.activity._
 import io.temporal.client.ActivityCompletionException
 import zio.temporal.{JavaTypeTag, TypeIsSpecified}
-import scala.jdk.OptionConverters.*
+import scala.jdk.OptionConverters._
 
 class ZActivityExecutionContext private[zio] (val toJava: ActivityExecutionContext) extends AnyVal {
 

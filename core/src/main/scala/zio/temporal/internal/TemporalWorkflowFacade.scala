@@ -19,7 +19,7 @@ import zio.Duration
 import zio.temporal.JavaTypeTag
 
 object TemporalWorkflowFacade {
-  import FunctionConverters.*
+  import FunctionConverters._
 
   def start(stub: WorkflowStub, args: List[Any]): WorkflowExecution =
     stub.start(args.asInstanceOf[List[AnyRef]]: _*)

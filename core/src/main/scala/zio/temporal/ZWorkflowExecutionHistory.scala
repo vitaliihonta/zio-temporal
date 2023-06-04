@@ -1,7 +1,7 @@
 package zio.temporal
 
 import io.temporal.common.WorkflowExecutionHistory
-import scala.jdk.CollectionConverters.*
+import scala.jdk.CollectionConverters._
 
 final class ZWorkflowExecutionHistory(val toJava: WorkflowExecutionHistory) {
   def workflowExecution: ZWorkflowExecution =

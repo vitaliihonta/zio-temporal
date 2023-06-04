@@ -2,7 +2,7 @@ package zio.temporal.testkit
 
 import io.temporal.testing.TestActivityEnvironment
 import zio.temporal.activity.{ExtendsActivity, IsActivity, ZActivityOptions, ZActivityStubBuilderInitial}
-import zio.*
+import zio._
 import zio.temporal.{JavaTypeTag, TypeIsSpecified}
 import zio.temporal.internal.ClassTagUtils
 

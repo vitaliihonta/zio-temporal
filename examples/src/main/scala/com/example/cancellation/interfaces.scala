@@ -1,7 +1,7 @@
 package com.example.cancellation
 
-import zio.*
-import zio.temporal.*
+import zio._
+import zio.temporal._
 
 @workflowInterface
 trait GreetingWorkflow {

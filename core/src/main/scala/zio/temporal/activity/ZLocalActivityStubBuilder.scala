@@ -1,6 +1,6 @@
 package zio.temporal.activity
 
-import zio.*
+import zio._
 import io.temporal.activity.LocalActivityOptions
 import io.temporal.workflow.Workflow
 import zio.temporal.ZRetryOptions

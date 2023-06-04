@@ -4,7 +4,7 @@ import zio.temporal.TemporalIO
 import zio.temporal.ZWorkflowExecution
 import zio.temporal.workflow.ZWorkflowStub
 
-import scala.quoted.*
+import scala.quoted._
 import zio.temporal.internal.{
   InvocationMacroUtils,
   SharedCompileTimeMessages,
@@ -37,9 +37,9 @@ object ZWorkflowStubSignalSyntax {
   private val Init                       = "<init>"
 
   def signalImpl(f: Expr[Unit])(using q: Quotes): Expr[TemporalIO[Unit]] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new InvocationMacroUtils[q.type]
-    import macroUtils.*
+    import macroUtils._
     val invocation = getMethodInvocation(f.asTerm)
     assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZWorkflowStub], "signal")
 
@@ -64,9 +64,9 @@ object ZWorkflowStubSignalSyntax {
     signal:  Expr[Unit]
   )(using q: Quotes
   ): Expr[TemporalIO[ZWorkflowExecution]] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new InvocationMacroUtils[q.type]
-    import macroUtils.*
+    import macroUtils._
 
     val startInvocation = getMethodInvocation(start.asTerm)
 

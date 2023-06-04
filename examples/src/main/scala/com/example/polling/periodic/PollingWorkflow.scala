@@ -1,8 +1,8 @@
 package com.example.polling.periodic
 
-import zio.*
+import zio._
 import zio.temporal._
-import zio.temporal.workflow.*
+import zio.temporal.workflow._
 
 @workflowInterface
 trait PollingWorkflow {

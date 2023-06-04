@@ -3,7 +3,7 @@ package zio.temporal.activity
 import io.temporal.activity.Activity
 import io.temporal.activity.ActivityExecutionContext
 import io.temporal.client.{ActivityCompletionClient, ActivityCompletionException}
-import zio.*
+import zio._
 import zio.temporal.internal.ZioUnsafeFacade
 
 object ZActivity {

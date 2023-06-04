@@ -1,10 +1,10 @@
 package zio.temporal
 
-import zio.*
+import zio._
 import zio.logging.backend.SLF4J
-import zio.temporal.fixture.*
-import zio.temporal.testkit.*
-import zio.test.*
+import zio.temporal.fixture._
+import zio.temporal.testkit._
+import zio.test._
 import java.util.concurrent.atomic.AtomicInteger
 
 object ActivitySpec extends ZIOSpecDefault {

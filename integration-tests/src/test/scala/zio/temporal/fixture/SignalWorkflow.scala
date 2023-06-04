@@ -1,6 +1,6 @@
 package zio.temporal.fixture
 
-import zio.temporal.*
+import zio.temporal._
 import zio.temporal.state.ZWorkflowState
 import zio.temporal.workflow.ZWorkflow
 

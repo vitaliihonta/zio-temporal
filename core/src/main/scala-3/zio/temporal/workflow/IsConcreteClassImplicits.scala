@@ -1,6 +1,6 @@
 package zio.temporal.workflow
 
-import scala.quoted.*
+import scala.quoted._
 import zio.temporal.internal.MacroUtils
 trait IsConcreteClassImplicits {
   inline given materialize[A]: IsConcreteClass[A] =
@@ -9,7 +9,7 @@ trait IsConcreteClassImplicits {
 
 object IsConcreteClassImplicits {
   def impl[A: Type](using q: Quotes): Expr[IsConcreteClass[A]] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new MacroUtils[q.type]
     macroUtils.assertConcreteClass(TypeRepr.of[A])
     '{ IsConcreteClass.__zio_temporal_IsConcreteClassInstance.asInstanceOf[IsConcreteClass[A]] }

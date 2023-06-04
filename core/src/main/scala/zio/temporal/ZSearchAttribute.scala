@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 import java.{util => ju}
 import scala.annotation.implicitNotFound
-import scala.jdk.CollectionConverters.*
+import scala.jdk.CollectionConverters._
 import scala.language.implicitConversions
 
 /** Base type for attribute value.

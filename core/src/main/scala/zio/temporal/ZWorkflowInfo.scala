@@ -1,11 +1,10 @@
 package zio.temporal
 
 import io.temporal.api.common.v1.Payload
-import zio.*
+import zio._
 import io.temporal.workflow.WorkflowInfo
-
-import scala.jdk.OptionConverters.*
-import scala.jdk.CollectionConverters.*
+import scala.jdk.OptionConverters._
+import scala.jdk.CollectionConverters._
 
 /** Represents current workflow information
   * @see

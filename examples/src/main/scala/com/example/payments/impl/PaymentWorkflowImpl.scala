@@ -1,12 +1,12 @@
 package com.example.payments.impl
 
 import com.example.payments.workflows.{InvalidConfirmationCodeError, PaymentActivity, PaymentWorkflow}
-import com.example.transactions.*
+import com.example.transactions._
 import io.temporal.failure.CanceledFailure
-import zio.*
-import zio.temporal.*
-import zio.temporal.workflow.*
-import zio.temporal.state.*
+import zio._
+import zio.temporal._
+import zio.temporal.workflow._
+import zio.temporal.state._
 import zio.temporal.activity.ZActivityStub
 import org.slf4j.MDC
 import zio.temporal.failure.{ActivityFailure, ApplicationFailure}

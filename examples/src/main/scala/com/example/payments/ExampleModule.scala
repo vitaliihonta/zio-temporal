@@ -1,10 +1,10 @@
 package com.example.payments
 
-import com.example.transactions.*
-import com.example.payments.impl.*
-import com.example.payments.workflows.*
-import zio.*
-import zio.temporal.*
+import com.example.transactions._
+import com.example.payments.impl._
+import com.example.payments.workflows._
+import zio._
+import zio.temporal._
 import zio.temporal.protobuf.ProtobufDataConverter
 import zio.temporal.worker.ZWorker
 import zio.temporal.worker.ZWorkerFactory

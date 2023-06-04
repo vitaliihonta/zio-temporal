@@ -1,11 +1,11 @@
 package com.example.payments.impl
 
 import com.example.payments.workflows.{BankError, BankIsDownError, InvalidConfirmationCodeError, PaymentActivity}
-import com.example.transactions.*
-import zio.*
+import com.example.transactions._
+import zio._
 import zio.temporal.activity.ZActivity
 import zio.temporal.activity.ZActivityOptions
-import zio.temporal.protobuf.syntax.*
+import zio.temporal.protobuf.syntax._
 
 import java.util.UUID
 

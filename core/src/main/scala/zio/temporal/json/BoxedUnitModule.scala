@@ -1,7 +1,7 @@
 package zio.temporal.json
 
 import com.fasterxml.jackson.core.{JsonGenerator, JsonParser, JsonToken}
-import com.fasterxml.jackson.databind.*
+import com.fasterxml.jackson.databind._
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.jsontype.{TypeDeserializer, TypeSerializer}
 import com.fasterxml.jackson.databind.module.SimpleModule

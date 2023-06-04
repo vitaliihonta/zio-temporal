@@ -1,6 +1,6 @@
 package com.example.child
 
-import zio.temporal.*
+import zio.temporal._
 
 @workflowInterface
 trait GreetingWorkflow {

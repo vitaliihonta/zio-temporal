@@ -1,11 +1,11 @@
 package com.example.generics.protobuf_ser
 
-import zio.*
+import zio._
 import zio.logging.backend.SLF4J
-import zio.temporal.*
+import zio.temporal._
 import zio.temporal.protobuf.ProtobufDataConverter
-import zio.temporal.worker.*
-import zio.temporal.workflow.*
+import zio.temporal.worker._
+import zio.temporal.workflow._
 import scala.reflect.ClassTag
 
 // NOTE: temporal won't deserialize correctly without the upper-bound type

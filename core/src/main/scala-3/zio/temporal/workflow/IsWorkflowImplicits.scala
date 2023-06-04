@@ -1,7 +1,7 @@
 package zio.temporal.workflow
 
 import zio.temporal.internal.InvocationMacroUtils
-import scala.quoted.*
+import scala.quoted._
 
 trait IsWorkflowImplicits {
   inline given materialize[A]: IsWorkflow[A] =
@@ -10,7 +10,7 @@ trait IsWorkflowImplicits {
 
 object IsWorkflowImplicits {
   def impl[A: Type](using q: Quotes): Expr[IsWorkflow[A]] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new InvocationMacroUtils[q.type]
     macroUtils.assertWorkflow(TypeRepr.of[A], isFromImplicit = true)
 

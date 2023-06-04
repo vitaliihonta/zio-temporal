@@ -1,6 +1,6 @@
 package zio.temporal.activity
 
-import zio.*
+import zio._
 import io.temporal.activity.ActivityCancellationType
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.context.ContextPropagator
@@ -8,7 +8,7 @@ import io.temporal.workflow.Workflow
 import zio.temporal.ZRetryOptions
 import zio.temporal.internal.ClassTagUtils
 
-import scala.jdk.CollectionConverters.*
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
 object ZActivityStubBuilderInitial {

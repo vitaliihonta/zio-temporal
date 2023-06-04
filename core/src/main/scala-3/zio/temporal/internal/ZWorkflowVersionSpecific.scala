@@ -1,7 +1,7 @@
 package zio.temporal.internal
 
 import org.slf4j.Logger
-import scala.quoted.*
+import scala.quoted._
 import zio.temporal.workflow.ZWorkflow
 
 trait ZWorkflowVersionSpecific {
@@ -20,7 +20,7 @@ trait ZWorkflowVersionSpecific {
 
 object ZWorkflowVersionSpecificMacro {
   def getLoggerImpl(using q: Quotes): Expr[Logger] = {
-    import q.reflect.*
+    import q.reflect._
 
     @annotation.tailrec
     def enclosingClass(symb: Symbol): Symbol =
