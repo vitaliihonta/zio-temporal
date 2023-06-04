@@ -1,11 +1,11 @@
 package com.example.generics.jackson_ser
 
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
-import zio.*
+import zio._
 import zio.logging.backend.SLF4J
-import zio.temporal.*
-import zio.temporal.worker.*
-import zio.temporal.workflow.*
+import zio.temporal._
+import zio.temporal.worker._
+import zio.temporal.workflow._
 import scala.reflect.ClassTag
 
 // NOTE: jackson (de)serialization won't work without additional annotations

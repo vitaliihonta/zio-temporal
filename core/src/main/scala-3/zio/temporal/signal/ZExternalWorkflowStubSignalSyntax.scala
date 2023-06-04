@@ -1,6 +1,6 @@
 package zio.temporal.signal
 
-import scala.quoted.*
+import scala.quoted._
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
 import zio.temporal.workflow.ZExternalWorkflowStub
 
@@ -11,9 +11,9 @@ trait ZExternalWorkflowStubSignalSyntax {
 
 object ZExternalWorkflowStubSignalSyntax {
   def signalImpl(f: Expr[Unit])(using q: Quotes): Expr[Unit] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new InvocationMacroUtils[q.type]
-    import macroUtils.*
+    import macroUtils._
     val invocation = getMethodInvocation(f.asTerm)
     assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZExternalWorkflowStub], "signal")
 

@@ -1,8 +1,8 @@
 package com.example.polling.periodic
 
-import zio.*
-import zio.temporal.*
-import zio.temporal.activity.*
+import zio._
+import zio.temporal._
+import zio.temporal.activity._
 
 @activityInterface
 trait PollingActivities {

@@ -1,11 +1,11 @@
 package com.example.misc
 
-import zio.*
+import zio._
 import zio.logging.backend.SLF4J
-import zio.temporal.*
+import zio.temporal._
 import zio.temporal.activity.{ZActivity, ZActivityOptions, ZActivityStub}
-import zio.temporal.worker.*
-import zio.temporal.workflow.*
+import zio.temporal.worker._
+import zio.temporal.workflow._
 
 @workflowInterface
 trait EitherWorkflow {

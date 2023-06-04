@@ -2,7 +2,7 @@ package zio.temporal.worker
 
 import io.temporal.common.interceptors.WorkerInterceptor
 import io.temporal.worker.WorkerFactoryOptions
-import zio.*
+import zio._
 import zio.temporal.internal.ConfigurationCompanion
 import zio.temporal.workflow.ZWorkflowClientOptions
 

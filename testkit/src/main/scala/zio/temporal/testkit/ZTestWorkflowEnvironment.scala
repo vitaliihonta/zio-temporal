@@ -1,13 +1,13 @@
 package zio.temporal.testkit
 
 import io.temporal.testing.TestWorkflowEnvironment
-import zio.*
+import zio._
 import zio.temporal.ZAwaitTerminationOptions
 import zio.temporal.activity.ZActivityOptions
 import zio.temporal.ZCurrentTimeMillis
 import zio.temporal.worker.ZWorker
 import zio.temporal.worker.ZWorkerOptions
-import zio.temporal.workflow.*
+import zio.temporal.workflow._
 import java.util.concurrent.TimeUnit
 import scala.reflect.ClassTag
 

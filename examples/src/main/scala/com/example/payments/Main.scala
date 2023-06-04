@@ -2,9 +2,9 @@ package com.example.payments
 
 import com.example.payments.impl.PaymentActivityImpl
 import com.example.payments.service.PaymentService
-import zio.*
-import zio.temporal.worker.*
-import zio.temporal.workflow.*
+import zio._
+import zio.temporal.worker._
+import zio.temporal.workflow._
 import zio.logging.backend.SLF4J
 import zio.temporal.activity.ZActivityOptions
 import zio.temporal.protobuf.ProtobufDataConverter

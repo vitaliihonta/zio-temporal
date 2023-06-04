@@ -3,7 +3,7 @@ package zio.temporal.workflow
 import zio.temporal.JavaTypeTag
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
 
-import scala.quoted.*
+import scala.quoted._
 
 trait ZChildWorkflowExecutionSyntax {
   inline def execute[R](inline f: R)(using javaTypeTag: JavaTypeTag[R]): R =
@@ -19,9 +19,9 @@ object ZChildWorkflowExecutionSyntax {
     javaTypeTag: Expr[JavaTypeTag[R]]
   )(using q:     Quotes
   ): Expr[R] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new InvocationMacroUtils[q.type]
-    import macroUtils.*
+    import macroUtils._
 
     val invocation = getMethodInvocation(f.asTerm)
     assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZChildWorkflowStub], "execute")
@@ -42,9 +42,9 @@ object ZChildWorkflowExecutionSyntax {
     javaTypeTag: Expr[JavaTypeTag[R]]
   )(using q:     Quotes
   ): Expr[ZAsync[R]] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new InvocationMacroUtils[q.type]
-    import macroUtils.*
+    import macroUtils._
 
     val invocation = getMethodInvocation(f.asTerm)
     assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZChildWorkflowStub], "executeAsync")

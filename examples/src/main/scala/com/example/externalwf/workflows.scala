@@ -1,9 +1,9 @@
 package com.example.externalwf
 
-import zio.*
-import zio.temporal.*
+import zio._
+import zio.temporal._
 import zio.temporal.state.ZWorkflowState
-import zio.temporal.workflow.*
+import zio.temporal.workflow._
 
 sealed trait OrderState extends Product with Serializable
 object OrderState {

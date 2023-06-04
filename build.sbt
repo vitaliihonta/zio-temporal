@@ -50,8 +50,7 @@ lazy val baseProjectSettings = Seq(
       "-language:higherKinds"
     )
     val crossVersionOptions = CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, y)) if y < 13 => Seq("-Ypartial-unification", "-Xsource:3")
-      case Some((2, _))           => Seq("-Xsource:3")
+      case Some((2, y)) if y < 13 => Seq("-Ypartial-unification")
       case _                      => Seq.empty[String]
     }
     baseOptions ++ crossVersionOptions

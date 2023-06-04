@@ -31,7 +31,7 @@ object EnumSearchAttributesSpec {
 }
 
 class EnumSearchAttributesSpec extends AnyWordSpec {
-  import EnumSearchAttributesSpec.*
+  import EnumSearchAttributesSpec._
   import zio.temporal.enumeratum
 
   "ZSearchAttribute.Convert" should {

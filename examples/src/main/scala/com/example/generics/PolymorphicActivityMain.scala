@@ -1,12 +1,12 @@
 package com.example.generics
 
-import zio.*
+import zio._
 import zio.logging.backend.SLF4J
-import zio.temporal.*
+import zio.temporal._
 import zio.temporal.activity.{ZActivity, ZActivityOptions, ZActivityStub}
 import zio.temporal.failure.{ActivityFailure, ApplicationFailure}
 import zio.temporal.worker.{ZWorker, ZWorkerFactory, ZWorkerFactoryOptions}
-import zio.temporal.workflow.*
+import zio.temporal.workflow._
 
 trait NotificationsSenderActivity {
   def send(msg: String): Unit

@@ -1,11 +1,11 @@
 package com.example.externalwf
 
-import zio.*
+import zio._
 import zio.logging.backend.SLF4J
-import zio.temporal.*
+import zio.temporal._
 import zio.temporal.activity.ZActivityOptions
-import zio.temporal.worker.*
-import zio.temporal.workflow.*
+import zio.temporal.worker._
+import zio.temporal.workflow._
 
 object Main extends ZIOAppDefault {
   val TaskQueue = "hello-food-workflows"

@@ -1,10 +1,10 @@
 package com.example.child
 
-import zio.*
-import zio.temporal.*
+import zio._
+import zio.temporal._
 import zio.temporal.activity.ZActivityOptions
-import zio.temporal.worker.*
-import zio.temporal.workflow.*
+import zio.temporal.worker._
+import zio.temporal.workflow._
 import zio.logging.backend.SLF4J
 
 object Main extends ZIOAppDefault {

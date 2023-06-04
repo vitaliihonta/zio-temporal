@@ -5,10 +5,10 @@ import io.temporal.common.context.ContextPropagator
 import io.temporal.workflow.ChildWorkflowCancellationType
 import io.temporal.workflow.ChildWorkflowOptions
 import io.temporal.workflow.Workflow
-import zio.*
+import zio._
 import zio.temporal.internal.ClassTagUtils
 import zio.temporal.{ZRetryOptions, ZSearchAttribute}
-import scala.jdk.CollectionConverters.*
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
 object ZChildWorkflowStubBuilder {

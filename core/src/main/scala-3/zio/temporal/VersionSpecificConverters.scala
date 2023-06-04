@@ -1,6 +1,6 @@
 package zio.temporal
 
-import scala.quoted.*
+import scala.quoted._
 import scala.deriving.Mirror
 
 trait VersionSpecificConverters {

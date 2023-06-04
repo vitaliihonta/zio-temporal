@@ -1,10 +1,10 @@
 package com.example.cancellation
 
 import io.temporal.client.ActivityCompletionException
-import zio.*
-import zio.temporal.*
-import zio.temporal.activity.*
-import zio.temporal.workflow.*
+import zio._
+import zio.temporal._
+import zio.temporal.activity._
+import zio.temporal.workflow._
 
 object GreetingActivitiesImpl {
   val make: URLayer[ZActivityOptions[Any], GreetingActivities] =

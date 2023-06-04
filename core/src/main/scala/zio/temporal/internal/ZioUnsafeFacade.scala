@@ -1,6 +1,6 @@
 package zio.temporal.internal
 
-import zio.*
+import zio._
 
 object ZioUnsafeFacade {
 

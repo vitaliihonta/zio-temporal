@@ -1,8 +1,8 @@
 package com.example.bookingsaga
 
-import zio.*
-import zio.temporal.*
-import zio.temporal.activity.*
+import zio._
+import zio.temporal._
+import zio.temporal.activity._
 
 object TripBookingActivitiesImpl {
   val make: URLayer[ZActivityOptions[Any], TripBookingActivitiesImpl] =

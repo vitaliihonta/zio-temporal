@@ -1,10 +1,10 @@
 package com.example.polling.periodic
 
-import zio.*
-import zio.temporal.*
+import zio._
+import zio.temporal._
 import zio.temporal.activity.ZActivityStub
 import zio.temporal.failure.ActivityFailure
-import zio.temporal.workflow.*
+import zio.temporal.workflow._
 
 import scala.annotation.tailrec
 

@@ -1,14 +1,14 @@
 package zio.temporal.workflow
 
-import zio.*
+import zio._
 import zio.temporal.internal.ConfigurationCompanion
 import io.temporal.api.enums.v1.QueryRejectCondition
 import io.temporal.client.WorkflowClientOptions
 import io.temporal.common.context.ContextPropagator
-import io.temporal.common.converter.*
+import io.temporal.common.converter._
 import io.temporal.common.interceptors.WorkflowClientInterceptor
 import zio.temporal.json.JacksonDataConverter
-import scala.jdk.CollectionConverters.*
+import scala.jdk.CollectionConverters._
 
 /** Represents temporal workflow client options
   *

@@ -77,8 +77,8 @@ while activity method are registered capitalized.
 For instance, having the following activity interface:
 
 ```scala mdoc:silent
-import zio.temporal.*
-import zio.temporal.activity.*
+import zio.temporal._
+import zio.temporal.activity._
 
 @activityInterface
 trait EchoActivity {
@@ -98,8 +98,8 @@ trait EchoWorkflow {
 The activity name in untyped invocation must be `Echo` (not `echo`):
 
 ```scala mdoc:silent
-import zio.*
-import zio.temporal.workflow.*
+import zio._
+import zio.temporal.workflow._
 
 class EchoWorkflowImpl extends EchoWorkflow {
   // Inside some workflow

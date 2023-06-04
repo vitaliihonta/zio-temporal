@@ -1,10 +1,10 @@
 package zio.temporal.workflow
 
-import zio.*
-import zio.temporal.*
+import zio._
+import zio.temporal._
 import zio.temporal.ZWorkflowExecution
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
-import scala.quoted.*
+import scala.quoted._
 
 trait ZWorkflowExecutionSyntax {
   inline def start[A](inline f: A): TemporalIO[ZWorkflowExecution] =
@@ -23,9 +23,9 @@ trait ZWorkflowExecutionSyntax {
 
 object ZWorkflowExecutionSyntax {
   def startImpl[A: Type](f: Expr[A])(using q: Quotes): Expr[TemporalIO[ZWorkflowExecution]] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new InvocationMacroUtils[q.type]
-    import macroUtils.*
+    import macroUtils._
 
     val invocation = getMethodInvocation(f.asTerm)
     assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZWorkflowStub], "start")
@@ -50,9 +50,9 @@ object ZWorkflowExecutionSyntax {
     javaTypeTag: Expr[JavaTypeTag[R]]
   )(using q:     Quotes
   ): Expr[TemporalIO[R]] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new InvocationMacroUtils[q.type]
-    import macroUtils.*
+    import macroUtils._
 
     val invocation = getMethodInvocation(f.asTerm)
     assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZWorkflowStub], "execute")
@@ -76,9 +76,9 @@ object ZWorkflowExecutionSyntax {
     javaTypeTag: Expr[JavaTypeTag[R]]
   )(using q:     Quotes
   ): Expr[TemporalIO[R]] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new InvocationMacroUtils[q.type]
-    import macroUtils.*
+    import macroUtils._
 
     val invocation = getMethodInvocation(f.asTerm)
     assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZWorkflowStub], "executeWithTimeout")

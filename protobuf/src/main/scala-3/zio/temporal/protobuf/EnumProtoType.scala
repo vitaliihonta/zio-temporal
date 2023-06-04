@@ -2,7 +2,7 @@ package zio.temporal.protobuf
 
 import scala.reflect.Enum
 import scalapb.{GeneratedEnum, GeneratedEnumCompanion}
-import scala.quoted.*
+import scala.quoted._
 import zio.temporal.internal.MacroUtils
 
 object EnumProtoType {
@@ -59,9 +59,9 @@ object EnumProtoTypePartiallyApplied {
     companion: Expr[GeneratedEnumCompanion[P]]
   )(using q:   Quotes
   ): Expr[ProtoType.Of[E, P]] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new MacroUtils[q.type]
-    import macroUtils.*
+    import macroUtils._
     val tpe          = TypeRepr.of[E]
     val enumName     = tpe.show
     val enumClassSym = tpe.classSymbol.getOrElse(error(s"$enumName is not a enum!"))

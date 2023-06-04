@@ -1,12 +1,12 @@
 package zio.temporal.workflow
 
 import io.temporal.workflow.ContinueAsNewOptions
-import zio.*
-import zio.temporal.*
+import zio._
+import zio.temporal._
 import zio.temporal.ZWorkflowExecution
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
 
-import scala.quoted.*
+import scala.quoted._
 import scala.reflect.ClassTag
 
 trait ZWorkflowContinueAsNewStubSyntax {
@@ -19,9 +19,9 @@ object ZWorkflowContinueAsNewStubSyntax {
     f:       Expr[R]
   )(using q: Quotes
   ): Expr[R] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new InvocationMacroUtils[q.type]
-    import macroUtils.*
+    import macroUtils._
 
     val invocation = getMethodInvocation(f.asTerm)
     assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZWorkflowContinueAsNewStub], "executeAsync")

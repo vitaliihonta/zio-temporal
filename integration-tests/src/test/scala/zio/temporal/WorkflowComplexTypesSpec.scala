@@ -1,11 +1,11 @@
 package zio.temporal
 
-import zio.*
-import zio.temporal.fixture.*
-import zio.temporal.testkit.*
+import zio._
+import zio.temporal.fixture._
+import zio.temporal.testkit._
 import zio.temporal.worker.ZWorker
 import zio.temporal.workflow.ZWorkflowStub
-import zio.test.*
+import zio.test._
 import java.util.UUID
 
 object WorkflowComplexTypesSpec extends ZIOSpecDefault {

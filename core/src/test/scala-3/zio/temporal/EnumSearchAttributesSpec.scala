@@ -26,7 +26,7 @@ object EnumSearchAttributesSpec {
 }
 
 class EnumSearchAttributesSpec extends AnyWordSpec {
-  import EnumSearchAttributesSpec.*
+  import EnumSearchAttributesSpec._
 
   "ZSearchAttribute.Convert" should {
     "work for scala3 enums" in {

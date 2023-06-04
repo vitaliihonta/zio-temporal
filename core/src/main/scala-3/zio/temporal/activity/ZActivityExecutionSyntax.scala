@@ -2,7 +2,7 @@ package zio.temporal.activity
 
 import zio.temporal.JavaTypeTag
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
-import scala.quoted.*
+import scala.quoted._
 import zio.temporal.workflow.ZAsync
 
 trait ZActivityExecutionSyntax {
@@ -19,9 +19,9 @@ object ZActivityExecutionSyntax {
     javaTypeTag: Expr[JavaTypeTag[R]]
   )(using q:     Quotes
   ): Expr[R] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new InvocationMacroUtils[q.type]
-    import macroUtils.*
+    import macroUtils._
 
     val invocation = getMethodInvocation(f.asTerm)
     assertTypedActivityStub(invocation.tpe, "execute")
@@ -49,9 +49,9 @@ object ZActivityExecutionSyntax {
     javaTypeTag: Expr[JavaTypeTag[R]]
   )(using q:     Quotes
   ): Expr[ZAsync[R]] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new InvocationMacroUtils[q.type]
-    import macroUtils.*
+    import macroUtils._
 
     val invocation = getMethodInvocation(f.asTerm)
     assertTypedActivityStub(invocation.tpe, "executeAsync")

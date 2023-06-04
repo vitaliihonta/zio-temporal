@@ -3,7 +3,7 @@ package zio.temporal.query
 import zio.temporal.{JavaTypeTag, TemporalIO}
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
 import zio.temporal.workflow.ZWorkflowStub
-import scala.quoted.*
+import scala.quoted._
 
 trait ZWorkflowStubQuerySyntax {
   inline def query[R](inline f: R)(using javaTypeTag: JavaTypeTag[R]): TemporalIO[R] =
@@ -16,9 +16,9 @@ object ZWorkflowStubQuerySyntax {
     javaTypeTag: Expr[JavaTypeTag[R]]
   )(using q:     Quotes
   ): Expr[TemporalIO[R]] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new InvocationMacroUtils[q.type]
-    import macroUtils.*
+    import macroUtils._
 
     val invocation = getMethodInvocation(f.asTerm)
     assertTypedWorkflowStub(invocation.tpe, TypeRepr.of[ZWorkflowStub], "query")

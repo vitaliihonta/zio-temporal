@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 import scalapb.GeneratedFileObject
 
 import java.net.URL
-import scala.jdk.CollectionConverters.*
+import scala.jdk.CollectionConverters._
 
 object ProtoFileObjectAutoLoader {
   private val logger           = LoggerFactory.getLogger(getClass)

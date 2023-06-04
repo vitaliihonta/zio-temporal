@@ -1,9 +1,9 @@
 package com.example.misc
 
-import zio.*
+import zio._
 import zio.logging.backend.SLF4J
 import zio.temporal.ZWorkflowExecutionMetadata
-import zio.temporal.workflow.*
+import zio.temporal.workflow._
 
 object WorkflowExecutionsMain extends ZIOAppDefault {
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =

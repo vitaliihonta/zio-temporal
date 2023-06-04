@@ -2,7 +2,7 @@ package zio.temporal.workflow
 
 import io.temporal.workflow.{CancellationScope, ContinueAsNewOptions, Workflow}
 import org.slf4j.Logger
-import zio.temporal.activity.*
+import zio.temporal.activity._
 import zio.temporal.internal.{ClassTagUtils, TemporalWorkflowFacade, ZWorkflowVersionSpecific}
 import zio.temporal.{
   JavaTypeTag,
@@ -12,10 +12,10 @@ import zio.temporal.{
   ZWorkflowExecution,
   ZWorkflowInfo
 }
-import zio.*
+import zio._
 import java.util.UUID
-import scala.jdk.CollectionConverters.*
-import scala.jdk.OptionConverters.*
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 import scala.reflect.ClassTag
 
 object ZWorkflow extends ZWorkflowVersionSpecific {

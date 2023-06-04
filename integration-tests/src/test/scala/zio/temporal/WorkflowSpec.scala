@@ -1,13 +1,13 @@
 package zio.temporal
 
-import zio.*
+import zio._
 import zio.logging.backend.SLF4J
-import zio.temporal.fixture.*
-import zio.temporal.testkit.*
-import zio.temporal.worker.*
-import zio.temporal.workflow.*
-import zio.test.*
-import zio.test.TestAspect.*
+import zio.temporal.fixture._
+import zio.temporal.testkit._
+import zio.temporal.worker._
+import zio.temporal.workflow._
+import zio.test._
+import zio.test.TestAspect._
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference

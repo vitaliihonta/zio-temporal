@@ -1,7 +1,7 @@
 package zio.temporal.enumeratum
 
-import _root_.enumeratum.*
-import _root_.enumeratum.values.*
+import _root_.enumeratum._
+import _root_.enumeratum.values._
 import zio.temporal.{VersionSpecificConverters, ZSearchAttribute}
 
 /** Provides automatic instance derivation for enumeratum types. It's an optional dependency which won't be added to the

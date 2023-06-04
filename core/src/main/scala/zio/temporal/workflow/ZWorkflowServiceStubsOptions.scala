@@ -4,7 +4,7 @@ import io.grpc.ManagedChannel
 import io.grpc.Metadata
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext
 import io.temporal.serviceclient.{GrpcMetadataProvider, RpcRetryOptions, WorkflowServiceStubsOptions}
-import zio.*
+import zio._
 import zio.temporal.internal.ConfigurationCompanion
 
 /** Represents temporal workflow service stubs options
