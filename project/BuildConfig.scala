@@ -12,6 +12,7 @@ object BuildConfig extends Dependencies {
   )
 
   val coreLibs = baseLibs ++ Seq(
+    Zio.streams,
     Utility.scalaJava8Compat,
     Utility.izumiReflect,
     Testing.scalatest,
@@ -87,6 +88,7 @@ trait Dependencies {
 
   object Zio {
     val self           = org.zio %% "zio"          % versions.zio
+    val streams        = org.zio %% "zio-streams"  % versions.zio
     val test           = org.zio %% "zio-test"     % versions.zio % Test
     val testSbt        = org.zio %% "zio-test-sbt" % versions.zio % Test
     val testFrameworks = Seq(new TestFramework("zio.test.sbt.ZTestFramework"))

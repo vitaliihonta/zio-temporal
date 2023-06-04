@@ -3,9 +3,9 @@ package zio.temporal.workflow
 import io.temporal.client.ActivityCompletionClient
 import io.temporal.client.WorkflowClient
 import zio.*
+import zio.stream.*
 import zio.temporal.internal.ClassTagUtils
-import zio.temporal.{ZWorkflowExecutionMetadata, experimentalApi}
-
+import zio.temporal.{ZHistoryEvent, ZWorkflowExecutionHistory, ZWorkflowExecutionMetadata, experimentalApi}
 import scala.jdk.OptionConverters.*
 import scala.jdk.CollectionConverters.*
 import scala.reflect.ClassTag
@@ -66,19 +66,67 @@ final class ZWorkflowClient private[zio] (val toJava: WorkflowClient) {
       )
     }
 
-  /** @see
-    *   [[WorkflowClient.listExecutions]]
+  /** A wrapper around {WorkflowServiceStub#listWorkflowExecutions(ListWorkflowExecutionsRequest)}
+    *
+    * @param query
+    *   Temporal Visibility Query, for syntax see <a href="https://docs.temporal.io/visibility#list-filter">Visibility
+    *   docs</a>
+    * @return
+    *   sequential stream that performs remote pagination under the hood
     */
-  @experimentalApi
-  def listExecutions(query: Option[String] = None): Task[Vector[ZWorkflowExecutionMetadata]] =
-    ZIO.attempt(
-      toJava
-        .listExecutions(query.orNull)
-        .iterator()
-        .asScala
-        .map(new ZWorkflowExecutionMetadata(_))
-        .toVector
-    )
+  def streamExecutions(query: Option[String] = None): Stream[Throwable, ZWorkflowExecutionMetadata] = {
+    ZStream
+      .blocking(
+        ZStream.fromJavaStreamZIO(
+          ZIO.attempt(
+            toJava.listExecutions(query.orNull)
+          )
+        )
+      )
+      .map(new ZWorkflowExecutionMetadata(_))
+  }
+
+  /** Streams history events for a workflow execution for the provided `workflowId`.
+    *
+    * @param workflowId
+    *   Workflow Id of the workflow to export the history for
+    * @param runId
+    *   Fixed Run Id of the workflow to export the history for. If not provided, the latest run will be used. Optional
+    * @return
+    *   stream of history events of the specified run of the workflow execution.
+    * @see
+    *   [[fetchHistory]] for a user-friendly eager version of this method
+    */
+  def streamHistory(workflowId: String, runId: Option[String] = None): Stream[Throwable, ZHistoryEvent] =
+    ZStream
+      .blocking(
+        ZStream.fromJavaStreamZIO(
+          ZIO.attempt(
+            toJava.streamHistory(workflowId, runId.orNull)
+          )
+        )
+      )
+      .map(new ZHistoryEvent(_))
+
+  /** Downloads workflow execution history for the provided `workflowId`.
+    *
+    * @param workflowId
+    *   Workflow Id of the workflow to export the history for
+    * @param runId
+    *   Fixed Run Id of the workflow to export the history for. If not provided, the latest run will be used. Optional
+    * @return
+    *   execution history of the workflow with the specified Workflow Id.
+    * @see
+    *   [[streamHistory]] for a lazy memory-efficient version of this method
+    */
+  def fetchHistory(workflowId: String, runId: Option[String] = None): Task[ZWorkflowExecutionHistory] =
+    ZIO
+      .blocking(
+        ZIO.attempt(
+          toJava.fetchHistory(workflowId, runId.orNull)
+        )
+      )
+      .map(new ZWorkflowExecutionHistory(_))
 }
 
 object ZWorkflowClient {

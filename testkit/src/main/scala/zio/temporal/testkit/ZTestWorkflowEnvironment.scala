@@ -225,6 +225,32 @@ object ZTestWorkflowEnvironment {
   ): URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Untyped] =
     ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]](_.workflowClient.newUntypedWorkflowStub(workflowId, runId))
 
+  /** This time might not be equal to [[java.lang.System.currentTimeMillis()]] due to time skipping.
+    *
+    * @return
+    *   the current in-memory test Temporal service time in milliseconds or [[java.lang.System.currentTimeMillis()]] if
+    *   an external service without time skipping support is used
+    */
+  def currentTimeMillis: URIO[ZTestWorkflowEnvironment[Any], ZCurrentTimeMillis] =
+    ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]](_.currentTimeMillis)
+
+  /** Wait until internal test Temporal service time passes the specified duration. This call also indicates that
+    * workflow time might jump forward (if none of the activities are running) up to the specified duration.
+    *
+    * <p>This method falls back to [[Thread.sleep]] if an external service without time skipping support is used
+    */
+  def sleep(duration: Duration): URIO[ZTestWorkflowEnvironment[Any], Unit] =
+    ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]](_.sleep(duration))
+
+  /** Currently prints histories of all workflow instances stored in the service. This is useful information to print in
+    * the case of a unit test failure.
+    *
+    * @return
+    *   the diagnostic data about the internal service state.
+    */
+  def getDiagnostics: URIO[ZTestWorkflowEnvironment[Any], String] =
+    ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]](_.getDiagnostics)
+
   /** Creates a new instance of [[ZTestWorkflowEnvironment]]
     *
     * @see
