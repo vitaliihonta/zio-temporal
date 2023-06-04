@@ -1,6 +1,6 @@
 package com.example.payments
 
-import zio.*
+import zio._
 import com.example.payments.service.{PaymentError, PaymentService, Transaction}
 
 import java.util.UUID

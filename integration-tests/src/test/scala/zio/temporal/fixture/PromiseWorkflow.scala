@@ -1,8 +1,8 @@
 package zio.temporal.fixture
 
-import zio.*
-import zio.temporal.*
-import zio.temporal.activity.*
+import zio._
+import zio.temporal._
+import zio.temporal.activity._
 import zio.temporal.workflow.ZWorkflow
 
 @activityInterface

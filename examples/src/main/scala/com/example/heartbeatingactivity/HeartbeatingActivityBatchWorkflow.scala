@@ -1,8 +1,8 @@
 package com.example.heartbeatingactivity
 
-import zio.*
-import zio.temporal.*
-import zio.temporal.workflow.*
+import zio._
+import zio.temporal._
+import zio.temporal.workflow._
 import zio.temporal.activity.ZActivityStub
 
 @workflowInterface

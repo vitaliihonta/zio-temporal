@@ -4,7 +4,7 @@ import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowOptions
 import io.temporal.api.enums.v1.WorkflowIdReusePolicy
 import io.temporal.common.context.ContextPropagator
-import zio.*
+import zio._
 import zio.temporal.{ZRetryOptions, ZSearchAttribute}
 import scala.reflect.ClassTag
 import scala.jdk.CollectionConverters._

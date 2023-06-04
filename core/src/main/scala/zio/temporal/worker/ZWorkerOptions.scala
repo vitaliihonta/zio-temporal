@@ -1,6 +1,6 @@
 package zio.temporal.worker
 
-import zio.*
+import zio._
 import io.temporal.worker.WorkerOptions
 
 /** Represents worker options

@@ -1,6 +1,6 @@
 package com.example.externalwf
 
-import zio.temporal.*
+import zio.temporal._
 
 @workflowInterface
 trait FoodDeliveryWorkflow {

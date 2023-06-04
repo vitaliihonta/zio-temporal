@@ -1,9 +1,9 @@
 package com.example.heartbeatingactivity
 
-import zio.*
-import zio.temporal.*
-import zio.temporal.worker.*
-import zio.temporal.workflow.*
+import zio._
+import zio.temporal._
+import zio.temporal.worker._
+import zio.temporal.workflow._
 import zio.logging.backend.SLF4J
 import zio.temporal.activity.ZActivityOptions
 

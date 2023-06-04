@@ -4,13 +4,12 @@ import zio.temporal.{activityMethod, workflowMethod}
 
 import scala.reflect.ClassTag
 import org.reflections.{Reflections, Store}
-import org.reflections.ReflectionUtils.*
+import org.reflections.ReflectionUtils._
 import org.reflections.scanners.Scanners
 import org.reflections.util.ReflectionUtilsPredicates.{withAnnotation, withName}
 import org.slf4j.LoggerFactory
-
 import java.lang.reflect.Method
-import scala.jdk.CollectionConverters.*
+import scala.jdk.CollectionConverters._
 
 private[zio] object ClassTagUtils {
   private val logger = LoggerFactory.getLogger(getClass)

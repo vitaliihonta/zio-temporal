@@ -1,6 +1,6 @@
 package com.example.bookingsaga
 
-import zio.temporal.*
+import zio.temporal._
 
 @activityInterface
 trait TripBookingActivities {

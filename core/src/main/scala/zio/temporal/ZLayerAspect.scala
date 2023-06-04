@@ -1,6 +1,6 @@
 package zio.temporal
 
-import zio.*
+import zio._
 
 /** Copy-paste of [[ZIOAspect]], but for [[ZLayer]]. Intended to use with various temporal's options in order to
   * override them

@@ -3,11 +3,11 @@ package com.example.cancellation
 import io.temporal.activity.ActivityCancellationType
 import io.temporal.client.ActivityCompletionException
 import io.temporal.failure.{CanceledFailure, TimeoutFailure}
-import zio.*
-import zio.temporal.*
-import zio.temporal.activity.*
+import zio._
+import zio.temporal._
+import zio.temporal.activity._
 import zio.temporal.failure.ActivityFailure
-import zio.temporal.workflow.*
+import zio.temporal.workflow._
 
 object GreetingWorkflowImpl {
   val ActivityMaxSleepSeconds: Int            = 30

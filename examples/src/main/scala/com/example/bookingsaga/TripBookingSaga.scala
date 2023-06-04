@@ -1,10 +1,10 @@
 package com.example.bookingsaga
 
-import zio.*
-import zio.temporal.*
-import zio.temporal.worker.*
-import zio.temporal.activity.*
-import zio.temporal.workflow.*
+import zio._
+import zio.temporal._
+import zio.temporal.worker._
+import zio.temporal.activity._
+import zio.temporal.workflow._
 import zio.logging.backend.SLF4J
 import io.temporal.client.WorkflowException
 

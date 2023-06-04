@@ -1,9 +1,9 @@
 package zio.temporal.internal
 
-import scala.quoted.*
+import scala.quoted._
 
 class MacroUtils[Q <: Quotes](using val q: Q) {
-  import q.reflect.*
+  import q.reflect._
 
   def warning(message: String): Unit = report.warning(message)
 

@@ -19,7 +19,7 @@ private[zio] trait Stubs[A <: BasicStubOps] {
     * @tparam T
     *   compile-time view
     */
-  final type Of[+T] = A & T
+  final type Of[+T] = A with T
 
   private[zio] def Of[T: ClassTag](value: A)(implicit A: ClassTag[A]): Of[T] =
     StubProxies.proxy[A, T](value)

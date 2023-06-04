@@ -1,6 +1,6 @@
 package zio.temporal.worker
 
-import zio.*
+import zio._
 import zio.temporal.internal.ClassTagUtils
 import io.temporal.worker.Worker
 import zio.temporal.activity.{ExtendsActivity, IsActivity}

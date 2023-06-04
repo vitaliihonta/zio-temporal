@@ -1,16 +1,15 @@
 package zio.temporal.internal
 
 import io.temporal.api.common.v1.WorkflowExecution
-import zio.temporal.*
+import zio.temporal._
 import zio.temporal.activity.{IsActivity, ZActivityStub}
-import zio.temporal.workflow.*
-
+import zio.temporal.workflow._
 import java.util.concurrent.CompletableFuture
-import scala.quoted.*
+import scala.quoted._
 import scala.reflect.ClassTag
 
 class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUtils[Q] {
-  import q.reflect.*
+  import q.reflect._
 
   private val ActivityInterface = typeSymbolOf[activityInterface]
   private val WorkflowInterface = typeSymbolOf[workflowInterface]

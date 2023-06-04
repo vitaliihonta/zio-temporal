@@ -1,6 +1,6 @@
 package zio.temporal.internal
 
-import zio.temporal.*
+import zio.temporal._
 import zio.temporal.activity.{IsActivity, ZActivityStub}
 import zio.temporal.workflow.IsWorkflow
 import scala.reflect.macros.blackbox

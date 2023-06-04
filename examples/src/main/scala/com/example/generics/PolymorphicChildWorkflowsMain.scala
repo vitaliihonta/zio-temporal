@@ -1,11 +1,11 @@
 package com.example.generics
 
-import zio.*
+import zio._
 import zio.logging.backend.SLF4J
-import zio.temporal.*
+import zio.temporal._
 import zio.temporal.failure.{ApplicationFailure, ChildWorkflowFailure}
 import zio.temporal.worker.{ZWorker, ZWorkerFactory, ZWorkerFactoryOptions}
-import zio.temporal.workflow.*
+import zio.temporal.workflow._
 
 trait NotificationsSenderWorkflow {
   // NOTE: must have a @workflowMethod annotation WITHOUT an explicit name.

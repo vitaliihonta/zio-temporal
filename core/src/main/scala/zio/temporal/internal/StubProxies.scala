@@ -12,7 +12,7 @@ private[zio] object StubProxies {
     delegate:             Delegate
   )(implicit delegateCtg: ClassTag[Delegate],
     proxiedCtg:           ClassTag[Proxied]
-  ): Delegate & Proxied = {
+  ): Delegate with Proxied = {
     val Delegate = delegateCtg.runtimeClass
     val Proxied  = proxiedCtg.runtimeClass
     val proxy = java.lang.reflect.Proxy.newProxyInstance(
@@ -33,6 +33,6 @@ private[zio] object StubProxies {
         }
     )
 
-    proxy.asInstanceOf[Delegate & Proxied]
+    proxy.asInstanceOf[Delegate with Proxied]
   }
 }

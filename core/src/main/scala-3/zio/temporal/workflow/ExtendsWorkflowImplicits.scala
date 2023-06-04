@@ -1,7 +1,7 @@
 package zio.temporal.workflow
 
 import zio.temporal.internal.InvocationMacroUtils
-import scala.quoted.*
+import scala.quoted._
 
 trait ExtendsWorkflowImplicits {
   inline given materialize[A]: ExtendsWorkflow[A] =
@@ -10,7 +10,7 @@ trait ExtendsWorkflowImplicits {
 
 object ExtendsWorkflowImplicits {
   def impl[A: Type](using q: Quotes): Expr[ExtendsWorkflow[A]] = {
-    import q.reflect.*
+    import q.reflect._
     val macroUtils = new InvocationMacroUtils[q.type]
     macroUtils.assertExtendsWorkflow(TypeRepr.of[A])
 

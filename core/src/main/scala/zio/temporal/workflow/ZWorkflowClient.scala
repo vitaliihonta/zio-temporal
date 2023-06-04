@@ -2,12 +2,11 @@ package zio.temporal.workflow
 
 import io.temporal.client.ActivityCompletionClient
 import io.temporal.client.WorkflowClient
-import zio.*
-import zio.stream.*
+import zio._
+import zio.stream._
 import zio.temporal.internal.ClassTagUtils
-import zio.temporal.{ZHistoryEvent, ZWorkflowExecutionHistory, ZWorkflowExecutionMetadata, experimentalApi}
-import scala.jdk.OptionConverters.*
-import scala.jdk.CollectionConverters.*
+import zio.temporal.{ZHistoryEvent, ZWorkflowExecutionHistory, ZWorkflowExecutionMetadata}
+import scala.jdk.OptionConverters._
 import scala.reflect.ClassTag
 
 /** Represents temporal workflow client

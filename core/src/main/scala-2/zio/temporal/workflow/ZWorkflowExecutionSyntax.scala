@@ -1,8 +1,8 @@
 package zio.temporal.workflow
 
-import zio.*
+import zio._
 import zio.temporal.internal.ZWorkflowMacro
-import zio.temporal.*
+import zio.temporal._
 import scala.language.experimental.macros
 import scala.language.implicitConversions
 

@@ -1,8 +1,8 @@
 package zio.temporal.fixture
 
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
-import zio.temporal.*
-import zio.temporal.workflow.*
+import zio.temporal._
+import zio.temporal.workflow._
 import scala.reflect.ClassTag
 
 case class ParameterizedWorkflowOutput(message: String)
