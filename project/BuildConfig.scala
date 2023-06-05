@@ -28,14 +28,14 @@ object BuildConfig extends Dependencies {
     Temporal.testing
   )
 
-  val testLibs = baseLibs ++ Seq(
+  val testLibs = (baseLibs ++ Seq(
     Zio.test,
     Zio.testSbt,
-    Logging.zio      % Test,
-    Logging.zioSlf4j % Test,
-    Logging.logback  % Test,
+    Logging.zio,
+    Logging.zioSlf4j,
+    Logging.logback,
     Testing.scalatest
-  )
+  )).map(_ % Test)
 
   val testLibsScala2 = Seq(
     Enumeratum.enumeratum % Test
@@ -56,6 +56,11 @@ object BuildConfig extends Dependencies {
     Logging.zio,
     Logging.zioSlf4j,
     Logging.logback
+  )
+
+  val docsLibs = baseLibs ++ examplesLibs ++ Seq(
+    Zio.test,
+    Enumeratum.enumeratum
   )
 }
 
@@ -89,8 +94,8 @@ trait Dependencies {
   object Zio {
     val self           = org.zio %% "zio"          % versions.zio
     val streams        = org.zio %% "zio-streams"  % versions.zio
-    val test           = org.zio %% "zio-test"     % versions.zio % Test
-    val testSbt        = org.zio %% "zio-test-sbt" % versions.zio % Test
+    val test           = org.zio %% "zio-test"     % versions.zio
+    val testSbt        = org.zio %% "zio-test-sbt" % versions.zio
     val testFrameworks = Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   }
 
@@ -123,6 +128,6 @@ trait Dependencies {
   }
 
   object Testing {
-    val scalatest = "org.scalatest" %% "scalatest" % "3.2.15" % Test
+    val scalatest = "org.scalatest" %% "scalatest" % "3.2.15"
   }
 }

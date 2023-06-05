@@ -1,11 +1,10 @@
 # Signals
-A [Signal](https://docs.temporal.io/workflows#signals) is a message sent to a running Workflow Execution.  
+A [Signal](https://docs.temporal.io/workflows#signal) is a message sent to a running Workflow Execution.  
 Signals deliver data to a running Workflow Execution. They're used to interact with Workflows, e.g. to update their state.  
-Refer to [Temporal documentation](https://docs.temporal.io/workflows#signals) for more details regarding signals and how they're handled by Temporal..  
 
 ## Defining signal methods
 
-Let's start from some basic imports that will be required for the whole demonstration:
+Let's start with some basic imports that will be required for the whole demonstration:
 
 ```scala mdoc:silent
 import zio._
@@ -136,7 +135,7 @@ val runWorkflow = for {
 } yield ()
 ```
 
-- **Reminder: you must always** wrap the query method invocation into `ZWorkflowStub.signal` method.
+- **Reminder: you must always** wrap the signal method invocation into `ZWorkflowStub.signal` method.
   - `paymentWorkflow.confirmPayment(code = "1234")` invocation would be re-written into an untyped Temporal's signal invocation
   - A direct method invocation will throw an exception
 - Reminder: signalling workflow state = calling a remote server

@@ -12,11 +12,12 @@ import zio.temporal.{
   ZWorkflowExecution,
   ZWorkflowInfo
 }
-import zio._
+import zio.{Random => _, _}
 import java.util.UUID
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
 import scala.reflect.ClassTag
+import scala.util.Random
 
 object ZWorkflow extends ZWorkflowVersionSpecific {
 
@@ -132,6 +133,16 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
   def awaitUntil(timeout: Duration)(cond: => Boolean): Boolean =
     Workflow.await(timeout.asJava, () => cond)
 
+  /** Create new timer. Note that Temporal service time resolution is in seconds. So all durations are rounded <b>up</b>
+    * to the nearest second.
+    *
+    * @return
+    *   `ZAsync` that becomes ready when at least specified number of seconds passes. It is failed with
+    *   [[zio.temporal.failure.CanceledFailure]] if enclosing scope is canceled.
+    */
+  def newTimer(delay: Duration): ZAsync[Unit] =
+    ZAsync.fromJava(Workflow.newTimer(delay)).unit
+
   /** Wraps a procedure in a CancellationScope. The procedure receives the wrapping CancellationScope as a parameter.
     * Useful when cancellation is requested from within the wrapped code. The following example cancels the sibling
     * activity on any failure.
@@ -190,6 +201,70 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     */
   def randomUUID: UUID = Workflow.randomUUID()
 
+  /** Replay safe random numbers generator. Seeded differently for each workflow instance. */
+  def newRandom: Random =
+    Workflow.newRandom()
+
+  /** Executes the provided function once, records its result into the workflow history. The recorded result on history
+    * will be returned without executing the provided function during replay. This guarantees the deterministic
+    * requirement for workflow as the exact same result will be returned in replay. Common use case is to run some short
+    * non-deterministic code in workflow, like getting random number. The only way to fail SideEffect is to panic which
+    * causes workflow task failure. The workflow task after timeout is rescheduled and re-executed giving SideEffect
+    * another chance to succeed.
+    *
+    * If function throws any exception it is not delivered to the workflow code. It is wrapped in [[Error]] causing
+    * failure of the current workflow task.
+    *
+    * @tparam R
+    *   side effect result type
+    * @param f
+    *   function that returns side effect value
+    * @return
+    *   value of the side effect
+    * @see
+    *   [[mutableSideEffect]]
+    */
+  def sideEffect[R](f: () => R)(implicit javaTypeTag: JavaTypeTag[R]): R =
+    Workflow.sideEffect[R](javaTypeTag.klass, javaTypeTag.genericType, () => f())
+
+  /** `mutableSideEffect` is similar to [[sideEffect]] in allowing calls of non-deterministic functions from workflow
+    * code.
+    *
+    * <p>The difference between [[mutableSideEffect]] and [[sideEffect]] is that every new [[sideEffect]] call in
+    * non-replay mode results in a new marker event recorded into the history. However, [[mutableSideEffect]] only
+    * records a new marker if a value has changed. During the replay, `mutableSideEffect` will not execute the function
+    * again, but it will return the exact same value as it was returning during the non-replay run.
+    *
+    * <p>One good use case of `mutableSideEffect` is to access a dynamically changing config without breaking
+    * determinism. Even if called very frequently the config value is recorded only when it changes not causing any
+    * performance degradation due to a large history size.
+    *
+    * <p>Caution: do not use `mutableSideEffect` function to modify any workflow state. Only use the mutableSideEffect's
+    * return value.
+    *
+    * <p>If function throws any exception it is not delivered to the workflow code. It is wrapped in [[Error]] causing
+    * failure of the current workflow task.
+    *
+    * @tparam R
+    *   side effect result type
+    * @param id
+    *   unique identifier of this side effect
+    * @param updated
+    *   used to decide if a new value should be recorded. A func result is recorded only if call to updated with stored
+    *   and a new value as arguments returns true. It is not called for the first value.
+    * @param f
+    *   function that produces a value. This function can contain non-deterministic code.
+    * @see
+    *   [[sideEffect]]
+    */
+  def mutableSideEffect[R](
+    id:                   String,
+    updated:              (R, R) => Boolean,
+    f:                    () => R
+  )(implicit javaTypeTag: JavaTypeTag[R]
+  ): R =
+    Workflow.mutableSideEffect(id, javaTypeTag.klass, javaTypeTag.genericType, (a, b) => updated(a, b), () => f())
+
   /** Returns current timestamp
     *
     * Should be used instead of [[java.lang.System.currentTimeMillis()]] to guarantee determinism
@@ -198,7 +273,8 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   current time millis as [[ZCurrentTimeMillis]]
     */
-  def currentTimeMillis: ZCurrentTimeMillis = new ZCurrentTimeMillis(Workflow.currentTimeMillis())
+  def currentTimeMillis: ZCurrentTimeMillis =
+    new ZCurrentTimeMillis(Workflow.currentTimeMillis())
 
   /** Adds or updates workflow search attributes.
     *
@@ -338,7 +414,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @tparam A
     *   an interface type implemented by the next run of the workflow
     */
-  def newContinueAsNewStub[A: ClassTag: IsWorkflow] =
+  def newContinueAsNewStub[A: ClassTag: IsWorkflow]: ZWorkflowContinueAsNewStubBuilder[A] =
     new ZWorkflowContinueAsNewStubBuilder[A](identity)
 
   /** Continues the current workflow execution as a new run possibly overriding the workflow type and options.

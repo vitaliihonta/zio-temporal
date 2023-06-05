@@ -5,6 +5,7 @@ import io.temporal.common.context.ContextPropagator
 import io.temporal.workflow.ChildWorkflowCancellationType
 import io.temporal.workflow.ChildWorkflowOptions
 import io.temporal.workflow.Workflow
+import io.temporal.api.enums.v1.ParentClosePolicy
 import zio._
 import zio.temporal.internal.ClassTagUtils
 import zio.temporal.{ZRetryOptions, ZSearchAttribute}
@@ -73,6 +74,9 @@ class ZChildWorkflowStubBuilder[Res] private[zio] (
 
   def withCancellationType(cancellationType: ChildWorkflowCancellationType): ZChildWorkflowStubBuilder[Res] =
     copy(_.setCancellationType(cancellationType))
+
+  def withParentClosePolicy(policy: ParentClosePolicy): ZChildWorkflowStubBuilder[Res] =
+    copy(_.setParentClosePolicy(policy))
 
   /** Builds typed ZChildWorkflowStub
     * @return

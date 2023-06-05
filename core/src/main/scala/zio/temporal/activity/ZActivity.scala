@@ -20,7 +20,7 @@ object ZActivity {
   /** Can be used to get information about an Activity Execution and to invoke Heartbeats. This static method relies on
     * a thread-local variable and works only in the original Activity Execution thread.
     */
-  def executionContext =
+  def executionContext: ZActivityExecutionContext =
     new ZActivityExecutionContext(Activity.getExecutionContext)
 
   /** Runs provided effect completing this activity with the effect result.

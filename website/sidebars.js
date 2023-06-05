@@ -6,7 +6,8 @@ const sidebars = {
       items: [
         "core/overview",
         "core/workflows",
-        "core/activities"
+        "core/activities",
+        "core/configuration"
       ]
     },
     {
@@ -16,7 +17,10 @@ const sidebars = {
         "workflows/state",
         "workflows/queries",
         "workflows/signals",
-        "workflows/child-workflows"
+        "workflows/child-workflows",
+        "workflows/continue-as-new",
+        "workflows/timers",
+        "workflows/external-workflows"
       ]
     },
     {
@@ -24,28 +28,46 @@ const sidebars = {
       label: "Resilience",
       items: [
         "resilience/retries",
-        "resilience/sagas"
+        "resilience/sagas",
+        "resilience/heartbeats"
       ]
     },
     {
       type: "category",
-      label: "Protobuf",
+      label: "Serialization",
       items: [
-        "protobuf/overview",
-        "protobuf/usage"
+        "serialization/overview",
+        "serialization/jackson",
+        "serialization/protobuf"
       ]
     },
     {
       type: "category",
       label: "Testing",
       items: [
-        "testing/overview"
+        "testing/overview",
+        "testing/testing-activities",
+        "testing/testing-workflows"
+      ]
+    },
+    {
+      type: "category",
+      label: "Advanced",
+      items: [
+        "advanced/overview",
+        "advanced/workflow-polymorphism",
+        "advanced/generic-workflows"
       ]
     },
     {
       type: "doc",
       id: "FAQ",
       label: "FAQ"
+    },
+    {
+      type: "doc",
+      id: "contribution",
+      label: "Contribution"
     }
   ]
 }

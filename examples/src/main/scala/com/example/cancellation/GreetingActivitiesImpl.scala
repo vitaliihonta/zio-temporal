@@ -1,10 +1,7 @@
 package com.example.cancellation
 
-import io.temporal.client.ActivityCompletionException
 import zio._
-import zio.temporal._
 import zio.temporal.activity._
-import zio.temporal.workflow._
 
 object GreetingActivitiesImpl {
   val make: URLayer[ZActivityOptions[Any], GreetingActivities] =
@@ -16,29 +13,32 @@ class GreetingActivitiesImpl(implicit options: ZActivityOptions[Any]) extends Gr
     val context = ZActivity.executionContext
 
     ZActivity.run {
-      def loop(i: Int, seconds: Int): Task[Unit] =
-        if (i >= seconds) ZIO.unit
-        else
-          for {
-            _ <- ZIO.sleep(1.second)
-            // Perform the heartbeat. Used to notify the workflow that activity execution is alive
-            _ <- context.heartbeat(i).onError { _ =>
-                   /*
-                    * Activity heartbeat can throw an exception for multiple reasons, including:
-                    * 1) activity cancellation
-                    * 2) activity not existing (due to a timeout for example) from the service point of view
-                    * 3) activity worker shutdown request
-                    *
-                    * In our case our activity fails because one of the other performed activities
-                    * has completed execution and our workflow method has issued the "cancel" request
-                    * to cancel all other activities in the cancellation scope.
-                    *
-                    * The following code simulates our activity after cancellation "cleanup"
-                    */
-                   cleanup()
-                 }
-            _ <- loop(i + 1, seconds)
-          } yield ()
+      def loop(i: Int, seconds: Int): Task[Unit] = {
+        ZIO
+          .unless(i >= seconds) {
+            for {
+              _ <- ZIO.sleep(1.second)
+              // Perform the heartbeat. Used to notify the workflow that activity execution is alive
+              _ <- context.heartbeat(i).onError { _ =>
+                     /*
+                      * Activity heartbeat can throw an exception for multiple reasons, including:
+                      * 1) activity cancellation
+                      * 2) activity not existing (due to a timeout for example) from the service point of view
+                      * 3) activity worker shutdown request
+                      *
+                      * In our case our activity fails because one of the other performed activities
+                      * has completed execution and our workflow method has issued the "cancel" request
+                      * to cancel all other activities in the cancellation scope.
+                      *
+                      * The following code simulates our activity after cancellation "cleanup"
+                      */
+                     cleanup()
+                   }
+              _ <- loop(i + 1, seconds)
+            } yield ()
+          }
+          .unit
+      }
 
       def cleanup(): UIO[Unit] = {
         for {

@@ -1,9 +1,9 @@
 # Queries
-A [Query](https://docs.temporal.io/workflows#queries) is a synchronous operation that is used to get the state of a Workflow Execution.  
+A [Query](https://docs.temporal.io/workflows#query) is a synchronous operation that is used to get the state of a Workflow Execution.  
 
 ## Defining query methods
 
-Let's start from some basic imports that will be required for the whole demonstration:
+Let's start with some basic imports that will be required for the whole demonstration:
 
 ```scala mdoc:silent
 import zio._

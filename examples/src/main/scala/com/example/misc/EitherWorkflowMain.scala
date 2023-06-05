@@ -42,7 +42,10 @@ case class EitherWorkflowImpl() extends EitherWorkflow {
       .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(1))
       .build
 
-    ZActivityStub.execute(stub.either).map(_ + 1)
+    // Deterministic random
+    val randomSum = ZWorkflow.newRandom.nextInt()
+
+    ZActivityStub.execute(stub.either).map(_ + randomSum)
   }
 }
 
