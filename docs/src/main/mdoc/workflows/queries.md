@@ -3,7 +3,7 @@ A [Query](https://docs.temporal.io/workflows#query) is a synchronous operation t
 
 ## Defining query methods
 
-Let's start from some basic imports that will be required for the whole demonstration:
+Let's start with some basic imports that will be required for the whole demonstration:
 
 ```scala mdoc:silent
 import zio._

@@ -6,7 +6,7 @@ Sleeping is a resource-light operation: it does not tie up the process, and you 
 
 ## Using timers
 
-Let's start from some basic imports that will be required for the whole demonstration:
+Let's start with some basic imports that will be required for the whole demonstration:
 
 ```scala mdoc:silent
 import zio._

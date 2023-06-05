@@ -6,7 +6,8 @@ const sidebars = {
       items: [
         "core/overview",
         "core/workflows",
-        "core/activities"
+        "core/activities",
+        "core/configuration"
       ]
     },
     {
@@ -20,7 +21,15 @@ const sidebars = {
         "workflows/continue-as-new",
         "workflows/timers",
         "workflows/external-workflows",
-        "workflows/advanced"
+        {
+          type: "category",
+          label: "Advanced",
+          items: [
+            "workflows/advanced/overview",
+            "workflows/advanced/workflow-polymorphism",
+            "workflows/advanced/generic-workflows"
+          ]
+        }
       ]
     },
     {

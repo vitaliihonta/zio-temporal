@@ -25,6 +25,7 @@ const siteConfig = {
       additionalLanguages: [
         'java',
         'scala',
+        'protobuf'
       ],
     },
     announcementBar: {

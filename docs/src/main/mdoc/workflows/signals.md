@@ -4,7 +4,7 @@ Signals deliver data to a running Workflow Execution. They're used to interact w
 
 ## Defining signal methods
 
-Let's start from some basic imports that will be required for the whole demonstration:
+Let's start with some basic imports that will be required for the whole demonstration:
 
 ```scala mdoc:silent
 import zio._

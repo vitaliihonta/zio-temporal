@@ -1,4 +1,0 @@
-# Advanced
-
-## Parameterized workflows
-tbd

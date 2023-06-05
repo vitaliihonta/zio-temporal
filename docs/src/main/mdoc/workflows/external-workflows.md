@@ -5,7 +5,7 @@ The _first_ workflow may send signals or cancel the **External** workflow.
 
 ## Defining child workflows
 
-Let's start from some basic imports that will be required for the whole demonstration:
+Let's start with some basic imports that will be required for the whole demonstration:
 
 ```scala mdoc:silent
 import zio._

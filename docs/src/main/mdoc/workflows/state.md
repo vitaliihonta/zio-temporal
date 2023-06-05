@@ -6,7 +6,7 @@ implementation.
 
 ## Using workflow state
 
-Let's start from some basic imports that will be required for the whole demonstration:
+Let's start with some basic imports that will be required for the whole demonstration:
 
 ```scala mdoc:silent
 import zio._

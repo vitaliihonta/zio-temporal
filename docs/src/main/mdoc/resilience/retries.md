@@ -5,7 +5,7 @@ Refer to [Temporal documentation](https://docs.temporal.io/retry-policies) for m
 
 ## Activity retries
 
-Let's start from some basic imports that will be required for the whole demonstration:
+Let's start with some basic imports that will be required for the whole demonstration:
 
 ```scala mdoc
 import zio._

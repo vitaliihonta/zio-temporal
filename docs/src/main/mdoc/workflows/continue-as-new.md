@@ -5,7 +5,7 @@ ZIO-Temporal allows you to use Continue-As-New in various ways.
 
 ## Defining a stub
 
-Let's start from some basic imports that will be required for the whole demonstration:
+Let's start with some basic imports that will be required for the whole demonstration:
 
 ```scala mdoc:silent
 import zio._
