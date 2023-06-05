@@ -273,7 +273,8 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   current time millis as [[ZCurrentTimeMillis]]
     */
-  def currentTimeMillis = new ZCurrentTimeMillis(Workflow.currentTimeMillis())
+  def currentTimeMillis: ZCurrentTimeMillis =
+    new ZCurrentTimeMillis(Workflow.currentTimeMillis())
 
   /** Adds or updates workflow search attributes.
     *
