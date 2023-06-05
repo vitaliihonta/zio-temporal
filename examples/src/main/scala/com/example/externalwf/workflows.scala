@@ -67,7 +67,6 @@ object DeliveryState {
   case object Cancelled               extends DeliveryState
 }
 
-// Define the parent workflow implementation. It implements the getGreeting workflow method
 class FoodDeliveryWorkflowImpl extends FoodDeliveryWorkflow {
   private val logger = ZWorkflow.makeLogger
 

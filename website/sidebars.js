@@ -16,10 +16,10 @@ const sidebars = {
         "workflows/state",
         "workflows/queries",
         "workflows/signals",
-        "workflows/timers",
         "workflows/child-workflows",
-        "workflows/external-workflows",
         "workflows/continue-as-new",
+        "workflows/timers",
+        "workflows/external-workflows",
         "workflows/advanced"
       ]
     },

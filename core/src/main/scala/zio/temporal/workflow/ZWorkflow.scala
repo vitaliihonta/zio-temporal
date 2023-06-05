@@ -338,7 +338,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @tparam A
     *   an interface type implemented by the next run of the workflow
     */
-  def newContinueAsNewStub[A: ClassTag: IsWorkflow] =
+  def newContinueAsNewStub[A: ClassTag: IsWorkflow]: ZWorkflowContinueAsNewStubBuilder[A] =
     new ZWorkflowContinueAsNewStubBuilder[A](identity)
 
   /** Continues the current workflow execution as a new run possibly overriding the workflow type and options.
