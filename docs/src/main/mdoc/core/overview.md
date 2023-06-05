@@ -38,9 +38,6 @@ libraryDependencies += "@ORGANIZATION@" %% "zio-temporal-protobuf" % "@VERSION@"
 libraryDependencies += "@ORGANIZATION@" %% "zio-temporal-testkit" % "@VERSION@"
 ```
 
-## Use cases
-TBD
-
 ## Modules
 
 1. **zio-temporal-core** - ZIO integration and basic wrappers that bring type safety to your workflows.  

@@ -1,5 +1,3 @@
 package zio.temporal.failure
 
-object TimeoutFailure {
-
-}
+object TimeoutFailure {}

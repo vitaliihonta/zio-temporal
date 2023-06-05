@@ -103,9 +103,7 @@ lazy val docs = project
     mdocSettings,
     noPublishSettings,
     scalaVersion := scala213,
-    libraryDependencies ++= examplesLibs ++ Seq(
-      Enumeratum.enumeratum
-    )
+    libraryDependencies ++= docsLibs
   )
   .dependsOn(
     core.jvm(scala213),

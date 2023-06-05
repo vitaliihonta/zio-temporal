@@ -1,6 +1,6 @@
 # Protobuf
 
-ZIO-Temporal provides with the `zio-temporal-protobuf` module allowing to use _Protobuf_ transport.
+ZIO-Temporal provides with the `zio-temporal-protobuf` module allowing to use _Protobuf_ transport. To use _Protobuf_, you must properly install [Scalapb](https://scalapb.github.io/docs/installatio)
 
 ## Defining protobuf files
 
@@ -80,3 +80,15 @@ class SampleWorkflowImpl extends SampleWorkflow {
 - `import zio.temporal.protobuf.syntax._` is required
 - `fromProto` extension method converts the data type **from** the Protobuf representation
 - `toProto` extension method converts the data type **into** the Protobuf representation
+
+In order to use Protobuf serializer, it's required to override the default `DataConverter`:
+
+```scala mdoc
+import zio.temporal.workflow.ZWorkflowClientOptions
+import zio.temporal.protobuf.ProtobufDataConverter
+
+val optionsLayer =
+  ZWorkflowClientOptions.make @@
+    // override automatically picks up generated Protobuf files
+    ZWorkflowClientOptions.withDataConverter(ProtobufDataConverter.makeAutoLoad())
+```

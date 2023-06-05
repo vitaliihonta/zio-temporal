@@ -11,7 +11,7 @@ object ActivitySpec extends ZIOSpecDefault {
   override val bootstrap: ZLayer[Any, Any, TestEnvironment] =
     testEnvironment ++ Runtime.removeDefaultLoggers ++ SLF4J.slf4j
 
-  override def spec = suite("ZActivity")(
+  override val spec = suite("ZActivity")(
     test("runs simple activity") {
       ZTestActivityEnvironment.activityOptions[Any].flatMap { implicit options =>
         for {

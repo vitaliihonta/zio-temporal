@@ -9,7 +9,7 @@ import zio.test._
 import java.util.UUID
 
 object WorkflowComplexTypesSpec extends ZIOSpecDefault {
-  override def spec: Spec[TestEnvironment with Scope, Any] =
+  override val spec: Spec[TestEnvironment with Scope, Any] =
     suite("Complex type serialization")(
       test("either") {
         ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>

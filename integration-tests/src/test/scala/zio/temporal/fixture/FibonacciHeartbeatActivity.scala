@@ -4,8 +4,6 @@ import io.temporal.client.ActivityCompletionException
 import zio._
 import zio.temporal._
 import zio.temporal.activity._
-import zio.temporal.workflow._
-import zio.temporal.state._
 import java.util.concurrent.atomic.AtomicInteger
 
 @activityInterface

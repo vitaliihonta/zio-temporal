@@ -20,16 +20,7 @@ const sidebars = {
         "workflows/child-workflows",
         "workflows/continue-as-new",
         "workflows/timers",
-        "workflows/external-workflows",
-        {
-          type: "category",
-          label: "Advanced",
-          items: [
-            "workflows/advanced/overview",
-            "workflows/advanced/workflow-polymorphism",
-            "workflows/advanced/generic-workflows"
-          ]
-        }
+        "workflows/external-workflows"
       ]
     },
     {
@@ -60,9 +51,23 @@ const sidebars = {
       ]
     },
     {
+      type: "category",
+      label: "Advanced",
+      items: [
+        "advanced/overview",
+        "advanced/workflow-polymorphism",
+        "advanced/generic-workflows"
+      ]
+    },
+    {
       type: "doc",
       id: "FAQ",
       label: "FAQ"
+    },
+    {
+      type: "doc",
+      id: "contribution",
+      label: "Contribution"
     }
   ]
 }
