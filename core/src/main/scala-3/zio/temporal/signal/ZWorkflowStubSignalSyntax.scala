@@ -13,6 +13,23 @@ import zio.temporal.internal.{
 }
 
 trait ZWorkflowStubSignalSyntax {
+
+  /** Sends a signal to the workflow. Accepts the signal method invocation
+    *
+    * Example:
+    * {{{
+    *   val stub: ZWorkflowStub.Of[T] = ???
+    *
+    *  val signalSent: TemporalIO[Unit] = ZWorkflowStub.signal(
+    *     stub.someSignalMethod(someArg)
+    *   )
+    * }}}
+    *
+    * @param f
+    *   the signal method invocation
+    * @return
+    *   ZIO
+    */
   inline def signal(inline f: Unit): TemporalIO[Unit] =
     ${ ZWorkflowStubSignalSyntax.signalImpl('f) }
 }

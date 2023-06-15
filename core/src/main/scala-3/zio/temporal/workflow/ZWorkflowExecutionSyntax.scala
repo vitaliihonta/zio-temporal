@@ -7,12 +7,73 @@ import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, T
 import scala.quoted._
 
 trait ZWorkflowExecutionSyntax {
+
+  /** Starts the given workflow. '''Doesn't wait''' for the workflow to finish. Accepts the workflow method invocation
+    *
+    * Example:
+    * {{{
+    *   val stub: ZWorkflowStub.Of[T] = ???
+    *
+    *   val workflowExecution: TemporalIO[ZWorkflowExecution] =
+    *      ZWorkflowStub.start(
+    *        stub.someMethod(someArg)
+    *      )
+    * }}}
+    *
+    * @tparam A
+    *   workflow result type
+    * @param f
+    *   the workflow method invocation
+    * @return
+    *   the workflow execution metadata
+    */
   inline def start[A](inline f: A): TemporalIO[ZWorkflowExecution] =
     ${ ZWorkflowExecutionSyntax.startImpl[A]('f) }
 
+  /** Executes the given workflow. '''Waits''' for the workflow to finish. Accepts the workflow method invocation
+    *
+    * Example:
+    * {{{
+    *   val stub: ZWorkflowStub.Of[T] = ???
+    *
+    *   val workflowExecution: TemporalIO[R] =
+    *      ZWorkflowStub.execute(
+    *        stub.someMethod(someArg)
+    *      )
+    * }}}
+    *
+    * @tparam R
+    *   workflow result type
+    * @param f
+    *   the workflow method invocation
+    * @return
+    *   the workflow result
+    */
   inline def execute[R](inline f: R)(using javaTypeTag: JavaTypeTag[R]): TemporalIO[R] =
     ${ ZWorkflowExecutionSyntax.executeImpl[R]('f, 'javaTypeTag) }
 
+  /** Executes the given workflow with a given timeout. '''Waits''' for the workflow to finish. Accepts the workflow
+    * method invocation
+    *
+    * Example:
+    * {{{
+    *   val stub: ZWorkflowStub.Of[T] = ???
+    *
+    *   val workflowExecution: TemporalIO[R] =
+    *      ZWorkflowStub.executeWithTimeout(5.seconds)(
+    *        stub.someMethod(someArg)
+    *      )
+    * }}}
+    *
+    * @tparam R
+    *   workflow result type
+    * @param timeout
+    *   the timeout
+    * @param f
+    *   the workflow method invocation
+    * @return
+    *   the workflow result
+    */
   inline def executeWithTimeout[R](
     timeout:           Duration
   )(inline f:          R

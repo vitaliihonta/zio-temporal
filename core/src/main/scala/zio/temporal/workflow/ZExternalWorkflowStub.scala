@@ -13,6 +13,8 @@ import zio.temporal.signal.ZExternalWorkflowStubSignalSyntax
 sealed trait ZExternalWorkflowStub extends BasicStubOps {
   def toJava: ExternalWorkflowStub
 
+  /** Returns an untyped version of [[ZExternalWorkflowStub]]
+    */
   def untyped: ZExternalWorkflowStub.Untyped
 
   def cancel(): Unit =

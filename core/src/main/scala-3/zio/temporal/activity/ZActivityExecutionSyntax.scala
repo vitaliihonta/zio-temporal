@@ -6,9 +6,46 @@ import scala.quoted._
 import zio.temporal.workflow.ZAsync
 
 trait ZActivityExecutionSyntax {
+
+  /** Executes the given activity synchronously. Accepts the activity method invocation
+    *
+    * Example:
+    * {{{
+    *   val stub: ZActivityStub.Of[T] = ???
+    *
+    *   val result: R = ZActivityStub.execute(
+    *     stub.someMethod(someArg)
+    *   )
+    * }}}
+    *
+    * @tparam R
+    *   activity result type
+    * @param f
+    *   the activity invocation
+    * @return
+    *   the activity result
+    */
   inline def execute[R](inline f: R)(using javaTypeTag: JavaTypeTag[R]): R =
     ${ ZActivityExecutionSyntax.executeImpl[R]('f, 'javaTypeTag) }
 
+  /** Executes the given activity asynchronously. Accepts the activity method invocation
+    *
+    * Example:
+    * {{{
+    *   val stub: ZActivityStub.Of[T] = ???
+    *
+    *   val result: ZAsync[R] = ZActivityStub.executeAsync(
+    *     stub.someMethod(someArg)
+    *   )
+    * }}}
+    *
+    * @tparam R
+    *   activity result type
+    * @param f
+    *   the activity invocation
+    * @return
+    *   the activity result (async)
+    */
   inline def executeAsync[R](inline f: R)(using javaTypeTag: JavaTypeTag[R]): ZAsync[R] =
     ${ ZActivityExecutionSyntax.executeAsyncImpl[R]('f, 'javaTypeTag) }
 }
