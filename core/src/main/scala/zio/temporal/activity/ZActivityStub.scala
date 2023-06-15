@@ -8,6 +8,8 @@ import zio.temporal.workflow.ZAsync
 sealed trait ZActivityStub extends BasicStubOps {
   def toJava: ActivityStub
 
+  /** Returns an untyped version of [[ZActivityStub]]
+    */
   def untyped: ZActivityStub.Untyped
 }
 

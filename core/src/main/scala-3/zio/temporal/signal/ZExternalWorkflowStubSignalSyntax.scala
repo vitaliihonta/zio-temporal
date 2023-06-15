@@ -5,6 +5,21 @@ import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, T
 import zio.temporal.workflow.ZExternalWorkflowStub
 
 trait ZExternalWorkflowStubSignalSyntax {
+
+  /** Sends a signal to an external workflow. Accepts the signal method invocation
+    *
+    * Example:
+    * {{{
+    *   val stub: ZExternalWorkflowStub.Of[T] = ???
+    *
+    *   ZExternalWorkflowStub.signal(
+    *     stub.someSignalMethod(someArg)
+    *   )
+    * }}}
+    *
+    * @param f
+    *   the signal method invocation
+    */
   inline def signal(inline f: Unit): Unit =
     ${ ZExternalWorkflowStubSignalSyntax.signalImpl('f) }
 }

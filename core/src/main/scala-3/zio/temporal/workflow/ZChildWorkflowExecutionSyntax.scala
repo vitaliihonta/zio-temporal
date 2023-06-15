@@ -6,9 +6,46 @@ import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, T
 import scala.quoted._
 
 trait ZChildWorkflowExecutionSyntax {
+
+  /** Executes the given child workflow synchronously. Accepts the workflow method invocation
+    *
+    * Example:
+    * {{{
+    *   val stub: ZChildWorkflowStub.Of[T] = ???
+    *
+    *   val result: R = ZChildWorkflowStub.execute(
+    *     stub.someMethod(someArg)
+    *   )
+    * }}}
+    *
+    * @tparam R
+    *   workflow result type
+    * @param f
+    *   the workflow method invocation
+    * @return
+    *   the workflow result
+    */
   inline def execute[R](inline f: R)(using javaTypeTag: JavaTypeTag[R]): R =
     ${ ZChildWorkflowExecutionSyntax.executeImpl[R]('f, 'javaTypeTag) }
 
+  /** Executes the given child workflow asynchronously. Accepts the workflow method invocation
+    *
+    * Example:
+    * {{{
+    *   val stub: ZChildWorkflowStub.Of[T] = ???
+    *
+    *   val result: ZAsync[R] = ZChildWorkflowStub.executeAsync(
+    *     stub.someMethod(someArg)
+    *   )
+    * }}}
+    *
+    * @tparam R
+    *   workflow result type
+    * @param f
+    *   the workflow method invocation
+    * @return
+    *   the workflow result (async)
+    */
   inline def executeAsync[R](inline f: R)(using javaTypeTag: JavaTypeTag[R]): ZAsync[R] =
     ${ ZChildWorkflowExecutionSyntax.executeAsyncImpl[R]('f, 'javaTypeTag) }
 }

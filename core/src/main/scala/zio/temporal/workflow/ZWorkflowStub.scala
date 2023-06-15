@@ -12,6 +12,8 @@ import java.util.concurrent.TimeUnit
 sealed trait ZWorkflowStub extends BasicStubOps with ZWorkflowClientSignalWithStartSyntax {
   def toJava: WorkflowStub
 
+  /** Returns an untyped version of [[ZWorkflowStub]]
+    */
   def untyped: ZWorkflowStub.Untyped
 
   /** Fetches workflow result

@@ -6,6 +6,25 @@ import zio.temporal.workflow.ZWorkflowStub
 import scala.quoted._
 
 trait ZWorkflowStubQuerySyntax {
+
+  /** Queries the given workflow. Accepts the workflow query method invocation
+    *
+    * Example:
+    * {{{
+    *   val stub: ZWorkflowStub.Of[T] = ???
+    *
+    *   val result: TemporalIO[R] = ZWorkflowStub.query(
+    *     stub.someQuery()
+    *   )
+    * }}}
+    *
+    * @tparam R
+    *   query method result type
+    * @param f
+    *   the query method invocation
+    * @return
+    *   the query method result
+    */
   inline def query[R](inline f: R)(using javaTypeTag: JavaTypeTag[R]): TemporalIO[R] =
     ${ ZWorkflowStubQuerySyntax.queryImpl[R]('f, 'javaTypeTag) }
 }

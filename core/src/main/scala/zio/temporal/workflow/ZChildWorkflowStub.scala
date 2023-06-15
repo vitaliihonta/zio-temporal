@@ -14,6 +14,8 @@ import zio.temporal.signal.ZChildWorkflowStubSignalSyntax
 sealed trait ZChildWorkflowStub extends BasicStubOps {
   def toJava: ChildWorkflowStub
 
+  /** Returns an untyped version of [[ZChildWorkflowStub]]
+    */
   def untyped: ZChildWorkflowStub.Untyped
 
   /** If workflow completes before this promise is ready then the child might not start at all.
@@ -33,7 +35,6 @@ final class ZChildWorkflowStubImpl @internalApi() (val toJava: ChildWorkflowStub
 object ZChildWorkflowStub
     extends Stubs[ZChildWorkflowStub]
     with ZChildWorkflowExecutionSyntax
-    with ZWorkflowStubQuerySyntax
     with ZChildWorkflowStubSignalSyntax {
 
   /** An untyped version of [[ZChildWorkflowStub]]
