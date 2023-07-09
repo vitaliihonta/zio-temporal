@@ -2,9 +2,8 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="author" content="Vitalii Honta" />
   <meta name="description" content="ZIO Temporal FAQ" />
-  <meta name="keywords" content="scala, zio, temporal, zio-temporal, workflow management" />
+  <meta name="keywords" content="ZIO Temporal FAQ, ZIO Temporal troubleshooting" />
 </head>
 
 ## What's zio.temporal.internal.StubProxies$IllegalStubProxyInvocationException?

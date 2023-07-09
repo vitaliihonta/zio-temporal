@@ -1,5 +1,11 @@
 # Workflows
 
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal workflows" />
+  <meta name="keywords" content="ZIO Temporal workflows, Scala Temporal workflows" />
+</head>
+
 ## Introduction
 
 Workflows are the basic building blocks in Temporal.  

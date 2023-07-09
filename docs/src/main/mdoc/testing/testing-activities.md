@@ -1,4 +1,11 @@
 # Activities
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal testing activities" />
+  <meta name="keywords" content="ZIO Temporal testing activities, Scala Temporal testing activities" />
+</head>
+
 Temporal provides with `ZTestActivityEnvironment` that allows to run activities in a local test environment.  
 General business logic, as well Temporal functionality (such as `Activity heartbeats`) can be tested locally with the testkit.  
 

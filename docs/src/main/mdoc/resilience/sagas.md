@@ -1,4 +1,11 @@
 # Sagas
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal Saga Pattern" />
+  <meta name="keywords" content="ZIO Temporal saga pattern, Scala Temporal saga pattern" />
+</head>
+
 Managing distributed transactions can be difficult to do well. Sagas are one of the most tried and tested design patterns for long-running work:
 - A Saga provides transaction management using a sequence of local transactions. 
 - A local transaction is the unit of work performed by a saga participant, a microservice. 

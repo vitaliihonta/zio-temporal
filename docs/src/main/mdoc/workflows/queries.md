@@ -1,4 +1,11 @@
 # Queries
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal query methods" />
+  <meta name="keywords" content="ZIO Temporal query methods, Scala Temporal query methods" />
+</head>
+
 A [Query](https://docs.temporal.io/workflows#query) is a synchronous operation that is used to get the state of a Workflow Execution.  
 
 ## Defining query methods

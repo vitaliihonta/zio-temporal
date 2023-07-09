@@ -1,4 +1,11 @@
 # Timeouts and retries
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal retries" />
+  <meta name="keywords" content="ZIO Temporal retries, Scala Temporal retries" />
+</head>
+
 A Retry Policy works in cooperation with the timeouts to provide fine controls to optimize the execution experience.  
 In Temporal, you could define retry policies for both Activity execution and Workflow execution.  
 Refer to [Temporal documentation](https://docs.temporal.io/retry-policies) for more details regarding retries.

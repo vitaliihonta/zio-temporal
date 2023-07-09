@@ -1,5 +1,12 @@
 # Activities
 
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal activities" />
+  <meta name="keywords" content="ZIO Temporal activities, Scala Temporal activities" />
+</head>
+
+
 ## Introduction
 
 One of the primary things that Workflows do is orchestrate the execution of Activities.  

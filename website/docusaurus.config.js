@@ -28,6 +28,11 @@ const siteConfig = {
         'protobuf'
       ],
     },
+    metadata: [
+      {name: "author", content:"Vitalii Honta"},
+      {name: 'twitter:card', content: 'summary'},
+      {name: 'twitter:creator', content: '@HontaVitalii'}
+    ],
     announcementBar: {
       id: 'support_ukraine',
       content:

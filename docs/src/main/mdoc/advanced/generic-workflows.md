@@ -1,4 +1,11 @@
 # Generic workflows
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal generic workflows" />
+  <meta name="keywords" content="ZIO Temporal generic workflows, Scala Temporal generic workflows" />
+</head>
+
 In order to define Workflow interfaces with type parameters, it's required to follow some guidelines.
 
 Let's start with some basic imports that will be required for the whole demonstration:

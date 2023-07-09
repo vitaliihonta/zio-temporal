@@ -1,4 +1,11 @@
 # Overview
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal advanced guide" />
+  <meta name="keywords" content="ZIO Temporal advanced guide, Scala Temporal advanced guide" />
+</head>
+
 This section covers untypical & advanced use-cases of Temporal & ZIO-Temporal.  
 Feel free to contribute your own use-cases!
 
