@@ -1,4 +1,11 @@
 # Configuration
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal configuration" />
+  <meta name="keywords" content="ZIO Temporal configuration, ZIO Temporal configuration" />
+</head>
+
 ZIO-Temporal integrates with the core ZIO Config. Therefore, you can configure your ZIO-Temporal easily!  
 The default way that works with no extra dependencies is environment variables. Here is the list of most frequently used configuration parameters:
 - `ZIO_TEMPORAL_ZWORKFLOW_SERVICE_STUBS_SERVER_URL` - Temporal server URL

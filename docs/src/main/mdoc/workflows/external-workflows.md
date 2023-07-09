@@ -1,4 +1,11 @@
 # External workflows
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal external workflows" />
+  <meta name="keywords" content="ZIO Temporal external workflows, Scala Temporal external workflows" />
+</head>
+
 A Workflow execution may interact with other workflow executions even if it's not a child.  
 The _second_ workflow is **External** to the _first_ one.  
 The _first_ workflow may send signals or cancel the **External** workflow.  

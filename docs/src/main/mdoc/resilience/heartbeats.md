@@ -1,4 +1,11 @@
 # Activity Heartbeats
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal heartbeats" />
+  <meta name="keywords" content="ZIO Temporal heartbeats, Scala Temporal heartbeats" />
+</head>
+
 An [Activity Heartbeat](https://docs.temporal.io/activities#activity-heartbeat) is a ping from the Worker Process that is executing the Activity to the Temporal Cluster.  
 Each Heartbeat informs the Temporal Cluster that the Activity Execution is making progress and the Worker has not crashed. If the Cluster does not receive a Heartbeat within a _Heartbeat Timeout_ time period,  
 the Activity will be considered failed and another Activity Task Execution may be scheduled according to the _Retry Policy_.

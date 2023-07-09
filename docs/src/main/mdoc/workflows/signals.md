@@ -1,4 +1,11 @@
 # Signals
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal signal method" />
+  <meta name="keywords" content="ZIO Temporal signal method, Scala Temporal signal method" />
+</head>
+
 A [Signal](https://docs.temporal.io/workflows#signal) is a message sent to a running Workflow Execution.  
 Signals deliver data to a running Workflow Execution. They're used to interact with Workflows, e.g. to update their state.  
 

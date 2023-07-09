@@ -1,5 +1,11 @@
 # Overview
 
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal overview" />
+  <meta name="keywords" content="ZIO Temporal overview" />
+</head>
+
 `zio-temporal` is an integration with [Temporal workflow](https://temporal.io) based on Java SDK and ZIO.  
 It allows you to run workflows in the Scala way!
 
@@ -17,13 +23,6 @@ Example projects using `zio-temporal`:
 - [Long-running workflows](https://github.com/vitaliihonta/zio-temporal/tree/main/examples/src/main/scala/com/example/heartbeatingactivity)
 - [Functional Scala 2022: Cryptocurrency exchange](https://github.com/vitaliihonta/zio-temporal-samples/tree/main/cryptostock)
 - [Content Sync](https://github.com/vitaliihonta/zio-temporal-samples/tree/main/content-sync)
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="author" content="Vitalii Honta" />
-  <meta name="description" content="Build invincible apps with ZIO and Temporal" />
-  <meta name="keywords" content="scala, zio, temporal, zio-temporal, workflow management" />
-</head>
 
 ## Installation
 

@@ -113,9 +113,8 @@ export default function Home() {
     >
       <Head>
         <meta charset="UTF-8" />
-        <meta name="author" content="Vitalii Honta" />
-        <meta name="description" content="Build invincible apps with ZIO and Temporal" />
-        <meta name="keywords" content="scala, zio, temporal, zio-temporal, workflow management" />
+        <meta name="description" content="ZIO Temporal" />
+        <meta name="keywords" content="ZIO Temporal, Temporal Scala, Temporal Scala SDK" />
       </Head>
       <div className={clsx('hero hero--dark', styles.heroBanner)}>
         <div className="container">

@@ -1,4 +1,11 @@
 # Jackson
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal jackson" />
+  <meta name="keywords" content="ZIO Temporal jackson, Scala Temporal jackson" />
+</head>
+
 Jackson is the default serialization format. No extra configuration is usually required for workflow/activity parameters to be serialized.  
 ZIO-Temporal goes with:
 - Jackson-Scala module

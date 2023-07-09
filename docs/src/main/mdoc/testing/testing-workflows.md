@@ -1,4 +1,11 @@
 # Workflows
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal testing workflows" />
+  <meta name="keywords" content="ZIO Temporal testing workflows, Scala Temporal testing workflows" />
+</head>
+
 Temporal provides with `ZTestWorkflowEnvironment` that allows to run workflows in a local test environment.  
 General business logic, as well Temporal functionality (such as `timers`, `sagas`, etc.) can be tested locally with the testkit.
 

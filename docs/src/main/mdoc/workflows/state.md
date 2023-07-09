@@ -1,5 +1,11 @@
 # Workflow state
 
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal state management" />
+  <meta name="keywords" content="ZIO Temporal state management, Scala Temporal state management" />
+</head>
+
 Temporal allows your workflows to be stateful.  
 Basically, it means that you could store the workflow state inside a plain Scala variable in the workflow
 implementation.

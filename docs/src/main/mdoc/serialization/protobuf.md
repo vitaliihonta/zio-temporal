@@ -1,5 +1,11 @@
 # Protobuf
 
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal protobuf" />
+  <meta name="keywords" content="ZIO Temporal protobuf, Scala Temporal protobuf" />
+</head>
+
 ZIO-Temporal provides with the `zio-temporal-protobuf` module allowing to use _Protobuf_ transport. To use _Protobuf_, you must properly install [Scalapb](https://scalapb.github.io/docs/installatio)
 
 ## Defining protobuf files

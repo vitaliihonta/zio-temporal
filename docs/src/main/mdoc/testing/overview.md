@@ -1,4 +1,11 @@
 # Overview
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal testing overview" />
+  <meta name="keywords" content="ZIO Temporal testing overview, Scala Temporal testing overview" />
+</head>
+
 The Testing section of the Temporal Application development guide describes the frameworks that facilitate Workflow and integration testing.
 
 In the context of Temporal, you can create these types of automated tests:

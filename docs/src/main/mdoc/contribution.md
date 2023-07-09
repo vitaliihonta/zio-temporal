@@ -2,9 +2,8 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="author" content="Vitalii Honta" />
-  <meta name="description" content="ZIO Temporal - contribution" />
-  <meta name="keywords" content="zio-temporal, contribution" />
+  <meta name="description" content="ZIO Temporal contribution guide" />
+  <meta name="keywords" content="ZIO Temporal contribution" />
 </head>
 
 ## All suggestions welcome

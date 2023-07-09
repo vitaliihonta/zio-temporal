@@ -1,4 +1,11 @@
 # Child workflows
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal child workflows" />
+  <meta name="keywords" content="ZIO Temporal child workflows, Scala Temporal child workflows" />
+</head>
+
 A [Child workflow](https://docs.temporal.io/workflows#child-workflow) is a Workflow Execution that is spawned from within another Workflow.  
 A Workflow Execution can be both a Parent and a Child Workflow Execution because any Workflow can spawn another Workflow.  
 

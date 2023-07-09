@@ -1,4 +1,12 @@
 # Timers
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal timers" />
+  <meta name="keywords" content="ZIO Temporal timers, Scala Temporal timers, ZIO Temporal sleep" />
+</head>
+
+
 A Workflow can set a durable timer for a fixed time period. A Workflow can sleep for months.  
 Timers are persisted, so even if your Worker or Temporal Cluster is down when the time period completes, as soon as your Worker and Cluster are back up, the `sleep()` call will resolve and your code will continue executing.
 

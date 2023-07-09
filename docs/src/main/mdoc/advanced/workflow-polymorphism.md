@@ -1,4 +1,11 @@
 # Workflow polymorphism
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal workflow polymorphism" />
+  <meta name="keywords" content="ZIO Temporal workflow polymorphism, Scala Temporal workflow polymorphism" />
+</head>
+
 Let's start with some basic imports that will be required for the whole demonstration:
 
 ```scala mdoc:silent

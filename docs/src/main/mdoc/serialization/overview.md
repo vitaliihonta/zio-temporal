@@ -1,4 +1,11 @@
 # Overview
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="ZIO Temporal serialization" />
+  <meta name="keywords" content="ZIO Temporal serialization, Scala Temporal serialization" />
+</head>
+
 Temporal applications communicate with the orchestrator - the Temporal Cluster.  
 The Worker process (running workflow) and the client process (invoking workflows) may be different processes running on different machines.  
 While invoking workflows & activities may look like simple method invocation, it's a remote procedure call over the network.  
