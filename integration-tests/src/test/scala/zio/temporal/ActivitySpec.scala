@@ -72,6 +72,6 @@ object ActivitySpec extends ZIOSpecDefault {
         .provideSome[Scope](
           ZTestEnvironmentOptions.default,
           ZTestActivityEnvironment.make[Any]
-        ) @@ TestAspect.withLiveClock
+        ) @@ TestAspect.withLiveClock @@ TestAspect.debug
   }
 }

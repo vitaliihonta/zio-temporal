@@ -639,6 +639,6 @@ object WorkflowSpec extends ZIOSpecDefault {
       thunk.provideSome[Scope](
         ZTestEnvironmentOptions.default,
         ZTestWorkflowEnvironment.make[Any]
-      ) @@ TestAspect.withLiveClock
+      ) @@ TestAspect.withLiveClock @@ TestAspect.debug
   }
 }
