@@ -11,8 +11,9 @@ import zio.test.TestAspect._
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import scala.collection.mutable.ListBuffer
+import zio.test.junit.JUnitRunnableSpec
 
-object WorkflowSpec extends ZIOSpecDefault {
+object WorkflowSpec extends JUnitRunnableSpec {
   override val bootstrap: ZLayer[Any, Any, TestEnvironment] =
     testEnvironment ++ Runtime.removeDefaultLoggers ++ SLF4J.slf4j
 

@@ -22,7 +22,7 @@ jobs:
           key: sbt-cache-${{ runner.os }}-${{ matrix.target-platform }}-${{ hashFiles('project/build.properties') }}
       - name: Check formatting
         run: sbt scalafmtCheckAll
-      - name: Compile
+      - name: Test
         run: sbt ";coverage;test;coverageAggregate"
       - name: Upload test results
         uses: codecov/codecov-action@v3
