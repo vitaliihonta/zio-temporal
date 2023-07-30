@@ -5,7 +5,7 @@ help:
 
 .PHONY: gen-doc
 gen-doc:
-	SBT_OPTS="-Xmx6G -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=2G -Xss64M" sbt 'unidoc; docs/mdoc;'
+	SBT_OPTS="-Xmx6G -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=2G -Xss64M" sbt 'unidoc; docs/mdoc;'
 
 .PHONY: clean
 clean:

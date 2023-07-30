@@ -1,0 +1,167 @@
+name: CI
+
+env:
+  JDK_JAVA_OPTIONS: -XX:+PrintCommandLineFlags -Xmx6G -Xss4M # JDK_JAVA_OPTIONS is _the_ env. variable to use for modern Java
+  JVM_OPTS: -XX:+PrintCommandLineFlags -Xmx6G -Xss4M # for Java 8 only (sadly, it is not modern enough for JDK_JAVA_OPTIONS)
+  NODE_OPTIONS: --max_old_space_size=6144
+
+on:
+  pull_request:
+  push:
+    branches:
+      - 'main'
+  release:
+    types:
+      - published
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+          check-latest: true
+      - name: Cache scala dependencies
+        uses: coursier/cache-action@v6
+      - name: Install libuv
+        run: sudo apt-get update && sudo apt-get install -y libuv1-dev
+      - name: Lint code
+        run: sbt scalafmtCheckAll
+
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+          check-latest: true
+      - name: Cache scala dependencies
+        uses: coursier/cache-action@v6
+      - name: Install libuv
+        run: sudo apt-get update && sudo apt-get install -y libuv1-dev
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 7
+      - name: Compile
+        run: sbt Test/compile
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['17']
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          check-latest: true
+      - name: Test
+        run: sbt ";coverage;test;coverageAggregate"
+      - name: Upload test results
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./target/scala-2.13/coverage-report
+
+  testJvms:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '11']
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          check-latest: true
+      - name: Cache scala dependencies
+        uses: coursier/cache-action@v6
+      - name: Test on different JVM versions
+        run: sbt test
+
+  ci:
+    runs-on: ubuntu-latest
+    needs: [lint, compile, test, testJvms]
+    steps:
+      - name: Aggregate of lint, mdoc and all tests
+        run: echo "ci passed"
+
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: [ci]
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 8
+          check-latest: true
+      - name: Install libuv
+        run: sudo apt-get update && sudo apt-get install -y libuv1-dev
+      - name: Release
+        run: sbt ";compile;ci-release"
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+
+  publish-website:
+    runs-on: ubuntu-latest
+    needs: [ publish ]
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['17']
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          check-latest: true
+      - name: Compile
+        run: sbt compile
+      - name: Generate site
+        run: make build-site
+      - name: Publish
+        uses: cloudflare/wrangler-action@2.0.0
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: pages publish --project-name=zio-temporal build/
+          workingDirectory: 'website'
