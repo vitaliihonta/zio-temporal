@@ -7,7 +7,7 @@ import zio.temporal.testkit._
 import zio.test._
 import java.util.concurrent.atomic.AtomicInteger
 
-object ActivitySpec extends ZIOSpecDefault {
+object ActivitySpec extends BaseTemporalSpec {
   override val bootstrap: ZLayer[Any, Any, TestEnvironment] =
     testEnvironment ++ Runtime.removeDefaultLoggers ++ SLF4J.slf4j
 
@@ -23,7 +23,7 @@ object ActivitySpec extends ZIOSpecDefault {
           result = stub.echo("hello")
         } yield assertTrue(result == "Echoed hello")
       }
-    }.provideEnv,
+    }.provideTestActivityEnv,
     test("runs heartbeat activity from start") {
       ZTestActivityEnvironment.activityOptions[Any].flatMap { implicit options =>
         val numIterations = new AtomicInteger()
@@ -39,7 +39,7 @@ object ActivitySpec extends ZIOSpecDefault {
           assertTrue(numIterations.get() == 5)
         }
       }
-    }.provideEnv,
+    }.provideTestActivityEnv,
     test("runs heartbeat activity from latest checkpoint") {
       ZTestActivityEnvironment.activityOptions[Any].flatMap { implicit options =>
         val numIterations = new AtomicInteger()
@@ -63,15 +63,6 @@ object ActivitySpec extends ZIOSpecDefault {
           assertTrue(numIterations.get() == 2)
         }
       }
-    }.provideEnv
+    }.provideTestActivityEnv
   ) @@ TestAspect.sequential @@ TestAspect.flaky
-
-  private implicit class ProvidedTestkit[E, A](thunk: Spec[ZTestActivityEnvironment[Any] with Scope, E]) {
-    def provideEnv: Spec[Scope, E] =
-      thunk
-        .provideSome[Scope](
-          ZTestEnvironmentOptions.default,
-          ZTestActivityEnvironment.make[Any]
-        ) @@ TestAspect.withLiveClock @@ TestAspect.debug
-  }
 }

@@ -182,23 +182,30 @@ object ZTestActivityEnvironment {
     */
   def make[R: Tag]: URLayer[R with ZTestEnvironmentOptions, ZTestActivityEnvironment[R]] =
     ZLayer.scoped[R with ZTestEnvironmentOptions] {
-      ZIO.runtime[R with ZTestEnvironmentOptions].flatMap { runtime =>
-        ZIO
-          .blocking(
-            ZIO.succeed(
-              new ZTestActivityEnvironment[R](
-                TestActivityEnvironment.newInstance(runtime.environment.get[ZTestEnvironmentOptions].toJava),
-                runtime
-              )
-            )
-          )
-          .flatMap { env =>
-            ZIO
-              .addFinalizer(
-                ZIO.attempt(env.toJava.close()).ignore
-              )
-              .as(env)
-          }
-      }
+      for {
+        runtime <- ZIO.runtime[R with ZTestEnvironmentOptions]
+        env <- ZIO.blocking(
+                 ZIO.succeed(
+                   new ZTestActivityEnvironment[R](
+                     TestActivityEnvironment.newInstance(runtime.environment.get[ZTestEnvironmentOptions].toJava),
+                     runtime
+                   )
+                 )
+               )
+        _ <- ZIO.addFinalizer(
+               ZIO.attempt(env.toJava.close()).ignore
+             )
+      } yield env
     }
+
+  /** Creates a new instance of [[ZTestActivityEnvironment]] with default options
+    *
+    * @return
+    *   managed instance of test activity environment
+    */
+  def makeDefault[R: Tag]: URLayer[R, ZTestActivityEnvironment[Any]] =
+    ZLayer.makeSome[R, ZTestActivityEnvironment[R]](
+      ZTestEnvironmentOptions.default,
+      make[R]
+    )
 }

@@ -55,11 +55,8 @@ class ZTestWorkflowEnvironment[+R] private[zio] (val toJava: TestWorkflowEnviron
     */
   def setup(options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.testDefault): URIO[Scope, Unit] =
     for {
-      started <- start.fork
-      _ <- ZIO.addFinalizer {
-             shutdownNow *> awaitTermination(options) *> started.join
-           }
-      _ <- workflowServiceStubs.setup()
+      _ <- start
+      _ <- ZIO.addFinalizer(close)
     } yield ()
 
   /** Start all workers created by this test environment. */
@@ -84,6 +81,12 @@ class ZTestWorkflowEnvironment[+R] private[zio] (val toJava: TestWorkflowEnviron
     */
   def shutdownNow: UIO[Unit] =
     ZIO.blocking(ZIO.succeed(toJava.shutdownNow()))
+
+  /** @see
+    *   [[TestWorkflowEnvironment#close]]
+    */
+  def close: UIO[Unit] =
+    ZIO.blocking(ZIO.succeed(toJava.close()))
 
   /** Blocks until all tasks have completed execution after a shutdown request, or the timeout occurs, or the current
     * thread is interrupted, whichever happens first.
@@ -271,4 +274,15 @@ object ZTestWorkflowEnvironment {
         )
       }
     }
+
+  /** Creates a new instance of [[ZTestWorkflowEnvironment]] with default options
+    * @return
+    *   managed instance of test environment
+    */
+  def makeDefault[R: Tag]: URLayer[R, ZTestWorkflowEnvironment[R]] = {
+    ZLayer.makeSome[R, ZTestWorkflowEnvironment[R]](
+      ZTestEnvironmentOptions.default,
+      make[R]
+    )
+  }
 }

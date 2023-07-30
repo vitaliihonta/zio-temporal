@@ -8,7 +8,7 @@ import zio.temporal.workflow.ZWorkflowStub
 import zio.test._
 import java.util.UUID
 
-object WorkflowComplexTypesSpec extends ZIOSpecDefault {
+object WorkflowComplexTypesSpec extends BaseTemporalSpec {
   override val spec: Spec[TestEnvironment with Scope, Any] =
     suite("Complex type serialization")(
       test("either") {
@@ -85,13 +85,5 @@ object WorkflowComplexTypesSpec extends ZIOSpecDefault {
           }
         }
       }
-    ).provideEnv @@ TestAspect.flaky @@ TestAspect.sequential
-
-  private implicit class ProvidedTestkit[E, A](thunk: Spec[ZTestWorkflowEnvironment[Any] with Scope, E]) {
-    def provideEnv: Spec[Scope, E] =
-      thunk.provideSome[Scope](
-        ZTestEnvironmentOptions.default,
-        ZTestWorkflowEnvironment.make[Any]
-      ) @@ TestAspect.withLiveClock @@ TestAspect.debug
-  }
+    ).provideTestWorkflowEnv @@ TestAspect.flaky @@ TestAspect.sequential
 }
