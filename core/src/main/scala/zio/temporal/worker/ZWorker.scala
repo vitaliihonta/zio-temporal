@@ -20,18 +20,10 @@ class ZWorker private[zio] (
   def isSuspended: UIO[Boolean] = ZIO.succeed(toJava.isSuspended)
 
   def suspendPolling: UIO[Unit] =
-    ZIO.blocking(
-      ZIO.succeed(
-        toJava.suspendPolling()
-      )
-    )
+    ZIO.succeedBlocking(toJava.suspendPolling())
 
   def resumePolling: UIO[Unit] =
-    ZIO.blocking(
-      ZIO.succeed(
-        toJava.resumePolling()
-      )
-    )
+    ZIO.succeedBlocking(toJava.resumePolling())
 
   override def toString: String =
     toJava.toString

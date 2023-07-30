@@ -13,14 +13,15 @@ https://zio-temporal.vhonta.dev
 
 ## Examples
 
-You can find the source code of example workflow in [examples directory](./examples)
+You can find the source code of example workflow in [examples directory](./examples).
+To create & start a Temporal cluster, it is required to install [Temporal CLI](https://docs.temporal.io/cli).  
 
 ### How to run examples
 
-1. Start temporal server locally with predefined [docker-compose file](./examples/docker-compose.yaml):
+1. Start the Temporal cluster
 
 ```shell
-docker-compose -f examples/docker-compose.yaml up -d
+make start-temporal
 ```
 
 2. Run example from sbt:

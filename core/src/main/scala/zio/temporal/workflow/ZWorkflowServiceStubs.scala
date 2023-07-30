@@ -21,20 +21,12 @@ final class ZWorkflowServiceStubs private[zio] (val toJava: WorkflowServiceStubs
   /** Shutdowns client asynchronously allowing existing gRPC calls to finish
     */
   def shutdown: UIO[Unit] =
-    ZIO.blocking(
-      ZIO.succeed(
-        toJava.shutdown()
-      )
-    )
+    ZIO.succeedBlocking(toJava.shutdown())
 
   /** Shutdowns client immediately cancelling existing gRPC calls
     */
   def shutdownNow: UIO[Unit] =
-    ZIO.blocking(
-      ZIO.succeed(
-        toJava.shutdownNow()
-      )
-    )
+    ZIO.succeedBlocking(toJava.shutdownNow())
 
   /** Awaits for gRPC stubs shutdown up to the specified timeout.
     *
@@ -47,10 +39,8 @@ final class ZWorkflowServiceStubs private[zio] (val toJava: WorkflowServiceStubs
     options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.default
   ): UIO[Unit] =
     ZIO
-      .blocking {
-        ZIO.succeed(
-          toJava.awaitTermination(options.pollTimeout.toNanos, TimeUnit.NANOSECONDS)
-        )
+      .succeedBlocking {
+        toJava.awaitTermination(options.pollTimeout.toNanos, TimeUnit.NANOSECONDS)
       }
       .repeat(Schedule.recurUntil[Boolean](identity) && Schedule.fixed(options.pollDelay))
       .unit
@@ -70,10 +60,8 @@ object ZWorkflowServiceStubs {
   val make: URLayer[ZWorkflowServiceStubsOptions, ZWorkflowServiceStubs] = ZLayer.scoped {
     ZIO.serviceWithZIO[ZWorkflowServiceStubsOptions] { options =>
       ZIO.acquireRelease(
-        ZIO.blocking(
-          ZIO.succeed(
-            new ZWorkflowServiceStubs(WorkflowServiceStubs.newServiceStubs(options.toJava))
-          )
+        ZIO.succeedBlocking(
+          new ZWorkflowServiceStubs(WorkflowServiceStubs.newServiceStubs(options.toJava))
         )
       )(_.shutdownNow)
     }

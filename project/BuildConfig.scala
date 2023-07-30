@@ -1,5 +1,4 @@
 import sbt.Keys.scalaVersion
-
 import sbt._
 
 object BuildConfig extends Dependencies {
@@ -31,6 +30,7 @@ object BuildConfig extends Dependencies {
   val testLibs = (baseLibs ++ Seq(
     Zio.test,
     Zio.testSbt,
+    Zio.testMagnolia,
     Logging.zio,
     Logging.zioSlf4j,
     Logging.logback,
@@ -67,11 +67,12 @@ object BuildConfig extends Dependencies {
 trait Dependencies {
 
   private object versions {
-    val temporal   = "1.19.1"
+    val temporal = "1.20.1"
+    // todo: update once a version next to 2.0.15 is released
     val zio        = "2.0.12"
-    val zioLogging = "2.1.12"
+    val zioLogging = "2.1.13"
     val enumeratum = "1.7.2"
-    val jackson    = "2.15.1"
+    val jackson    = "2.15.2"
   }
 
   object org {
@@ -92,10 +93,11 @@ trait Dependencies {
   }
 
   object Zio {
-    val self           = org.zio %% "zio"          % versions.zio
-    val streams        = org.zio %% "zio-streams"  % versions.zio
-    val test           = org.zio %% "zio-test"     % versions.zio
-    val testSbt        = org.zio %% "zio-test-sbt" % versions.zio
+    val self           = org.zio %% "zio"               % versions.zio
+    val streams        = org.zio %% "zio-streams"       % versions.zio
+    val test           = org.zio %% "zio-test"          % versions.zio
+    val testSbt        = org.zio %% "zio-test-sbt"      % versions.zio
+    val testMagnolia   = org.zio %% "zio-test-magnolia" % versions.zio
     val testFrameworks = Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   }
 
@@ -128,6 +130,6 @@ trait Dependencies {
   }
 
   object Testing {
-    val scalatest = "org.scalatest" %% "scalatest" % "3.2.15"
+    val scalatest = "org.scalatest" %% "scalatest" % "3.2.16"
   }
 }

@@ -21,7 +21,7 @@ object WorkflowExecutionsMain extends ZIOAppDefault {
                         .runCollect
                     }
       _ <- ZIO.logInfo(s"Found ${executions.size} executions")
-      _ <- ZIO.foreach(executions)(printExecutionInfo)
+      _ <- ZIO.foreachDiscard(executions)(printExecutionInfo)
     } yield ()
 
     program.provideSome[Scope](

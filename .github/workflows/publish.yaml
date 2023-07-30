@@ -21,10 +21,8 @@ jobs:
             ~/.ivy2/cache
             ~/.coursier
           key: sbt-cache-${{ runner.os }}-${{ matrix.target-platform }}-${{ hashFiles('project/build.properties') }}
-      - name: Compile
-        run: sbt +compile
       - name: Release
-        run: sbt ci-release
+        run: sbt ";compile;ci-release"
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}

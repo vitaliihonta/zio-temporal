@@ -29,7 +29,7 @@ final class ZWorkerFactory private[zio] (val toJava: WorkerFactory) {
   /** Starts all the workers created by this factory.
     */
   def start: UIO[Unit] =
-    ZIO.blocking(ZIO.succeed(toJava.start())) *> ZIO.logInfo("ZWorkerFactory started")
+    ZIO.succeedBlocking(toJava.start()) *> ZIO.logInfo("ZWorkerFactory started")
 
   /** Initiates an orderly shutdown in which polls are stopped and already received workflow and activity tasks are
     * executed.
@@ -39,7 +39,7 @@ final class ZWorkerFactory private[zio] (val toJava: WorkerFactory) {
     */
   def shutdown: UIO[Unit] =
     ZIO.logInfo("ZWorkerFactory shutdown initiated...") *>
-      ZIO.blocking(ZIO.succeed(toJava.shutdown()))
+      ZIO.succeedBlocking(toJava.shutdown())
 
   /** Initiates an orderly shutdown in which polls are stopped and already received workflow and activity tasks are
     * attempted to be stopped. This implementation cancels tasks via Thread.interrupt(), so any task that fails to
@@ -50,7 +50,7 @@ final class ZWorkerFactory private[zio] (val toJava: WorkerFactory) {
     */
   def shutdownNow: UIO[Unit] =
     ZIO.logInfo("ZWorkerFactory shutdownNow initiated...") *>
-      ZIO.blocking(ZIO.succeed(toJava.shutdownNow()))
+      ZIO.succeedBlocking(toJava.shutdownNow())
 
   /** Creates worker that connects to an instance of the Temporal Service. It uses the namespace configured at the
     * Factory level. New workers cannot be created after the start() has been called
@@ -65,8 +65,8 @@ final class ZWorkerFactory private[zio] (val toJava: WorkerFactory) {
     *   ZWorker
     */
   def newWorker(taskQueue: String, options: ZWorkerOptions = ZWorkerOptions.default): UIO[ZWorker] =
-    ZIO.blocking(
-      ZIO.succeed(new ZWorker(toJava.newWorker(taskQueue, options.toJava)))
+    ZIO.succeedBlocking(
+      new ZWorker(toJava.newWorker(taskQueue, options.toJava))
     )
 
   /** @param taskQueue
@@ -75,12 +75,10 @@ final class ZWorkerFactory private[zio] (val toJava: WorkerFactory) {
     *   a worker created previously through [[newWorker]] for the given task queue.
     */
   def getWorker(taskQueue: String): UIO[Option[ZWorker]] =
-    ZIO.blocking(
-      ZIO
-        .attempt(new ZWorker(toJava.getWorker(taskQueue)))
-        .refineToOrDie[IllegalArgumentException]
-        .option
-    )
+    ZIO
+      .attemptBlocking(new ZWorker(toJava.getWorker(taskQueue)))
+      .refineToOrDie[IllegalArgumentException]
+      .option
 }
 
 object ZWorkerFactory {

@@ -33,10 +33,8 @@ class ZTestWorkflowEnvironment[+R] private[zio] (val toJava: TestWorkflowEnviron
     *   task queue to poll.
     */
   def newWorker(taskQueue: String, options: ZWorkerOptions = ZWorkerOptions.default): UIO[ZWorker] =
-    ZIO.blocking(
-      ZIO.succeed(
-        new ZWorker(toJava.newWorker(taskQueue, options.toJava))
-      )
+    ZIO.succeedBlocking(
+      new ZWorker(toJava.newWorker(taskQueue, options.toJava))
     )
 
   /** Creates a WorkflowClient that is connected to the in-memory test Temporal service. */
@@ -55,16 +53,13 @@ class ZTestWorkflowEnvironment[+R] private[zio] (val toJava: TestWorkflowEnviron
     */
   def setup(options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.testDefault): URIO[Scope, Unit] =
     for {
-      started <- start.fork
-      _ <- ZIO.addFinalizer {
-             shutdownNow *> awaitTermination(options) *> started.join
-           }
-      _ <- workflowServiceStubs.setup()
+      _ <- start
+      _ <- ZIO.addFinalizer(close)
     } yield ()
 
   /** Start all workers created by this test environment. */
   def start: UIO[Unit] =
-    ZIO.blocking(ZIO.succeed(toJava.start()))
+    ZIO.succeedBlocking(toJava.start())
 
   /** Initiates an orderly shutdown in which polls are stopped and already received workflow and activity tasks are
     * executed.
@@ -73,7 +68,7 @@ class ZTestWorkflowEnvironment[+R] private[zio] (val toJava: TestWorkflowEnviron
     *   [[TestWorkflowEnvironment#shutdown]]
     */
   def shutdown: UIO[Unit] =
-    ZIO.blocking(ZIO.succeed(toJava.shutdown()))
+    ZIO.succeedBlocking(toJava.shutdown())
 
   /** Initiates an orderly shutdown in which polls are stopped and already received workflow and activity tasks are
     * attempted to be stopped. This implementation cancels tasks via Thread.interrupt(), so any task that fails to
@@ -83,7 +78,13 @@ class ZTestWorkflowEnvironment[+R] private[zio] (val toJava: TestWorkflowEnviron
     *   [[TestWorkflowEnvironment#shutdownNow]]
     */
   def shutdownNow: UIO[Unit] =
-    ZIO.blocking(ZIO.succeed(toJava.shutdownNow()))
+    ZIO.succeedBlocking(toJava.shutdownNow())
+
+  /** @see
+    *   [[TestWorkflowEnvironment#close]]
+    */
+  def close: UIO[Unit] =
+    ZIO.succeedBlocking(toJava.close())
 
   /** Blocks until all tasks have completed execution after a shutdown request, or the timeout occurs, or the current
     * thread is interrupted, whichever happens first.
@@ -95,10 +96,8 @@ class ZTestWorkflowEnvironment[+R] private[zio] (val toJava: TestWorkflowEnviron
     options: ZAwaitTerminationOptions = ZAwaitTerminationOptions.testDefault
   ): UIO[Unit] =
     ZIO
-      .blocking {
-        ZIO.succeed(
-          toJava.awaitTermination(options.pollTimeout.toNanos, TimeUnit.NANOSECONDS)
-        )
+      .succeedBlocking {
+        toJava.awaitTermination(options.pollTimeout.toNanos, TimeUnit.NANOSECONDS)
       }
       .repeat(Schedule.recurUntil((_: Unit) => true) && Schedule.fixed(options.pollDelay))
       .unit
@@ -117,11 +116,8 @@ class ZTestWorkflowEnvironment[+R] private[zio] (val toJava: TestWorkflowEnviron
     *
     * <p>This method falls back to [[Thread.sleep]] if an external service without time skipping support is used
     */
-  def sleep(duration: Duration): UIO[Unit] = ZIO.blocking(
-    ZIO.succeed(
-      toJava.sleep(duration)
-    )
-  )
+  def sleep(duration: Duration): UIO[Unit] =
+    ZIO.succeedBlocking(toJava.sleep(duration))
 
   /** Currently prints histories of all workflow instances stored in the service. This is useful information to print in
     * the case of a unit test failure.
@@ -261,14 +257,23 @@ object ZTestWorkflowEnvironment {
   def make[R: Tag]: URLayer[R with ZTestEnvironmentOptions, ZTestWorkflowEnvironment[R]] =
     ZLayer.scoped[R with ZTestEnvironmentOptions] {
       ZIO.runtime[R with ZTestEnvironmentOptions].flatMap { runtime =>
-        ZIO.blocking(
-          ZIO.succeed(
-            new ZTestWorkflowEnvironment[R](
-              TestWorkflowEnvironment.newInstance(runtime.environment.get[ZTestEnvironmentOptions].toJava),
-              runtime
-            )
+        ZIO.succeedBlocking(
+          new ZTestWorkflowEnvironment[R](
+            TestWorkflowEnvironment.newInstance(runtime.environment.get[ZTestEnvironmentOptions].toJava),
+            runtime
           )
         )
       }
     }
+
+  /** Creates a new instance of [[ZTestWorkflowEnvironment]] with default options
+    * @return
+    *   managed instance of test environment
+    */
+  def makeDefault[R: Tag]: URLayer[R, ZTestWorkflowEnvironment[R]] = {
+    ZLayer.makeSome[R, ZTestWorkflowEnvironment[R]](
+      ZTestEnvironmentOptions.default,
+      make[R]
+    )
+  }
 }

@@ -21,7 +21,7 @@ class EnumProtoTypeSpec extends AnyWordSpec {
   private val enumProto = EnumProtoType(Color).to(EnumProtoTypeSpec.Color)
 
   "EnumProtoType" should {
-    "convert scala3 enum to protobuf correctly" in {
+    "convert enumeratum enum to protobuf correctly" in {
       assert(enumProto.repr(EnumProtoTypeSpec.Color.Red) == Color.Red)
       assert(enumProto.repr(EnumProtoTypeSpec.Color.Green) == Color.Green)
       assert(enumProto.repr(EnumProtoTypeSpec.Color.Blue) == Color.Blue)

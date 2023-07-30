@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import scala.collection.mutable.ListBuffer
 
-object WorkflowSpec extends ZIOSpecDefault {
+object WorkflowSpec extends BaseTemporalSpec {
   override val bootstrap: ZLayer[Any, Any, TestEnvironment] =
     testEnvironment ++ Runtime.removeDefaultLoggers ++ SLF4J.slf4j
 
@@ -36,7 +36,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         result <- ZWorkflowStub.execute(sampleWorkflow.echo(sampleIn))
       } yield assertTrue(result == sampleOut)
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("runs simple workflow with custom name") {
       val taskQueue = "sample-named-queue"
       val sampleIn  = "Fooo"
@@ -56,7 +56,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         result <- ZWorkflowStub.execute(sampleWorkflow.echo(sampleIn))
       } yield assertTrue(result == sampleOut)
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("runs child workflows") {
       val taskQueue = "child-queue"
 
@@ -75,7 +75,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         result <- ZWorkflowStub.execute(greetingWorkflow.getGreeting("Vitalii"))
       } yield assertTrue(result == "Hello Vitalii!")
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("runs child workflows with custom names") {
       val taskQueue = "child-named-queue"
 
@@ -94,7 +94,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         result <- ZWorkflowStub.execute(greetingWorkflow.getGreeting("Vitalii"))
       } yield assertTrue(result == "Hello Vitalii!")
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("runs child untyped workflows") {
       val taskQueue = "child-untyped-queue"
 
@@ -113,7 +113,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         result <- greetingWorkflow.execute[String]("Vitalii")
       } yield assertTrue(result == "Hello Vitalii!")
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("runs workflows with external workflow signalling") {
       val taskQueue      = "external-workflow-queue"
       val input          = "Wooork"
@@ -151,7 +151,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         result <- fooWorkflow.result[String]
       } yield assertTrue(result == expectedOutput)
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("runs workflows with untyped external workflow signalling") {
       val taskQueue      = "external-untyped-workflow-queue"
       val input          = "Wooork"
@@ -185,7 +185,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         result <- fooWorkflow.result[String](timeout = 5.seconds)
       } yield assertTrue(result contains expectedOutput)
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("run workflow with signals") {
       val taskQueue = "signal-queue"
 
@@ -230,7 +230,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         assertTrue(result == "ECHO Hello!")
       }
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("run workflow with untyped signals") {
       val taskQueue = "signal-untyped-queue"
 
@@ -270,7 +270,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         assertTrue(result == "ECHO Hello!")
       }
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("run workflow with ZIO") {
       ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
         val taskQueue = "zio-queue"
@@ -300,7 +300,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         } yield assertTrue(result == "Echoed HELLO THERE")
       }
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("run workflow with continue as new") {
       ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
         val taskQueue = "continue-as-new-queue"
@@ -326,7 +326,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         } yield assertTrue(result == "Done")
       }
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("run custom-named workflow with continue as new") {
       ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
         val taskQueue = "continue-as-new-named-queue"
@@ -352,7 +352,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         } yield assertTrue(result == "Done")
       }
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("run workflow with ZIO untyped activity") {
       ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
         val taskQueue = "zio-untyped-queue"
@@ -378,7 +378,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         } yield assertTrue(result == "Echoed HELLO THERE")
       }
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("run workflow with signal and start") {
       val taskQueue = "signal-with-start-queue"
 
@@ -424,7 +424,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         assertTrue(result == 3)
       }
 
-    }.provideEnv @@ TestAspect.flaky,
+    }.provideTestWorkflowEnv @@ TestAspect.flaky,
     test("run workflow with successful sagas") {
       ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
         val taskQueue      = "saga-queue"
@@ -452,7 +452,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         }
       }
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("run workflow with saga compensations") {
       ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
         val taskQueue = "saga-queue"
@@ -499,7 +499,7 @@ object WorkflowSpec extends ZIOSpecDefault {
         }
       }
 
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("run workflow with zasync") {
       val taskQueue = "zasync-queue"
 
@@ -518,12 +518,11 @@ object WorkflowSpec extends ZIOSpecDefault {
       val x = 2
       val y = 3
 
-      val tests = for {
-        workflowId <- ZIO.randomWith(_.nextUUID)
+      def runTest(n: Int) = for {
         promiseWorkflow <- ZTestWorkflowEnvironment
                              .newWorkflowStub[PromiseWorkflow]
                              .withTaskQueue(taskQueue)
-                             .withWorkflowId(workflowId.toString)
+                             .withWorkflowId(s"zasync-spec-$n")
                              .withWorkflowRunTimeout(10.seconds)
                              .build
         result <- ZWorkflowStub.execute(promiseWorkflow.fooBar(x, y))
@@ -537,19 +536,20 @@ object WorkflowSpec extends ZIOSpecDefault {
                ZWorker.addActivityImplementation(new PromiseActivityImpl(fooFunc, barFunc))
 
         _ <- ZTestWorkflowEnvironment.setup()
+
         assertions <- ZIO
-                        .collectAll((1 to 20).map(_ => tests))
-                        .map { res =>
+                        .foreach(List.range(1, 21))(runTest)
+                        .map { results =>
                           val actualResult = order.get.toList
 
                           println(actualResult.toString)
 
-                          TestResult.all(res: _*) &&
+                          results.reduce(_ && _) &&
                           assertTrue(actualResult.size == 40) &&
                           assertTrue(actualResult != List.fill(20)(List("foo" -> x, "bar" -> y)))
                         }
       } yield assertions
-    }.provideEnv @@ TestAspect.flaky,
+    }.provideTestWorkflowEnv @@ TestAspect.flaky(3),
     test("run parameterized workflow") {
       ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
         val taskQueue = "parameterized-queue"
@@ -602,7 +602,7 @@ object WorkflowSpec extends ZIOSpecDefault {
           )
         }
       }
-    }.provideEnv,
+    }.provideTestWorkflowEnv,
     test("Runs workflows with timers") {
       val taskQueue = "payment-queue"
       for {
@@ -631,14 +631,6 @@ object WorkflowSpec extends ZIOSpecDefault {
         // Get the workflow result
         isFinished <- paymentWorkflow.result[Boolean]
       } yield assertTrue(!isFinished)
-    }.provideEnv
-  ) @@ TestAspect.sequential
-
-  private implicit class ProvidedTestkit[E, A](thunk: Spec[ZTestWorkflowEnvironment[Any] with Scope, E]) {
-    def provideEnv: Spec[Scope, E] =
-      thunk.provideSome[Scope](
-        ZTestEnvironmentOptions.default,
-        ZTestWorkflowEnvironment.make[Any]
-      ) @@ TestAspect.withLiveClock
-  }
+    }.provideTestWorkflowEnv
+  )
 }
