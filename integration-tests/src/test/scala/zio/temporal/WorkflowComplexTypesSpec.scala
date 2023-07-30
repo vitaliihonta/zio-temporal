@@ -85,5 +85,5 @@ object WorkflowComplexTypesSpec extends BaseTemporalSpec {
           }
         }
       }
-    ).provideTestWorkflowEnv @@ TestAspect.flaky @@ TestAspect.sequential
+    ).provideTestWorkflowEnv @@ TestAspect.flaky
 }

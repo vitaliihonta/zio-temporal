@@ -184,12 +184,10 @@ object ZTestActivityEnvironment {
     ZLayer.scoped[R with ZTestEnvironmentOptions] {
       for {
         runtime <- ZIO.runtime[R with ZTestEnvironmentOptions]
-        env <- ZIO.blocking(
-                 ZIO.succeed(
-                   new ZTestActivityEnvironment[R](
-                     TestActivityEnvironment.newInstance(runtime.environment.get[ZTestEnvironmentOptions].toJava),
-                     runtime
-                   )
+        env <- ZIO.succeedBlocking(
+                 new ZTestActivityEnvironment[R](
+                   TestActivityEnvironment.newInstance(runtime.environment.get[ZTestEnvironmentOptions].toJava),
+                   runtime
                  )
                )
         _ <- ZIO.addFinalizer(

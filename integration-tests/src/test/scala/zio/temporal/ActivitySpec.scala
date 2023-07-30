@@ -64,5 +64,5 @@ object ActivitySpec extends BaseTemporalSpec {
         }
       }
     }.provideTestActivityEnv
-  ) @@ TestAspect.sequential @@ TestAspect.flaky
+  ) @@ TestAspect.flaky
 }

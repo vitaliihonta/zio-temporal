@@ -13,9 +13,7 @@ object TemporalInteraction {
 
   def from[A](thunk: => A): TemporalIO[A] = {
     ZIO
-      .blocking(
-        ZIO.attempt(thunk)
-      )
+      .attemptBlocking(thunk)
       .refineToOrDie[WorkflowException]
   }
 

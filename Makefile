@@ -21,11 +21,7 @@ start-site: gen-doc
 
 .PHONY: start-temporal
 start-temporal:
-	docker-compose -f examples/docker-compose.yaml up -d
-
-.PHONY: stop-temporal
-stop-temporal:
-	docker-compose -f examples/docker-compose.yaml down
+	temporal server start-dev
 
 .PHONY: run-heartbeatingactivity-worker
 run-heartbeatingactivity-worker:

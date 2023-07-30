@@ -21,7 +21,7 @@ final class ZWorkflowClient private[zio] (val toJava: WorkflowClient) {
     *   [[ActivityCompletionClient]]
     */
   def newActivityCompletionClient: UIO[ActivityCompletionClient] =
-    ZIO.blocking(ZIO.succeed(toJava.newActivityCompletionClient()))
+    ZIO.succeedBlocking(toJava.newActivityCompletionClient())
 
   /** Creates new typed workflow stub builder
     * @tparam A
@@ -120,11 +120,7 @@ final class ZWorkflowClient private[zio] (val toJava: WorkflowClient) {
     */
   def fetchHistory(workflowId: String, runId: Option[String] = None): Task[ZWorkflowExecutionHistory] =
     ZIO
-      .blocking(
-        ZIO.attempt(
-          toJava.fetchHistory(workflowId, runId.orNull)
-        )
-      )
+      .attemptBlocking(toJava.fetchHistory(workflowId, runId.orNull))
       .map(new ZWorkflowExecutionHistory(_))
 }
 
@@ -137,15 +133,13 @@ object ZWorkflowClient {
   val make: URLayer[ZWorkflowServiceStubs with ZWorkflowClientOptions, ZWorkflowClient] =
     ZLayer.fromZIO {
       ZIO.environmentWithZIO[ZWorkflowServiceStubs with ZWorkflowClientOptions] { environment =>
-        ZIO.blocking {
-          ZIO.succeed {
-            new ZWorkflowClient(
-              WorkflowClient.newInstance(
-                environment.get[ZWorkflowServiceStubs].toJava,
-                environment.get[ZWorkflowClientOptions].toJava
-              )
+        ZIO.succeedBlocking {
+          new ZWorkflowClient(
+            WorkflowClient.newInstance(
+              environment.get[ZWorkflowServiceStubs].toJava,
+              environment.get[ZWorkflowClientOptions].toJava
             )
-          }
+          )
         }
       }
     }
