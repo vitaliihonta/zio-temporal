@@ -209,11 +209,17 @@ lazy val examples = projectMatrix
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
 
+lazy val projectStableVersion = Def.setting {
+  val prevStable = (ThisBuild / previousStableVersion).value
+  if (prevStable.isDefined) prevStable.get
+  else (ThisBuild / version).value
+}
+
 // MDOC
 lazy val mdocSettings = Seq(
   mdocIn := file("docs/src/main/mdoc"),
   mdocVariables := Map(
-    "VERSION"      -> version.value,
+    "VERSION"      -> projectStableVersion.value,
     "ORGANIZATION" -> organization.value,
     "EMAIL"        -> developers.value.head.email
   ),
@@ -234,7 +240,7 @@ lazy val unidocSettings = Seq(
     "-doc-title",
     "ZIO Temporal",
     "-doc-version",
-    s"v${(ThisBuild / version).value}"
+    s"v${projectStableVersion.value}"
   )
 )
 
@@ -246,7 +252,7 @@ ThisBuild / updateSiteVariables := {
   val variables =
     Map[String, String](
       "organization"           -> (ThisBuild / organization).value,
-      "latestVersion"          -> (ThisBuild / version).value,
+      "latestVersion"          -> projectStableVersion.value,
       "downloadReportsBaseUrl" -> "https://zio-temporal.vhonta.dev/assets"
     )
 
