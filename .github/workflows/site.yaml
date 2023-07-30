@@ -1,0 +1,32 @@
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - published
+jobs:
+  publish-website:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+          check-latest: true
+      - name: Compile
+        run: sbt compile
+      - name: Generate site
+        run: make build-site
+      - name: Publish
+        uses: cloudflare/wrangler-action@2.0.0
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: pages publish --project-name=zio-temporal build/
+          workingDirectory: 'website'
