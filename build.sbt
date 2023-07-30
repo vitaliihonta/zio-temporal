@@ -80,7 +80,8 @@ lazy val root = project
   .in(file("."))
   .settings(baseSettings, noPublishSettings, unidocSettings)
   .settings(
-    name := "zio-temporal-root"
+    name         := "zio-temporal-root",
+    scalaVersion := scala213
   )
   .aggregate(
     core.projectRefs ++
