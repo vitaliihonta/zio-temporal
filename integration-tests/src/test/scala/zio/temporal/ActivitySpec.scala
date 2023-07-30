@@ -5,10 +5,9 @@ import zio.logging.backend.SLF4J
 import zio.temporal.fixture._
 import zio.temporal.testkit._
 import zio.test._
-import zio.test.junit.JUnitRunnableSpec
 import java.util.concurrent.atomic.AtomicInteger
 
-object ActivitySpec extends JUnitRunnableSpec {
+object ActivitySpec extends ZIOSpecDefault {
   override val bootstrap: ZLayer[Any, Any, TestEnvironment] =
     testEnvironment ++ Runtime.removeDefaultLoggers ++ SLF4J.slf4j
 

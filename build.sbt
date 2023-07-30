@@ -7,7 +7,6 @@ val scala3   = "3.3.0"
 val allScalaVersions          = List(scala212, scala213, scala3)
 val documentationScalaVersion = scala213
 
-ThisBuild / scalaVersion           := scala213
 ThisBuild / organization           := "dev.vhonta"
 ThisBuild / versionScheme          := Some("early-semver")
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"

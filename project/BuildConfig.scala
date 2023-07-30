@@ -31,8 +31,6 @@ object BuildConfig extends Dependencies {
     Zio.test,
     Zio.testSbt,
     Zio.testMagnolia,
-    Zio.testJunit,
-    Zio.sbtJunit,
     Logging.zio,
     Logging.zioSlf4j,
     Logging.logback,
@@ -94,13 +92,11 @@ trait Dependencies {
   }
 
   object Zio {
-    val self           = org.zio         %% "zio"               % versions.zio
-    val streams        = org.zio         %% "zio-streams"       % versions.zio
-    val test           = org.zio         %% "zio-test"          % versions.zio
-    val testSbt        = org.zio         %% "zio-test-sbt"      % versions.zio
-    val testMagnolia   = org.zio         %% "zio-test-magnolia" % versions.zio
-    val testJunit      = org.zio         %% "zio-test-junit"    % versions.zio
-    val sbtJunit       = "com.github.sbt" % "junit-interface"   % "0.13.3"
+    val self           = org.zio %% "zio"               % versions.zio
+    val streams        = org.zio %% "zio-streams"       % versions.zio
+    val test           = org.zio %% "zio-test"          % versions.zio
+    val testSbt        = org.zio %% "zio-test-sbt"      % versions.zio
+    val testMagnolia   = org.zio %% "zio-test-magnolia" % versions.zio
     val testFrameworks = Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   }
 

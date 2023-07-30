@@ -6,10 +6,9 @@ import zio.temporal.testkit._
 import zio.temporal.worker.ZWorker
 import zio.temporal.workflow.ZWorkflowStub
 import zio.test._
-import zio.test.junit.JUnitRunnableSpec
 import java.util.UUID
 
-object WorkflowComplexTypesSpec extends JUnitRunnableSpec {
+object WorkflowComplexTypesSpec extends ZIOSpecDefault {
   override val spec: Spec[TestEnvironment with Scope, Any] =
     suite("Complex type serialization")(
       test("either") {
