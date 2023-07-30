@@ -1,3 +1,4 @@
+name: Site
 on:
   workflow_dispatch:
   release:
