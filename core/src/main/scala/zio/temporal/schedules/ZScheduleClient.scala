@@ -1,11 +1,14 @@
 package zio.temporal.schedules
 
 import io.temporal.client.schedules._
+import io.temporal.common.interceptors.Header
 import zio._
 import zio.temporal.TemporalIO
-import zio.temporal.internal.TemporalInteraction
-import zio.temporal.workflow.ZWorkflowServiceStubs
+import zio.temporal.internal.{ClassTagUtils, TemporalInteraction}
+import zio.temporal.workflow.{IsWorkflow, ZWorkflowServiceStubs, ZWorkflowStubBuilderTaskQueueDsl}
 import zio.stream._
+
+import scala.reflect.ClassTag
 
 /** Represents Temporal schedule client
   *
@@ -65,6 +68,33 @@ final class ZScheduleClient private[zio] (val toJava: ScheduleClient) {
         )
       )
       .map(new ZScheduleListDescription(_))
+
+  // todo: document
+  def newScheduleStartWorkflowStub[A: ClassTag: IsWorkflow](
+    header: Header = Header.empty()
+  ): ZWorkflowStubBuilderTaskQueueDsl[ZScheduleStartWorkflowStub.Of[A]] =
+    new ZWorkflowStubBuilderTaskQueueDsl[ZScheduleStartWorkflowStub.Of[A]](options =>
+      ZScheduleStartWorkflowStub.Of(
+        new ZScheduleStartWorkflowStubImpl(
+          ClassTagUtils.classOf[A],
+          options,
+          header
+        )
+      )
+    )
+
+  // todo: document
+  def newUntypedScheduleStartWorkflowStub(
+    workflowType: String,
+    header:       Header = Header.empty()
+  ): ZWorkflowStubBuilderTaskQueueDsl[ZScheduleStartWorkflowStub.Untyped] =
+    new ZWorkflowStubBuilderTaskQueueDsl[ZScheduleStartWorkflowStub.Untyped](options =>
+      new ZScheduleStartWorkflowStub.UntypedImpl(
+        workflowType,
+        options,
+        header
+      )
+    )
 }
 
 object ZScheduleClient {
