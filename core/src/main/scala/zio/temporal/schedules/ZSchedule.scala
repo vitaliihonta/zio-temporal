@@ -59,10 +59,10 @@ object ZSchedule {
 final case class ZScheduleSpec private[zio] (
   startAt:         Instant,
   endAt:           Option[Instant],
-  calendars:       List[ScheduleCalendarSpec],
-  intervals:       List[ScheduleIntervalSpec],
+  calendars:       List[ZScheduleCalendarSpec],
+  intervals:       List[ZScheduleIntervalSpec],
   cronExpressions: List[String],
-  skip:            List[ScheduleCalendarSpec],
+  skip:            List[ZScheduleCalendarSpec],
   jitter:          Option[Duration],
   timeZoneName:    Option[String]) {
 
@@ -72,10 +72,10 @@ final case class ZScheduleSpec private[zio] (
   def withEndAt(value: Instant): ZScheduleSpec =
     copy(endAt = Some(value))
 
-  def withCalendars(values: ScheduleCalendarSpec*): ZScheduleSpec =
+  def withCalendars(values: ZScheduleCalendarSpec*): ZScheduleSpec =
     copy(calendars = values.toList)
 
-  def withIntervals(values: ScheduleIntervalSpec*): ZScheduleSpec =
+  def withIntervals(values: ZScheduleIntervalSpec*): ZScheduleSpec =
     copy(intervals = values.toList)
 
   def withCronExpressions(values: String*): ZScheduleSpec =
@@ -90,10 +90,10 @@ final case class ZScheduleSpec private[zio] (
   def toJava: ScheduleSpec = {
     val builder = ScheduleSpec
       .newBuilder()
-      .setCalendars(calendars.asJava)
-      .setIntervals(intervals.asJava)
+      .setCalendars(calendars.map(_.toJava).asJava)
+      .setIntervals(intervals.map(_.toJava).asJava)
       .setCronExpressions(cronExpressions.asJava)
-      .setSkip(skip.asJava)
+      .setSkip(skip.map(_.toJava).asJava)
       .setStartAt(startAt)
 
     endAt.foreach(builder.setEndAt)
@@ -124,10 +124,10 @@ object ZScheduleSpec {
     ZScheduleSpec(
       startAt = spec.getStartAt,
       endAt = Option(spec.getEndAt),
-      calendars = Option(spec.getCalendars).toList.flatMap(_.asScala),
-      intervals = Option(spec.getIntervals).toList.flatMap(_.asScala),
+      calendars = Option(spec.getCalendars).toList.flatMap(_.asScala.map(ZScheduleCalendarSpec.fromJava)),
+      intervals = Option(spec.getIntervals).toList.flatMap(_.asScala.map(ZScheduleIntervalSpec.fromJava)),
       cronExpressions = Option(spec.getCronExpressions).toList.flatMap(_.asScala),
-      skip = Option(spec.getSkip).toList.flatMap(_.asScala),
+      skip = Option(spec.getSkip).toList.flatMap(_.asScala.map(ZScheduleCalendarSpec.fromJava)),
       jitter = Option(spec.getJitter),
       timeZoneName = Option(spec.getTimeZoneName)
     )

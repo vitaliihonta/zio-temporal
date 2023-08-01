@@ -1,5 +1,6 @@
 package com.example.schedule
 
+import io.temporal.client.schedules.ScheduleIntervalSpec
 import zio._
 import zio.logging.backend.SLF4J
 import zio.temporal.workflow._
@@ -36,13 +37,30 @@ object ScheduledWorkflowMain extends ZIOAppDefault {
                        )
                      }
                      .withSpec(
-                       ZScheduleSpec.withStartAt(now)
+                       ZScheduleSpec
+                         .withStartAt(now.plusSeconds(60))
+                         .withIntervals(
+                           every(5.minutes)
+                         )
+                       // todo: make calendars work
+//                         .withCalendars(
+//                           calendar
+//                             .withSeconds(range(from = 0, to = 60))
+//                             .withMinutes(range(from = 9, to = 60, by = 5))
+//                             .withHour(range(from = 0, to = 24, by = 2))
+//                             .withDayOfMonth(allMonthDays)
+//                             .withMonth(allMonths)
+//                             .withDayOfWeek(allWeekDays)
+//                         )
                      )
 
-        _ <- scheduleClient.createSchedule(
-               scheduleId.toString,
-               schedule
-             )
+        handle <- scheduleClient.createSchedule(
+                    scheduleId.toString,
+                    schedule
+                  )
+
+        description <- handle.describe
+        _           <- ZIO.logInfo(s"Created schedule=$description")
       } yield ()
     }
 
@@ -52,7 +70,6 @@ object ScheduledWorkflowMain extends ZIOAppDefault {
       _ <- startWorkflows
       // todo: not sure about the order
       _ <- ZWorkerFactory.serve
-
     } yield ()
 
     program.provideSome[Scope](
