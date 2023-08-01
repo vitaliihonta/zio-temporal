@@ -43,7 +43,14 @@ final class ZScheduleDescription private[zio] (val toJava: ScheduleDescription) 
   def getMemo[T: JavaTypeTag](key: String): Option[T] =
     Option(toJava.getMemo[T](key, JavaTypeTag[T].klass, JavaTypeTag[T].genericType))
 
-  // todo: add toString
+  override def toString: String = {
+    s"ZScheduleDescription(" +
+      s"id=$id" +
+      s", info=$info" +
+      s", schedule=$schedule" +
+      s", searchAttributes=$searchAttributes" +
+      s")"
+  }
 }
 
 // todo: implement

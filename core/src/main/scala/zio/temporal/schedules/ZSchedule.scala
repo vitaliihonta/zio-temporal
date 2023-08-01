@@ -26,6 +26,15 @@ final case class ZSchedule private[zio] (
     .setPolicy(policy.toJava)
     .setState(state.toJava)
     .build()
+
+  override def toString: String = {
+    s"ZSchedule(" +
+      s"action=$action" +
+      s", spec=$spec" +
+      s", policy=$policy" +
+      s", state=$state" +
+      s")"
+  }
 }
 
 object ZSchedule {
@@ -57,7 +66,7 @@ object ZSchedule {
   * [[ZScheduleSpec.cronExpressions]] excluding anything in [[ZScheduleSpec.skip]].
   */
 final case class ZScheduleSpec private[zio] (
-  startAt:         Instant,
+  startAt:         Option[Instant],
   endAt:           Option[Instant],
   calendars:       List[ZScheduleCalendarSpec],
   intervals:       List[ZScheduleIntervalSpec],
@@ -67,7 +76,7 @@ final case class ZScheduleSpec private[zio] (
   timeZoneName:    Option[String]) {
 
   def withStartAt(value: Instant): ZScheduleSpec =
-    copy(startAt = value)
+    copy(startAt = Some(value))
 
   def withEndAt(value: Instant): ZScheduleSpec =
     copy(endAt = Some(value))
@@ -94,35 +103,55 @@ final case class ZScheduleSpec private[zio] (
       .setIntervals(intervals.map(_.toJava).asJava)
       .setCronExpressions(cronExpressions.asJava)
       .setSkip(skip.map(_.toJava).asJava)
-      .setStartAt(startAt)
 
+    startAt.foreach(builder.setStartAt)
     endAt.foreach(builder.setEndAt)
     jitter.foreach(builder.setJitter)
     timeZoneName.foreach(builder.setTimeZoneName)
 
     builder.build()
   }
+
+  override def toString: String = {
+    s"ZScheduleSpec(" +
+      s"startAt=$startAt" +
+      s", endAt=$endAt" +
+      s", calendars=$calendars" +
+      s", intervals=$intervals" +
+      s", cronExpressions=$cronExpressions" +
+      s", skip=$skip" +
+      s", jitter=$jitter" +
+      s", timeZoneName=$timeZoneName" +
+      s")"
+  }
 }
 
 object ZScheduleSpec {
-
-  /** Creates a schedule spec.
-    */
-  def withStartAt(value: Instant): ZScheduleSpec =
+  def apply(
+    startAt:         Option[Instant] = None,
+    endAt:           Option[Instant] = None,
+    calendars:       List[ZScheduleCalendarSpec] = Nil,
+    intervals:       List[ZScheduleIntervalSpec] = Nil,
+    cronExpressions: List[String] = Nil,
+    skip:            List[ZScheduleCalendarSpec] = Nil,
+    jitter:          Option[Duration] = None,
+    timeZoneName:    Option[String] = None
+  ): ZScheduleSpec = {
     new ZScheduleSpec(
-      startAt = value,
-      endAt = None,
-      calendars = Nil,
-      intervals = Nil,
-      cronExpressions = Nil,
-      skip = Nil,
-      jitter = None,
-      timeZoneName = None
+      startAt,
+      endAt,
+      calendars,
+      intervals,
+      cronExpressions,
+      skip,
+      jitter,
+      timeZoneName
     )
+  }
 
   def fromJava(spec: ScheduleSpec): ZScheduleSpec =
     ZScheduleSpec(
-      startAt = spec.getStartAt,
+      startAt = Option(spec.getStartAt),
       endAt = Option(spec.getEndAt),
       calendars = Option(spec.getCalendars).toList.flatMap(_.asScala.map(ZScheduleCalendarSpec.fromJava)),
       intervals = Option(spec.getIntervals).toList.flatMap(_.asScala.map(ZScheduleIntervalSpec.fromJava)),
@@ -154,6 +183,14 @@ final case class ZSchedulePolicy private[zio] (
     catchupWindow.foreach(builder.setCatchupWindow)
     pauseOnFailure.foreach(builder.setPauseOnFailure)
     builder.build()
+  }
+
+  override def toString: String = {
+    s"ZSchedulePolicy(" +
+      s"overlap=$overlap" +
+      s", catchupWindow=$catchupWindow" +
+      s", pauseOnFailure=$pauseOnFailure" +
+      s")"
   }
 }
 
@@ -199,6 +236,15 @@ final case class ZScheduleState(
     limitedAction.foreach(builder.setLimitedAction)
     remainingActions.foreach(builder.setRemainingActions)
     builder.build()
+  }
+
+  override def toString: String = {
+    s"ZScheduleState(" +
+      s"note=$note" +
+      s", paused=$paused" +
+      s", limitedAction=$limitedAction" +
+      s", remainingActions=$remainingActions" +
+      s")"
   }
 }
 

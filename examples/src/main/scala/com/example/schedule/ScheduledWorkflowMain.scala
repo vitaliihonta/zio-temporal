@@ -30,6 +30,17 @@ object ScheduledWorkflowMain extends ZIOAppDefault {
                  .build
 
         now <- Clock.instant
+        // todo: figure out how this hugging api works
+        myCalendar = calendar
+                       .withSeconds(range())
+                       .withMinutes(range(by = 5))
+                       .withHour(range(from = 10, to = 14))
+                       .withDayOfMonth(allMonthDays)
+                       .withMonth(allMonths)
+                       .withDayOfWeek(allWeekDays)
+
+        _ <- ZIO.logInfo(s"The calendar: $myCalendar")
+
         schedule = ZSchedule
                      .withAction {
                        ZScheduleStartWorkflowStub.start(
@@ -37,28 +48,20 @@ object ScheduledWorkflowMain extends ZIOAppDefault {
                        )
                      }
                      .withSpec(
-                       ZScheduleSpec
-                         .withStartAt(now.plusSeconds(60))
-                         .withIntervals(
-                           every(5.minutes)
-                         )
-                       // todo: make calendars work
-//                         .withCalendars(
-//                           calendar
-//                             .withSeconds(range(from = 0, to = 60))
-//                             .withMinutes(range(from = 9, to = 60, by = 5))
-//                             .withHour(range(from = 0, to = 24, by = 2))
-//                             .withDayOfMonth(allMonthDays)
-//                             .withMonth(allMonths)
-//                             .withDayOfWeek(allWeekDays)
+                       ZScheduleSpec()
+//                         .withStartAt(now.plusSeconds(60))
+//                         .withIntervals(
+//                           every(5.minutes)
 //                         )
+                         // todo: make calendars work
+                         .withCalendars(myCalendar)
                      )
 
         handle <- scheduleClient.createSchedule(
                     scheduleId.toString,
                     schedule
                   )
-
+//
         description <- handle.describe
         _           <- ZIO.logInfo(s"Created schedule=$description")
       } yield ()
@@ -69,7 +72,7 @@ object ScheduledWorkflowMain extends ZIOAppDefault {
       _ <- ZWorkflowServiceStubs.setup()
       _ <- startWorkflows
       // todo: not sure about the order
-      _ <- ZWorkerFactory.serve
+//      _ <- ZWorkerFactory.serve
     } yield ()
 
     program.provideSome[Scope](

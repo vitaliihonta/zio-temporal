@@ -15,6 +15,13 @@ final case class ZScheduleIntervalSpec private[zio] (
 
   def toJava: ScheduleIntervalSpec =
     new ScheduleIntervalSpec(every, offset.orNull)
+
+  override def toString: String = {
+    s"ZScheduleIntervalSpec(" +
+      s"every=$every" +
+      s", offset=$offset" +
+      s")"
+  }
 }
 
 object ZScheduleIntervalSpec {
@@ -27,13 +34,16 @@ object ZScheduleIntervalSpec {
 
 // todo: document
 final case class ZScheduleRange private[zio] (start: Int, end: Int, step: Int) {
-  def to(end: Int): ZScheduleRange =
-    copy(end = end)
-
-  def by(step: Int): ZScheduleRange =
-    copy(step = step)
 
   def toJava: ScheduleRange = new ScheduleRange(start, end, step)
+
+  override def toString: String = {
+    s"ZScheduleRange(" +
+      s"start=$start" +
+      s", end=$end" +
+      s", step=$step" +
+      s")"
+  }
 }
 
 object ZScheduleRange {
@@ -46,6 +56,7 @@ object ZScheduleRange {
 }
 
 // todo: document
+// todo 2: make it typesafe
 final case class ZScheduleCalendarSpec private[zio] (
   seconds:    List[ZScheduleRange],
   minutes:    List[ZScheduleRange],
@@ -116,6 +127,19 @@ final case class ZScheduleCalendarSpec private[zio] (
 
     builder.build()
   }
+
+  override def toString: String = {
+    s"ZScheduleCalendarSpec(" +
+      s"seconds=$seconds" +
+      s", minutes=$minutes" +
+      s", hour=$hour" +
+      s", dayOfMonth=$dayOfMonth" +
+      s", month=$month" +
+      s", year=$year" +
+      s", dayOfWeek=$dayOfWeek" +
+      s", comment=$comment" +
+      s")"
+  }
 }
 
 object ZScheduleCalendarSpec {
@@ -141,7 +165,7 @@ trait ScheduleSpecSyntax {
   final def every(value: Duration): ZScheduleIntervalSpec =
     ZScheduleIntervalSpec(value, offset = None)
 
-  final def range(from: Int, to: Int = 0, by: Int = 0): ZScheduleRange =
+  final def range(from: Int = 0, to: Int = 0, by: Int = 0): ZScheduleRange =
     ZScheduleRange(start = from, end = to, step = by)
 
   final val calendar: ZScheduleCalendarSpec =
@@ -157,11 +181,11 @@ trait ScheduleSpecSyntax {
     )
 
   final val allMonthDays: List[ZScheduleRange] =
-    List(range(1) to 31)
+    List(range(from = 1, to = 31, by = 1))
 
   final val allMonths: List[ZScheduleRange] =
-    List(range(1) to 12)
+    List(range(from = 1, to = 12, by = 1))
 
   final val allWeekDays: List[ZScheduleRange] =
-    List(range(0) to 6)
+    List(range(from = 0, to = 6, by = 1))
 }
