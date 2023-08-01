@@ -1,12 +1,8 @@
 package zio.temporal.internal
 
-import zio.Duration
-
 import scala.reflect.macros.blackbox
 import zio.temporal.schedules._
-import io.temporal.client.schedules._
 
-// todo: finish
 class ZScheduleStartWorkflowMacro(override val c: blackbox.Context) extends InvocationMacroUtils(c) {
   import c.universe._
 

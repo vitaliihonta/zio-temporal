@@ -3,7 +3,9 @@ package zio.temporal.internal
 import io.temporal.api.common.v1.WorkflowExecution
 import zio.temporal._
 import zio.temporal.activity.{IsActivity, ZActivityStub}
+import zio.temporal.schedules.ZScheduleStartWorkflowStub
 import zio.temporal.workflow._
+
 import java.util.concurrent.CompletableFuture
 import scala.quoted._
 import scala.reflect.ClassTag
@@ -23,6 +25,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   private val zexternalWorkflowStub      = TypeRepr.of[ZExternalWorkflowStub]
   private val zworkflowContinueAsNewStub = TypeRepr.of[ZWorkflowContinueAsNewStub]
   private val zactivityStub              = TypeRepr.of[ZActivityStub]
+  private val zscheduleStartWorkflowStub = TypeRepr.of[ZScheduleStartWorkflowStub]
 
   protected val IsWorkflowImplicitTC = TypeRepr.typeConstructorOf(classOf[IsWorkflow[Any]])
   protected val IsActivityImplicitC  = TypeRepr.typeConstructorOf(classOf[IsActivity[Any]])
@@ -60,14 +63,15 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
     private val unwrappedType = unwrapStub(instance.tpe.widen)
 
     def selectJavaReprOf[T: Type]: Expr[T] =
-      instance
-        .select(instance.symbol.methodMember("toJava").head)
-        .asExprOf[T]
+      selectMember[T]("toJava")
 
     def selectStubbedClass: Expr[Class[_]] =
+      selectMember[Class[_]]("stubbedClass")
+
+    def selectMember[T](name: String)(using Type[T]): Expr[T] =
       instance
-        .select(instance.symbol.methodMember("stubbedClass").head)
-        .asExprOf[Class[_]]
+        .select(instance.symbol.methodMember(name).head)
+        .asExprOf[T]
 
     def getMethod(errorDetails: => String): MethodInfo =
       unwrappedType.typeSymbol
@@ -203,6 +207,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
             stub =:= zchildWorkflowStub ||
             stub =:= zexternalWorkflowStub ||
             stub =:= zworkflowContinueAsNewStub ||
+            stub =:= zscheduleStartWorkflowStub ||
             stub =:= zactivityStub =>
         wrapped
       case other => other

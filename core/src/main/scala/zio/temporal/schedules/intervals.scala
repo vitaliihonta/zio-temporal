@@ -56,7 +56,6 @@ object ZScheduleRange {
 }
 
 // todo: document
-// todo 2: make it typesafe
 final case class ZScheduleCalendarSpec private[zio] (
   seconds:    List[ZScheduleRange],
   minutes:    List[ZScheduleRange],
@@ -180,6 +179,7 @@ trait ScheduleSpecSyntax {
       comment = None
     )
 
+  // todo: add other useful constants?
   final val allMonthDays: List[ZScheduleRange] =
     List(range(from = 1, to = 31, by = 1))
 

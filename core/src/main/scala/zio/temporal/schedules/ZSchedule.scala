@@ -62,18 +62,15 @@ object ZSchedule {
 
 /** Specification of the times scheduled actions may occur.
   *
-  * The times are the union of [[ZScheduleSpec.calendars]], [[ZScheduleSpec.intervals]], and
-  * [[ZScheduleSpec.cronExpressions]] excluding anything in [[ZScheduleSpec.skip]].
+  * The [[times]] is a union represented as [[ZScheduleSpec.Times]] type. [[ZScheduleSpec.skip]] is used for exclusions
   */
 final case class ZScheduleSpec private[zio] (
-  startAt:         Option[Instant],
-  endAt:           Option[Instant],
-  calendars:       List[ZScheduleCalendarSpec],
-  intervals:       List[ZScheduleIntervalSpec],
-  cronExpressions: List[String],
-  skip:            List[ZScheduleCalendarSpec],
-  jitter:          Option[Duration],
-  timeZoneName:    Option[String]) {
+  times:        ZScheduleSpec.Times,
+  startAt:      Option[Instant],
+  endAt:        Option[Instant],
+  skip:         List[ZScheduleCalendarSpec],
+  jitter:       Option[Duration],
+  timeZoneName: Option[String]) {
 
   def withStartAt(value: Instant): ZScheduleSpec =
     copy(startAt = Some(value))
@@ -81,29 +78,24 @@ final case class ZScheduleSpec private[zio] (
   def withEndAt(value: Instant): ZScheduleSpec =
     copy(endAt = Some(value))
 
-  def withCalendars(values: ZScheduleCalendarSpec*): ZScheduleSpec =
-    copy(calendars = values.toList)
-
-  def withIntervals(values: ZScheduleIntervalSpec*): ZScheduleSpec =
-    copy(intervals = values.toList)
-
-  def withCronExpressions(values: String*): ZScheduleSpec =
-    copy(cronExpressions = values.toList)
-
   def withJitter(value: Duration): ZScheduleSpec =
     copy(jitter = Some(value))
 
   def withTimeZoneName(value: String): ZScheduleSpec =
     copy(timeZoneName = Some(value))
 
+  def withSkip(values: List[ZScheduleCalendarSpec]): ZScheduleSpec =
+    copy(skip = values)
+
+  def withSkip(values: ZScheduleCalendarSpec*): ZScheduleSpec =
+    withSkip(values.toList)
+
   def toJava: ScheduleSpec = {
     val builder = ScheduleSpec
       .newBuilder()
-      .setCalendars(calendars.map(_.toJava).asJava)
-      .setIntervals(intervals.map(_.toJava).asJava)
-      .setCronExpressions(cronExpressions.asJava)
       .setSkip(skip.map(_.toJava).asJava)
 
+    times.applyTo(builder)
     startAt.foreach(builder.setStartAt)
     endAt.foreach(builder.setEndAt)
     jitter.foreach(builder.setJitter)
@@ -116,9 +108,7 @@ final case class ZScheduleSpec private[zio] (
     s"ZScheduleSpec(" +
       s"startAt=$startAt" +
       s", endAt=$endAt" +
-      s", calendars=$calendars" +
-      s", intervals=$intervals" +
-      s", cronExpressions=$cronExpressions" +
+      s", times=$times" +
       s", skip=$skip" +
       s", jitter=$jitter" +
       s", timeZoneName=$timeZoneName" +
@@ -127,35 +117,98 @@ final case class ZScheduleSpec private[zio] (
 }
 
 object ZScheduleSpec {
-  def apply(
-    startAt:         Option[Instant] = None,
-    endAt:           Option[Instant] = None,
-    calendars:       List[ZScheduleCalendarSpec] = Nil,
-    intervals:       List[ZScheduleIntervalSpec] = Nil,
-    cronExpressions: List[String] = Nil,
-    skip:            List[ZScheduleCalendarSpec] = Nil,
-    jitter:          Option[Duration] = None,
-    timeZoneName:    Option[String] = None
-  ): ZScheduleSpec = {
+  def calendars(values: List[ZScheduleCalendarSpec]): ZScheduleSpec =
+    initial(Times.Calendars(values))
+
+  def calendars(values: ZScheduleCalendarSpec*): ZScheduleSpec =
+    calendars(values.toList)
+
+  def intervals(values: List[ZScheduleIntervalSpec]): ZScheduleSpec =
+    initial(Times.Intervals(values))
+
+  def intervals(values: ZScheduleIntervalSpec*): ZScheduleSpec =
+    intervals(values.toList)
+
+  def cronExpressions(values: List[String]): ZScheduleSpec =
+    initial(Times.CronExpressions(values))
+
+  def cronExpressions(values: String*): ZScheduleSpec =
+    cronExpressions(values.toList)
+
+  sealed trait Times extends Product with Serializable {
+    protected[temporal] def applyTo(builder: ScheduleSpec.Builder): Unit
+  }
+
+  final object Times {
+    def fromJava(spec: ScheduleSpec): Times = {
+      def asCalendars = Option(spec.getCalendars)
+        .filterNot(_.isEmpty)
+        .map(_.asScala.map(ZScheduleCalendarSpec.fromJava).toList)
+        .map(Calendars(_))
+
+      def asIntervals = Option(spec.getIntervals)
+        .filterNot(_.isEmpty)
+        .map(_.asScala.map(ZScheduleIntervalSpec.fromJava).toList)
+        .map(Intervals(_))
+
+      def asCronExpressions = Option(spec.getCronExpressions)
+        .filterNot(_.isEmpty)
+        .map(_.asScala.toList)
+        .map(CronExpressions(_))
+
+      asCalendars
+        .orElse(asIntervals)
+        .orElse(asCronExpressions)
+        .getOrElse(Calendars(values = Nil))
+    }
+
+    final case class Calendars(values: List[ZScheduleCalendarSpec]) extends Times {
+      override protected[temporal] def applyTo(builder: ScheduleSpec.Builder): Unit = {
+        builder.setCalendars(values.map(_.toJava).asJava)
+      }
+
+      override def toString: String = {
+        s"ZScheduleSpec.Times.Calendars(values=${values.mkString("[", ", ", "]")})"
+      }
+    }
+
+    final case class Intervals(values: List[ZScheduleIntervalSpec]) extends Times {
+      override protected[temporal] def applyTo(builder: ScheduleSpec.Builder): Unit = {
+        builder.setIntervals(values.map(_.toJava).asJava)
+      }
+
+      override def toString: String = {
+        s"ZScheduleSpec.Times.Intervals(values=${values.mkString("[", ", ", "]")})"
+      }
+    }
+
+    final case class CronExpressions(values: List[String]) extends Times {
+      override protected[temporal] def applyTo(builder: ScheduleSpec.Builder): Unit = {
+        builder.setCronExpressions(values.asJava)
+      }
+
+      override def toString: String = {
+        s"ZScheduleSpec.Times.CronExpressions(values=${values.mkString("[", ", ", "]")})"
+      }
+    }
+  }
+
+  private def initial(times: ZScheduleSpec.Times): ZScheduleSpec = {
     new ZScheduleSpec(
-      startAt,
-      endAt,
-      calendars,
-      intervals,
-      cronExpressions,
-      skip,
-      jitter,
-      timeZoneName
+      times,
+      startAt = None,
+      endAt = None,
+      skip = Nil,
+      jitter = None,
+      timeZoneName = None
     )
   }
 
   def fromJava(spec: ScheduleSpec): ZScheduleSpec =
     ZScheduleSpec(
+      times = Times.fromJava(spec),
       startAt = Option(spec.getStartAt),
       endAt = Option(spec.getEndAt),
-      calendars = Option(spec.getCalendars).toList.flatMap(_.asScala.map(ZScheduleCalendarSpec.fromJava)),
-      intervals = Option(spec.getIntervals).toList.flatMap(_.asScala.map(ZScheduleIntervalSpec.fromJava)),
-      cronExpressions = Option(spec.getCronExpressions).toList.flatMap(_.asScala),
       skip = Option(spec.getSkip).toList.flatMap(_.asScala.map(ZScheduleCalendarSpec.fromJava)),
       jitter = Option(spec.getJitter),
       timeZoneName = Option(spec.getTimeZoneName)
