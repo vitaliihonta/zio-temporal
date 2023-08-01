@@ -28,18 +28,20 @@ object ScheduledWorkflowMain extends ZIOAppDefault {
                  .withWorkflowId(workflowId.toString)
                  .build
 
-        scheduleAction = ZScheduleStartWorkflowStub.start(
-                           stub.printGreeting("Hello!")
-                         )
-
-        scheduleSpec   = ZScheduleSpec()
-        schedulePolicy = ZSchedulePolicy()
-        scheduleState  = ZScheduleState()
+        now <- Clock.instant
+        schedule = ZSchedule
+                     .withAction {
+                       ZScheduleStartWorkflowStub.start(
+                         stub.printGreeting("Hello!")
+                       )
+                     }
+                     .withSpec(
+                       ZScheduleSpec.withStartAt(now)
+                     )
 
         _ <- scheduleClient.createSchedule(
                scheduleId.toString,
-               ZSchedule(scheduleAction, scheduleSpec, schedulePolicy, scheduleState),
-               ZScheduleOptions(triggerImmediately = true)
+               schedule
              )
       } yield ()
     }

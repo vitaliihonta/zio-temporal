@@ -1,6 +1,5 @@
 package zio.temporal.schedules
 
-import io.temporal.api.common.v1.Payload
 import io.temporal.client.schedules.ScheduleDescription
 import io.temporal.client.schedules.ScheduleListDescription
 import zio.temporal.JavaTypeTag
@@ -9,22 +8,37 @@ import scala.jdk.CollectionConverters._
 
 // todo: document
 final class ZScheduleDescription private[zio] (val toJava: ScheduleDescription) {
+
+  /** Get the ID of the schedule.
+    *
+    * @return
+    *   schedule ID
+    */
   def id: String = toJava.getId
 
-  def info: ZScheduleInfo =
+  /** Get information about the schedule.
+    *
+    * @return
+    *   schedule info
+    */
+  def info =
     new ZScheduleInfo(toJava.getInfo)
 
-  // todo: implement
+  /** Gets the schedule details.
+    *
+    * @return
+    *   schedule details
+    */
   def schedule: ZSchedule =
-    ZSchedule(
-      action = ???,
-      spec = ???,
-      policy = ???,
-      state = ???
-    )
+    ZSchedule.fromJava(toJava.getSchedule)
 
+  /** Gets the search attributes on the schedule.
+    *
+    * @return
+    *   search attributes
+    */
   def searchAttributes: Map[String, List[Any]] =
-    toJava.getSearchAttributes.asScala.view.mapValues(_.asScala.toList).toMap
+    toJava.getSearchAttributes.asScala.view.map { case (k, v) => k -> v.asScala.toList }.toMap
 
   def getMemo[T: JavaTypeTag](key: String): Option[T] =
     Option(toJava.getMemo[T](key, JavaTypeTag[T].klass, JavaTypeTag[T].genericType))

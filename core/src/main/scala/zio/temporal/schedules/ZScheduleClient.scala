@@ -30,7 +30,11 @@ final class ZScheduleClient private[zio] (val toJava: ScheduleClient) {
     * @return
     *   A handle that can be used to perform operations on a schedule.
     */
-  def createSchedule(scheduleId: String, schedule: ZSchedule, options: ZScheduleOptions): TemporalIO[ZScheduleHandle] =
+  def createSchedule(
+    scheduleId: String,
+    schedule:   ZSchedule,
+    options:    ZScheduleOptions = ZScheduleOptions.default
+  ): TemporalIO[ZScheduleHandle] =
     TemporalInteraction.from {
       new ZScheduleHandle(
         toJava.createSchedule(scheduleId, schedule.toJava, options.toJava)
