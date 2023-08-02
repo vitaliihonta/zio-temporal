@@ -12,7 +12,7 @@ import scala.jdk.CollectionConverters._
   * @see
   *   [[ScheduleClientOptions]]
   */
-case class ZScheduleClientOptions private[zio] (
+final case class ZScheduleClientOptions private[zio] (
   namespace:                            Option[String],
   dataConverter:                        Option[DataConverter],
   identity:                             Option[String],
@@ -50,6 +50,15 @@ case class ZScheduleClientOptions private[zio] (
     builder.setContextPropagators(contextPropagators.asJava)
 
     javaOptionsCustomization(builder).build()
+  }
+
+  override def toString: String = {
+    s"ZScheduleClientOptions(" +
+      s"namespace=$namespace" +
+      s", dataConverter=$dataConverter" +
+      s", identity=$identity" +
+      s", contextPropagators=$contextPropagators" +
+      s")"
   }
 }
 

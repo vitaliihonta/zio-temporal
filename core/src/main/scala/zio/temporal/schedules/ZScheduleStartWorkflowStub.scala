@@ -4,7 +4,6 @@ import io.temporal.common.interceptors.Header
 import io.temporal.client.WorkflowOptions
 import zio.temporal.internal.{BasicStubOps, Stubs}
 import zio.temporal.internalApi
-import scala.reflect.ClassTag
 
 // todo: document
 sealed trait ZScheduleStartWorkflowStub extends BasicStubOps {

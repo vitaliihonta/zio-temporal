@@ -13,4 +13,12 @@ final case class ZScheduleBackfill(
 
   def toJava =
     new ScheduleBackfill(startAt, endAt, overlapPolicy)
+
+  override def toString: String = {
+    s"ZScheduleBackfill(" +
+      s"startAt=$startAt" +
+      s", endAt=$endAt" +
+      s", overlapPolicy=$overlapPolicy" +
+      s")"
+  }
 }

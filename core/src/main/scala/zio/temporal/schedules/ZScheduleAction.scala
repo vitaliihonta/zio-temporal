@@ -157,5 +157,11 @@ object ZScheduleActionExecution {
 
   /** Special case for subclasses unknown by zio-temporal
     */
-  final case class Unknown private[zio] (toJava: ScheduleActionExecution) extends ZScheduleActionExecution
+  final case class Unknown private[zio] (toJava: ScheduleActionExecution) extends ZScheduleActionExecution {
+    override def toString: String = {
+      s"ZScheduleActionExecution.Unknown(" +
+        s"toJava=$toJava" +
+        s")"
+    }
+  }
 }

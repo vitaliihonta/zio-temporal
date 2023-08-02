@@ -95,7 +95,14 @@ final class ZScheduleHandle private[zio] (val toJava: ScheduleHandle) {
 
 /** Parameter passed to a schedule updater. */
 final case class ZScheduleUpdateInput(
-  description: ZScheduleDescription)
+  description: ZScheduleDescription) {
+
+  override def toString: String = {
+    s"ZScheduleUpdateInput(" +
+      s"description=$description" +
+      s")"
+  }
+}
 
 object ZScheduleUpdateInput {
   def fromJava(input: ScheduleUpdateInput): ZScheduleUpdateInput =
@@ -108,4 +115,10 @@ final case class ZScheduleUpdate(
 
   def toJava =
     new ScheduleUpdate(schedule.toJava)
+
+  override def toString: String = {
+    s"ZScheduleUpdate(" +
+      s"schedule=$schedule" +
+      s")"
+  }
 }
