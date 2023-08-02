@@ -29,24 +29,13 @@ object ScheduledWorkflowMain extends ZIOAppDefault {
 
         now <- Clock.instant
 
-        calendarSpec = ZScheduleSpec
-                         .calendars(
-                           calendar
-                             .withSeconds(range())
-                             .withMinutes(range(to = 59, by = 10))
-                             .withHour(range(from = 1, to = 23, by = 2))
-                             .withDayOfMonth(allMonthDays)
-                             .withMonth(allMonths)
-                             .withDayOfWeek(allWeekDays)
-                             .withComment("Every odd hour, every 10 minutes during an hour")
-                         )
-                         .withStartAt(now.plusSeconds(60))
-
         intervalSpec = ZScheduleSpec
-                         .intervals(every(1.hour))
+                         .intervals(every(15.minutes))
                          .withSkip(
                            // skip weekends
-                           calendar.withDayOfWeek(range(from = 6, to = 7))
+                           calendar
+                             .withDayOfWeek(weekend)
+                             .withComment("Except weekend")
                          )
 
         schedule = ZSchedule
@@ -55,10 +44,7 @@ object ScheduledWorkflowMain extends ZIOAppDefault {
                          stub.printGreeting("Hello!")
                        )
                      }
-                     .withSpec(
-                       // Choose whatever spec you want
-                       intervalSpec
-                     )
+                     .withSpec(intervalSpec)
 
         handle <- scheduleClient.createSchedule(
                     scheduleId.toString,
@@ -67,14 +53,59 @@ object ScheduledWorkflowMain extends ZIOAppDefault {
 
         description <- handle.describe
         _           <- ZIO.logInfo(s"Created schedule=$description")
+      } yield handle
+    }
+
+    def manipulateWithSchedule(handle: ZScheduleHandle): Task[Unit] = {
+      for {
+        _   <- ZIO.logInfo(s"Manually triggering schedule=${handle.id}")
+        _   <- handle.trigger()
+        _   <- ZIO.sleep(5.seconds)
+        _   <- ZIO.logInfo(s"Pausing schedule=${handle.id}")
+        _   <- handle.pause(note = Some("Temporarily pause"))
+        _   <- ZIO.sleep(30.seconds)
+        _   <- ZIO.logInfo(s"Unpausing schedule=${handle.id}")
+        _   <- handle.unpause(note = Some("Unpause"))
+        _   <- ZIO.logInfo(s"Backfill schdule=${handle.id}")
+        now <- Clock.instant
+        _ <- handle.backfill(
+               List(
+                 ZScheduleBackfill(startAt = now.minusMillis(1.day.toMillis), endAt = now.minusMillis(1.hour.toMillis))
+               )
+             )
+        _ <- ZIO.sleep(30.seconds)
+        _ <- ZIO.logInfo(s"Updating schedule=${handle.id}")
+        _ <- handle.update { input =>
+               val calendarSpec = ZScheduleSpec
+                 .calendars(
+                   calendar
+                     .withSeconds(range())
+                     .withMinutes(range(to = 59, by = 10))
+                     .withHour(range(from = 1, to = 23, by = 2))
+                     .withDayOfMonth(allMonthDays)
+                     .withMonth(allMonths)
+                     .withDayOfWeek(allWeekDays)
+                     .withComment("Every odd hour, every 10 minutes during an hour")
+                 )
+                 .withStartAt(now.plusSeconds(60))
+
+               ZScheduleUpdate(
+                 input.description.schedule
+                   .withSpec(calendarSpec)
+               )
+             }
+        _ <- ZIO.sleep(30.seconds)
+        _ <- ZIO.logInfo(s"Deleting schedule=${handle.id}")
+        _ <- handle.delete()
       } yield ()
     }
 
     val program = for {
-      _ <- registerWorkflows
-      _ <- ZWorkflowServiceStubs.setup()
-      _ <- startSchedules
-      _ <- ZWorkerFactory.serve
+      _      <- registerWorkflows
+      _      <- ZWorkflowServiceStubs.setup()
+      handle <- startSchedules
+      _      <- ZWorkerFactory.setup
+      _      <- manipulateWithSchedule(handle)
     } yield ()
 
     program.provideSome[Scope](

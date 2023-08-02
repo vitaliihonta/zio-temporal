@@ -13,6 +13,9 @@ final case class ZSchedule private[zio] (
   policy: ZSchedulePolicy,
   state:  ZScheduleState) {
 
+  def withSpec(value: ZScheduleSpec): ZSchedule =
+    copy(spec = value)
+
   def withPolicy(value: ZSchedulePolicy): ZSchedule =
     copy(policy = value)
 

@@ -188,4 +188,7 @@ trait ScheduleSpecSyntax {
 
   final val allWeekDays: List[ZScheduleRange] =
     List(range(from = 0, to = 6, by = 1))
+
+  final val weekend: List[ZScheduleRange] =
+    List(range(from = 6, to = 7))
 }
