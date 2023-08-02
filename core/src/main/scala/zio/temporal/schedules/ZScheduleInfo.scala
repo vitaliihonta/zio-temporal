@@ -80,6 +80,7 @@ final class ZScheduleInfo private[zio] (val toJava: ScheduleInfo) {
     s")"
 }
 
+/** Information about a listed schedule. */
 final class ZScheduleListInfo private[zio] (val toJava: ScheduleListInfo) {
 
   /** Most recent actions, oldest first. This may be a smaller count than ScheduleInfo.RecentActions

@@ -5,21 +5,26 @@ import zio.temporal.ZSearchAttribute
 
 import scala.jdk.CollectionConverters._
 
+/** Options for creating a schedule. */
 final case class ZScheduleOptions private[zio] (
   triggerImmediately: Boolean,
   backfills:          List[ZScheduleBackfill],
   memo:               Map[String, AnyRef],
   searchAttributes:   Map[String, ZSearchAttribute]) {
 
+  /** Set if the schedule will be triggered immediately upon creation. */
   def withTriggerImmediately(value: Boolean): ZScheduleOptions =
     copy(triggerImmediately = value)
 
+  /** Set the time periods to take actions on as if that time passed right now. */
   def withBackfills(values: ZScheduleBackfill*): ZScheduleOptions =
     copy(backfills = values.toList)
 
+  /** Set the memo for the schedule. Values for the memo cannot be null. */
   def withMemo(values: (String, AnyRef)*): ZScheduleOptions =
     copy(memo = values.toMap)
 
+  /** Set the search attributes for the schedule. */
   def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZScheduleOptions =
     copy(searchAttributes = attrs)
 
@@ -44,6 +49,8 @@ final case class ZScheduleOptions private[zio] (
 }
 
 object ZScheduleOptions {
+
+  /** Default schedule options */
   val default: ZScheduleOptions =
     ZScheduleOptions(
       triggerImmediately = false,

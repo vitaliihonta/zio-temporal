@@ -7,7 +7,26 @@ import scala.quoted._
 import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages}
 
 trait ZScheduleStartWorkflowStubSyntax {
-  // todo: document
+
+  /** Creates a Start Workflow Schedule Action for the given workflow. Accepts the workflow method invocation
+    *
+    * Example:
+    * {{{
+    *   val stub: ZScheduleStartWorkflowStub.Of[T] = ???
+    *
+    *   val action: ZScheduleAction.StartWorkflow =
+    *      ZScheduleStartWorkflowStub.start(
+    *        stub.someMethod(someArg)
+    *      )
+    * }}}
+    *
+    * @tparam A
+    *   workflow result type
+    * @param f
+    *   the workflow method invocation
+    * @return
+    *   Start Workflow Schedule Action
+    */
   inline def start[A](inline f: A): ZScheduleAction.StartWorkflow =
     ${ ZScheduleStartWorkflowStubSyntax.startImpl[A]('f) }
 }

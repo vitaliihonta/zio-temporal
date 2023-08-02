@@ -73,7 +73,16 @@ final class ZScheduleClient private[zio] (val toJava: ScheduleClient) {
       )
       .map(new ZScheduleListDescription(_))
 
-  // todo: document
+  /** Creates new typed schedule start workflow stub builder. The instance could then be used to start a scheduled
+    * workflow.
+    *
+    * @tparam A
+    *   workflow interface
+    * @param header
+    *   headers sent with each workflow scheduled
+    * @return
+    *   builder instance
+    */
   def newScheduleStartWorkflowStub[A: ClassTag: IsWorkflow](
     header: Header = Header.empty()
   ): ZWorkflowStubBuilderTaskQueueDsl[ZScheduleStartWorkflowStub.Of[A]] =
@@ -87,7 +96,16 @@ final class ZScheduleClient private[zio] (val toJava: ScheduleClient) {
       )
     )
 
-  // todo: document
+  /** Creates new untyped schedule start workflow stub builder. The instance could then be used to start a scheduled
+    * workflow.
+    *
+    * @param workflowType
+    *   workflow type
+    * @param header
+    *   headers sent with each workflow scheduled
+    * @return
+    *   builder instance
+    */
   def newUntypedScheduleStartWorkflowStub(
     workflowType: String,
     header:       Header = Header.empty()

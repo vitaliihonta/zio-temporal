@@ -53,6 +53,10 @@ object ScheduledWorkflowMain extends ZIOAppDefault {
 
         description <- handle.describe
         _           <- ZIO.logInfo(s"Created schedule=$description")
+        _ <- scheduleClient
+               .listSchedules()
+               .mapZIO(schd => ZIO.logInfo(s"Found schedule=$schd"))
+               .runDrain
       } yield handle
     }
 

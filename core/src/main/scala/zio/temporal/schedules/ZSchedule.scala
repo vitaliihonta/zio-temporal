@@ -44,7 +44,7 @@ object ZSchedule {
   def withAction(action: ZScheduleAction): WithAction =
     new WithAction(action)
 
-  final class WithAction private[zio] (val action: ZScheduleAction) extends AnyVal {
+  final class WithAction private[zio] (private val action: ZScheduleAction) extends AnyVal {
     def withSpec(spec: ZScheduleSpec): ZSchedule =
       ZSchedule(
         action,
@@ -138,6 +138,11 @@ object ZScheduleSpec {
   def cronExpressions(values: String*): ZScheduleSpec =
     cronExpressions(values.toList)
 
+  /** The [[Times]] is a schedule specification kind represented as a union of
+    *   - [[Times.Intervals]]
+    *   - [[Times.Calendars]]
+    *   - [[Times.CronExpressions]]
+    */
   sealed trait Times extends Product with Serializable {
     protected[temporal] def applyTo(builder: ScheduleSpec.Builder): Unit
   }
@@ -251,6 +256,9 @@ final case class ZSchedulePolicy private[zio] (
 }
 
 object ZSchedulePolicy {
+
+  /** Default schedule policy
+    */
   val default: ZSchedulePolicy =
     ZSchedulePolicy(
       overlap = None,
@@ -266,6 +274,7 @@ object ZSchedulePolicy {
     )
 }
 
+/** State of a schedule. */
 final case class ZScheduleState(
   note:             Option[String],
   paused:           Option[Boolean],
@@ -305,6 +314,8 @@ final case class ZScheduleState(
 }
 
 object ZScheduleState {
+
+  /** Default schedule state */
   val default: ZScheduleState =
     ZScheduleState(
       note = None,

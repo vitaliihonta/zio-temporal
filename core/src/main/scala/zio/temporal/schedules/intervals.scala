@@ -5,7 +5,10 @@ import zio._
 import scala.language.implicitConversions
 import scala.jdk.CollectionConverters._
 
-// todo: document
+/** Specification for scheduling on an interval. Matching times are expressed as
+  *
+  * <p>epoch + (n * every) + offset.
+  */
 final case class ZScheduleIntervalSpec private[zio] (
   every:  Duration,
   offset: Option[Duration]) {
@@ -13,7 +16,7 @@ final case class ZScheduleIntervalSpec private[zio] (
   def withOffset(value: Duration): ZScheduleIntervalSpec =
     copy(offset = Some(value))
 
-  def toJava: ScheduleIntervalSpec =
+  def toJava =
     new ScheduleIntervalSpec(every, offset.orNull)
 
   override def toString: String = {
@@ -32,10 +35,10 @@ object ZScheduleIntervalSpec {
     )
 }
 
-// todo: document
+/** Inclusive range for a schedule match value. */
 final case class ZScheduleRange private[zio] (start: Int, end: Int, step: Int) {
 
-  def toJava: ScheduleRange = new ScheduleRange(start, end, step)
+  def toJava = new ScheduleRange(start, end, step)
 
   override def toString: String = {
     s"ZScheduleRange(" +
@@ -55,7 +58,11 @@ object ZScheduleRange {
     )
 }
 
-// todo: document
+/** Specification of when to run an action in relation to calendar time.
+  *
+  * <p>A timestamp matches if at least one range of each field matches except for year. If year is missing, that means
+  * all years match. For all fields besides year, at least one range must be present to match anything.
+  */
 final case class ZScheduleCalendarSpec private[zio] (
   seconds:    List[ZScheduleRange],
   minutes:    List[ZScheduleRange],
@@ -159,14 +166,30 @@ object ZScheduleCalendarSpec {
   }
 }
 
-// todo: document
+/** Helper methods for creating schedules */
 trait ScheduleSpecSyntax {
+
+  /** Creates a schedule interval.
+    *
+    * @param value
+    *   period to repeat the interval.
+    */
   final def every(value: Duration): ZScheduleIntervalSpec =
     ZScheduleIntervalSpec(value, offset = None)
 
+  /** Create a inclusive range for a schedule match value.
+    *
+    * @param from
+    *   The inclusive start of the range
+    * @param to
+    *   The inclusive end of the range. Default if unset or less than start is start.
+    * @param by
+    *   The step to take between each value. Default if unset or 0, is 1.
+    */
   final def range(from: Int = 0, to: Int = 0, by: Int = 0): ZScheduleRange =
     ZScheduleRange(start = from, end = to, step = by)
 
+  /** */
   final val calendar: ZScheduleCalendarSpec =
     ZScheduleCalendarSpec(
       seconds = Nil,
@@ -179,16 +202,19 @@ trait ScheduleSpecSyntax {
       comment = None
     )
 
-  // todo: add other useful constants?
+  /** Default range set for all days in a month. */
   final val allMonthDays: List[ZScheduleRange] =
     List(range(from = 1, to = 31, by = 1))
 
+  /** Default range set for all months in a year. */
   final val allMonths: List[ZScheduleRange] =
     List(range(from = 1, to = 12, by = 1))
 
+  /** Default range set for all days in a week. */
   final val allWeekDays: List[ZScheduleRange] =
     List(range(from = 0, to = 6, by = 1))
 
+  /** Default range set for weekend days. */
   final val weekend: List[ZScheduleRange] =
-    List(range(from = 6, to = 7))
+    List(range(from = 5, to = 6))
 }

@@ -3,9 +3,10 @@ package zio.temporal.schedules
 import io.temporal.common.interceptors.Header
 import io.temporal.client.WorkflowOptions
 import zio.temporal.internal.{BasicStubOps, Stubs}
-import zio.temporal.internalApi
 
-// todo: document
+/** Typed schedule start workflow stub that is used to start a scheduled workflow. Allows scheduling a workflow
+  * type-safely by invoking the workflow method
+  */
 sealed trait ZScheduleStartWorkflowStub extends BasicStubOps {
 
   def workflowOptions: WorkflowOptions
@@ -13,13 +14,15 @@ sealed trait ZScheduleStartWorkflowStub extends BasicStubOps {
   def header: Header
 }
 
-final class ZScheduleStartWorkflowStubImpl @internalApi() (
+final class ZScheduleStartWorkflowStubImpl private[zio] (
   val stubbedClass:    Class[_],
   val workflowOptions: WorkflowOptions,
   val header:          Header)
     extends ZScheduleStartWorkflowStub
 
 object ZScheduleStartWorkflowStub extends Stubs[ZScheduleStartWorkflowStub] with ZScheduleStartWorkflowStubSyntax {
+
+  /** Untyped version of [[ZScheduleStartWorkflowStub]] */
   sealed trait Untyped {
     def workflowType: String
 
@@ -28,7 +31,7 @@ object ZScheduleStartWorkflowStub extends Stubs[ZScheduleStartWorkflowStub] with
     def header: Header
   }
 
-  private[temporal] final class UntypedImpl @internalApi() (
+  final class UntypedImpl private[zio] (
     val workflowType:    String,
     val workflowOptions: WorkflowOptions,
     val header:          Header)

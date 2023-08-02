@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory
 import zio.temporal.JavaTypeTag
 import scala.jdk.CollectionConverters._
 
-// todo: document
+/** Description of a schedule. */
 final class ZScheduleDescription private[zio] (val toJava: ScheduleDescription) {
 
   /** Get the ID of the schedule.
@@ -59,7 +59,7 @@ final class ZScheduleDescription private[zio] (val toJava: ScheduleDescription) 
   }
 }
 
-// todo: document
+/** Description of a listed schedule. */
 final class ZScheduleListDescription private[zio] (val toJava: ScheduleListDescription) {
   def scheduleId: String =
     toJava.getScheduleId
@@ -86,6 +86,7 @@ final class ZScheduleListDescription private[zio] (val toJava: ScheduleListDescr
   }
 }
 
+/** Details for a listed schedule. */
 final class ZScheduleListSchedule private[zio] (val toJava: ScheduleListSchedule) {
   def action: ZScheduleListAction =
     ZScheduleListAction(toJava.getAction)
@@ -105,6 +106,7 @@ final class ZScheduleListSchedule private[zio] (val toJava: ScheduleListSchedule
   }
 }
 
+/** State of a listed schedule. */
 final class ZScheduleListState private[zio] (val toJava: ScheduleListState) {
   def note: Option[String] = Option(toJava.getNote)
 
@@ -118,6 +120,7 @@ final class ZScheduleListState private[zio] (val toJava: ScheduleListState) {
   }
 }
 
+/** Base class for an action a listed schedule can take. */
 sealed trait ZScheduleListAction {
   def toJava: ScheduleListAction
 }
@@ -134,7 +137,14 @@ object ZScheduleListAction {
       Unknown(value)
   }
 
+  /** Action to start a workflow on a listed schedule. */
   final class StartWorkflow(val toJava: ScheduleListActionStartWorkflow) extends ZScheduleListAction {
+
+    /** Get the scheduled workflow type name.
+      *
+      * @return
+      *   Workflow type name
+      */
     def workflow: String = toJava.getWorkflow
 
     override def toString: String = {
@@ -144,6 +154,8 @@ object ZScheduleListAction {
     }
   }
 
+  /** Special case for subclasses unknown by zio-temporal
+    */
   final case class Unknown(toJava: ScheduleListAction) extends ZScheduleListAction {
     override def toString: String = {
       s"ZScheduleListAction.Unknown(" +
