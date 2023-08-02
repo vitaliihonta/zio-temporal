@@ -29,6 +29,9 @@ object SharedCompileTimeMessages {
   val generatedWorkflowExecute: String =
     "Generated workflow method execute"
 
+  val generatedScheduleStartWorkflow: String =
+    "Generated schedule start workflow action"
+
   val generatedContinueAsNewExecute: String =
     "Generated continue as new execute"
 

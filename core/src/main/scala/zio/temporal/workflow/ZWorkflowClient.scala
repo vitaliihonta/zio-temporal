@@ -9,7 +9,7 @@ import zio.temporal.{ZHistoryEvent, ZWorkflowExecutionHistory, ZWorkflowExecutio
 import scala.jdk.OptionConverters._
 import scala.reflect.ClassTag
 
-/** Represents temporal workflow client
+/** Represents Temporal workflow client
   *
   * @see
   *   [[WorkflowClient]]

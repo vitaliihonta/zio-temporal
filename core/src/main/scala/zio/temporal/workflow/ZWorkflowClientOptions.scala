@@ -10,16 +10,17 @@ import io.temporal.common.interceptors.WorkflowClientInterceptor
 import zio.temporal.json.JacksonDataConverter
 import scala.jdk.CollectionConverters._
 
-/** Represents temporal workflow client options
+/** Represents Temporal workflow client options
   *
   * @see
   *   [[WorkflowClientOptions]]
   */
 case class ZWorkflowClientOptions private[zio] (
-  namespace:                            Option[String],
-  dataConverter:                        DataConverter,
-  interceptors:                         List[WorkflowClientInterceptor],
-  identity:                             Option[String],
+  namespace:     Option[String],
+  dataConverter: DataConverter,
+  interceptors:  List[WorkflowClientInterceptor],
+  identity:      Option[String],
+  @deprecated("use worker's buildId instead", since = "0.3.0")
   binaryChecksum:                       Option[String],
   contextPropagators:                   List[ContextPropagator],
   queryRejectCondition:                 Option[QueryRejectCondition],
@@ -37,6 +38,7 @@ case class ZWorkflowClientOptions private[zio] (
   def withIdentity(value: String): ZWorkflowClientOptions =
     copy(identity = Some(value))
 
+  @deprecated("use worker's buildId instead", since = "0.3.0")
   def withBinaryChecksum(value: String): ZWorkflowClientOptions =
     copy(binaryChecksum = Some(value))
 
@@ -85,6 +87,7 @@ object ZWorkflowClientOptions extends ConfigurationCompanion[ZWorkflowClientOpti
   def withIdentity(value: String): Configure =
     configure(_.withIdentity(value))
 
+  @deprecated("use worker's buildId instead", since = "0.3.0")
   def withBinaryChecksum(value: String): Configure =
     configure(_.withBinaryChecksum(value))
 
@@ -103,7 +106,7 @@ object ZWorkflowClientOptions extends ConfigurationCompanion[ZWorkflowClientOpti
       Config.string("identity").optional ++
       Config.string("binary_checksum").optional
 
-  /** Reads config from the default path `zio.temporal.ZWorkflowClient`
+  /** Reads config from the default path `zio.temporal.zworkflow_client`
     */
   val make: Layer[Config.Error, ZWorkflowClientOptions] =
     makeImpl(Nil)
