@@ -3,8 +3,9 @@ package zio.temporal.schedules
 import io.temporal.client.WorkflowOptions
 import io.temporal.client.schedules.ScheduleActionStartWorkflow
 import io.temporal.common.interceptors.Header
+
 import scala.quoted._
-import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages}
+import zio.temporal.internal.{InvocationMacroUtils, SharedCompileTimeMessages, TemporalWorkflowFacade}
 
 trait ZScheduleStartWorkflowStubSyntax {
 
@@ -49,14 +50,11 @@ object ZScheduleStartWorkflowStubSyntax {
     val workflowOptions = invocation.selectMember[WorkflowOptions]("workflowOptions")
 
     '{
-      new ZScheduleAction.StartWorkflow(
-        ScheduleActionStartWorkflow
-          .newBuilder()
-          .setWorkflowType(${ stubbedClass })
-          .setHeader(${ header })
-          .setOptions(${ workflowOptions })
-          .setArguments(${ method.argsExpr }: _*)
-          .build()
+      TemporalWorkflowFacade.startScheduleAction(
+        ${ stubbedClass },
+        ${ header },
+        ${ workflowOptions },
+        ${ method.argsExpr }
       )
     }.debugged(SharedCompileTimeMessages.generatedScheduleStartWorkflow)
   }

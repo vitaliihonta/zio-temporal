@@ -1,7 +1,9 @@
 package zio.temporal.internal
 
 import io.temporal.api.common.v1.WorkflowExecution
-import io.temporal.client.{BatchRequest, WorkflowStub}
+import io.temporal.client.schedules.ScheduleActionStartWorkflow
+import io.temporal.client.{BatchRequest, WorkflowOptions, WorkflowStub}
+import io.temporal.common.interceptors.Header
 import io.temporal.workflow.{
   ActivityStub,
   ChildWorkflowStub,
@@ -17,12 +19,30 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import zio.Duration
 import zio.temporal.JavaTypeTag
+import zio.temporal.schedules.ZScheduleAction
 
 object TemporalWorkflowFacade {
   import FunctionConverters._
 
   def start(stub: WorkflowStub, args: List[Any]): WorkflowExecution =
     stub.start(args.asInstanceOf[List[AnyRef]]: _*)
+
+  def startScheduleAction(
+    stubbedClass:    Class[_],
+    header:          Header,
+    workflowOptions: WorkflowOptions,
+    args:            List[Any]
+  ): ZScheduleAction.StartWorkflow = {
+    new ZScheduleAction.StartWorkflow(
+      ScheduleActionStartWorkflow
+        .newBuilder()
+        .setWorkflowType(stubbedClass)
+        .setHeader(header)
+        .setOptions(workflowOptions)
+        .setArguments(args.asInstanceOf[List[AnyRef]]: _*)
+        .build()
+    )
+  }
 
   def execute[R](
     stub:                 WorkflowStub,

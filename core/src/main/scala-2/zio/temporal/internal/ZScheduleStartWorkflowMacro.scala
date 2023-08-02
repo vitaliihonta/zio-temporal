@@ -20,13 +20,11 @@ class ZScheduleStartWorkflowMacro(override val c: blackbox.Context) extends Invo
     method.warnPossibleSerializationIssues()
 
     q"""
-       new _root_.zio.temporal.schedules.ZScheduleAction.StartWorkflow(
-          _root_.io.temporal.client.schedules.ScheduleActionStartWorkflow.newBuilder()
-            .setWorkflowType(${invocation.instance}.stubbedClass)
-            .setHeader(${invocation.instance}.header)
-            .setOptions(${invocation.instance}.workflowOptions)
-            .setArguments(..${method.appliedArgs})
-            .build()
+       _root_.zio.temporal.internal.TemporalWorkflowFacade.startScheduleAction(
+         ${invocation.instance}.stubbedClass,
+         ${invocation.instance}.header,
+         ${invocation.instance}.workflowOptions,
+         List(..${method.appliedArgs})
        )
      """.debugged(SharedCompileTimeMessages.generatedScheduleStartWorkflow)
   }

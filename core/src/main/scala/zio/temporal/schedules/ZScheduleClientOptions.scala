@@ -19,17 +19,34 @@ final case class ZScheduleClientOptions private[zio] (
   contextPropagators:                   List[ContextPropagator],
   private val javaOptionsCustomization: ScheduleClientOptions.Builder => ScheduleClientOptions.Builder) {
 
+  /** Set the namespace this client will operate on. */
   def withNamespace(value: String): ZScheduleClientOptions =
     copy(namespace = Some(value))
 
+  /** Overrides a data converter implementation used serialize workflow arguments and results.
+    */
   def withDataConverter(value: DataConverter): ZScheduleClientOptions =
     copy(dataConverter = Some(value))
 
+  /** Override human-readable identity of the client. */
   def withIdentity(value: String): ZScheduleClientOptions =
     copy(identity = Some(value))
 
-  def withContextPropagators(value: ContextPropagator*): ZScheduleClientOptions =
-    copy(contextPropagators = value.toList)
+  /** Set the context propagators for this client.
+    *
+    * @param values
+    *   specifies the list of context propagators to use with the client.
+    */
+  def withContextPropagators(values: ContextPropagator*): ZScheduleClientOptions =
+    withContextPropagators(values.toList)
+
+  /** Set the context propagators for this client.
+    *
+    * @param values
+    *   specifies the list of context propagators to use with the client.
+    */
+  def withContextPropagators(values: List[ContextPropagator]): ZScheduleClientOptions =
+    copy(contextPropagators = values)
 
   /** Allows to specify options directly on the java SDK's [[ScheduleClientOptions]]. Use it in case an appropriate
     * `withXXX` method is missing

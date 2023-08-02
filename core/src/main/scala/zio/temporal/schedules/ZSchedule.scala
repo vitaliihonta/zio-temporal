@@ -13,12 +13,27 @@ final case class ZSchedule private[zio] (
   policy: ZSchedulePolicy,
   state:  ZScheduleState) {
 
+  /** Set the spec for this schedule. Required to build.
+    *
+    * @see
+    *   [[ZScheduleSpec]]
+    */
   def withSpec(value: ZScheduleSpec): ZSchedule =
     copy(spec = value)
 
+  /** Set the policy for this schedule
+    *
+    * @see
+    *   [[ZSchedulePolicy]]
+    */
   def withPolicy(value: ZSchedulePolicy): ZSchedule =
     copy(policy = value)
 
+  /** Set the state for this schedule
+    *
+    * @see
+    *   [[ZScheduleState]]
+    */
   def withState(value: ZScheduleState): ZSchedule =
     copy(state = value)
 
@@ -41,10 +56,22 @@ final case class ZSchedule private[zio] (
 }
 
 object ZSchedule {
-  def withAction(action: ZScheduleAction): WithAction =
+
+  /** Set the action for this schedule. Required to build.
+    *
+    * @see
+    *   [[ZScheduleAction]]
+    */
+  def withAction(action: ZScheduleAction) =
     new WithAction(action)
 
   final class WithAction private[zio] (private val action: ZScheduleAction) extends AnyVal {
+
+    /** Set the spec for this schedule. Required to build.
+      *
+      * @see
+      *   [[ZScheduleSpec]]
+      */
     def withSpec(spec: ZScheduleSpec): ZSchedule =
       ZSchedule(
         action,
@@ -75,21 +102,31 @@ final case class ZScheduleSpec private[zio] (
   jitter:       Option[Duration],
   timeZoneName: Option[String]) {
 
+  /** Set the start time of the schedule, before which any matching times will be skipped. */
   def withStartAt(value: Instant): ZScheduleSpec =
     copy(startAt = Some(value))
 
+  /** Set the end time of the schedule, after which any matching times will be skipped. */
   def withEndAt(value: Instant): ZScheduleSpec =
     copy(endAt = Some(value))
 
+  /** Set the jitter to apply to each action.
+    *
+    * <p>An action's schedule time will be incremented by a random value between 0 and this value if present (but not
+    * past the next schedule).
+    */
   def withJitter(value: Duration): ZScheduleSpec =
     copy(jitter = Some(value))
 
+  /** Set the schedules time zone as a string, for example <c>US/Central</c>. */
   def withTimeZoneName(value: String): ZScheduleSpec =
     copy(timeZoneName = Some(value))
 
+  /** Set the calendar-based specification of times a schedule should not run. */
   def withSkip(values: List[ZScheduleCalendarSpec]): ZScheduleSpec =
     copy(skip = values)
 
+  /** Set the calendar-based specification of times a schedule should not run. */
   def withSkip(values: ZScheduleCalendarSpec*): ZScheduleSpec =
     withSkip(values.toList)
 
@@ -120,23 +157,48 @@ final case class ZScheduleSpec private[zio] (
 }
 
 object ZScheduleSpec {
+
+  /** Set the calendar-based specification of times a schedule should run. */
   def calendars(values: List[ZScheduleCalendarSpec]): ZScheduleSpec =
     initial(Times.Calendars(values))
 
+  /** Set the calendar-based specification of times a schedule should run. */
   def calendars(values: ZScheduleCalendarSpec*): ZScheduleSpec =
     calendars(values.toList)
 
+  /** Set the interval-based specification of times a schedule should run. */
   def intervals(values: List[ZScheduleIntervalSpec]): ZScheduleSpec =
     initial(Times.Intervals(values))
 
+  /** Set the interval-based specification of times a schedule should run. */
   def intervals(values: ZScheduleIntervalSpec*): ZScheduleSpec =
     intervals(values.toList)
 
+  /** Set the cron-based specification of times a schedule should run.
+    *
+    * <p>This is provided for easy migration from legacy string-based cron scheduling. New uses should use [[calendars]]
+    * instead. These expressions will be translated to calendar-based specifications on the server.
+    */
   def cronExpressions(values: List[String]): ZScheduleSpec =
     initial(Times.CronExpressions(values))
 
+  /** Set the cron-based specification of times a schedule should run.
+    *
+    * <p>This is provided for easy migration from legacy string-based cron scheduling. New uses should use [[calendars]]
+    * instead. These expressions will be translated to calendar-based specifications on the server.
+    */
   def cronExpressions(values: String*): ZScheduleSpec =
     cronExpressions(values.toList)
+
+  def fromJava(spec: ScheduleSpec): ZScheduleSpec =
+    ZScheduleSpec(
+      times = Times.fromJava(spec),
+      startAt = Option(spec.getStartAt),
+      endAt = Option(spec.getEndAt),
+      skip = Option(spec.getSkip).toList.flatMap(_.asScala.map(ZScheduleCalendarSpec.fromJava)),
+      jitter = Option(spec.getJitter),
+      timeZoneName = Option(spec.getTimeZoneName)
+    )
 
   /** The [[Times]] is a schedule specification kind represented as a union of
     *   - [[Times.Intervals]]
@@ -211,16 +273,6 @@ object ZScheduleSpec {
       timeZoneName = None
     )
   }
-
-  def fromJava(spec: ScheduleSpec): ZScheduleSpec =
-    ZScheduleSpec(
-      times = Times.fromJava(spec),
-      startAt = Option(spec.getStartAt),
-      endAt = Option(spec.getEndAt),
-      skip = Option(spec.getSkip).toList.flatMap(_.asScala.map(ZScheduleCalendarSpec.fromJava)),
-      jitter = Option(spec.getJitter),
-      timeZoneName = Option(spec.getTimeZoneName)
-    )
 }
 
 /** Policies of a schedule. */
@@ -229,12 +281,16 @@ final case class ZSchedulePolicy private[zio] (
   catchupWindow:  Option[Duration],
   pauseOnFailure: Option[Boolean]) {
 
+  /** Set the policy for what happens when an action is started while another is still running. */
   def withOverlap(value: ScheduleOverlapPolicy): ZSchedulePolicy =
     copy(overlap = Some(value))
 
+  /** Set the amount of time in the past to execute missed actions after a Temporal server is unavailable.
+    */
   def withCatchupWindow(value: Duration): ZSchedulePolicy =
     copy(catchupWindow = Some(value))
 
+  /** Set whether to pause the schedule if an action fails or times out. */
   def withPauseOnFailure(value: Boolean): ZSchedulePolicy =
     copy(pauseOnFailure = Some(value))
 
@@ -281,15 +337,21 @@ final case class ZScheduleState(
   limitedAction:    Option[Boolean],
   remainingActions: Option[Long]) {
 
+  /** Set a human-readable message for the schedule. */
   def withNote(value: String): ZScheduleState =
     copy(note = Some(value))
 
+  /** Set whether this schedule is paused. */
   def withPaused(value: Boolean): ZScheduleState =
     copy(paused = Some(value))
 
+  /** Set ,if true, whether remaining actions will be decremented for each action */
   def withLimitedAction(value: Boolean): ZScheduleState =
     copy(limitedAction = Some(value))
 
+  /** Set the actions remaining on this schedule. Once this number hits 0, no further actions are scheduled
+    * automatically.
+    */
   def withRemainingActions(value: Long): ZScheduleState =
     copy(remainingActions = Some(value))
 
