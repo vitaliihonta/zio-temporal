@@ -26,12 +26,26 @@ object Main extends ZIOAppDefault {
                            .newWorkflowStub[FoodOrderWorkflow]
                            .withTaskQueue(TaskQueue)
                            .withWorkflowId(workflowId.toString)
+                           .withSearchAttributes(
+                             /** NOTE: make sure to add a search attributes
+                               * {{{
+                               *    temporal operator search-attribute create --namespace default --name Vendor --type Keyword
+                               *    temporal operator search-attribute create --namespace default --name VendorVersion --type Text
+                               * }}}
+                               */
+                             Map(
+                               "Vendor"        -> ZSearchAttribute.keyword("vhonta.dev"),
+                               "VendorVersion" -> "1.0.0"
+                             )
+                           )
                            .build
+
         deliveryWorkflow <- client
                               .newWorkflowStub[FoodDeliveryWorkflow]
                               .withTaskQueue(TaskQueue)
                               .withWorkflowId(FoodDeliveryWorkflow.makeId(workflowId.toString))
                               .build
+
         goods           = List("peperoni pizza", "coke")
         deliveryAddress = "Sample street, 5/2, 10000"
         _ <- ZIO.logInfo("Starting order & delivery workflow!")

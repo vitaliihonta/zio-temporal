@@ -24,7 +24,10 @@ final case class ZScheduleOptions private[zio] (
   def withMemo(values: (String, AnyRef)*): ZScheduleOptions =
     copy(memo = values.toMap)
 
-  /** Set the search attributes for the schedule. */
+  /** Set the search attributes for the schedule.
+    * @note
+    *   it uses untyped search attributes under the hood. todo: update once java SDK updates it
+    */
   def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZScheduleOptions =
     copy(searchAttributes = attrs)
 

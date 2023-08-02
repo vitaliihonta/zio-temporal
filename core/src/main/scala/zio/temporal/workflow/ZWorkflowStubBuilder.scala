@@ -65,7 +65,7 @@ final class ZWorkflowStubBuilder[Res] private[zio] (
     new ZWorkflowStubBuilder[Res](buildImpl, taskQueue, workflowId, additionalConfig andThen config)
 
   def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZWorkflowStubBuilder[Res] =
-    copy(_.setSearchAttributes(attrs))
+    copy(_.setTypedSearchAttributes(ZSearchAttribute.toJavaSearchAttributes(attrs)))
 
   def withCronSchedule(schedule: String): ZWorkflowStubBuilder[Res] =
     copy(_.setCronSchedule(schedule))

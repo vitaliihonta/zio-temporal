@@ -2,8 +2,9 @@ package zio.temporal.enumeratum
 
 import _root_.enumeratum.{Enum, EnumEntry}
 import _root_.enumeratum.values.{StringEnum, StringEnumEntry}
+import io.temporal.common.SearchAttributeKey
 import org.scalatest.wordspec.AnyWordSpec
-import zio.temporal.ZSearchAttribute
+import zio.temporal.{ZSearchAttribute, ZSearchAttributeMeta}
 
 object EnumSearchAttributesSpec {
   sealed abstract class Color(val value: String) extends StringEnumEntry
@@ -30,17 +31,28 @@ object EnumSearchAttributesSpec {
   }
 }
 
+// todo: add test cases
 class EnumSearchAttributesSpec extends AnyWordSpec {
   import EnumSearchAttributesSpec._
   import zio.temporal.enumeratum
 
-  "ZSearchAttribute.Convert" should {
+  "ZSearchAttributeMeta" should {
     "work for enumeratum string enums" in {
-      assert(ZSearchAttribute.from(Color.Red).toString == "red")
+      val meta = ZSearchAttributeMeta[Color]
+
+      assert(meta.encode(Color.Red) == "red")
+      assert(
+        meta.attributeKey("color") == SearchAttributeKey.forKeyword("color")
+      )
     }
 
     "work for enumeratum enums with parameters" in {
-      assert(ZSearchAttribute.from(Planet.Earth).toString == "Earth")
+      val meta = ZSearchAttributeMeta[Planet]
+
+      assert(meta.encode(Planet.Earth) == "Earth")
+      assert(
+        meta.attributeKey("planet") == SearchAttributeKey.forKeyword("planet")
+      )
     }
   }
 }

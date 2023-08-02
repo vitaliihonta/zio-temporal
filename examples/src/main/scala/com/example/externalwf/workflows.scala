@@ -1,7 +1,6 @@
 package com.example.externalwf
 
 import zio._
-import zio.temporal._
 import zio.temporal.state.ZWorkflowState
 import zio.temporal.workflow._
 
@@ -19,14 +18,19 @@ class FoodOrderWorkflowImpl extends FoodOrderWorkflow {
 
   override def order(goods: List[String], deliveryAddress: String): Boolean = {
 
-    /** NOTE: make sure to add a search attribute
+    /** NOTE: make sure to add a search attributes
       * {{{
-      *    docker exec -it temporal-admin-tools bash
-      *    temporal-admin-tools> temporal operator search-attribute create --namespace default --name DeliveryAddress --type Text
+      *    temporal operator search-attribute create --namespace default --name DeliveryAddress --type Text
+      *     temporal operator search-attribute create --namespace default --name Goods --type KeywordList
+      *     temporal operator search-attribute create --namespace default --name Date --type DateTime
       * }}}
       */
     ZWorkflow.upsertSearchAttributes(
-      Map("DeliveryAddress" -> deliveryAddress)
+      Map(
+        "DeliveryAddress" -> deliveryAddress,
+        "Goods"           -> goods.distinct,
+        "Date"            -> ZWorkflow.currentTimeMillis.toOffsetDateTime()
+      )
     )
 
     logger.info("Waiting until payment received or cancel or timeout...")
@@ -34,7 +38,9 @@ class FoodOrderWorkflowImpl extends FoodOrderWorkflow {
     val deliveryWorkflow = ZWorkflow.newExternalWorkflowStub[FoodDeliveryWorkflow](
       FoodDeliveryWorkflow.makeId(ZWorkflow.info.workflowId)
     )
-    logger.info(s"Search attrs: ${ZWorkflow.info.searchAttributes}")
+
+    logger.info(s"Search attrs: ${ZWorkflow.typedSearchAttributes}")
+
     if (!touched || state =:= OrderState.Cancelled) {
       ZExternalWorkflowStub.signal(
         deliveryWorkflow.cancelDelivery()

@@ -64,7 +64,7 @@ class ZChildWorkflowStubBuilder[Res] private[zio] (
     copy(_.setRetryOptions(options.toJava))
 
   def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZChildWorkflowStubBuilder[Res] =
-    copy(_.setSearchAttributes(attrs))
+    copy(_.setTypedSearchAttributes(ZSearchAttribute.toJavaSearchAttributes(attrs)))
 
   def withCronSchedule(schedule: String): ZChildWorkflowStubBuilder[Res] =
     copy(_.setCronSchedule(schedule))
