@@ -41,6 +41,7 @@ class EnumSearchAttributesSpec extends AnyWordSpec {
       val meta = ZSearchAttributeMeta[Color]
 
       assert(meta.encode(Color.Red) == "red")
+      assert(meta.decode("red") == Color.Red)
       assert(
         meta.attributeKey("color") == SearchAttributeKey.forKeyword("color")
       )
@@ -50,6 +51,7 @@ class EnumSearchAttributesSpec extends AnyWordSpec {
       val meta = ZSearchAttributeMeta[Planet]
 
       assert(meta.encode(Planet.Earth) == "Earth")
+      assert(meta.decode("Earth") == Planet.Earth)
       assert(
         meta.attributeKey("planet") == SearchAttributeKey.forKeyword("planet")
       )
