@@ -5,8 +5,8 @@ import java.{util => ju}
 
 trait ZSearchAttributeMetaCollectionInstances {
   implicit def traversableInstance[Coll[x] <: Traversable[x], V](
-    implicit asString: ZSearchAttributeMeta.Of[V, String],
+    implicit asString: ZSearchAttributeMeta.Of[V, ZSearchAttribute.Keyword],
     cbf:               CanBuildFrom[List[V], V, Coll[V]]
-  ): ZSearchAttributeMeta.Of[Coll[V], ju.List[String]] =
+  ): ZSearchAttributeMeta.Of[Coll[V], ZSearchAttribute.Plain[ju.List[String]]] =
     ZSearchAttributeMeta.keywordListImpl[V].convert[Coll[V]](_.to[Coll], _.toList)
 }

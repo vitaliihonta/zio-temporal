@@ -29,6 +29,10 @@ object EnumSearchAttributesSpec {
 
     override val values = findValues
   }
+
+  object Language extends Enumeration {
+    val English, Ukrainian, Czech = Value
+  }
 }
 
 // todo: add test cases
@@ -41,7 +45,7 @@ class EnumSearchAttributesSpec extends AnyWordSpec {
       val meta = ZSearchAttributeMeta[Color]
 
       assert(meta.encode(Color.Red) == "red")
-      assert(meta.decode("red") == Color.Red)
+      assert(meta.decode(ZSearchAttribute.Keyword("red")) == Color.Red)
       assert(
         meta.attributeKey("color") == SearchAttributeKey.forKeyword("color")
       )
@@ -51,9 +55,21 @@ class EnumSearchAttributesSpec extends AnyWordSpec {
       val meta = ZSearchAttributeMeta[Planet]
 
       assert(meta.encode(Planet.Earth) == "Earth")
-      assert(meta.decode("Earth") == Planet.Earth)
+      assert(meta.decode(ZSearchAttribute.Keyword("Earth")) == Planet.Earth)
       assert(
         meta.attributeKey("planet") == SearchAttributeKey.forKeyword("planet")
+      )
+    }
+
+    "work with scala.Enumeration" in {
+      // IDEA is not happy without the type annotation
+      val meta: ZSearchAttributeMeta.Of[Language.Value, ZSearchAttribute.Keyword] =
+        ZSearchAttributeMeta.enumeration(Language)
+
+      assert(meta.encode(Language.Ukrainian) == "Ukrainian")
+      assert(meta.decode(ZSearchAttribute.Keyword("English")) == Language.English)
+      assert(
+        meta.attributeKey("Czech") == SearchAttributeKey.forKeyword("Czech")
       )
     }
   }

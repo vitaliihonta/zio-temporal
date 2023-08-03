@@ -1,11 +1,6 @@
 package zio.temporal
 
-import io.temporal.common.{SearchAttributeKey, SearchAttributeUpdate, SearchAttributes}
-import java.time.{Instant, LocalDateTime, OffsetDateTime, ZoneOffset}
-import java.util.UUID
-import java.{util => ju}
-import scala.annotation.implicitNotFound
-import scala.jdk.CollectionConverters._
+import io.temporal.common.{SearchAttributeUpdate, SearchAttributes}
 import scala.language.implicitConversions
 
 /** Base type for attribute value.
@@ -32,13 +27,27 @@ sealed trait ZSearchAttribute {
 object ZSearchAttribute {
   type Of[A] = ZSearchAttribute { type ValueType = A }
 
-  /** Explicitly sets attribute type to Keyword
-    *
-    * @param value
-    *   search attribute value
+  /** Used to indicate that a type is encoded as a plain attribute
     */
-  def keyword(value: String): ZSearchAttribute.Of[String] =
-    new SearchAttributeImpl[String](value, ZSearchAttributeMeta.stringKeyword)
+  sealed trait PlainTag
+  final type Plain[+A] = A with PlainTag
+  final object Plain {
+    def apply[A](value: A): Plain[A] = value.asInstanceOf[Plain[A]]
+
+    def unwrap[A](plain: Plain[A]): A = plain
+  }
+
+  /** Used to indicate that a type is encoded as Keyword attribute
+    */
+  sealed trait KeywordTag
+
+  final type Keyword = String with KeywordTag
+  final object Keyword {
+
+    def apply(value: String): Keyword = value.asInstanceOf[Keyword]
+
+    def unwrap(keyword: Keyword): String = keyword
+  }
 
   /** Converts a value to [[ZSearchAttribute]] having implicit [[ZSearchAttributeMeta]] instance
     *
@@ -49,24 +58,16 @@ object ZSearchAttribute {
     * @return
     *   converted search attribute
     */
-  implicit def from[A](value: A)(implicit meta: ZSearchAttributeMeta[A]): ZSearchAttribute.Of[A] =
+  def apply[A, R](value: A)(implicit meta: ZSearchAttributeMeta.Of[A, Plain[R]]): ZSearchAttribute.Of[A] =
     new SearchAttributeImpl[A](value, meta)
 
-  /** Converts custom search attributes to [[java.util.Map]] that temporal Java SDK can consume
+  /** Explicitly sets attribute type to Keyword
     *
-    * @param attrs
-    *   attributes to convert
-    * @return
-    *   attributes converted
+    * @param value
+    *   search attribute value
     */
-  implicit def toJava(attrs: Map[String, ZSearchAttribute]): ju.Map[String, AnyRef] =
-    attrs
-      .map { case (k, attr) =>
-        val meta = attr.meta
-        k -> meta.encode(attr.value)
-      }
-      .asInstanceOf[Map[String, AnyRef]]
-      .asJava
+  def keyword[A](value: A)(implicit meta: ZSearchAttributeMeta.Of[A, Keyword]): ZSearchAttribute.Of[A] =
+    new SearchAttributeImpl[A](value, meta)
 
   /** Converts custom search attributes to a list of [[SearchAttributeUpdate]] that temporal Java SDK can consume
     *

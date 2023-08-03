@@ -1,6 +1,7 @@
 package com.example.externalwf
 
 import zio._
+import zio.temporal.ZSearchAttribute
 import zio.temporal.state.ZWorkflowState
 import zio.temporal.workflow._
 
@@ -27,9 +28,9 @@ class FoodOrderWorkflowImpl extends FoodOrderWorkflow {
       */
     ZWorkflow.upsertSearchAttributes(
       Map(
-        "DeliveryAddress" -> deliveryAddress,
-        "Goods"           -> goods.distinct,
-        "Date"            -> ZWorkflow.currentTimeMillis.toOffsetDateTime()
+        "DeliveryAddress" -> ZSearchAttribute(Option(deliveryAddress).map(_.trim).filterNot(_.isEmpty)),
+        "Goods"           -> ZSearchAttribute(goods.distinct),
+        "Date"            -> ZSearchAttribute(ZWorkflow.currentTimeMillis)
       )
     )
 

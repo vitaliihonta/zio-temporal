@@ -25,8 +25,6 @@ final case class ZScheduleOptions private[zio] (
     copy(memo = values.toMap)
 
   /** Set the search attributes for the schedule.
-    * @note
-    *   it uses untyped search attributes under the hood. todo: update once java SDK updates it
     */
   def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZScheduleOptions =
     copy(searchAttributes = attrs)
@@ -37,7 +35,15 @@ final case class ZScheduleOptions private[zio] (
       .setTriggerImmediately(triggerImmediately)
       .setBackfills(backfills.view.map(_.toJava).toList.asJava)
       .setMemo(memo.asJava)
-      .setSearchAttributes(searchAttributes)
+      .setSearchAttributes(
+        // todo: update once java SDK updates it
+        searchAttributes
+          .map { case (key, attr) =>
+            key -> attr.meta.encode(attr.value).asInstanceOf[AnyRef]
+          }
+          .toMap
+          .asJava
+      )
       .build()
   }
 
