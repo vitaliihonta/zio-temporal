@@ -8,18 +8,27 @@ import java.{util => ju}
   */
 final class ZSearchAttributes private[zio] (val toJava: SearchAttributes) {
 
-  /** Get whether the search attribute key exists. */
-  def containsKey[T](name: String)(implicit meta: ZSearchAttributeMeta[T]): Boolean =
+  /** Get whether the search attribute key exists.
+    *
+    * @tparam T
+    *   Scala type for the attribute
+    * @tparam Tag
+    *   either [[ZSearchAttribute.Plain]] or [[ZSearchAttribute.Keyword]]
+    */
+  def containsKey[T, Tag](name: String)(implicit meta: ZSearchAttributeMeta[T, Tag]): Boolean =
     toJava.containsKey(meta.attributeKey(name))
 
   /** Get a search attribute value by its key or null if not present.
     *
+    * @tparam T
+    *   Scala type for the attribute
+    * @tparam Tag
+    *   either [[ZSearchAttribute.Plain]] or [[ZSearchAttribute.Keyword]]
     * @throws ClassCastException
     *   If the search attribute is not of the proper type for the key.
     */
-  def get[T](name: String)(implicit meta: ZSearchAttributeMeta[T]): Option[T] = Option(
-    toJava.get[meta.Repr](meta.attributeKey(name))
-  ).map(meta.decode)
+  def get[T, Tag](name: String)(implicit meta: ZSearchAttributeMeta[T, Tag]): Option[T] =
+    Option(toJava.get[meta.Repr](meta.attributeKey(name))).map(meta.decode)
 
   /** Get the size of the collection. */
   def size: Int =

@@ -3,11 +3,13 @@ package zio.temporal
 import io.temporal.common.SearchAttributeKey
 import zio.temporal.ZSearchAttribute.Plain
 import zio.temporal.ZSearchAttribute.Keyword
+
 import java.time.{Instant, LocalDateTime, OffsetDateTime, ZoneOffset}
 import java.util.UUID
 import java.{util => ju}
 import scala.annotation.implicitNotFound
 import scala.jdk.CollectionConverters._
+import scala.reflect.ClassTag
 
 /** Encapsulates description & recipe for a Scala type stored as Temporal Search attribute.
   *
@@ -16,8 +18,8 @@ import scala.jdk.CollectionConverters._
   */
 @implicitNotFound(""""Type ${A} is not a valid type for a Temporal Search Attribute.
 Either convert it to a supported type or provide an implicit ZSearchAttributeMeta instance
-"""")
-sealed trait ZSearchAttributeMeta[A] { self =>
+""")
+sealed trait ZSearchAttributeMeta[A, Tag] { self =>
 
   /** Representation supported by Temporal
     */
@@ -62,8 +64,8 @@ sealed trait ZSearchAttributeMeta[A] { self =>
     * @return
     *   a new meta
     */
-  def convert[B](project: A => B, reverse: B => A): ZSearchAttributeMeta.Of[B, self.Repr] =
-    new ZSearchAttributeMeta[B] {
+  def convert[B](project: A => B, reverse: B => A): ZSearchAttributeMeta.Of[B, Tag, self.Repr] =
+    new ZSearchAttributeMeta[B, Tag] {
       override type Repr = self.Repr
 
       override def attributeKey(name: String): SearchAttributeKey[Repr] =
@@ -76,11 +78,13 @@ sealed trait ZSearchAttributeMeta[A] { self =>
         project(self.decode(value))
     }
 
+  def downcastTag: ZSearchAttributeMeta.Of[A, Any, self.Repr] =
+    self.asInstanceOf[ZSearchAttributeMeta.Of[A, Any, self.Repr]]
 }
 
 object ZSearchAttributeMeta extends ZSearchAttributeMetaCollectionInstances with ZSearchAttributeMetaEnumInstances {
 
-  type Of[A, R] = ZSearchAttributeMeta[A] { type Repr = R }
+  type Of[A, Tag, R] = ZSearchAttributeMeta[A, Tag] { type Repr = R }
 
   /** Summons an instance of [[ZSearchAttributeMeta]]
     *
@@ -89,187 +93,158 @@ object ZSearchAttributeMeta extends ZSearchAttributeMetaCollectionInstances with
     * @return
     *   summoned instance for the provided scala type
     */
-  def apply[A](implicit meta: ZSearchAttributeMeta[A]): meta.type = meta
+  def apply[A, Tag](implicit meta: ZSearchAttributeMeta[A, Tag]): meta.type = meta
 
   /** Meta for a string type represented as Keyword type
     */
-  implicit val stringKeyword: ZSearchAttributeMeta.Of[String, Keyword]   = new KeywordMeta[String](identity, identity)
-  implicit val string: ZSearchAttributeMeta.Of[String, Plain[String]]    = StringMeta
-  implicit val boolean: ZSearchAttributeMeta.Of[Boolean, Plain[Boolean]] = BooleanMeta
-  implicit val long: ZSearchAttributeMeta.Of[Long, Plain[Long]]          = LongMeta
-  implicit val integer: ZSearchAttributeMeta.Of[Int, Plain[Long]]        = long.convert(_.toInt, _.toLong)
-  implicit val double: ZSearchAttributeMeta.Of[Double, Plain[Double]]    = DoubleMeta
+  implicit val stringKeyword: ZSearchAttributeMeta.Of[String, Keyword, String] =
+    new KeywordMeta[String](identity, identity)
 
-  implicit val bigInt: ZSearchAttributeMeta.Of[BigInt, Plain[String]] =
+  implicit val string: ZSearchAttributeMeta.Of[String, Plain, String]    = StringMeta
+  implicit val boolean: ZSearchAttributeMeta.Of[Boolean, Plain, Boolean] = BooleanMeta
+  implicit val long: ZSearchAttributeMeta.Of[Long, Plain, Long]          = LongMeta
+  implicit val integer: ZSearchAttributeMeta.Of[Int, Plain, Long]        = long.convert(_.toInt, _.toLong)
+  implicit val double: ZSearchAttributeMeta.Of[Double, Plain, Double]    = DoubleMeta
+
+  implicit val bigInt: ZSearchAttributeMeta.Of[BigInt, Plain, String] =
     string.convert(BigInt(_), _.toString)
 
-  implicit val bigDecimal: ZSearchAttributeMeta.Of[BigDecimal, Plain[String]] =
+  implicit val bigDecimal: ZSearchAttributeMeta.Of[BigDecimal, Plain, String] =
     string.convert(BigDecimal(_), _.toString)
 
-  implicit val uuid: ZSearchAttributeMeta.Of[UUID, Keyword] =
+  implicit val uuid: ZSearchAttributeMeta.Of[UUID, Keyword, String] =
     stringKeyword.convert(UUID.fromString, _.toString)
 
-  implicit val offsetDateTime: ZSearchAttributeMeta.Of[OffsetDateTime, Plain[OffsetDateTime]] =
+  implicit val offsetDateTime: ZSearchAttributeMeta.Of[OffsetDateTime, Plain, OffsetDateTime] =
     OffsetDateTimeMeta
 
-  implicit val localDateTime: ZSearchAttributeMeta.Of[LocalDateTime, Plain[OffsetDateTime]] =
+  implicit val localDateTime: ZSearchAttributeMeta.Of[LocalDateTime, Plain, OffsetDateTime] =
     offsetDateTime.convert(_.toLocalDateTime, _.atOffset(ZoneOffset.UTC))
 
-  implicit val instant: ZSearchAttributeMeta.Of[Instant, Plain[OffsetDateTime]] =
+  implicit val instant: ZSearchAttributeMeta.Of[Instant, Plain, OffsetDateTime] =
     offsetDateTime.convert(_.toInstant, _.atOffset(ZoneOffset.UTC))
 
-  implicit val currentTimeMillis: ZSearchAttributeMeta.Of[ZCurrentTimeMillis, Plain[OffsetDateTime]] =
+  implicit val currentTimeMillis: ZSearchAttributeMeta.Of[ZCurrentTimeMillis, Plain, OffsetDateTime] =
     offsetDateTime.convert(otd => new ZCurrentTimeMillis(otd.toInstant.toEpochMilli), _.toOffsetDateTime())
 
-  implicit def plainOptionInstance[V, R](
-    implicit underlying: ZSearchAttributeMeta.Of[V, Plain[R]]
-  ): ZSearchAttributeMeta.Of[Option[V], Plain[R]] =
-    new OptionMetaPlain[V, R](underlying)
+  implicit def option[V, Tag, R](
+    implicit underlying: ZSearchAttributeMeta.Of[V, Tag, R]
+  ): ZSearchAttributeMeta.Of[Option[V], Tag, R] =
+    new OptionMeta[V, Tag, R](underlying)
 
-  implicit def plainKeywordInstance[V, R](
-    implicit underlying: ZSearchAttributeMeta.Of[V, Keyword]
-  ): ZSearchAttributeMeta.Of[Option[V], Keyword] =
-    new OptionMetaKeyword[V](underlying)
+  implicit def array[V: ClassTag](
+    implicit asString: ZSearchAttributeMeta.Of[V, Keyword, String]
+  ): ZSearchAttributeMeta.Of[Array[V], Keyword, ju.List[String]] =
+    keywordListImpl[V].convert(_.toArray, _.toList)
 
   protected[zio] def keywordListImpl[V](
-    implicit asString: ZSearchAttributeMeta.Of[V, Keyword]
-  ): ZSearchAttributeMeta.Of[List[V], Plain[ju.List[String]]] =
+    implicit asString: ZSearchAttributeMeta.Of[V, Keyword, String]
+  ): ZSearchAttributeMeta.Of[List[V], Keyword, ju.List[String]] =
     new KeywordListMeta[V](asString)
 
-  private[zio] sealed trait SimpleMeta[A] extends ZSearchAttributeMeta[A] {
-    override final type Repr = Plain[A]
+  private[zio] sealed trait SimplePlainMeta[A] extends ZSearchAttributeMeta[A, Plain] {
+    override final type Repr = A
 
     protected def underlyingAttributeKey(name: String): SearchAttributeKey[A]
 
-    override def attributeKey(name: String): SearchAttributeKey[Plain[A]] = {
-      // safe to cast as Plain is a tagged type
-      underlyingAttributeKey(name).asInstanceOf[SearchAttributeKey[Plain[A]]]
+    override def attributeKey(name: String): SearchAttributeKey[A] = {
+      underlyingAttributeKey(name)
     }
 
-    override def encode(value: A): Plain[A] = Plain(value)
+    override def encode(value: A): A = value
 
-    override def decode(value: Plain[A]): A = Plain.unwrap(value)
+    override def decode(value: A): A = value
   }
 
-  private final object StringMeta extends SimpleMeta[String] {
+  private final object StringMeta extends SimplePlainMeta[String] {
     override def underlyingAttributeKey(name: String): SearchAttributeKey[String] = {
       SearchAttributeKey.forText(name)
     }
   }
 
-  private final object BooleanMeta extends SimpleMeta[Boolean] {
+  private final object BooleanMeta extends SimplePlainMeta[Boolean] {
     override def underlyingAttributeKey(name: String): SearchAttributeKey[Boolean] = {
       // safe to cast java.lang.Boolean to Boolean
       SearchAttributeKey.forBoolean(name).asInstanceOf[SearchAttributeKey[Boolean]]
     }
   }
 
-  private final object LongMeta extends SimpleMeta[Long] {
+  private final object LongMeta extends SimplePlainMeta[Long] {
     override def underlyingAttributeKey(name: String): SearchAttributeKey[Long] = {
       // safe to cast java.lang.Long to Long
       SearchAttributeKey.forLong(name).asInstanceOf[SearchAttributeKey[Long]]
     }
   }
 
-  private final object DoubleMeta extends SimpleMeta[Double] {
+  private final object DoubleMeta extends SimplePlainMeta[Double] {
     override def underlyingAttributeKey(name: String): SearchAttributeKey[Double] = {
       // safe to cast java.lang.Double to Double
       SearchAttributeKey.forDouble(name).asInstanceOf[SearchAttributeKey[Double]]
     }
   }
 
-  private final object OffsetDateTimeMeta extends SimpleMeta[OffsetDateTime] {
+  private final object OffsetDateTimeMeta extends SimplePlainMeta[OffsetDateTime] {
     override def underlyingAttributeKey(name: String): SearchAttributeKey[OffsetDateTime] = {
       SearchAttributeKey.forOffsetDateTime(name)
     }
   }
 
-  private final class OptionMetaPlain[A, R](underlying: ZSearchAttributeMeta.Of[A, Plain[R]])
-      extends ZSearchAttributeMeta[Option[A]] {
+  private final class OptionMeta[A, Tag, R](underlying: ZSearchAttributeMeta.Of[A, Tag, R])
+      extends ZSearchAttributeMeta[Option[A], Tag] {
 
-    override type Repr = Plain[R]
+    override type Repr = R
 
-    override def attributeKey(name: String): SearchAttributeKey[Plain[R]] = {
+    override def attributeKey(name: String): SearchAttributeKey[R] = {
       // option isn't encoded as a value
       underlying.attributeKey(name)
     }
 
-    override def encode(value: Option[A]): Plain[R] = {
+    override def encode(value: Option[A]): R = {
       value.map(underlying.encode).getOrElse {
-        null.asInstanceOf[Plain[R]]
+        null.asInstanceOf[R]
       }
     }
 
-    override def decode(value: Plain[R]): Option[A] = {
+    override def decode(value: R): Option[A] = {
       Option(value).map(underlying.decode)
     }
   }
 
-  private final class OptionMetaKeyword[A](underlying: ZSearchAttributeMeta.Of[A, Keyword])
-      extends ZSearchAttributeMeta[Option[A]] {
+  final class KeywordMeta[V](encodeValue: V => String, decodeValue: String => V)
+      extends ZSearchAttributeMeta[V, Keyword] {
+    override type Repr = String
 
-    override type Repr = Keyword
-
-    override def attributeKey(name: String): SearchAttributeKey[Keyword] = {
-      // option isn't encoded as a value
-      underlying.attributeKey(name)
+    override def attributeKey(name: String): SearchAttributeKey[String] = {
+      SearchAttributeKey.forKeyword(name)
     }
 
-    override def encode(value: Option[A]): Keyword = {
-      value.map(underlying.encode).getOrElse {
-        null.asInstanceOf[Keyword]
-      }
+    override def decode(value: String): V = {
+      decodeValue(value)
     }
 
-    override def decode(value: Keyword): Option[A] = {
-      Option(value).map(underlying.decode)
+    override def encode(value: V): String = {
+      encodeValue(value)
     }
   }
 
-  final class KeywordMeta[V](encodeValue: V => String, decodeValue: String => V) extends ZSearchAttributeMeta[V] {
-    override type Repr = Keyword
+  final class KeywordListMeta[V](val underlying: ZSearchAttributeMeta.Of[V, Keyword, String])
+      extends ZSearchAttributeMeta[List[V], Keyword] {
 
-    override def attributeKey(name: String): SearchAttributeKey[Keyword] = {
-      // safe to cast as Keyword is just a tagged type
-      SearchAttributeKey
-        .forKeyword(name)
-        .asInstanceOf[SearchAttributeKey[Keyword]]
-    }
+    override type Repr = ju.List[String]
 
-    override def decode(value: Keyword): V = {
-      decodeValue(Keyword.unwrap(value))
-    }
-
-    override def encode(value: V): Keyword = {
-      Keyword(encodeValue(value))
-    }
-  }
-
-  final class KeywordListMeta[V](val underlying: ZSearchAttributeMeta.Of[V, Keyword])
-      extends ZSearchAttributeMeta[List[V]] {
-
-    override type Repr = Plain[ju.List[String]]
-
-    override def attributeKey(name: String): SearchAttributeKey[Plain[ju.List[String]]] = {
+    override def attributeKey(name: String): SearchAttributeKey[ju.List[String]] = {
       // safe to cast as Plain is a tagged type
-      SearchAttributeKey.forKeywordList(name).asInstanceOf[SearchAttributeKey[Plain[ju.List[String]]]]
+      SearchAttributeKey.forKeywordList(name)
     }
 
-    override def decode(values: Plain[ju.List[String]]): List[V] = {
-      Plain
-        .unwrap(values)
-        .asScala
-        .map(value => underlying.decode(Keyword(value)))
+    override def decode(values: ju.List[String]): List[V] = {
+      values.asScala
+        .map(underlying.decode)
         .toList
     }
 
-    override def encode(values: List[V]): Plain[ju.List[String]] = {
-      val result = values.map { (value: V) =>
-        val encoded: Keyword = underlying.encode(value)
-        Keyword.unwrap(encoded)
-      }.asJava
-
-      Plain(result)
+    override def encode(values: List[V]): ju.List[String] = {
+      values.map(underlying.encode).asJava
     }
   }
 }

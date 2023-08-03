@@ -32,20 +32,20 @@ class EnumSearchAttributesSpec extends AnyWordSpec {
 
   "ZSearchAttributeMeta" should {
     "work for scala3 enums" in {
-      val meta = ZSearchAttributeMeta[Color]
+      val meta = ZSearchAttributeMeta[Color, Keyword]
 
-      assert(meta.encode(Color.Red) == Keyword("Red"))
-      assert(meta.decode(Keyword("Red")) == Color.Red)
+      assert(meta.encode(Color.Red) == "Red")
+      assert(meta.decode("Red") == Color.Red)
       assert(
         meta.attributeKey("color") == SearchAttributeKey.forKeyword("color")
       )
     }
 
     "work for scala3 enums with parameters" in {
-      val meta = ZSearchAttributeMeta[Planet]
+      val meta = ZSearchAttributeMeta[Planet, Keyword]
 
-      assert(meta.encode(Planet.Earth) == Keyword("Earth"))
-      assert(meta.decode(ZSearchAttribute.Keyword("Earth")) == Planet.Earth)
+      assert(meta.encode(Planet.Earth) == "Earth")
+      assert(meta.decode("Earth") == Planet.Earth)
       assert(
         meta.attributeKey("planet") == SearchAttributeKey.forKeyword("planet")
       )

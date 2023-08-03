@@ -14,7 +14,7 @@ sealed trait ZSearchAttribute {
 
   def value: ValueType
 
-  def meta: ZSearchAttributeMeta[ValueType]
+  def meta: ZSearchAttributeMeta[ValueType, Any]
 
   override def toString: String = {
     s"ZSearchAttribute(" +
@@ -27,24 +27,15 @@ sealed trait ZSearchAttribute {
 object ZSearchAttribute {
   type Of[A] = ZSearchAttribute { type ValueType = A }
 
+  sealed trait Tag
+
   /** Used to indicate that a type is encoded as a plain attribute
     */
-  final case class Plain[A] private (private val value: A)
-  final object Plain {
-    def apply[A](value: A): Plain[A] = new Plain(value)
-
-    def unwrap[A](plain: Plain[A]): A = plain.value
-  }
+  sealed trait Plain extends Tag
 
   /** Used to indicate that a type is encoded as Keyword attribute
     */
-  final case class Keyword private (private val value: String)
-  final object Keyword {
-
-    def apply(value: String): Keyword = new Keyword(value)
-
-    def unwrap(keyword: Keyword): String = keyword.value
-  }
+  sealed trait Keyword extends Tag
 
   /** Converts a value to [[ZSearchAttribute]] having implicit [[ZSearchAttributeMeta]] instance
     *
@@ -55,16 +46,16 @@ object ZSearchAttribute {
     * @return
     *   converted search attribute
     */
-  def apply[A, R](value: A)(implicit meta: ZSearchAttributeMeta.Of[A, Plain[R]]): ZSearchAttribute.Of[A] =
-    new SearchAttributeImpl[A](value, meta)
+  def apply[A](value: A)(implicit meta: ZSearchAttributeMeta[A, Plain]): ZSearchAttribute.Of[A] =
+    new SearchAttributeImpl[A](value, meta.downcastTag)
 
   /** Explicitly sets attribute type to Keyword
     *
     * @param value
     *   search attribute value
     */
-  def keyword[A](value: A)(implicit meta: ZSearchAttributeMeta.Of[A, Keyword]): ZSearchAttribute.Of[A] =
-    new SearchAttributeImpl[A](value, meta)
+  def keyword[A](value: A)(implicit meta: ZSearchAttributeMeta[A, Keyword]): ZSearchAttribute.Of[A] =
+    new SearchAttributeImpl[A](value, meta.downcastTag)
 
   /** Converts custom search attributes to a list of [[SearchAttributeUpdate]] that temporal Java SDK can consume
     *
@@ -103,7 +94,7 @@ object ZSearchAttribute {
 
   private[zio] final class SearchAttributeImpl[V](
     override val value: V,
-    override val meta:  ZSearchAttributeMeta[V])
+    override val meta:  ZSearchAttributeMeta[V, Any])
       extends ZSearchAttribute {
 
     override type ValueType = V

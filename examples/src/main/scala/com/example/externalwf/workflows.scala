@@ -1,7 +1,7 @@
 package com.example.externalwf
 
 import zio._
-import zio.temporal.ZSearchAttribute
+import zio.temporal.{ZCurrentTimeMillis, ZSearchAttribute}
 import zio.temporal.state.ZWorkflowState
 import zio.temporal.workflow._
 
@@ -29,7 +29,7 @@ class FoodOrderWorkflowImpl extends FoodOrderWorkflow {
     ZWorkflow.upsertSearchAttributes(
       Map(
         "DeliveryAddress" -> ZSearchAttribute(Option(deliveryAddress).map(_.trim).filterNot(_.isEmpty)),
-        "Goods"           -> ZSearchAttribute(goods.distinct),
+        "Goods"           -> ZSearchAttribute.keyword(goods.toSet),
         "Date"            -> ZSearchAttribute(ZWorkflow.currentTimeMillis)
       )
     )
@@ -40,7 +40,15 @@ class FoodOrderWorkflowImpl extends FoodOrderWorkflow {
       FoodDeliveryWorkflow.makeId(ZWorkflow.info.workflowId)
     )
 
-    logger.info(s"Search attrs: ${ZWorkflow.typedSearchAttributes}")
+    val searchAttributes = ZWorkflow.typedSearchAttributes
+
+    logger.info(s"All search attrs: $searchAttributes")
+    locally {
+      val optionAttr = searchAttributes.get[Option[String], ZSearchAttribute.Plain]("DeliveryAddress")
+      val setAttr    = searchAttributes.get[Set[String], ZSearchAttribute.Keyword]("Goods")
+      val dateAttr   = searchAttributes.get[ZCurrentTimeMillis, ZSearchAttribute.Plain]("Date")
+      logger.info(s"""Option=$optionAttr set=$setAttr date=$dateAttr""")
+    }
 
     if (!touched || state =:= OrderState.Cancelled) {
       ZExternalWorkflowStub.signal(

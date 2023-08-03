@@ -42,20 +42,20 @@ class EnumSearchAttributesSpec extends AnyWordSpec {
 
   "ZSearchAttributeMeta" should {
     "work for enumeratum string enums" in {
-      val meta = ZSearchAttributeMeta[Color]
+      val meta = ZSearchAttributeMeta[Color, Keyword]
 
-      assert(meta.encode(Color.Red) == Keyword("red"))
-      assert(meta.decode(Keyword("red")) == Color.Red)
+      assert(meta.encode(Color.Red) == "red")
+      assert(meta.decode("red") == Color.Red)
       assert(
         meta.attributeKey("color") == SearchAttributeKey.forKeyword("color")
       )
     }
 
     "work for enumeratum enums with parameters" in {
-      val meta = ZSearchAttributeMeta[Planet]
+      val meta = ZSearchAttributeMeta[Planet, Keyword]
 
-      assert(meta.encode(Planet.Earth) == Keyword("Earth"))
-      assert(meta.decode(Keyword("Earth")) == Planet.Earth)
+      assert(meta.encode(Planet.Earth) == "Earth")
+      assert(meta.decode("Earth") == Planet.Earth)
       assert(
         meta.attributeKey("planet") == SearchAttributeKey.forKeyword("planet")
       )
@@ -63,11 +63,11 @@ class EnumSearchAttributesSpec extends AnyWordSpec {
 
     "work with scala.Enumeration" in {
       // IDEA is not happy without the type annotation
-      val meta: ZSearchAttributeMeta.Of[Language.Value, Keyword] =
+      val meta: ZSearchAttributeMeta.Of[Language.Value, Keyword, String] =
         ZSearchAttributeMeta.enumeration(Language)
 
-      assert(meta.encode(Language.Ukrainian) == Keyword("Ukrainian"))
-      assert(meta.decode(Keyword("English")) == Language.English)
+      assert(meta.encode(Language.Ukrainian) == "Ukrainian")
+      assert(meta.decode("English") == Language.English)
       assert(
         meta.attributeKey("Czech") == SearchAttributeKey.forKeyword("Czech")
       )

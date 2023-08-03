@@ -14,4 +14,11 @@ final class ZCurrentTimeMillis private[zio] (val toEpochMillis: Long) extends An
 
   @inline def toInstant: Instant =
     Instant.ofEpochMilli(toEpochMillis)
+
+  override def toString: String = {
+    s"ZCurrentTimeMillis(" +
+      s"epochMillis=$toEpochMillis" +
+      s", pretty=$toInstant" +
+      s")"
+  }
 }
