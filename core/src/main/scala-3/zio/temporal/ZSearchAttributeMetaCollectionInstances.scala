@@ -4,7 +4,7 @@ import java.{util => ju}
 import scala.collection.Factory
 
 trait ZSearchAttributeMetaCollectionInstances {
-  implicit def traversableInstance[Coll[x] <: IterableOnce[x], V](
+  implicit def traversableInstance[Coll[x] <: Iterable[x], V](
     implicit asString: ZSearchAttributeMeta.Of[V, ZSearchAttribute.Keyword],
     factory:           Factory[V, Coll[V]]
   ): ZSearchAttributeMeta.Of[Coll[V], ZSearchAttribute.Plain[ju.List[String]]] =

@@ -35,7 +35,6 @@ object EnumSearchAttributesSpec {
   }
 }
 
-// todo: add test cases
 class EnumSearchAttributesSpec extends AnyWordSpec {
   import EnumSearchAttributesSpec._
   import zio.temporal.enumeratum

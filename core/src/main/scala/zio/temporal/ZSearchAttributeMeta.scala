@@ -9,6 +9,7 @@ import java.{util => ju}
 import scala.annotation.implicitNotFound
 import scala.jdk.CollectionConverters._
 
+// todo: cover with tests
 /** Encapsulates description & recipe for a Scala type stored as Temporal Search attribute.
   *
   * @tparam A

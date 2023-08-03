@@ -26,7 +26,6 @@ object EnumSearchAttributesSpec {
   }
 }
 
-// todo: add test cases
 class EnumSearchAttributesSpec extends AnyWordSpec {
   import EnumSearchAttributesSpec._
 
