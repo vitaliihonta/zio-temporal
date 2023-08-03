@@ -3,9 +3,9 @@ package zio.temporal
 import zio.temporal.internal.Scala3EnumUtils
 import scala.quoted._
 
-trait ZSearchAttributeMetaVersionSpecific {
+trait ZSearchAttributeMetaEnumInstances {
 
-  /** Provides automatic instance derivation for Scala 3 enum types.
+  /** Provides an attribute meta for Scala 3 native enum types.
     */
   inline given enumAttribute[E <: scala.reflect.Enum]: ZSearchAttributeMeta.Of[E, String] = {
     val enumMeta = Scala3EnumUtils.getEnumMeta[E]
