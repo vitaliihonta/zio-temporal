@@ -4,6 +4,7 @@ import _root_.enumeratum.{Enum, EnumEntry}
 import _root_.enumeratum.values.{StringEnum, StringEnumEntry}
 import io.temporal.common.SearchAttributeKey
 import org.scalatest.wordspec.AnyWordSpec
+import zio.temporal.ZSearchAttribute.Keyword
 import zio.temporal.{ZSearchAttribute, ZSearchAttributeMeta}
 
 object EnumSearchAttributesSpec {
@@ -43,8 +44,8 @@ class EnumSearchAttributesSpec extends AnyWordSpec {
     "work for enumeratum string enums" in {
       val meta = ZSearchAttributeMeta[Color]
 
-      assert(meta.encode(Color.Red) == "red")
-      assert(meta.decode(ZSearchAttribute.Keyword("red")) == Color.Red)
+      assert(meta.encode(Color.Red) == Keyword("red"))
+      assert(meta.decode(Keyword("red")) == Color.Red)
       assert(
         meta.attributeKey("color") == SearchAttributeKey.forKeyword("color")
       )
@@ -53,8 +54,8 @@ class EnumSearchAttributesSpec extends AnyWordSpec {
     "work for enumeratum enums with parameters" in {
       val meta = ZSearchAttributeMeta[Planet]
 
-      assert(meta.encode(Planet.Earth) == "Earth")
-      assert(meta.decode(ZSearchAttribute.Keyword("Earth")) == Planet.Earth)
+      assert(meta.encode(Planet.Earth) == Keyword("Earth"))
+      assert(meta.decode(Keyword("Earth")) == Planet.Earth)
       assert(
         meta.attributeKey("planet") == SearchAttributeKey.forKeyword("planet")
       )
@@ -62,11 +63,11 @@ class EnumSearchAttributesSpec extends AnyWordSpec {
 
     "work with scala.Enumeration" in {
       // IDEA is not happy without the type annotation
-      val meta: ZSearchAttributeMeta.Of[Language.Value, ZSearchAttribute.Keyword] =
+      val meta: ZSearchAttributeMeta.Of[Language.Value, Keyword] =
         ZSearchAttributeMeta.enumeration(Language)
 
-      assert(meta.encode(Language.Ukrainian) == "Ukrainian")
-      assert(meta.decode(ZSearchAttribute.Keyword("English")) == Language.English)
+      assert(meta.encode(Language.Ukrainian) == Keyword("Ukrainian"))
+      assert(meta.decode(Keyword("English")) == Language.English)
       assert(
         meta.attributeKey("Czech") == SearchAttributeKey.forKeyword("Czech")
       )

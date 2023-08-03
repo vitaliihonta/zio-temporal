@@ -29,24 +29,21 @@ object ZSearchAttribute {
 
   /** Used to indicate that a type is encoded as a plain attribute
     */
-  sealed trait PlainTag
-  final type Plain[+A] = A with PlainTag
+  final case class Plain[A] private (private val value: A)
   final object Plain {
-    def apply[A](value: A): Plain[A] = value.asInstanceOf[Plain[A]]
+    def apply[A](value: A): Plain[A] = new Plain(value)
 
-    def unwrap[A](plain: Plain[A]): A = plain
+    def unwrap[A](plain: Plain[A]): A = plain.value
   }
 
   /** Used to indicate that a type is encoded as Keyword attribute
     */
-  sealed trait KeywordTag
-
-  final type Keyword = String with KeywordTag
+  final case class Keyword private (private val value: String)
   final object Keyword {
 
-    def apply(value: String): Keyword = value.asInstanceOf[Keyword]
+    def apply(value: String): Keyword = new Keyword(value)
 
-    def unwrap(keyword: Keyword): String = keyword
+    def unwrap(keyword: Keyword): String = keyword.value
   }
 
   /** Converts a value to [[ZSearchAttribute]] having implicit [[ZSearchAttributeMeta]] instance

@@ -9,7 +9,6 @@ import java.{util => ju}
 import scala.annotation.implicitNotFound
 import scala.jdk.CollectionConverters._
 
-// todo: cover with tests
 /** Encapsulates description & recipe for a Scala type stored as Temporal Search attribute.
   *
   * @tparam A
@@ -238,7 +237,7 @@ object ZSearchAttributeMeta extends ZSearchAttributeMetaCollectionInstances with
     }
 
     override def decode(value: Keyword): V = {
-      decodeValue(value)
+      decodeValue(Keyword.unwrap(value))
     }
 
     override def encode(value: V): Keyword = {
