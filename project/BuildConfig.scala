@@ -67,7 +67,7 @@ object BuildConfig extends Dependencies {
 trait Dependencies {
 
   private object versions {
-    val temporal = "1.20.1"
+    val temporal = "1.21.0"
     // todo: update once a version next to 2.0.15 is released
     val zio        = "2.0.12"
     val zioLogging = "2.1.13"

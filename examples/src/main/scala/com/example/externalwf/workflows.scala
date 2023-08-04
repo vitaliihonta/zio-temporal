@@ -1,7 +1,7 @@
 package com.example.externalwf
 
 import zio._
-import zio.temporal._
+import zio.temporal.{ZCurrentTimeMillis, ZSearchAttribute}
 import zio.temporal.state.ZWorkflowState
 import zio.temporal.workflow._
 
@@ -19,14 +19,19 @@ class FoodOrderWorkflowImpl extends FoodOrderWorkflow {
 
   override def order(goods: List[String], deliveryAddress: String): Boolean = {
 
-    /** NOTE: make sure to add a search attribute
+    /** NOTE: make sure to add a search attributes
       * {{{
-      *    docker exec -it temporal-admin-tools bash
-      *    temporal-admin-tools> temporal operator search-attribute create --namespace default --name DeliveryAddress --type Text
+      *    temporal operator search-attribute create --namespace default --name DeliveryAddress --type Text
+      *     temporal operator search-attribute create --namespace default --name Goods --type KeywordList
+      *     temporal operator search-attribute create --namespace default --name Date --type DateTime
       * }}}
       */
     ZWorkflow.upsertSearchAttributes(
-      Map("DeliveryAddress" -> deliveryAddress)
+      Map(
+        "DeliveryAddress" -> ZSearchAttribute(Option(deliveryAddress).map(_.trim).filterNot(_.isEmpty)),
+        "Goods"           -> ZSearchAttribute.keyword(goods.toSet),
+        "Date"            -> ZSearchAttribute(ZWorkflow.currentTimeMillis)
+      )
     )
 
     logger.info("Waiting until payment received or cancel or timeout...")
@@ -34,7 +39,17 @@ class FoodOrderWorkflowImpl extends FoodOrderWorkflow {
     val deliveryWorkflow = ZWorkflow.newExternalWorkflowStub[FoodDeliveryWorkflow](
       FoodDeliveryWorkflow.makeId(ZWorkflow.info.workflowId)
     )
-    logger.info(s"Search attrs: ${ZWorkflow.info.searchAttributes}")
+
+    val searchAttributes = ZWorkflow.typedSearchAttributes
+
+    logger.info(s"All search attrs: $searchAttributes")
+    locally {
+      val optionAttr = searchAttributes.get[Option[String], ZSearchAttribute.Plain]("DeliveryAddress")
+      val setAttr    = searchAttributes.get[Set[String], ZSearchAttribute.Keyword]("Goods")
+      val dateAttr   = searchAttributes.get[ZCurrentTimeMillis, ZSearchAttribute.Plain]("Date")
+      logger.info(s"""Option=$optionAttr set=$setAttr date=$dateAttr""")
+    }
+
     if (!touched || state =:= OrderState.Cancelled) {
       ZExternalWorkflowStub.signal(
         deliveryWorkflow.cancelDelivery()

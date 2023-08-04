@@ -2,8 +2,10 @@ package zio.temporal.enumeratum
 
 import _root_.enumeratum.{Enum, EnumEntry}
 import _root_.enumeratum.values.{StringEnum, StringEnumEntry}
+import io.temporal.common.SearchAttributeKey
 import org.scalatest.wordspec.AnyWordSpec
-import zio.temporal.ZSearchAttribute
+import zio.temporal.ZSearchAttribute.Keyword
+import zio.temporal.{ZSearchAttribute, ZSearchAttributeMeta}
 
 object EnumSearchAttributesSpec {
   sealed abstract class Color(val value: String) extends StringEnumEntry
@@ -28,19 +30,47 @@ object EnumSearchAttributesSpec {
 
     override val values = findValues
   }
+
+  object Language extends Enumeration {
+    val English, Ukrainian, Czech = Value
+  }
 }
 
 class EnumSearchAttributesSpec extends AnyWordSpec {
   import EnumSearchAttributesSpec._
   import zio.temporal.enumeratum
 
-  "ZSearchAttribute.Convert" should {
+  "ZSearchAttributeMeta" should {
     "work for enumeratum string enums" in {
-      assert(ZSearchAttribute.from(Color.Red).toString == "red")
+      val meta = ZSearchAttributeMeta[Color, Keyword]
+
+      assert(meta.encode(Color.Red) == "red")
+      assert(meta.decode("red") == Color.Red)
+      assert(
+        meta.attributeKey("color") == SearchAttributeKey.forKeyword("color")
+      )
     }
 
     "work for enumeratum enums with parameters" in {
-      assert(ZSearchAttribute.from(Planet.Earth).toString == "Earth")
+      val meta = ZSearchAttributeMeta[Planet, Keyword]
+
+      assert(meta.encode(Planet.Earth) == "Earth")
+      assert(meta.decode("Earth") == Planet.Earth)
+      assert(
+        meta.attributeKey("planet") == SearchAttributeKey.forKeyword("planet")
+      )
+    }
+
+    "work with scala.Enumeration" in {
+      // IDEA is not happy without the type annotation
+      val meta: ZSearchAttributeMeta.Of[Language.Value, Keyword, String] =
+        ZSearchAttributeMeta.enumeration(Language)
+
+      assert(meta.encode(Language.Ukrainian) == "Ukrainian")
+      assert(meta.decode("English") == Language.English)
+      assert(
+        meta.attributeKey("Czech") == SearchAttributeKey.forKeyword("Czech")
+      )
     }
   }
 }

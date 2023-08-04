@@ -1,6 +1,8 @@
 package zio.temporal
 
+import io.temporal.common.SearchAttributeKey
 import org.scalatest.wordspec.AnyWordSpec
+import zio.temporal.ZSearchAttribute.Keyword
 
 object EnumSearchAttributesSpec {
   enum Color {
@@ -28,13 +30,25 @@ object EnumSearchAttributesSpec {
 class EnumSearchAttributesSpec extends AnyWordSpec {
   import EnumSearchAttributesSpec._
 
-  "ZSearchAttribute.Convert" should {
+  "ZSearchAttributeMeta" should {
     "work for scala3 enums" in {
-      assert(ZSearchAttribute.from(Color.Red).toString == "Red")
+      val meta = ZSearchAttributeMeta[Color, Keyword]
+
+      assert(meta.encode(Color.Red) == "Red")
+      assert(meta.decode("Red") == Color.Red)
+      assert(
+        meta.attributeKey("color") == SearchAttributeKey.forKeyword("color")
+      )
     }
 
     "work for scala3 enums with parameters" in {
-      assert(ZSearchAttribute.from(Planet.Earth).toString == "Earth")
+      val meta = ZSearchAttributeMeta[Planet, Keyword]
+
+      assert(meta.encode(Planet.Earth) == "Earth")
+      assert(meta.decode("Earth") == Planet.Earth)
+      assert(
+        meta.attributeKey("planet") == SearchAttributeKey.forKeyword("planet")
+      )
     }
   }
 }

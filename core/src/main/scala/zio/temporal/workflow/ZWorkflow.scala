@@ -1,5 +1,6 @@
 package zio.temporal.workflow
 
+import io.temporal.common.{SearchAttributeKey, SearchAttributeUpdate}
 import io.temporal.workflow.{CancellationScope, ContinueAsNewOptions, Workflow}
 import org.slf4j.Logger
 import zio.temporal.activity._
@@ -9,10 +10,12 @@ import zio.temporal.{
   TypeIsSpecified,
   ZCurrentTimeMillis,
   ZSearchAttribute,
+  ZSearchAttributes,
   ZWorkflowExecution,
   ZWorkflowInfo
 }
 import zio.{Random => _, _}
+
 import java.util.UUID
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
@@ -276,16 +279,25 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
   def currentTimeMillis: ZCurrentTimeMillis =
     new ZCurrentTimeMillis(Workflow.currentTimeMillis())
 
+  /** Get immutable set of search attributes. To modify search attributes associated with this workflow use
+    * [[upsertSearchAttributes]]
+    *
+    * @return
+    *   immutable set of search attributes.
+    */
+  def typedSearchAttributes: ZSearchAttributes =
+    new ZSearchAttributes(Workflow.getTypedSearchAttributes)
+
   /** Adds or updates workflow search attributes.
     *
     * @see
-    *   [[Workflow.upsertSearchAttributes]]
+    *   [[Workflow.upsertTypedSearchAttributes]]
     * @param attrs
     *   map of String to [[ZSearchAttribute]] value that can be used to search in list APIs
     */
   def upsertSearchAttributes(attrs: Map[String, ZSearchAttribute]): Unit =
-    Workflow.upsertSearchAttributes(
-      attrs.map { case (k, v) => (k, v.attributeValue.asInstanceOf[AnyRef]) }.asJava
+    Workflow.upsertTypedSearchAttributes(
+      ZSearchAttribute.toJavaAttributeUpdates(attrs): _*
     )
 
   /** Creates a builder of client stub to activities that implement given interface.
