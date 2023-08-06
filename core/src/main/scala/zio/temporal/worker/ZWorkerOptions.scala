@@ -8,7 +8,7 @@ import io.temporal.worker.WorkerOptions
   * @see
   *   [[WorkerOptions]]
   */
-case class ZWorkerOptions private[zio] (
+final case class ZWorkerOptions private[zio] (
   maxWorkerActivitiesPerSecond:            Option[Double],
   maxConcurrentActivityExecutionSize:      Option[Int],
   maxConcurrentWorkflowTaskExecutionSize:  Option[Int],

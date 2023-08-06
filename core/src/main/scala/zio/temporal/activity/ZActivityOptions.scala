@@ -25,8 +25,8 @@ object ZActivityOptions {
     ZLayer.fromZIO {
       for {
         runtime                  <- ZIO.runtime[R]
-        client                   <- ZIO.environment[ZWorkflowClient]
-        activityCompletionClient <- client.get.newActivityCompletionClient
+        client                   <- ZIO.service[ZWorkflowClient]
+        activityCompletionClient <- client.newActivityCompletionClient
       } yield new ZActivityOptions(runtime, Some(activityCompletionClient))
     }
 }

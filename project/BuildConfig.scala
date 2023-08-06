@@ -53,6 +53,7 @@ object BuildConfig extends Dependencies {
   )
 
   val examplesLibs = baseLibs ++ Seq(
+    Zio.cli,
     Logging.zio,
     Logging.zioSlf4j,
     Logging.logback
@@ -99,6 +100,9 @@ trait Dependencies {
     val testSbt        = org.zio %% "zio-test-sbt"      % versions.zio
     val testMagnolia   = org.zio %% "zio-test-magnolia" % versions.zio
     val testFrameworks = Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+
+    // only for examples
+    val cli = org.zio %% "zio-cli" % "0.5.0"
   }
 
   object Enumeratum {

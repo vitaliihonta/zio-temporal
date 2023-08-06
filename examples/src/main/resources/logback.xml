@@ -12,6 +12,7 @@
     <logger name="io.temporal" level="info"/>
     <logger name="io.temporal.internal.worker.Poller" level="error"/>
     <logger name="zio.temporal.internal.ZioUnsafeFacade" level="info"/>
+    <logger name="com.example" level="info"/>
 
     <root level="info">
         <appender-ref ref="STDOUT"/>
