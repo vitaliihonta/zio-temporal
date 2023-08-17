@@ -13,7 +13,6 @@ object BuildConfig extends Dependencies {
   val coreLibs = baseLibs ++ Seq(
     Zio.streams,
     Utility.scalaJava8Compat,
-    Utility.izumiReflect,
     Testing.scalatest,
     Utility.reflections
   )
@@ -68,9 +67,8 @@ object BuildConfig extends Dependencies {
 trait Dependencies {
 
   private object versions {
-    val temporal = "1.21.1"
-    // todo: update once a version next to 2.0.15 is released
-    val zio        = "2.0.12"
+    val temporal   = "1.21.1"
+    val zio        = "2.0.16"
     val zioLogging = "2.1.13"
     val enumeratum = "1.7.2"
     val jackson    = "2.15.2"
@@ -117,7 +115,6 @@ trait Dependencies {
   object Utility {
     val scalaJava8Compat  = "org.scala-lang.modules" %% "scala-java8-compat"      % "1.0.2"
     val collectionsCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.10.0"
-    val izumiReflect      = org.zio                  %% "izumi-reflect"           % "2.3.1" // the same one used in ZIO
     val reflections       = "org.reflections"         % "reflections"             % "0.10.2"
   }
 
