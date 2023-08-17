@@ -17,35 +17,31 @@ object ScheduledWorkflowMain extends ZIOAppDefault {
       ZWorkerFactory.newWorker(TaskQueue) @@
         ZWorker.addWorkflow[HelloWorkflowWithTimeImpl].fromClass
 
-    val startSchedules = ZIO.serviceWithZIO[ZScheduleClient] { scheduleClient =>
+    def startSchedules(workflowId: String, scheduleId: String) = ZIO.serviceWithZIO[ZScheduleClient] { scheduleClient =>
+      val stub = scheduleClient
+        .newScheduleStartWorkflowStub[HelloWorkflowWithTime]()
+        .withTaskQueue(TaskQueue)
+        .withWorkflowId(workflowId)
+        .build
+
+      val intervalSpec = ZScheduleSpec
+        .intervals(every(15.minutes))
+        .withSkip(
+          // skip weekends
+          calendar
+            .withDayOfWeek(weekend)
+            .withComment("Except weekend")
+        )
+
+      val schedule = ZSchedule
+        .withAction {
+          ZScheduleStartWorkflowStub.start(
+            stub.printGreeting("Hello!")
+          )
+        }
+        .withSpec(intervalSpec)
+
       for {
-        scheduleId <- Random.nextUUID
-        workflowId <- Random.nextUUID
-        stub = scheduleClient
-                 .newScheduleStartWorkflowStub[HelloWorkflowWithTime]()
-                 .withTaskQueue(TaskQueue)
-                 .withWorkflowId(workflowId.toString)
-                 .build
-
-        now <- Clock.instant
-
-        intervalSpec = ZScheduleSpec
-                         .intervals(every(15.minutes))
-                         .withSkip(
-                           // skip weekends
-                           calendar
-                             .withDayOfWeek(weekend)
-                             .withComment("Except weekend")
-                         )
-
-        schedule = ZSchedule
-                     .withAction {
-                       ZScheduleStartWorkflowStub.start(
-                         stub.printGreeting("Hello!")
-                       )
-                     }
-                     .withSpec(intervalSpec)
-
         handle <- scheduleClient.createSchedule(
                     scheduleId.toString,
                     schedule
@@ -60,56 +56,79 @@ object ScheduledWorkflowMain extends ZIOAppDefault {
       } yield handle
     }
 
-    def manipulateWithSchedule(handle: ZScheduleHandle): Task[Unit] = {
-      for {
-        _   <- ZIO.logInfo(s"Manually triggering schedule=${handle.id}")
-        _   <- handle.trigger()
-        _   <- ZIO.sleep(5.seconds)
-        _   <- ZIO.logInfo(s"Pausing schedule=${handle.id}")
-        _   <- handle.pause(note = Some("Temporarily pause"))
-        _   <- ZIO.sleep(30.seconds)
-        _   <- ZIO.logInfo(s"Unpausing schedule=${handle.id}")
-        _   <- handle.unpause(note = Some("Unpause"))
-        _   <- ZIO.logInfo(s"Backfill schdule=${handle.id}")
-        now <- Clock.instant
-        _ <- handle.backfill(
-               List(
-                 ZScheduleBackfill(startAt = now.minusMillis(1.day.toMillis), endAt = now.minusMillis(1.hour.toMillis))
-               )
-             )
-        _ <- ZIO.sleep(30.seconds)
-        _ <- ZIO.logInfo(s"Updating schedule=${handle.id}")
-        _ <- handle.update { input =>
-               val calendarSpec = ZScheduleSpec
-                 .calendars(
-                   calendar
-                     .withSeconds(range())
-                     .withMinutes(range(to = 59, by = 10))
-                     .withHour(range(from = 1, to = 23, by = 2))
-                     .withDayOfMonth(allMonthDays)
-                     .withMonth(allMonths)
-                     .withDayOfWeek(allWeekDays)
-                     .withComment("Every odd hour, every 10 minutes during an hour")
-                 )
-                 .withStartAt(now.plusSeconds(60))
+    def manipulateWithSchedule(
+      handle:     ZScheduleHandle,
+      workflowId: String
+    ): RIO[ZScheduleClient, Unit] = {
+      ZIO.serviceWithZIO[ZScheduleClient] { scheduleClient =>
+        for {
+          _   <- ZIO.logInfo(s"Manually triggering schedule=${handle.id}")
+          _   <- handle.trigger()
+          _   <- ZIO.sleep(5.seconds)
+          _   <- ZIO.logInfo(s"Pausing schedule=${handle.id}")
+          _   <- handle.pause(note = Some("Temporarily pause"))
+          _   <- ZIO.sleep(30.seconds)
+          _   <- ZIO.logInfo(s"Unpausing schedule=${handle.id}")
+          _   <- handle.unpause(note = Some("Unpause"))
+          _   <- ZIO.logInfo(s"Backfill schdule=${handle.id}")
+          now <- Clock.instant
+          _ <-
+            handle.backfill(
+              List(
+                ZScheduleBackfill(startAt = now.minusMillis(1.day.toMillis), endAt = now.minusMillis(1.hour.toMillis))
+              )
+            )
+          _ <- ZIO.sleep(30.seconds)
+          _ <- ZIO.logInfo(s"Updating schedule=${handle.id}")
+          _ <- handle.update { input =>
+                 val calendarSpec = ZScheduleSpec
+                   .calendars(
+                     calendar
+                       .withSeconds(range())
+                       .withMinutes(range(to = 59, by = 4))
+                       .withHour(range(from = 1, to = 23, by = 2))
+                       .withDayOfMonth(allMonthDays)
+                       .withMonth(allMonths)
+                       .withDayOfWeek(allWeekDays)
+                       .withComment("Every odd hour, every 10 minutes during an hour")
+                   )
+                   .withStartAt(now.plusSeconds(10))
 
-               ZScheduleUpdate(
-                 input.description.schedule
-                   .withSpec(calendarSpec)
-               )
-             }
-        _ <- ZIO.sleep(30.seconds)
-        _ <- ZIO.logInfo(s"Deleting schedule=${handle.id}")
-        _ <- handle.delete()
-      } yield ()
+                 val newStub = scheduleClient
+                   .newScheduleStartWorkflowStub[HelloWorkflowWithTime]()
+                   .withTaskQueue(TaskQueue)
+                   .withWorkflowId(workflowId)
+                   .build
+
+                 ZScheduleUpdate(
+                   input.description.schedule
+                     // change workflow parameters
+                     .withAction(
+                       ZScheduleStartWorkflowStub.start(
+                         newStub.printGreeting("Hello updated!")
+                       )
+                     )
+                     .withSpec(calendarSpec)
+                 )
+               }
+          _ <- ZIO.sleep(30.seconds)
+          _ <- ZIO.logInfo("Triggering to demonstrate updated arguments...")
+          _ <- handle.trigger()
+          _ <- ZIO.sleep(30.seconds)
+          _ <- ZIO.logInfo(s"Deleting schedule=${handle.id}")
+          _ <- handle.delete()
+        } yield ()
+      }
     }
 
     val program = for {
-      _      <- registerWorkflows
-      _      <- ZWorkflowServiceStubs.setup()
-      handle <- startSchedules
-      _      <- ZWorkerFactory.setup
-      _      <- manipulateWithSchedule(handle)
+      _          <- registerWorkflows
+      _          <- ZWorkflowServiceStubs.setup()
+      scheduleId <- Random.nextUUID
+      workflowId <- Random.nextUUID
+      handle     <- startSchedules(workflowId.toString, scheduleId.toString)
+      _          <- ZWorkerFactory.setup
+      _          <- manipulateWithSchedule(handle, workflowId.toString)
     } yield ()
 
     program.provideSome[Scope](
