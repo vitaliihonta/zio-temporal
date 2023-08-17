@@ -1,11 +1,11 @@
 package zio.temporal.workflow
 
-import io.temporal.client.ActivityCompletionClient
-import io.temporal.client.WorkflowClient
+import io.temporal.client.{ActivityCompletionClient, BuildIdOperation, WorkflowClient}
 import zio._
 import zio.stream._
-import zio.temporal.internal.ClassTagUtils
-import zio.temporal.{ZHistoryEvent, ZWorkflowExecutionHistory, ZWorkflowExecutionMetadata}
+import zio.temporal.internal.{ClassTagUtils, TemporalInteraction}
+import zio.temporal.{TemporalIO, ZHistoryEvent, ZWorkflowExecutionHistory, ZWorkflowExecutionMetadata}
+
 import scala.jdk.OptionConverters._
 import scala.reflect.ClassTag
 
@@ -122,6 +122,41 @@ final class ZWorkflowClient private[zio] (val toJava: WorkflowClient) {
     ZIO
       .attemptBlocking(toJava.fetchHistory(workflowId, runId.orNull))
       .map(new ZWorkflowExecutionHistory(_))
+
+  /** Allows you to update the worker-build-id based version sets for a particular task queue. This is used in
+    * conjunction with workers who specify their build id and thus opt into the feature.
+    *
+    * @param taskQueue
+    *   The task queue to update the version set(s) of.
+    * @param operation
+    *   The operation to perform. See [[BuildIdOperation]] for more.
+    * @throws io.temporal.client.WorkflowServiceException
+    *   for any failures including networking and service availability issues.
+    * @note
+    *   experimental in Java SDK
+    */
+  def updateWorkerBuildIdCompatibility(taskQueue: String, operation: BuildIdOperation): TemporalIO[Unit] =
+    TemporalInteraction.from {
+      toJava.updateWorkerBuildIdCompatability(taskQueue, operation)
+    }
+
+  /** Returns the worker-build-id based version sets for a particular task queue.
+    *
+    * @param taskQueue
+    *   The task queue to fetch the version set(s) of.
+    * @return
+    *   The version set(s) for the task queue.
+    * @throws io.temporal.client.WorkflowServiceException
+    *   for any failures including networking and service availability issues.
+    * @note
+    *   experimental in Java SDK
+    */
+  def getWorkerBuildIdCompatibility(taskQueue: String): TemporalIO[ZWorkerBuildIdVersionSets] =
+    TemporalInteraction.from {
+      new ZWorkerBuildIdVersionSets(
+        toJava.getWorkerBuildIdCompatability(taskQueue)
+      )
+    }
 }
 
 object ZWorkflowClient {

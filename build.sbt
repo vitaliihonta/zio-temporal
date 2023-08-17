@@ -116,6 +116,7 @@ lazy val core = projectMatrix
   .in(file("core"))
   .settings(baseLibSettings)
   .settings(crossCompileSettings)
+  .enablePlugins(BuildInfoPlugin)
   .settings(
     name := "zio-temporal-core",
     libraryDependencies ++= coreLibs ++ {
@@ -126,7 +127,16 @@ lazy val core = projectMatrix
           ) ++ coreLibsScala2
         case _ => Nil
       }
-    }
+    },
+    buildInfoKeys := Seq[BuildInfoKey](
+      organization,
+      BuildInfoKey.map(name) { case (k, _) => k -> "zio-temporal" },
+      version,
+      scalaVersion,
+      isSnapshot
+    ),
+    buildInfoOptions += BuildInfoOption.ToMap,
+    buildInfoPackage := "zio.temporal.build"
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
 
