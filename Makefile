@@ -21,7 +21,7 @@ start-site: gen-doc
 
 .PHONY: start-temporal
 start-temporal:
-	temporal server start-dev --dynamic-config-value 'frontend.workerVersioningDataAPIs=true'
+	temporal server start-dev --dynamic-config-value 'frontend.workerVersioningDataAPIs=true' --dynamic-config-value 'frontend.workerVersioningWorkflowAPIs=true'
 
 # Heartbeating activity example
 .PHONY: run-heartbeatingactivity-worker
@@ -32,34 +32,34 @@ run-heartbeatingactivity-worker:
 run-heartbeatingactivity-starter:
 	sbt "examples/runMain com.example.heartbeatingactivity.HeartbeatingActivityBatchStarter"
 
-.PHONY: run-heartbeatingactivity-cancel
-run-heartbeatingactivity-cancel:
-	sbt "examples/runMain com.example.heartbeatingactivity.HeartbeatingActivityBatchCancelling"
+.PHONY: run-heartbeatingactivity-terminate
+run-heartbeatingactivity-terminate:
+	sbt "examples/runMain com.example.heartbeatingactivity.HeartbeatingActivityBatchTerminate"
 
 # payments example
 .PHONY: run-payments-example
 run-payments-example:
 	sbt "examples/runMain com.example.payments.Main"
 
-# versioned workflows
-.PHONY: run-versioned-wf-worker-v0
-run-versioned-wf-worker-v0: WORKER_BUILD_ID=wrkr-v0
-run-versioned-wf-worker-v0: run-versioned-wf-worker
+# versioned worker
+.PHONY: run-versioned-worker-v0
+run-versioned-worker-v0: WORKER_BUILD_ID=wrkr-v0
+run-versioned-worker-v0: run-versioned-worker
 
-.PHONY: run-versioned-wf-worker-v1
-run-versioned-wf-worker-v1: WORKER_BUILD_ID=wrkr-v1
-run-versioned-wf-worker-v1: run-versioned-wf-worker
+.PHONY: run-versioned-worker-v1
+run-versioned-worker-v1: WORKER_BUILD_ID=wrkr-v1
+run-versioned-worker-v1: run-versioned-worker
 
-run-versioned-wf-worker:
-	sbt "examples/runMain com.example.versioning.VersionedWorkflowMain worker --build-id=$(WORKER_BUILD_ID)"
+run-versioned-worker:
+	sbt "examples/runMain com.example.versioning_worker.VersionedWorkerMain worker $(WORKER_BUILD_ID)"
 
-.PHONY: run-versioned-wf-starter-v0
-run-versioned-wf-starter-v0: WORKER_BUILD_ID=wrkr-v0
-run-versioned-wf-starter-v0: run-versioned-wf-starter
+.PHONY: run-versioned-worker-starter-v0
+run-versioned-worker-starter-v0: WORKER_BUILD_ID=wrkr-v0
+run-versioned-worker-starter-v0:  run-versioned-worker-starter
 
-.PHONY: run-versioned-wf-starter-v1
-run-versioned-wf-starter-v1: WORKER_BUILD_ID=wrkr-v1
-run-versioned-wf-starter-v1: run-versioned-wf-starter
+.PHONY: run-versioned-worker-starter-v1
+run-versioned-worker-starter-v1: WORKER_BUILD_ID=wrkr-v1
+run-versioned-worker-starter-v1: run-versioned-worker-starter
 
-run-versioned-wf-starter:
-	sbt "examples/runMain com.example.versioning.VersionedWorkflowMain start --build-id=$(WORKER_BUILD_ID)"
+run-versioned-worker-starter:
+	sbt "examples/runMain com.example.versioning_worker.VersionedWorkerMain start $(WORKER_BUILD_ID)"

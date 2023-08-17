@@ -1,4 +1,4 @@
-package com.example.versioning
+package com.example.versioning_worker
 
 import zio.temporal._
 
@@ -23,6 +23,4 @@ trait SubscriptionActivities {
     *   paymentId
     */
   def proceedPayment(subscriptionId: String, amount: BigDecimal): String
-
-  def sendReceipt(subscriptionId: String, paymentId: String, email: String): Unit
 }

@@ -1,4 +1,4 @@
-package com.example.versioning
+package com.example.versioning_worker
 
 import io.temporal.client.BuildIdOperation
 import zio.{BuildInfo => _, _}
@@ -15,7 +15,7 @@ import zio.temporal.workflow.{
 }
 import zio.temporal.build.BuildInfo
 
-object VersionedWorkflowMain extends ZIOCliDefault {
+object VersionedWorkerMain extends ZIOCliDefault {
 
   val TaskQueue = "versioned-workflows"
 
@@ -53,7 +53,7 @@ object VersionedWorkflowMain extends ZIOCliDefault {
     val workerOptions = ZWorkerOptions.default.withBuildId(buildId)
 
     val registerWorkflows = ZWorkerFactory.newWorker(TaskQueue, workerOptions) @@
-      ZWorker.addWorkflow[SubscriptionWorkflowV1].fromClass @@
+      ZWorker.addWorkflow[SubscriptionWorkflowImpl].fromClass @@
       ZWorker.addActivityImplementationService[SubscriptionActivities]
 
     val program = for {
@@ -80,7 +80,6 @@ object VersionedWorkflowMain extends ZIOCliDefault {
         // starter should set the version
         _ <- client.updateWorkerBuildIdCompatibility(
                TaskQueue,
-               // todo: figure out how it works
                BuildIdOperation.newIdInNewDefaultSet(buildId)
              )
         subscriptionId <- Random.nextUUID

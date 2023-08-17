@@ -6,7 +6,7 @@ import zio.temporal.activity._
 import zio.temporal.workflow._
 import zio.logging.backend.SLF4J
 
-object HeartbeatingActivityBatchCancelling extends ZIOAppDefault {
+object HeartbeatingActivityBatchTerminate extends ZIOAppDefault {
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
     Runtime.removeDefaultLoggers ++ SLF4J.slf4j
 
@@ -14,10 +14,10 @@ object HeartbeatingActivityBatchCancelling extends ZIOAppDefault {
     val program = for {
       _              <- ZWorkflowServiceStubs.setup()
       workflowClient <- ZIO.service[ZWorkflowClient]
-      workflowId     <- ZIO.consoleWith(_.readLine("Enter workflowId to cancel: "))
+      workflowId     <- ZIO.consoleWith(_.readLine("Enter workflowId to terminate: "))
 
       batchWorkflow <- workflowClient.newWorkflowStub[HeartbeatingActivityBatchWorkflow](workflowId)
-      _             <- batchWorkflow.cancel
+      _             <- batchWorkflow.terminate(reason = Some("Requested"))
       _             <- ZIO.logInfo(s"Cancelled workflowId=$workflowId")
     } yield ()
 

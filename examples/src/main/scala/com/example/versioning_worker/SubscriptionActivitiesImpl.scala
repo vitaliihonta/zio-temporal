@@ -1,4 +1,4 @@
-package com.example.versioning
+package com.example.versioning_worker
 
 import zio._
 import zio.temporal.activity._
@@ -31,15 +31,6 @@ class SubscriptionActivitiesImpl()(implicit options: ZActivityOptions[Any]) exte
       } yield {
         s"payment-$subscriptionId"
       }
-    }
-  }
-
-  override def sendReceipt(subscriptionId: String, paymentId: String, email: String): Unit = {
-    ZActivity.run {
-      for {
-        _ <- ZIO.logInfo(s"Sending receipt subscription=$subscriptionId payment=$paymentId to=$email")
-        _ <- ZIO.sleep(5.seconds)
-      } yield ()
     }
   }
 }
