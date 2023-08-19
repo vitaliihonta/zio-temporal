@@ -21,7 +21,8 @@ const sidebars = {
         "workflows/continue-as-new",
         "workflows/timers",
         "workflows/external-workflows",
-        "workflows/schedules"
+        "workflows/schedules",
+        "workflows/versioning"
       ]
     },
     {

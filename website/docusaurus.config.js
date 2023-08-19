@@ -26,7 +26,8 @@ const siteConfig = {
       additionalLanguages: [
         'java',
         'scala',
-        'protobuf'
+        'protobuf',
+        'bash'
       ],
     },
     metadata: [
