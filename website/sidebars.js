@@ -20,7 +20,9 @@ const sidebars = {
         "workflows/child-workflows",
         "workflows/continue-as-new",
         "workflows/timers",
-        "workflows/external-workflows"
+        "workflows/external-workflows",
+        "workflows/schedules",
+        "workflows/versioning"
       ]
     },
     {

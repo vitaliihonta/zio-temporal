@@ -13,6 +13,14 @@ final case class ZSchedule private[zio] (
   policy: ZSchedulePolicy,
   state:  ZScheduleState) {
 
+  /** Update the action for this schedule. Required to build.
+    *
+    * @see
+    *   [[ZScheduleAction]]
+    */
+  def withAction(action: ZScheduleAction): ZSchedule =
+    copy(action = action)
+
   /** Set the spec for this schedule. Required to build.
     *
     * @see
