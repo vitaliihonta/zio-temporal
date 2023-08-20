@@ -5,6 +5,7 @@ object BuildConfig extends Dependencies {
 
   val baseLibs = Seq(
     Temporal.self,
+    Temporal.openTracing % Optional,
     Zio.self,
     Jackson.scala,
     Jackson.jsr310
@@ -27,7 +28,7 @@ object BuildConfig extends Dependencies {
     Temporal.testing
   )
 
-  val testLibs = (baseLibs ++ Seq(
+  val testLibs = baseLibs ++ Seq(
     Zio.test,
     Zio.testSbt,
     Zio.testMagnolia,
@@ -35,7 +36,7 @@ object BuildConfig extends Dependencies {
     Logging.zioSlf4j,
     Logging.logback,
     Testing.scalatest
-  )).map(_ % Test)
+  ).map(_ % Test)
 
   val testLibsScala2 = Seq(
     Enumeratum.enumeratum % Test
@@ -56,8 +57,10 @@ object BuildConfig extends Dependencies {
     Zio.cli,
     Logging.zio,
     Logging.zioSlf4j,
-    Logging.logback
-  )
+    Logging.logback,
+    Temporal.openTracing,
+    Monitoring.micrometerOtlp
+  ) ++ Monitoring.otel
 
   val docsLibs = baseLibs ++ examplesLibs ++ Seq(
     Zio.test,
@@ -74,6 +77,7 @@ trait Dependencies {
     val zioLogging = "2.1.13"
     val enumeratum = "1.7.2"
     val jackson    = "2.15.2"
+    val otel       = "1.29.0"
   }
 
   object org {
@@ -83,8 +87,9 @@ trait Dependencies {
   }
 
   object Temporal {
-    val self    = org.temporal % "temporal-sdk"     % versions.temporal
-    val testing = org.temporal % "temporal-testing" % versions.temporal
+    val self        = org.temporal % "temporal-sdk"         % versions.temporal
+    val testing     = org.temporal % "temporal-testing"     % versions.temporal
+    val openTracing = org.temporal % "temporal-opentracing" % versions.temporal
   }
 
   object Jackson {
@@ -135,5 +140,16 @@ trait Dependencies {
 
   object Testing {
     val scalatest = "org.scalatest" %% "scalatest" % "3.2.16"
+  }
+
+  object Monitoring {
+    val otelApi              = "io.opentelemetry" % "opentelemetry-api"                         % versions.otel
+    val otelExporterOtlp     = "io.opentelemetry" % "opentelemetry-exporter-otlp"               % versions.otel
+    val otelTracePropagators = "io.opentelemetry" % "opentelemetry-extension-trace-propagators" % versions.otel
+    val otelOpentracingShim  = "io.opentelemetry" % "opentelemetry-opentracing-shim"            % versions.otel
+
+    val otel = Seq(otelApi, otelExporterOtlp, otelTracePropagators, otelOpentracingShim)
+
+    val micrometerOtlp = "io.micrometer" % "micrometer-registry-otlp" % "1.11.3"
   }
 }

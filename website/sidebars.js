@@ -53,6 +53,11 @@ const sidebars = {
       ]
     },
     {
+      "type": "doc",
+      "id": "observability",
+      "label": "Observability"
+    },
+    {
       type: "category",
       label: "Advanced",
       items: [

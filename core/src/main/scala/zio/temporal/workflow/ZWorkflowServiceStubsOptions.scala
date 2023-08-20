@@ -1,5 +1,6 @@
 package zio.temporal.workflow
 
+import com.uber.m3.tally.Scope
 import io.grpc.ManagedChannel
 import io.grpc.Metadata
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext
@@ -29,6 +30,7 @@ case class ZWorkflowServiceStubsOptions private[zio] (
   grpcReconnectFrequency:               Option[Duration],
   headers:                              Option[Metadata],
   grpcMetadataProvider:                 Option[GrpcMetadataProvider],
+  metricsScope:                         Option[Scope],
   private val javaOptionsCustomization: WorkflowServiceStubsOptions.Builder => WorkflowServiceStubsOptions.Builder) {
 
   def withServiceUrl(value: String): ZWorkflowServiceStubsOptions =
@@ -76,11 +78,21 @@ case class ZWorkflowServiceStubsOptions private[zio] (
   def withHeaders(value: Metadata): ZWorkflowServiceStubsOptions =
     copy(headers = Some(value))
 
-  /** @param grpcMetadataProvider
+  /** @param value
     *   gRPC metadata/headers provider to be called on each gRPC request to supply additional headers
     */
-  def withGrpcMetadataProvider(grpcMetadataProvider: GrpcMetadataProvider): ZWorkflowServiceStubsOptions =
-    copy(grpcMetadataProvider = Some(grpcMetadataProvider))
+  def withGrpcMetadataProvider(value: GrpcMetadataProvider): ZWorkflowServiceStubsOptions =
+    copy(grpcMetadataProvider = Some(value))
+
+  /** Sets the scope to be used for metrics reporting. Optional. Default is to not report metrics.
+    *
+    * <p>This method should be used to integrate client and workers with external metrics and monitoring systems.
+    *
+    * @param value
+    *   the scope to be used for metrics reporting.
+    */
+  def withMetricsScope(value: Scope): ZWorkflowServiceStubsOptions =
+    copy(metricsScope = Some(value))
 
   /** Allows to specify options directly on the java SDK's [[WorkflowServiceStubsOptions]]. Use it in case an
     * appropriate `withXXX` method is missing
@@ -112,6 +124,7 @@ case class ZWorkflowServiceStubsOptions private[zio] (
     grpcReconnectFrequency.foreach(t => builder.setGrpcReconnectFrequency(t.asJava))
     headers.foreach(builder.setHeaders)
     grpcMetadataProvider.foreach(builder.addGrpcMetadataProvider)
+    metricsScope.foreach(builder.setMetricsScope(_))
 
     javaOptionsCustomization(builder).build()
   }
@@ -166,6 +179,9 @@ object ZWorkflowServiceStubsOptions extends ConfigurationCompanion[ZWorkflowServ
 
   def withGrpcMetadataProvider(grpcMetadataProvider: GrpcMetadataProvider): Configure =
     configure(_.withGrpcMetadataProvider(grpcMetadataProvider))
+
+  def withMetricsScope(value: Scope): Configure =
+    configure(_.withMetricsScope(value))
 
   def transformJavaOptions(
     f: WorkflowServiceStubsOptions.Builder => WorkflowServiceStubsOptions.Builder
@@ -232,6 +248,7 @@ object ZWorkflowServiceStubsOptions extends ConfigurationCompanion[ZWorkflowServ
             grpcReconnectFrequency = grpcReconnectFrequency,
             headers = None,
             grpcMetadataProvider = None,
+            metricsScope = None,
             javaOptionsCustomization = identity
           )
       }
