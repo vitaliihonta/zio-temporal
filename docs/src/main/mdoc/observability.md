@@ -15,11 +15,170 @@ This section covers features related to viewing the state of the application, in
 
 ## How to emit metrics
 
-tbd
+Each Temporal SDK is capable of emitting an optional set of metrics from either the Client or the Worker process. For a
+complete list of metrics capable of being emitted, see the SDK metrics referenceLink preview icon.
+
+Metrics can be scraped and stored in time series databases, such as:
+
+- Prometheus
+- M3db
+- statsd
+
+For more information about dasbharods, see
+Temporal [Java SDK guide](https://docs.temporal.io/dev-guide/java/observability#metrics)
+
+To emit metrics, use the `MicrometerClientStatsReporter` class to integrate with Micrometer `MeterRegistry`
+configured for your metrics backend. Micrometer is a popular Java framework that provides integration with Prometheus
+and other backends.
+
+The following example shows how to use `MicrometerClientStatsReporter` to define the metrics scope and set it with the
+`ZWorkflowServiceStubsOptions`.
+
+**(1)** Add necessary dependencies
+
+```scala
+libraryDependencies ++= Seq(
+  // Temporal integration with opentracing
+  "io.temporal" % "temporal-opentracing" % "<temporal-version>",
+  // Micrometer-otlp integration
+  "io.micrometer" % "micrometer-registry-otlp" % "<micrometer-version>",
+  // Opentelemetry libs
+  "io.opentelemetry" % "opentelemetry-api"                         % "<otel-version>",
+  "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "<otel-version>",
+  "io.opentelemetry" % "opentelemetry-extension-trace-propagators" % "<otel-version>",
+  "io.opentelemetry" % "opentelemetry-opentracing-shim"            % "<otel-version>"
+)
+```
+
+**(2)** Configure the Opentelemetry-based metrics registry & provide it to the `ZWorkflowServiceStubsOptions`:
+
+```scala mdoc
+import zio._
+import zio.temporal._
+import zio.temporal.workflow._
+// required for metrics
+import com.uber.m3.tally.RootScopeBuilder
+import io.micrometer.registry.otlp.{OtlpConfig, OtlpMeterRegistry}
+import io.temporal.common.reporter.MicrometerClientStatsReporter
+
+// OtlpConfig is a SAM, so Map#get is easily convertable into OtlpConfig
+val otlpConfig: OtlpConfig =
+  Map(
+    "url"                -> "http://otlp-server-endpoint:4317",
+    "resourceAttributes" -> "service.name=<service-name>"
+  ).get(_).orNull
+
+val metricsScope = new RootScopeBuilder()
+  .reporter(
+    new MicrometerClientStatsReporter(
+      new OtlpMeterRegistry(
+        otlpConfig,
+        io.micrometer.core.instrument.Clock.SYSTEM
+      )
+    )
+  )
+  // it's usually better to use bigger intervals in production
+  .reportEvery(5.seconds)
+
+val workflowServiceStubsOptionsLayer =
+  ZWorkflowServiceStubsOptions.make @@
+    ZWorkflowServiceStubsOptions.withMetricsScope(metricsScope)
+```
+
+For more details,
+find [Monitoring samples](https://github.com/vitaliihonta/zio-temporal/tree/main/examples/src/main/scala/com/example).
+For details on configuring a OTLP scrape endpoint with Micrometer, see
+Micrometer [OTLP doc](https://micrometer.io/docs/registry/otlp)
 
 ## How to setup Tracing
 
-tbd
+Tracing allows you to view the call graph of a Workflow along with its Activities and any Child Workflows.
+
+Temporal Web's tracing capabilities mainly track Activity Execution within a Temporal context. If you need custom
+tracing specific for your use case, you should make use of context propagation to add tracing logic accordingly.
+
+Both client-side & worker-side tracing requires `OpenTracingOptions`. It can be build in the following way:
+```scala mdoc
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
+import io.opentelemetry.context.propagation.{ContextPropagators, TextMapPropagator}
+import io.temporal.opentracing.OpenTracingOptions
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.opentracingshim.OpenTracingShim
+import io.opentelemetry.sdk.OpenTelemetrySdk
+import io.opentelemetry.sdk.resources.Resource
+import io.opentelemetry.sdk.trace.SdkTracerProvider
+import io.opentelemetry.sdk.trace.`export`.SimpleSpanProcessor
+import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
+import io.opentelemetry.extension.trace.propagation.OtTracePropagator
+import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
+
+val tracingOptions: OpenTracingOptions = {
+  val selfResource = Resource.getDefault.merge(
+    Resource.create(Attributes.of(ResourceAttributes.SERVICE_NAME, "<resource-name>"))
+  )
+  
+  val spanProcessor = SimpleSpanProcessor.create(
+    OtlpGrpcSpanExporter
+      .builder()
+      .setEndpoint("http://otlp-server-endpoint:4317")
+      .setTimeout(5.seconds)
+      .build()
+  )
+  
+  val tracerProvider = SdkTracerProvider
+    .builder()
+    .addSpanProcessor(spanProcessor)
+    .setResource(selfResource)
+    .build()
+  
+  val propagators = ContextPropagators.create(
+    TextMapPropagator.composite(
+      W3CTraceContextPropagator.getInstance(),
+      OtTracePropagator.getInstance()
+    )
+  )
+  
+  OpenTracingOptions
+    .newBuilder()
+    .setTracer(
+      OpenTracingShim.createTracerShim(
+        OpenTelemetrySdk
+          .builder()
+          .setPropagators(propagators)
+          .setTracerProvider(tracerProvider)
+          .build()
+      )
+    )
+    .build()
+}
+```
+
+To configure tracing, register the `OpenTracingClientInterceptor` interceptor. You can register the interceptors
+on both the Temporal Client side and the Worker side.
+
+The following code examples demonstrate the `OpenTracingClientInterceptor` on the Temporal Client.
+
+```scala mdoc
+import io.temporal.opentracing.OpenTracingClientInterceptor
+
+val otlpClientInterceptor = new OpenTracingClientInterceptor(tracingOptions)
+
+val workflowClientOptionsLayer = ZWorkflowClientOptions.make @@
+  ZWorkflowClientOptions.withInterceptors(otlpClientInterceptor)
+```
+
+The following code examples demonstrate the `OpenTracingWorkerInterceptor` on the Worker:
+```scala mdoc
+import io.temporal.opentracing.OpenTracingWorkerInterceptor
+import zio.temporal.worker._
+
+val otlpWorkerInterceptor = new OpenTracingWorkerInterceptor(tracingOptions)
+
+val workerFactoryOptionsLayer = ZWorkerFactoryOptions.make @@
+  ZWorkerFactoryOptions.withWorkerInterceptors(otlpWorkerInterceptor)
+```
+
+For more information, see the Temporal [OpenTracing module](https://github.com/temporalio/sdk-java/blob/master/temporal-opentracing/README.md)
 
 ## How to log from a Workflow
 
@@ -107,7 +266,8 @@ Note that `String` can be encoded both as `text` and `keyword`. By default, it's
 as `keyword`, you must wrap it into `ZSearchAttribute.keyword` method.  
 Other types encoded as `keyword` (such as `UUID`) should be wrapped as well.  
 ZIO Temporal methods to set search attributes usually accept `Map[String, ZSearchAttribute]`.  
-For simple types, just wrap them with `ZSearchAttribute()` method call, while `keyword`-based types should be wrapped into `ZSearchAttribute.keyword` method:
+For simple types, just wrap them with `ZSearchAttribute()` method call, while `keyword`-based types should be wrapped
+into `ZSearchAttribute.keyword` method:
 
 ```scala mdoc
 import java.util.UUID
@@ -219,7 +379,8 @@ class MyWorkflowImpl extends MyWorkflow {
 }
 ```
 
-**(4)** In case you want to encode your custom type as a search attribute, it's required to define as implicit instance of `ZSearchAttributeMeta` based on an existing type:  
+**(4)** In case you want to encode your custom type as a search attribute, it's required to define as implicit instance
+of `ZSearchAttributeMeta` based on an existing type:
 
 ```scala mdoc
 case class MyCustomType(value: String)
