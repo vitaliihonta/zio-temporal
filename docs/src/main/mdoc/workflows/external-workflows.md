@@ -140,6 +140,8 @@ class FoodOrderWorkflowImpl extends FoodOrderWorkflow {
 }
 ```
 
+Important notes:
+
 - To create an external workflow stub, you must use `ZWorkflow.newExternalWorkflowStub[<WorkflowType>]` method.
   - The workflow ID must be known to create the stub
 - **Reminder: you must always** wrap the external workflow signal invocation into `ZExternalWorkflowStub.signal` method.
