@@ -220,9 +220,12 @@ lazy val examples = projectMatrix
   .jvmPlatform(scalaVersions = allScalaVersions)
 
 lazy val projectStableVersion = Def.setting {
-  val prevStable = (ThisBuild / previousStableVersion).value
-  if (prevStable.isDefined) prevStable.get
-  else (ThisBuild / version).value
+  if ((ThisBuild / isVersionStable).value) (ThisBuild / version).value
+  else {
+    val prevStable = (ThisBuild / previousStableVersion).value
+    if (prevStable.isDefined) prevStable.get
+    else (ThisBuild / version).value
+  }
 }
 
 // MDOC
