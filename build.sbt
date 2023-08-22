@@ -6,6 +6,13 @@ val scala3   = "3.3.0"
 
 val allScalaVersions          = List(scala212, scala213, scala3)
 val documentationScalaVersion = scala213
+val projectStableVersion      = settingKey[String]("project stable version")
+
+ThisBuild / projectStableVersion := {
+  lazy val prevStable = (ThisBuild / previousStableVersion).value
+  if ((ThisBuild / isSnapshot).value && prevStable.isDefined) prevStable.get
+  else (ThisBuild / version).value
+}
 
 ThisBuild / organization           := "dev.vhonta"
 ThisBuild / versionScheme          := Some("early-semver")
@@ -218,15 +225,6 @@ lazy val examples = projectMatrix
     protobuf
   )
   .jvmPlatform(scalaVersions = allScalaVersions)
-
-lazy val projectStableVersion = Def.setting {
-  if ((ThisBuild / isVersionStable).value) (ThisBuild / version).value
-  else {
-    val prevStable = (ThisBuild / previousStableVersion).value
-    if (prevStable.isDefined) prevStable.get
-    else (ThisBuild / version).value
-  }
-}
 
 // MDOC
 lazy val mdocSettings = Seq(
