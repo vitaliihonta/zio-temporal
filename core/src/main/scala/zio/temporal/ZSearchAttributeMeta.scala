@@ -64,7 +64,7 @@ sealed trait ZSearchAttributeMeta[A, Tag] { self =>
     * @return
     *   a new meta
     */
-  def convert[B](project: A => B, reverse: B => A): ZSearchAttributeMeta.Of[B, Tag, self.Repr] =
+  def convert[B](project: A => B)(reverse: B => A): ZSearchAttributeMeta.Of[B, Tag, self.Repr] =
     new ZSearchAttributeMeta[B, Tag] {
       override type Repr = self.Repr
 
@@ -103,29 +103,29 @@ object ZSearchAttributeMeta extends ZSearchAttributeMetaCollectionInstances with
   implicit val string: ZSearchAttributeMeta.Of[String, Plain, String]    = StringMeta
   implicit val boolean: ZSearchAttributeMeta.Of[Boolean, Plain, Boolean] = BooleanMeta
   implicit val long: ZSearchAttributeMeta.Of[Long, Plain, Long]          = LongMeta
-  implicit val integer: ZSearchAttributeMeta.Of[Int, Plain, Long]        = long.convert(_.toInt, _.toLong)
+  implicit val integer: ZSearchAttributeMeta.Of[Int, Plain, Long]        = long.convert(_.toInt)(_.toLong)
   implicit val double: ZSearchAttributeMeta.Of[Double, Plain, Double]    = DoubleMeta
 
   implicit val bigInt: ZSearchAttributeMeta.Of[BigInt, Plain, String] =
-    string.convert(BigInt(_), _.toString)
+    string.convert(BigInt(_))(_.toString)
 
   implicit val bigDecimal: ZSearchAttributeMeta.Of[BigDecimal, Plain, String] =
-    string.convert(BigDecimal(_), _.toString)
+    string.convert(BigDecimal(_))(_.toString)
 
   implicit val uuid: ZSearchAttributeMeta.Of[UUID, Keyword, String] =
-    stringKeyword.convert(UUID.fromString, _.toString)
+    stringKeyword.convert(UUID.fromString)(_.toString)
 
   implicit val offsetDateTime: ZSearchAttributeMeta.Of[OffsetDateTime, Plain, OffsetDateTime] =
     OffsetDateTimeMeta
 
   implicit val localDateTime: ZSearchAttributeMeta.Of[LocalDateTime, Plain, OffsetDateTime] =
-    offsetDateTime.convert(_.toLocalDateTime, _.atOffset(ZoneOffset.UTC))
+    offsetDateTime.convert(_.toLocalDateTime)(_.atOffset(ZoneOffset.UTC))
 
   implicit val instant: ZSearchAttributeMeta.Of[Instant, Plain, OffsetDateTime] =
-    offsetDateTime.convert(_.toInstant, _.atOffset(ZoneOffset.UTC))
+    offsetDateTime.convert(_.toInstant)(_.atOffset(ZoneOffset.UTC))
 
   implicit val currentTimeMillis: ZSearchAttributeMeta.Of[ZCurrentTimeMillis, Plain, OffsetDateTime] =
-    offsetDateTime.convert(otd => new ZCurrentTimeMillis(otd.toInstant.toEpochMilli), _.toOffsetDateTime())
+    offsetDateTime.convert(otd => new ZCurrentTimeMillis(otd.toInstant.toEpochMilli))(_.toOffsetDateTime())
 
   implicit def option[V, Tag, R](
     implicit underlying: ZSearchAttributeMeta.Of[V, Tag, R]
@@ -135,7 +135,7 @@ object ZSearchAttributeMeta extends ZSearchAttributeMetaCollectionInstances with
   implicit def array[V: ClassTag](
     implicit asString: ZSearchAttributeMeta.Of[V, Keyword, String]
   ): ZSearchAttributeMeta.Of[Array[V], Keyword, ju.List[String]] =
-    keywordListImpl[V].convert(_.toArray, _.toList)
+    keywordListImpl[V].convert(_.toArray)(_.toList)
 
   protected[zio] def keywordListImpl[V](
     implicit asString: ZSearchAttributeMeta.Of[V, Keyword, String]

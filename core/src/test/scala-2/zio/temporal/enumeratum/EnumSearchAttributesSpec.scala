@@ -38,7 +38,6 @@ object EnumSearchAttributesSpec {
 
 class EnumSearchAttributesSpec extends AnyWordSpec {
   import EnumSearchAttributesSpec._
-  import zio.temporal.enumeratum
 
   "ZSearchAttributeMeta" should {
     "work for enumeratum string enums" in {

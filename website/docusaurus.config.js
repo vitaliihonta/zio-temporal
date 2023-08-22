@@ -5,6 +5,7 @@ const siteConfig = {
   baseUrl: '/',
   projectName: 'zio-temporal',
   favicon: 'img/favicon/favicon.ico',
+  trailingSlash: false,
   presets: [
     [
       '@docusaurus/preset-classic',
@@ -25,7 +26,8 @@ const siteConfig = {
       additionalLanguages: [
         'java',
         'scala',
-        'protobuf'
+        'protobuf',
+        'bash'
       ],
     },
     metadata: [

@@ -58,6 +58,8 @@ class GreetingWorkflowSimple extends GreetingWorkflow {
 }
 ```
 
+Important notes:
+
 - To create a child workflow stub, you must use `ZWorkflow.newChildWorkflowStub[<ChildType>]` method.
   - It's possible to configure the child workflow because `newChildWorkflowStub` returns a builder
 - **Reminder: you must always** wrap the child workflow invocation into `ZChildWorkflowStub.execute` method.
