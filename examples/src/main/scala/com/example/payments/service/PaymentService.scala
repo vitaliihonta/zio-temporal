@@ -104,8 +104,8 @@ class TemporalPaymentService(workflowClient: ZWorkflowClient) extends PaymentSer
     }
 
   private def withErrorHandling[R, A](thunk: TemporalRIO[R, A]): ZIO[R, PaymentError, A] =
-    thunk.mapError { workflowException =>
-      PaymentError(workflowException.toString)
+    thunk.mapError { exception =>
+      PaymentError(exception.toString)
     }
 
   private def updateLogContext(transactionId: UUID): UIO[Unit] =

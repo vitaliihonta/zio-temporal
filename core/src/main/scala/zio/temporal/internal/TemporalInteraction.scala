@@ -1,10 +1,9 @@
 package zio.temporal.internal
 
-import io.temporal.client.WorkflowException
+import io.temporal.failure.TemporalException
 import zio.ZIO
 import zio.temporal.TemporalIO
 import zio.temporal.internalApi
-
 import java.util.concurrent.CompletableFuture
 import scala.concurrent.TimeoutException
 
@@ -14,13 +13,13 @@ object TemporalInteraction {
   def from[A](thunk: => A): TemporalIO[A] = {
     ZIO
       .attemptBlocking(thunk)
-      .refineToOrDie[WorkflowException]
+      .refineToOrDie[TemporalException]
   }
 
   def fromFuture[A](future: => CompletableFuture[A]): TemporalIO[A] =
     ZIO
       .fromFutureJava(future)
-      .refineToOrDie[WorkflowException]
+      .refineToOrDie[TemporalException]
 
   def fromFutureTimeout[A](future: => CompletableFuture[A]): TemporalIO[Option[A]] =
     ZIO
@@ -29,5 +28,5 @@ object TemporalInteraction {
       .catchSome { case _: TimeoutException =>
         ZIO.none
       }
-      .refineToOrDie[WorkflowException]
+      .refineToOrDie[TemporalException]
 }
