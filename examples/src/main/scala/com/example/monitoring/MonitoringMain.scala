@@ -5,7 +5,6 @@ import io.micrometer.registry.otlp.{OtlpConfig, OtlpMeterRegistry}
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.propagation.{ContextPropagators, TextMapPropagator}
-import io.temporal.client.WorkflowException
 import io.temporal.common.reporter.MicrometerClientStatsReporter
 import io.temporal.opentracing.{OpenTracingClientInterceptor, OpenTracingOptions, OpenTracingWorkerInterceptor}
 import io.opentelemetry.opentracingshim.OpenTracingShim
@@ -16,6 +15,7 @@ import io.opentelemetry.sdk.trace.`export`.SimpleSpanProcessor
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
 import io.opentelemetry.extension.trace.propagation.OtTracePropagator
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
+import io.temporal.failure.TemporalException
 import zio._
 import zio.logging.backend.SLF4J
 import zio.temporal._
@@ -35,7 +35,7 @@ object MonitoringMain extends ZIOAppDefault {
         ZWorker.addWorkflow[SampleWorkflowImpl].fromClass @@
         ZWorker.addActivityImplementationService[SampleActivities]
 
-    def invokeWorkflows(who: String): ZIO[ZWorkflowClient, WorkflowException, Unit] =
+    def invokeWorkflows(who: String): ZIO[ZWorkflowClient, TemporalException, Unit] =
       ZIO.serviceWithZIO[ZWorkflowClient] { client =>
         for {
           workflowId <- Random.nextUUID

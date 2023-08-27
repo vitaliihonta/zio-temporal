@@ -6,7 +6,7 @@ import zio.temporal.worker._
 import zio.temporal.activity._
 import zio.temporal.workflow._
 import zio.logging.backend.SLF4J
-import io.temporal.client.WorkflowException
+import io.temporal.failure.TemporalException
 
 object TripBookingSaga extends ZIOAppDefault {
   val TaskQueue = "trip-booking"
@@ -33,7 +33,7 @@ object TripBookingSaga extends ZIOAppDefault {
              .execute(
                trip.bookTrip(name)
              )
-             .catchAll { (e: WorkflowException) =>
+             .catchAll { (e: TemporalException) =>
                ZIO.logInfo(s"Workflow execution failed (as expected): $e")
              }
     } yield ()
