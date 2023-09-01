@@ -12,7 +12,7 @@ const features = [
   {
     title: 'Convenient',
     content: [
-      "Working with Temporal is nature like it was developed for Scala."
+      "Working with Temporal is natural like it was developed for Scala."
     ]
   },
   {
