@@ -12,21 +12,21 @@ const features = [
   {
     title: 'Convenient',
     content: [
-      "Working with Temporal is natural like it was developed for Scala."
+      "Working with Temporal is natural as though it was developed for Scala"
     ]
   },
   {
     title: 'Robust',
     content: [
-      "Most typical errors are handled by the library at compile time.",
-      "No more runtime exceptions!"
+      "The library handles most typical programmer errors at compile time.",
+      "No more dumb runtime exceptions!"
     ]
   },
   {
     title: 'ZIO-native',
     content: [
-      "Use your favorite library with Temporal!",
-      "Running ZIO code inside your workflows never been that easy!"
+      "Use your favorite ZIO library with Temporal!",
+      "Running ZIO code inside your workflows has never been that easy!"
     ]
   },
 ];
