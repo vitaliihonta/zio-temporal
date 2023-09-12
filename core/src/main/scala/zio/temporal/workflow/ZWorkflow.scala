@@ -1,6 +1,6 @@
 package zio.temporal.workflow
 
-import io.temporal.common.{SearchAttributeKey, SearchAttributeUpdate}
+import com.uber.m3.tally.Scope
 import io.temporal.workflow.{CancellationScope, ContinueAsNewOptions, Workflow}
 import org.slf4j.Logger
 import zio.temporal.activity._
@@ -16,9 +16,7 @@ import zio.temporal.{
   ZWorkflowInfo
 }
 import zio.{Random => _, _}
-
 import java.util.UUID
-import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
 import scala.reflect.ClassTag
 import scala.util.Random
@@ -475,12 +473,20 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     *   retry options that specify retry policy
     * @param expiration
     *   stop retrying after this interval if provided
-    * @param fn
+    * @param f
     *   function to invoke and retry
     * @return
     *   result of the function or the last failure.
     */
-  def retry[R](options: ZRetryOptions, expiration: Option[Duration] = None)(fn: => R): R =
-    Workflow.retry(options.toJava, expiration.toJava, () => fn)
+  def retry[R](options: ZRetryOptions, expiration: Option[Duration] = None)(f: => R): R =
+    Workflow.retry(options.toJava, expiration.toJava, () => f)
 
+  /** Get scope for reporting business metrics in workflow logic. This should be used instead of creating new metrics
+    * scopes as it is able to dedupe metrics during replay.
+    *
+    * <p>The original metrics scope is set through [[ZWorkflowServiceStubsOptions.withMetricsScope]] when a worker
+    * starts up.
+    */
+  def metricsScope: Scope =
+    Workflow.getMetricsScope
 }
