@@ -631,6 +631,25 @@ object WorkflowSpec extends BaseTemporalSpec {
         // Get the workflow result
         isFinished <- paymentWorkflow.result[Boolean]
       } yield assertTrue(!isFinished)
+    }.provideTestWorkflowEnv,
+    test("Workflow retry") {
+      val taskQueue = "retry-queue"
+      for {
+        workflowId <- ZIO.randomWith(_.nextUUID)
+        _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
+               ZWorker.addWorkflow[RetryWorkflowImpl].fromClass
+
+        _ <- ZTestWorkflowEnvironment.setup()
+
+        retryWorkflow <- ZTestWorkflowEnvironment
+                           .newWorkflowStub[RetryWorkflow]
+                           .withTaskQueue(taskQueue)
+                           .withWorkflowId(workflowId.toString)
+                           .withWorkflowRunTimeout(10.second)
+                           .build
+
+        result <- ZWorkflowStub.execute(retryWorkflow.withRetry(2)).either
+      } yield assert(result)(Assertion.isRight(Assertion.equalTo("OK")))
     }.provideTestWorkflowEnv
   )
 }

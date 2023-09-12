@@ -9,6 +9,7 @@ import zio.temporal.{
   JavaTypeTag,
   TypeIsSpecified,
   ZCurrentTimeMillis,
+  ZRetryOptions,
   ZSearchAttribute,
   ZSearchAttributes,
   ZWorkflowExecution,
@@ -467,4 +468,19 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     */
   def getPreviousRunFailure: Option[Exception] =
     Workflow.getPreviousRunFailure.toScala
+
+  /** Invokes function retrying in case of failures according to retry options. Synchronous variant.
+    *
+    * @param options
+    *   retry options that specify retry policy
+    * @param expiration
+    *   stop retrying after this interval if provided
+    * @param fn
+    *   function to invoke and retry
+    * @return
+    *   result of the function or the last failure.
+    */
+  def retry[R](options: ZRetryOptions, expiration: Option[Duration] = None)(fn: => R): R =
+    Workflow.retry(options.toJava, expiration.toJava, () => fn)
+
 }
