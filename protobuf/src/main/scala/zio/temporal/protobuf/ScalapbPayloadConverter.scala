@@ -1,59 +1,24 @@
 package zio.temporal.protobuf
 
 import com.google.protobuf.ByteString
-import com.google.protobuf.`type`.TypeProto
 import com.google.protobuf.any.Any
-import com.google.protobuf.any.AnyProto
-import com.google.protobuf.duration.DurationProto
-import com.google.protobuf.empty.EmptyProto
-import com.google.protobuf.field_mask.FieldMaskProto
-import com.google.protobuf.struct.StructProto
-import com.google.protobuf.timestamp.TimestampProto
-import com.google.protobuf.wrappers.WrappersProto
 import io.temporal.api.common.v1.Payload
 import io.temporal.common.converter.{EncodingKeys, PayloadConverter}
-import scalapb.GeneratedFileObject
-import scalapb.GeneratedMessage
-import scalapb.GeneratedMessageCompanion
-import scalapb.options.ScalapbProto
+import scalapb.{GeneratedMessage, GeneratedMessageCompanion}
 
 import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
 import java.{util => ju}
 
 /** Used to deserialize protobuf generated types */
-class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadConverter {
+class ScalapbPayloadConverter extends PayloadConverter {
 
   private val temporalZioPrefix = "types/zio-temporal"
+  private val scalaModuleField  = "MODULE$"
 
   private def dropTemporalZioPrefix(typeUrl: String): String =
     if (typeUrl.startsWith(temporalZioPrefix + "/")) typeUrl.drop(temporalZioPrefix.length + 1)
     else typeUrl
-
-  private val stdFiles: Seq[GeneratedFileObject] = Seq(
-    AnyProto,
-    DurationProto,
-    EmptyProto,
-    StructProto,
-    FieldMaskProto,
-    TimestampProto,
-    TypeProto,
-    WrappersProto,
-    ScalapbProto,
-    ZioTemporalProto
-  )
-
-  private def nestedCompanions(
-    cmp: GeneratedMessageCompanion[_ <: GeneratedMessage]
-  ): Seq[GeneratedMessageCompanion[_ <: GeneratedMessage]] =
-    cmp.nestedMessagesCompanions.flatMap(nested => Seq(nested) ++ nestedCompanions(nested))
-
-  private val companions = (stdFiles ++ files)
-    .flatMap(_.messagesCompanions.flatMap(cmp => Seq(cmp) ++ nestedCompanions(cmp)))
-    .map { companion =>
-      companion.scalaDescriptor.fullName -> widen(companion)
-    }
-    .toMap
 
   override val getEncodingType: String = "binary/protobuf"
   private val encodingMetaValue        = ByteString.copyFrom(getEncodingType, StandardCharsets.UTF_8)
@@ -110,21 +75,21 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
     writeGeneratedMessage(ZUnit())
 
   override def fromData[T](content: Payload, valueClass: Class[T], valueType: Type): T =
-    getCompanion(content, content.getMetadataOrThrow(EncodingKeys.METADATA_MESSAGE_TYPE_KEY).toStringUtf8)
+    getCompanion(content, content.getMetadataOrThrow(EncodingKeys.METADATA_MESSAGE_TYPE_KEY).toStringUtf8, valueClass)
       .parseFrom(content.getData.newCodedInput()) match {
       case optional: Optional =>
         optional.value match {
           case None => None.asInstanceOf[T]
           case Some(value) =>
             Some(
-              getCompanion(content, dropTemporalZioPrefix(value.typeUrl))
+              getCompanion(content, dropTemporalZioPrefix(value.typeUrl), valueClass)
                 .parseFrom(value.value.newCodedInput())
             ).asInstanceOf[T]
         }
       case result: Result =>
         result.result match {
           case Result.Result.Error(error) =>
-            val decoded = getCompanion(content, dropTemporalZioPrefix(error.typeUrl))
+            val decoded = getCompanion(content, dropTemporalZioPrefix(error.typeUrl), valueClass)
               .parseFrom(error.value.newCodedInput())
 
             val result = if (decoded.isInstanceOf[ZUnit]) () else decoded
@@ -132,7 +97,7 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
             Left(result).asInstanceOf[T]
 
           case Result.Result.Value(value) =>
-            val decoded = getCompanion(content, dropTemporalZioPrefix(value.typeUrl))
+            val decoded = getCompanion(content, dropTemporalZioPrefix(value.typeUrl), valueClass)
               .parseFrom(value.value.newCodedInput())
 
             val result = if (decoded.isInstanceOf[ZUnit]) () else decoded
@@ -149,14 +114,25 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
       case value    => value.asInstanceOf[T]
     }
 
-  private def getCompanion(content: Payload, typeUrl: String): GeneratedMessageCompanion[GeneratedMessage] =
+  private def getCompanion[T](
+    content:    Payload,
+    typeUrl:    String,
+    valueClass: Class[T]
+  ): GeneratedMessageCompanion[GeneratedMessage] =
     if (isEither(typeUrl)) widen(Result.messageCompanion)
     else if (isOption(typeUrl)) widen(Optional.messageCompanion)
-    else
-      companions.getOrElse(
-        typeUrl,
-        throw new ProtobufPayloadException(s"Unable to convert $content to $typeUrl")
-      )
+    else {
+      try {
+        val companionClass = Class.forName(valueClass.getName + "$")
+        companionClass
+          .getDeclaredField(scalaModuleField)
+          .get(null)
+          .asInstanceOf[GeneratedMessageCompanion[GeneratedMessage]]
+      } catch {
+        case _: Exception =>
+          throw new ProtobufPayloadException(s"Unable to convert $content to $typeUrl")
+      }
+    }
 
   private def isEither(typeUrl: String): Boolean =
     typeUrl.startsWith("scala.util.Either")
