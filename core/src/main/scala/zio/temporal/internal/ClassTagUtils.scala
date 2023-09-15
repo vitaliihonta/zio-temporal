@@ -3,13 +3,7 @@ package zio.temporal.internal
 import zio.temporal.{activityMethod, workflowMethod}
 
 import scala.reflect.ClassTag
-import org.reflections.{Reflections, Store}
-import org.reflections.ReflectionUtils._
-import org.reflections.scanners.Scanners
-import org.reflections.util.ReflectionUtilsPredicates.{withAnnotation, withName}
 import org.slf4j.LoggerFactory
-import java.lang.reflect.Method
-import scala.jdk.CollectionConverters._
 
 private[zio] object ClassTagUtils {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -26,14 +20,12 @@ private[zio] object ClassTagUtils {
     * we must use reflection to get the workflow name
     */
   def getWorkflowType[A: ClassTag]: String = {
-    val wfMethod = get[Store, Method](
-      Methods
-        .of(classOf[A])
-        .filter(withAnnotation(Predef.classOf[workflowMethod]))
-        .as(Predef.classOf[Method])
-    ).asScala.headOption.getOrElse {
-      throw new NoWorkflowMethodException(s"${classOf[A]} doesn't have a workflowMethod!")
-    }
+    val wfMethod = classOf[A].getMethods
+      .filterNot(_.getAnnotation(classOf[workflowMethod]) == null)
+      .headOption
+      .getOrElse {
+        throw new NoWorkflowMethodException(s"${classOf[A]} doesn't have a workflowMethod!")
+      }
 
     val name = Option(wfMethod.getAnnotation(Predef.classOf[workflowMethod]).name())
       .filter(_.nonEmpty)
@@ -44,12 +36,7 @@ private[zio] object ClassTagUtils {
   }
 
   def getActivityType(cls: Class[_], methodName: String): String = {
-    val actMethods = get[Store, Method](
-      Methods
-        .of(cls)
-        .filter(withName(methodName))
-        .as(Predef.classOf[Method])
-    ).asScala.toList
+    val actMethods = cls.getMethods.filter(_.getName == methodName).toList
 
     if (actMethods.isEmpty) {
       throw new NoActivityMethodException(s"$cls doesn't have an activity method '$methodName'!")
