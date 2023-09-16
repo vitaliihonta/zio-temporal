@@ -8,8 +8,10 @@ import io.temporal.api.common.v1.Payload
 import io.temporal.common.converter.EncodingKeys
 import org.scalatest.{Assertion, OptionValues}
 import zio.temporal.JavaTypeTag
-
 import java.nio.charset.StandardCharsets
+import scala.concurrent.{Future, Await}
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.jdk.OptionConverters._
 
 object ScalapbPayloadConverterSpec {
@@ -19,16 +21,10 @@ object ScalapbPayloadConverterSpec {
 class ScalapbPayloadConverterSpec extends AnyWordSpec with Matchers with OptionValues {
   import ScalapbPayloadConverterSpec.TemporaryClass
 
-  private val converter = new ScalapbPayloadConverter(
-    files = List(
-      TestingProtoProto,
-      TestingProto2Proto,
-      ProtobufTestsProto
-    )
-  )
+  private val converter = new ScalapbPayloadConverter()
 
   "ScalapbPayloadConverter" should {
-    "(De)Serialize simple case class into protobuf bytes" in {
+    "(de)serialize simple case class into protobuf bytes" in {
       val msg = TestingMessage(test = "hello")
 
       val payload = converter.toData(msg).toScala.value
@@ -39,7 +35,7 @@ class ScalapbPayloadConverterSpec extends AnyWordSpec with Matchers with OptionV
       decoded shouldEqual msg
     }
 
-    "(De)Serialize oneOf" in {
+    "(de)serialize oneOf" in {
       // case 1
       val msg1     = TestingOneOfMessage(value = TestingOneOfMessage.Value.First(TestingCaseFirst(42L)))
       val payload1 = converter.toData(msg1).toScala.value
@@ -57,7 +53,7 @@ class ScalapbPayloadConverterSpec extends AnyWordSpec with Matchers with OptionV
       decoded2 shouldEqual msg2
     }
 
-    "(De)Serialize sealed oneOf" in {
+    "(de)serialize sealed oneOf" in {
       // case 1
       val msg1: TestingOneOfSealedMessage = TestingSealedCaseFirst("bar")
       val payload1                        = converter.toData(msg1).toScala.value
@@ -85,7 +81,7 @@ class ScalapbPayloadConverterSpec extends AnyWordSpec with Matchers with OptionV
       decoded2 shouldEqual msg2
     }
 
-    "(De)Serialize Either" in {
+    "(de)serialize Either" in {
       val msg1: Either[TestingMessage, TestingOneOfSealedMessage] = Left(TestingMessage(test = "hello"))
       val payload1                                                = converter.toData(msg1).toScala.value
       checkProtobufHeaders(payload1)(fullName = Result.scalaDescriptor.fullName)
@@ -107,7 +103,7 @@ class ScalapbPayloadConverterSpec extends AnyWordSpec with Matchers with OptionV
       decoded2 shouldEqual msg2
     }
 
-    "(De)Serialize Option" in {
+    "(de)serialize Option" in {
       val msg1: Option[TestingMessage] = Some(TestingMessage(test = "hello"))
       val payload1                     = converter.toData(msg1).toScala.value
       checkProtobufHeaders(payload1)(fullName = Optional.scalaDescriptor.fullName)
@@ -129,7 +125,7 @@ class ScalapbPayloadConverterSpec extends AnyWordSpec with Matchers with OptionV
       decoded2 shouldEqual msg2
     }
 
-    "(De)Serialize Unit" in {
+    "(de)serialize Unit" in {
       val msg: Unit = ()
 
       val payload = converter.toData(msg).toScala.value
@@ -140,12 +136,12 @@ class ScalapbPayloadConverterSpec extends AnyWordSpec with Matchers with OptionV
       decoded shouldEqual msg
     }
 
-    "Not serialize non-scalapb-generated types" in {
+    "not serialize non-scalapb-generated types" in {
       converter.toData("Foooo").toScala should be(empty)
       converter.toData(TemporaryClass(1)).toScala should be(empty)
     }
 
-    "Fail to deserialize non-scalapb-generated types" in {
+    "fail to deserialize non-scalapb-generated types" in {
       val payload = Payload
         .newBuilder()
         .putMetadata(
@@ -161,6 +157,35 @@ class ScalapbPayloadConverterSpec extends AnyWordSpec with Matchers with OptionV
           JavaTypeTag[TemporaryClass].genericType
         )
       }
+    }
+
+    "be thread-safe" in {
+      val firstMessage = TestingMessage(test = "hello")
+      val firstPayload = converter.toData(firstMessage).toScala.value
+
+      def decodeFirst(): Boolean = {
+        val decoded = converter.fromData(firstPayload, classOf[TestingMessage], JavaTypeTag[TestingMessage].genericType)
+        decoded == firstMessage
+      }
+
+      val secondMessage: Either[TestingMessage, TestingOneOfSealedMessage] = Left(TestingMessage(test = "hello"))
+      val secondPayload = converter.toData(secondMessage).toScala.value
+
+      def decodeSecond(): Boolean = {
+        val decoded = converter.fromData(
+          secondPayload,
+          classOf[Either[TestingMessage, TestingOneOfSealedMessage]],
+          JavaTypeTag[Either[TestingMessage, TestingOneOfSealedMessage]].genericType
+        )
+        decoded == secondMessage
+      }
+
+      val decodingTasks = Future.traverse(List.range(1, 100)) { _ =>
+        Future.sequence(List(Future(decodeFirst()), Future(decodeSecond())))
+      }
+
+      val everythingPasses = Await.result(decodingTasks.map(_.flatten.reduce(_ && _)), 60.seconds)
+      assert(everythingPasses)
     }
   }
 

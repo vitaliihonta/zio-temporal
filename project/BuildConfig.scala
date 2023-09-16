@@ -14,8 +14,7 @@ object BuildConfig extends Dependencies {
   val coreLibs = baseLibs ++ Seq(
     Zio.streams,
     Utility.scalaJava8Compat,
-    Testing.scalatest,
-    Utility.reflections
+    Testing.scalatest
   )
 
   val coreLibsScala2 = Seq(
@@ -44,7 +43,6 @@ object BuildConfig extends Dependencies {
   val protobufLibs = baseLibs ++ Seq(
     Scalapb.runtime,
     Scalapb.runtimeProtobuf,
-    Utility.reflections,
     Testing.scalatest
   )
 
@@ -120,7 +118,6 @@ trait Dependencies {
   object Utility {
     val scalaJava8Compat  = "org.scala-lang.modules" %% "scala-java8-compat"      % "1.0.2"
     val collectionsCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.10.0"
-    val reflections       = "org.reflections"         % "reflections"             % "0.10.2"
   }
 
   object ScalaReflect {
