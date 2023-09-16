@@ -1,0 +1,33 @@
+syntax = "proto2";
+
+package com.example.testing;
+
+message TestingOneOfMessage {
+  oneof value {
+    TestingCaseFirst first = 1;
+    TestingCaseSecond second = 2;
+  }
+}
+
+message TestingCaseFirst {
+  required int64 foo = 1;
+}
+
+message TestingCaseSecond {
+  required string bar = 1;
+}
+
+message TestingOneOfSealedMessage {
+  oneof sealed_value {
+    TestingSealedCaseFirst first = 1;
+    TestingSealedCaseSecond second = 2;
+  }
+}
+
+message TestingSealedCaseFirst {
+  required string foo = 1;
+}
+
+message TestingSealedCaseSecond {
+  required bool bar = 1;
+}
