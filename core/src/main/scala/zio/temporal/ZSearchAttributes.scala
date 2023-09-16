@@ -61,3 +61,10 @@ final class ZSearchAttributes private[zio] (val toJava: SearchAttributes) {
       s", valueReflectType=${key.getValueReflectType}" +
       s")"
 }
+
+object ZSearchAttributes {
+
+  def fromJava(attrs: SearchAttributes): ZSearchAttributes =
+    new ZSearchAttributes(attrs)
+
+}

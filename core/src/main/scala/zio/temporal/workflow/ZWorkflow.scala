@@ -287,7 +287,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     *   immutable set of search attributes.
     */
   def typedSearchAttributes: ZSearchAttributes =
-    new ZSearchAttributes(Workflow.getTypedSearchAttributes)
+    ZSearchAttributes.fromJava(Workflow.getTypedSearchAttributes)
 
   /** Adds or updates workflow search attributes.
     *

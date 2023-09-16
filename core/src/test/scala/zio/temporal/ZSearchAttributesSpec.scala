@@ -11,7 +11,7 @@ import java.{util => ju}
 class ZSearchAttributesSpec extends AnyWordSpec with Matchers {
   "ZSearchAttributes.get" should {
     "return existing attribute decoded" in {
-      val attrs = new ZSearchAttributes(
+      val attrs = ZSearchAttributes.fromJava(
         SearchAttributes
           .newBuilder()
           .set(SearchAttributeKey.forText("foo"), "bar")

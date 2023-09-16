@@ -5,7 +5,8 @@ import io.temporal.client.WorkflowOptions
 import io.temporal.api.enums.v1.WorkflowIdReusePolicy
 import io.temporal.common.context.ContextPropagator
 import zio._
-import zio.temporal.{ZRetryOptions, ZSearchAttribute}
+import zio.temporal.{ZRetryOptions, ZSearchAttribute, ZSearchAttributes}
+
 import scala.reflect.ClassTag
 import scala.jdk.CollectionConverters._
 import zio.temporal.internal.ClassTagUtils
@@ -67,6 +68,9 @@ final class ZWorkflowStubBuilder[Res] private[zio] (
 
   def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZWorkflowStubBuilder[Res] =
     copy(_.setTypedSearchAttributes(ZSearchAttribute.toJavaSearchAttributes(attrs)))
+
+  def withSearchAttributes(attrs: ZSearchAttributes): ZWorkflowStubBuilder[Res] =
+    copy(_.setTypedSearchAttributes(attrs.toJava))
 
   def withCronSchedule(schedule: String): ZWorkflowStubBuilder[Res] =
     copy(_.setCronSchedule(schedule))
