@@ -6,9 +6,11 @@ import io.temporal.workflow.ChildWorkflowCancellationType
 import io.temporal.workflow.ChildWorkflowOptions
 import io.temporal.workflow.Workflow
 import io.temporal.api.enums.v1.ParentClosePolicy
+import io.temporal.common.SearchAttributes
 import zio._
 import zio.temporal.internal.ClassTagUtils
-import zio.temporal.{ZRetryOptions, ZSearchAttribute}
+import zio.temporal.{ZRetryOptions, ZSearchAttribute, ZSearchAttributes}
+
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
@@ -65,6 +67,9 @@ class ZChildWorkflowStubBuilder[Res] private[zio] (
 
   def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZChildWorkflowStubBuilder[Res] =
     copy(_.setTypedSearchAttributes(ZSearchAttribute.toJavaSearchAttributes(attrs)))
+
+  def withSearchAttributes(attrs: ZSearchAttributes): ZChildWorkflowStubBuilder[Res] =
+    copy(_.setTypedSearchAttributes(attrs.toJava))
 
   def withCronSchedule(schedule: String): ZChildWorkflowStubBuilder[Res] =
     copy(_.setCronSchedule(schedule))
