@@ -91,8 +91,9 @@ class ScalapbPayloadConverter(files: Seq[GeneratedFileObject]) extends PayloadCo
     Payload
       .newBuilder()
       .putMetadata(EncodingKeys.METADATA_ENCODING_KEY, encodingMetaValue)
-      .putMetadata(EncodingKeys.METADATA_MESSAGE_TYPE_KEY,
-                   ByteString.copyFrom(msg.companion.scalaDescriptor.fullName, StandardCharsets.UTF_8)
+      .putMetadata(
+        EncodingKeys.METADATA_MESSAGE_TYPE_KEY,
+        ByteString.copyFrom(msg.companion.scalaDescriptor.fullName, StandardCharsets.UTF_8)
       )
       .setData(msg.toByteString)
       .build()
