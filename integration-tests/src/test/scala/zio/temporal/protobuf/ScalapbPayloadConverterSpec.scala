@@ -3,15 +3,22 @@ package zio.temporal.protobuf
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import com.example.testing._
+import com.google.protobuf.ByteString
 import io.temporal.api.common.v1.Payload
 import io.temporal.common.converter.EncodingKeys
 import org.scalatest.{Assertion, OptionValues}
-import scalapb.GeneratedMessage
 import zio.temporal.JavaTypeTag
 
+import java.nio.charset.StandardCharsets
 import scala.jdk.OptionConverters._
 
+object ScalapbPayloadConverterSpec {
+  case class TemporaryClass(value: Int)
+}
+
 class ScalapbPayloadConverterSpec extends AnyWordSpec with Matchers with OptionValues {
+  import ScalapbPayloadConverterSpec.TemporaryClass
+
   private val converter = new ScalapbPayloadConverter(
     files = List(
       TestingProtoProto,
@@ -76,6 +83,84 @@ class ScalapbPayloadConverterSpec extends AnyWordSpec with Matchers with OptionV
           JavaTypeTag[TestingOneOfSealedMessage].genericType
         )
       decoded2 shouldEqual msg2
+    }
+
+    "(De)Serialize Either" in {
+      val msg1: Either[TestingMessage, TestingOneOfSealedMessage] = Left(TestingMessage(test = "hello"))
+      val payload1                                                = converter.toData(msg1).toScala.value
+      checkProtobufHeaders(payload1)(fullName = Result.scalaDescriptor.fullName)
+      val decoded1 = converter.fromData(
+        payload1,
+        classOf[Either[TestingMessage, TestingOneOfSealedMessage]],
+        JavaTypeTag[Either[TestingMessage, TestingOneOfSealedMessage]].genericType
+      )
+      decoded1 shouldEqual msg1
+
+      val msg2: Either[TestingMessage, TestingOneOfSealedMessage] = Right(TestingSealedCaseSecond(bar = true))
+      val payload2                                                = converter.toData(msg2).toScala.value
+      checkProtobufHeaders(payload2)(fullName = Result.scalaDescriptor.fullName)
+      val decoded2 = converter.fromData(
+        payload2,
+        classOf[Either[TestingMessage, TestingOneOfSealedMessage]],
+        JavaTypeTag[Either[TestingMessage, TestingOneOfSealedMessage]].genericType
+      )
+      decoded2 shouldEqual msg2
+    }
+
+    "(De)Serialize Option" in {
+      val msg1: Option[TestingMessage] = Some(TestingMessage(test = "hello"))
+      val payload1                     = converter.toData(msg1).toScala.value
+      checkProtobufHeaders(payload1)(fullName = Optional.scalaDescriptor.fullName)
+      val decoded1 = converter.fromData(
+        payload1,
+        classOf[Option[TestingMessage]],
+        JavaTypeTag[Option[TestingMessage]].genericType
+      )
+      decoded1 shouldEqual msg1
+
+      val msg2: Option[TestingMessage] = None
+      val payload2                     = converter.toData(msg2).toScala.value
+      checkProtobufHeaders(payload2)(fullName = Optional.scalaDescriptor.fullName)
+      val decoded2 = converter.fromData(
+        payload2,
+        classOf[Option[TestingMessage]],
+        JavaTypeTag[Option[TestingMessage]].genericType
+      )
+      decoded2 shouldEqual msg2
+    }
+
+    "(De)Serialize Unit" in {
+      val msg: Unit = ()
+
+      val payload = converter.toData(msg).toScala.value
+
+      checkProtobufHeaders(payload)(fullName = ZUnit.scalaDescriptor.fullName)
+
+      val decoded = converter.fromData(payload, classOf[Unit], JavaTypeTag[Unit].genericType)
+      decoded shouldEqual msg
+    }
+
+    "Not serialize non-scalapb-generated types" in {
+      converter.toData("Foooo").toScala should be(empty)
+      converter.toData(TemporaryClass(1)).toScala should be(empty)
+    }
+
+    "Fail to deserialize non-scalapb-generated types" in {
+      val payload = Payload
+        .newBuilder()
+        .putMetadata(
+          EncodingKeys.METADATA_MESSAGE_TYPE_KEY,
+          ByteString.copyFrom("zio.temporal.protobuf.TemporaryClass", StandardCharsets.UTF_8)
+        )
+        .build()
+
+      assertThrows[ProtobufPayloadException] {
+        converter.fromData(
+          payload,
+          classOf[TemporaryClass],
+          JavaTypeTag[TemporaryClass].genericType
+        )
+      }
     }
   }
 
