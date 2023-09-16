@@ -27,6 +27,7 @@ object ZWorkflowContinueAsNewStub extends Stubs[ZWorkflowContinueAsNewStub] with
   final implicit class Ops[A](private val self: ZWorkflowContinueAsNewStub.Of[A]) extends AnyVal {}
 }
 
+// todo: make ContinueAsNewOptions instead
 class ZWorkflowContinueAsNewStubBuilder[A: ClassTag: IsWorkflow](
   configure: ContinueAsNewOptions.Builder => ContinueAsNewOptions.Builder) {
 

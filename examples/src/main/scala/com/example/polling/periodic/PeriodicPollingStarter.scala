@@ -2,7 +2,7 @@ package com.example.polling.periodic
 
 import zio._
 import zio.temporal._
-import zio.temporal.activity.ZActivityOptions
+import zio.temporal.activity.ZActivityRunOptions
 import zio.temporal.worker._
 import zio.temporal.workflow._
 import zio.logging.backend.SLF4J
@@ -55,7 +55,7 @@ object PeriodicPollingStarter extends ZIOAppDefault {
         // service layers
         TestService.make,
         PeriodicPollingActivityImpl.make,
-        ZActivityOptions.default,
+        ZActivityRunOptions.default,
         //
         ZWorkflowClient.make,
         ZWorkflowServiceStubs.make,

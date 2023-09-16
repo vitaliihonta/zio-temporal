@@ -20,7 +20,7 @@ trait TransferActivity {
 class TransferActivityImpl(
   depositFunc:      (String, BigDecimal) => IO[TransferError, Done],
   withdrawFunc:     (String, BigDecimal) => IO[TransferError, Done]
-)(implicit options: ZActivityOptions[Any])
+)(implicit options: ZActivityRunOptions[Any])
     extends TransferActivity {
 
   override def deposit(account: String, amount: BigDecimal): Done = {
@@ -47,14 +47,15 @@ trait SagaWorkflow {
 class SagaWorkflowImpl extends SagaWorkflow {
 
   private val activity = ZWorkflow
-    .newActivityStub[TransferActivity]
-    .withStartToCloseTimeout(5.seconds)
-    .withRetryOptions(
-      ZRetryOptions.default
-        .withMaximumAttempts(1)
-        .withDoNotRetry(nameOf[TransferError])
+    .newActivityStub[TransferActivity](
+      ZActivityOptions
+        .withStartToCloseTimeout(5.seconds)
+        .withRetryOptions(
+          ZRetryOptions.default
+            .withMaximumAttempts(1)
+            .withDoNotRetry(nameOf[TransferError])
+        )
     )
-    .build
 
   override def transfer(command: TransferCommand): BigDecimal = {
     val saga = for {

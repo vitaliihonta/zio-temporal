@@ -13,7 +13,7 @@ trait ZioUntypedActivity {
   def echo(what: String): String
 }
 
-class ZioUntypedActivityImpl(implicit options: ZActivityOptions[Any]) extends ZioUntypedActivity {
+class ZioUntypedActivityImpl(implicit options: ZActivityRunOptions[Any]) extends ZioUntypedActivity {
   override def echo(what: String): String =
     ZActivity.run {
       ZIO
@@ -36,9 +36,10 @@ class ZioWorkflowUntypedImpl extends ZioWorkflowUntyped {
   private val state  = ZWorkflowState.empty[Unit]
   private val logger = ZWorkflow.makeLogger
 
-  private val activity = ZWorkflow.newUntypedActivityStub
-    .withStartToCloseTimeout(5.seconds)
-    .build
+  private val activity = ZWorkflow
+    .newUntypedActivityStub(
+      ZActivityOptions.withStartToCloseTimeout(5.seconds)
+    )
 
   override def echo(what: String): String = {
     val msg = activity.execute[String]("EchoUntyped", what)

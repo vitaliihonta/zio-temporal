@@ -10,6 +10,7 @@ import scala.reflect.ClassTag
 import scala.jdk.CollectionConverters._
 import zio.temporal.internal.ClassTagUtils
 
+// TODO: make WorkflowOptions instead
 object ZWorkflowStubBuilderTaskQueueDsl {
   type Of[A]   = ZWorkflowStubBuilderTaskQueueDsl[UIO[ZWorkflowStub.Of[A]]]
   type Untyped = ZWorkflowStubBuilderTaskQueueDsl[UIO[ZWorkflowStub.Untyped]]

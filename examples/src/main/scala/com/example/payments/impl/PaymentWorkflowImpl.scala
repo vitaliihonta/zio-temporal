@@ -7,9 +7,10 @@ import zio._
 import zio.temporal._
 import zio.temporal.workflow._
 import zio.temporal.state._
-import zio.temporal.activity.ZActivityStub
+import zio.temporal.activity.{ZActivityOptions, ZActivityStub}
 import org.slf4j.MDC
 import zio.temporal.failure.{ActivityFailure, ApplicationFailure}
+
 import scala.concurrent.TimeoutException
 import scala.util.control.NoStackTrace
 
@@ -25,14 +26,15 @@ class PaymentWorkflowImpl extends PaymentWorkflow {
   MDC.put("transaction_id", ZWorkflow.info.workflowId)
 
   private val activity: ZActivityStub.Of[PaymentActivity] = ZWorkflow
-    .newActivityStub[PaymentActivity]
-    .withStartToCloseTimeout(10.seconds)
-    .withRetryOptions(
-      ZRetryOptions.default
-        .withMaximumAttempts(5)
-        .withDoNotRetry(nameOf[InvalidConfirmationCodeError])
+    .newActivityStub[PaymentActivity](
+      ZActivityOptions
+        .withStartToCloseTimeout(10.seconds)
+        .withRetryOptions(
+          ZRetryOptions.default
+            .withMaximumAttempts(5)
+            .withDoNotRetry(nameOf[InvalidConfirmationCodeError])
+        )
     )
-    .build
 
   private val state = ZWorkflowState.empty[TransactionState]
 

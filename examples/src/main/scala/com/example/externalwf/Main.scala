@@ -3,7 +3,7 @@ package com.example.externalwf
 import zio._
 import zio.logging.backend.SLF4J
 import zio.temporal._
-import zio.temporal.activity.ZActivityOptions
+import zio.temporal.activity.ZActivityRunOptions
 import zio.temporal.worker._
 import zio.temporal.workflow._
 

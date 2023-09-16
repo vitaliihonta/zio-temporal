@@ -4,11 +4,11 @@ import zio._
 import zio.temporal.activity._
 
 object GreetingActivitiesImpl {
-  val make: URLayer[ZActivityOptions[Any], GreetingActivities] =
-    ZLayer.fromFunction(new GreetingActivitiesImpl()(_: ZActivityOptions[Any]))
+  val make: URLayer[ZActivityRunOptions[Any], GreetingActivities] =
+    ZLayer.fromFunction(new GreetingActivitiesImpl()(_: ZActivityRunOptions[Any]))
 }
 
-class GreetingActivitiesImpl(implicit options: ZActivityOptions[Any]) extends GreetingActivities {
+class GreetingActivitiesImpl(implicit options: ZActivityRunOptions[Any]) extends GreetingActivities {
   override def composeGreeting(greeting: String, name: String): String = {
     val context = ZActivity.executionContext
 

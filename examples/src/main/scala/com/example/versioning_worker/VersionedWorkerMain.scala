@@ -4,7 +4,7 @@ import io.temporal.client.BuildIdOperation
 import zio.{BuildInfo => _, _}
 import zio.cli._
 import zio.logging.backend.SLF4J
-import zio.temporal.activity.ZActivityOptions
+import zio.temporal.activity.ZActivityRunOptions
 import zio.temporal.worker._
 import zio.temporal.workflow.{
   ZWorkflowClient,
@@ -70,7 +70,7 @@ object VersionedWorkerMain extends ZIOCliDefault {
       ZWorkflowServiceStubs.make,
       ZWorkflowServiceStubsOptions.make,
       ZWorkerFactory.make,
-      ZActivityOptions.default
+      ZActivityRunOptions.default
     )
   }
 

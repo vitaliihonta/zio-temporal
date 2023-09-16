@@ -8,7 +8,7 @@ import io.temporal.common.RetryOptions
   * @see
   *   [[RetryOptions]]
   */
-case class ZRetryOptions private[zio] (
+final case class ZRetryOptions private[zio] (
   maximumAttempts:                      Option[Int],
   initialInterval:                      Option[Duration],
   backoffCoefficient:                   Option[Double],
@@ -90,4 +90,16 @@ object ZRetryOptions {
     doNotRetry = Seq.empty,
     javaOptionsCustomization = identity
   )
+
+  /** Creates retry options based on Java SDK's [[RetryOptions]]
+    */
+  def fromJava(retryOptions: RetryOptions): ZRetryOptions =
+    new ZRetryOptions(
+      maximumAttempts = Option(retryOptions.getMaximumAttempts),
+      initialInterval = Option(retryOptions.getInitialInterval),
+      backoffCoefficient = Option(retryOptions.getBackoffCoefficient),
+      maximumInterval = Option(retryOptions.getMaximumInterval),
+      doNotRetry = Option(retryOptions.getDoNotRetry).toList.flatten,
+      javaOptionsCustomization = identity
+    )
 }

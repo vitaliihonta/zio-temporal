@@ -14,11 +14,11 @@ object SafeMath {
 }
 
 object TypedArithmeticActivityImpl {
-  val make: URLayer[ZActivityOptions[Any], ArithmeticActivity] =
-    ZLayer.fromFunction(TypedArithmeticActivityImpl()(_: ZActivityOptions[Any]))
+  val make: URLayer[ZActivityRunOptions[Any], ArithmeticActivity] =
+    ZLayer.fromFunction(TypedArithmeticActivityImpl()(_: ZActivityRunOptions[Any]))
 }
 
-case class TypedArithmeticActivityImpl()(implicit options: ZActivityOptions[Any]) extends ArithmeticActivity {
+case class TypedArithmeticActivityImpl()(implicit options: ZActivityRunOptions[Any]) extends ArithmeticActivity {
   override def divide(x: Int, y: Int): Int = {
     ZActivity.run {
       for {

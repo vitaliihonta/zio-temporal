@@ -28,10 +28,11 @@ class PromiseActivityImpl(fooFunc: Int => Int, barFunc: Int => Int) extends Prom
 class PromiseWorkflowImpl extends PromiseWorkflow {
 
   private val activity = ZWorkflow
-    .newActivityStub[PromiseActivity]
-    .withStartToCloseTimeout(5.seconds)
-    .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(1))
-    .build
+    .newActivityStub[PromiseActivity](
+      ZActivityOptions
+        .withStartToCloseTimeout(5.seconds)
+        .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(1))
+    )
 
   override def fooBar(x: Int, y: Int): Int = {
     val first  = ZActivityStub.executeAsync(activity.foo(x))

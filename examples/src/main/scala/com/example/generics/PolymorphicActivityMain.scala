@@ -3,7 +3,7 @@ package com.example.generics
 import zio._
 import zio.logging.backend.SLF4J
 import zio.temporal._
-import zio.temporal.activity.{ZActivity, ZActivityOptions, ZActivityStub}
+import zio.temporal.activity.{ZActivity, ZActivityOptions, ZActivityRunOptions, ZActivityStub}
 import zio.temporal.failure.{ActivityFailure, ApplicationFailure}
 import zio.temporal.worker.{ZWorker, ZWorkerFactory, ZWorkerFactoryOptions}
 import zio.temporal.workflow._
@@ -20,11 +20,11 @@ trait SmsNotificationsSenderActivity extends NotificationsSenderActivity {
 }
 
 object SmsNotificationsSenderActivityImpl {
-  val make: URLayer[ZActivityOptions[Any], SmsNotificationsSenderActivity] =
-    ZLayer.fromFunction(new SmsNotificationsSenderActivityImpl()(_: ZActivityOptions[Any]))
+  val make: URLayer[ZActivityRunOptions[Any], SmsNotificationsSenderActivity] =
+    ZLayer.fromFunction(new SmsNotificationsSenderActivityImpl()(_: ZActivityRunOptions[Any]))
 }
 
-class SmsNotificationsSenderActivityImpl(implicit options: ZActivityOptions[Any])
+class SmsNotificationsSenderActivityImpl(implicit options: ZActivityRunOptions[Any])
     extends SmsNotificationsSenderActivity {
   override def send(msg: String): Unit = {
     ZActivity.run {
@@ -41,11 +41,11 @@ trait PushNotificationsSenderActivity extends NotificationsSenderActivity {
 }
 
 object PushNotificationsSenderActivityImpl {
-  val make: URLayer[ZActivityOptions[Any], PushNotificationsSenderActivity] =
-    ZLayer.fromFunction(new PushNotificationsSenderActivityImpl()(_: ZActivityOptions[Any]))
+  val make: URLayer[ZActivityRunOptions[Any], PushNotificationsSenderActivity] =
+    ZLayer.fromFunction(new PushNotificationsSenderActivityImpl()(_: ZActivityRunOptions[Any]))
 }
 
-class PushNotificationsSenderActivityImpl(implicit options: ZActivityOptions[Any])
+class PushNotificationsSenderActivityImpl(implicit options: ZActivityRunOptions[Any])
     extends PushNotificationsSenderActivity {
   override def send(msg: String): Unit = {
     ZActivity.run {
@@ -70,17 +70,19 @@ class NotificationActivityBasedWorkflowImpl extends NotificationActivityBasedWor
   private val senders: List[ZActivityStub.Of[NotificationsSenderActivity]] =
     List(
       ZWorkflow
-        .newActivityStub[PushNotificationsSenderActivity]
-        .withStartToCloseTimeout(1.minute)
-        .withRetryOptions(
-          ZRetryOptions.default.withMaximumAttempts(2)
-        )
-        .build,
+        .newActivityStub[PushNotificationsSenderActivity](
+          ZActivityOptions
+            .withStartToCloseTimeout(1.minute)
+            .withRetryOptions(
+              ZRetryOptions.default.withMaximumAttempts(2)
+            )
+        ),
       ZWorkflow
-        .newActivityStub[SmsNotificationsSenderActivity]
-        .withStartToCloseTimeout(1.minute)
-        .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(2))
-        .build
+        .newActivityStub[SmsNotificationsSenderActivity](
+          ZActivityOptions
+            .withStartToCloseTimeout(1.minute)
+            .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(2))
+        )
     )
 
   override def send(msg: String): Unit = {
@@ -155,7 +157,7 @@ object PolymorphicActivityMain extends ZIOAppDefault {
         ZWorkflowServiceStubsOptions.make,
         ZWorkflowClientOptions.make,
         ZWorkerFactoryOptions.make,
-        ZActivityOptions.default
+        ZActivityRunOptions.default
       )
   }
 }

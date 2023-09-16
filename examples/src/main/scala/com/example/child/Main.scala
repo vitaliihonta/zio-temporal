@@ -2,7 +2,7 @@ package com.example.child
 
 import zio._
 import zio.temporal._
-import zio.temporal.activity.ZActivityOptions
+import zio.temporal.activity.ZActivityRunOptions
 import zio.temporal.worker._
 import zio.temporal.workflow._
 import zio.logging.backend.SLF4J

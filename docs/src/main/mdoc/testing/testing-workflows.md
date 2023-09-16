@@ -97,7 +97,7 @@ trait GreetingActivity {
 }
 
 // Activity runs ZIO
-class GreetingActivityImpl(implicit options: ZActivityOptions[Any]) extends GreetingActivity {
+class GreetingActivityImpl(implicit options: ZActivityRunOptions[Any]) extends GreetingActivity {
   override def composeGreeting(greeting: String, name: String): String = {
     ZActivity.run {
       ZIO.logInfo(s"Composing greeting=$greeting name=$name") *>

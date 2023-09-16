@@ -19,7 +19,7 @@ import io.temporal.failure.TemporalException
 import zio._
 import zio.logging.backend.SLF4J
 import zio.temporal._
-import zio.temporal.activity.ZActivityOptions
+import zio.temporal.activity.ZActivityRunOptions
 import zio.temporal.worker._
 import zio.temporal.workflow._
 
@@ -92,7 +92,7 @@ object MonitoringMain extends ZIOAppDefault {
       .provideSome[Scope](
         // activities
         SampleActivitiesImpl.make,
-        ZActivityOptions.default,
+        ZActivityRunOptions.default,
         // temporal
         ZWorkflowServiceStubsOptions.make @@
           ZWorkflowServiceStubsOptions.withMetricsScope(metricsScope),

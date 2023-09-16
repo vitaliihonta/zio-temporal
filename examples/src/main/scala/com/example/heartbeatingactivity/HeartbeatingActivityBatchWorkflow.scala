@@ -3,7 +3,7 @@ package com.example.heartbeatingactivity
 import zio._
 import zio.temporal._
 import zio.temporal.workflow._
-import zio.temporal.activity.ZActivityStub
+import zio.temporal.activity.{ZActivityOptions, ZActivityStub}
 
 @workflowInterface
 trait HeartbeatingActivityBatchWorkflow {
@@ -31,10 +31,11 @@ class HeartbeatingActivityBatchWorkflowImpl extends HeartbeatingActivityBatchWor
     * timeout is also needed to record heartbeat details at the service.
     */
   private val recordProcessor: ZActivityStub.Of[RecordProcessorActivity] = ZWorkflow
-    .newActivityStub[RecordProcessorActivity]
-    .withStartToCloseTimeout(1.hour)
-    .withHeartbeatTimeout(10.seconds)
-    .build
+    .newActivityStub[RecordProcessorActivity](
+      ZActivityOptions
+        .withStartToCloseTimeout(1.hour)
+        .withHeartbeatTimeout(10.seconds)
+    )
 
   private val logger = ZWorkflow.makeLogger
 

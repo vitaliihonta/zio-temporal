@@ -8,32 +8,20 @@ import zio.temporal.internal.ClassTagUtils
 
 import scala.reflect.ClassTag
 
+@deprecated("Build ZLocalActivityOptions and provide it directly", since = "0.5.0")
 object ZLocalActivityStubBuilderInitial {
   type Of[A]   = ZLocalActivityStubBuilderInitial[ZActivityStub.Of[A]]
   type Untyped = ZLocalActivityStubBuilderInitial[ZActivityStub.Untyped]
-
-  private[temporal] def buildTyped[A: ClassTag]: LocalActivityOptions => ZActivityStub.Of[A] =
-    options =>
-      ZActivityStub.Of[A](
-        new ZActivityStubImpl(
-          Workflow.newUntypedLocalActivityStub(options),
-          ClassTagUtils.classOf[A]
-        )
-      )
-
-  private[temporal] def buildUntyped: LocalActivityOptions => ZActivityStub.Untyped =
-    options =>
-      new ZActivityStub.UntypedImpl(
-        Workflow.newUntypedLocalActivityStub(options)
-      )
 }
 
+@deprecated("Build ZLocalActivityOptions and provide it directly", since = "0.5.0")
 class ZLocalActivityStubBuilderInitial[Res] private[zio] (buildImpl: LocalActivityOptions => Res) {
 
   def withStartToCloseTimeout(timeout: Duration): ZLocalActivityStubBuilder[Res] =
     new ZLocalActivityStubBuilder[Res](buildImpl, timeout, identity)
 }
 
+@deprecated("Build ZLocalActivityOptions and provide it directly", since = "0.5.0")
 class ZLocalActivityStubBuilder[Res] private[zio] (
   buildImpl:           LocalActivityOptions => Res,
   startToCloseTimeout: Duration,

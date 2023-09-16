@@ -7,11 +7,11 @@ import zio.temporal.workflow._
 import zio.temporal.failure.ActivityFailure
 
 object ArithmeticActivityImpl {
-  val make: URLayer[ZActivityOptions[Any], ArithmeticActivity] =
-    ZLayer.fromFunction(ArithmeticActivityImpl()(_: ZActivityOptions[Any]))
+  val make: URLayer[ZActivityRunOptions[Any], ArithmeticActivity] =
+    ZLayer.fromFunction(ArithmeticActivityImpl()(_: ZActivityRunOptions[Any]))
 }
 
-case class ArithmeticActivityImpl()(implicit options: ZActivityOptions[Any]) extends ArithmeticActivity {
+case class ArithmeticActivityImpl()(implicit options: ZActivityRunOptions[Any]) extends ArithmeticActivity {
   override def divide(x: Int, y: Int): Int = {
     ZActivity.run {
       for {

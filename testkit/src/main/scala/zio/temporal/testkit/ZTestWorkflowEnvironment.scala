@@ -3,7 +3,7 @@ package zio.temporal.testkit
 import io.temporal.testing.TestWorkflowEnvironment
 import zio._
 import zio.temporal.ZAwaitTerminationOptions
-import zio.temporal.activity.ZActivityOptions
+import zio.temporal.activity.ZActivityRunOptions
 import zio.temporal.ZCurrentTimeMillis
 import zio.temporal.worker.ZWorker
 import zio.temporal.worker.ZWorkerOptions
@@ -43,8 +43,8 @@ class ZTestWorkflowEnvironment[+R] private[zio] (val toJava: TestWorkflowEnviron
   /** Returns the in-memory test Temporal service that is owned by this. */
   lazy val workflowServiceStubs: ZWorkflowServiceStubs = new ZWorkflowServiceStubs(toJava.getWorkflowServiceStubs)
 
-  implicit lazy val activityOptions: ZActivityOptions[R] =
-    new ZActivityOptions[R](runtime, Some(workflowClient.toJava.newActivityCompletionClient()))
+  implicit lazy val activityOptions: ZActivityRunOptions[R] =
+    new ZActivityRunOptions[R](runtime, Some(workflowClient.toJava.newActivityCompletionClient()))
 
   /** Setup test environment with a guaranteed finalization.
     *
@@ -162,7 +162,7 @@ object ZTestWorkflowEnvironment {
   def workflowServiceStubs: URIO[ZTestWorkflowEnvironment[Any], ZWorkflowServiceStubs] =
     ZIO.serviceWith[ZTestWorkflowEnvironment[Any]](_.workflowServiceStubs)
 
-  def activityOptions[R: Tag]: URIO[ZTestWorkflowEnvironment[R], ZActivityOptions[R]] =
+  def activityOptions[R: Tag]: URIO[ZTestWorkflowEnvironment[R], ZActivityRunOptions[R]] =
     ZIO.serviceWith[ZTestWorkflowEnvironment[R]](_.activityOptions)
 
   /** Access activity options */
@@ -171,7 +171,7 @@ object ZTestWorkflowEnvironment {
 
   final class ActivityOptionsWithZIOPartiallyApplied[R](private val `dummy`: Boolean = true) extends AnyVal {
     def apply[R2 <: ZTestWorkflowEnvironment[R], E, A](
-      f:            ZActivityOptions[R] => ZIO[R2, E, A]
+      f:            ZActivityRunOptions[R] => ZIO[R2, E, A]
     )(implicit tag: Tag[R]
     ): ZIO[R2, E, A] =
       ZIO.serviceWithZIO[ZTestWorkflowEnvironment[R]](testEnv => f(testEnv.activityOptions))

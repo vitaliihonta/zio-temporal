@@ -11,7 +11,7 @@ trait ZioActivity {
   def echo(what: String): String
 }
 
-class ZioActivityImpl(implicit options: ZActivityOptions[Any]) extends ZioActivity {
+class ZioActivityImpl(implicit options: ZActivityRunOptions[Any]) extends ZioActivity {
   override def echo(what: String): String =
     ZActivity.run {
       ZIO
@@ -34,9 +34,9 @@ class ZioWorkflowImpl extends ZioWorkflow {
   private val logger = ZWorkflow.makeLogger
 
   private val activity = ZWorkflow
-    .newActivityStub[ZioActivity]
-    .withStartToCloseTimeout(5.seconds)
-    .build
+    .newActivityStub[ZioActivity](
+      ZActivityOptions.withStartToCloseTimeout(5.seconds)
+    )
 
   override def echo(what: String): String = {
     val msg = ZActivityStub.execute(

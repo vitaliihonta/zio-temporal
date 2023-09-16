@@ -1,7 +1,7 @@
 package zio.temporal.testkit
 
 import io.temporal.testing.TestActivityEnvironment
-import zio.temporal.activity.{ExtendsActivity, IsActivity, ZActivityOptions, ZActivityStubBuilderInitial}
+import zio.temporal.activity.{ExtendsActivity, IsActivity, ZActivityRunOptions, ZActivityStubBuilderInitial}
 import zio._
 import zio.temporal.{JavaTypeTag, TypeIsSpecified}
 import zio.temporal.internal.ClassTagUtils
@@ -12,8 +12,8 @@ class ZTestActivityEnvironment[+R] private[zio] (
   val toJava: TestActivityEnvironment,
   runtime:    zio.Runtime[R]) {
 
-  implicit lazy val activityOptions: ZActivityOptions[R] =
-    new ZActivityOptions[R](runtime, None)
+  implicit lazy val activityOptions: ZActivityRunOptions[R] =
+    new ZActivityRunOptions[R](runtime, None)
 
   /** Registers activity implementations to test. Use [[newActivityStub]] to create stubs that can be used to invoke
     * them.
@@ -96,7 +96,7 @@ class ZTestActivityEnvironment[+R] private[zio] (
 }
 
 object ZTestActivityEnvironment {
-  def activityOptions[R: Tag]: URIO[ZTestActivityEnvironment[R], ZActivityOptions[R]] =
+  def activityOptions[R: Tag]: URIO[ZTestActivityEnvironment[R], ZActivityRunOptions[R]] =
     ZIO.serviceWith[ZTestActivityEnvironment[R]](_.activityOptions)
 
   /** Registers activity implementations to test. Use [[newActivityStub]] to create stubs that can be used to invoke

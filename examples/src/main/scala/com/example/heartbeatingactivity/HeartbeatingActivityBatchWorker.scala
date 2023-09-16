@@ -5,7 +5,7 @@ import zio.temporal._
 import zio.temporal.worker._
 import zio.temporal.workflow._
 import zio.logging.backend.SLF4J
-import zio.temporal.activity.ZActivityOptions
+import zio.temporal.activity.ZActivityRunOptions
 
 object HeartbeatingActivityBatchWorker extends ZIOAppDefault {
   val TaskQueue = "HeartbeatingActivityBatch"
@@ -30,7 +30,7 @@ object HeartbeatingActivityBatchWorker extends ZIOAppDefault {
         ZWorkflowServiceStubsOptions.make,
         ZWorkflowClientOptions.make,
         ZWorkerFactoryOptions.make,
-        ZActivityOptions.default,
+        ZActivityRunOptions.default,
         // Activity
         RecordLoaderImpl.make,
         RecordProcessorImpl.make,

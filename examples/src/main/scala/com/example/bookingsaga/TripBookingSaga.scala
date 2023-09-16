@@ -55,7 +55,7 @@ object TripBookingSaga extends ZIOAppDefault {
       ZWorkflowServiceStubsOptions.make,
       ZWorkflowClientOptions.make,
       ZWorkerFactoryOptions.make,
-      ZActivityOptions.default,
+      ZActivityRunOptions.default,
       // Activity
       TripBookingActivitiesImpl.make,
       // Services

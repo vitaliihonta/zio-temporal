@@ -34,7 +34,7 @@ object ZActivity {
     * @return
     *   result of executing the action
     */
-  def run[R, A](action: RIO[R, A])(implicit zactivityOptions: ZActivityOptions[R]): A =
+  def run[R, A](action: RIO[R, A])(implicit zactivityOptions: ZActivityRunOptions[R]): A =
     runImpl(action)(wrap)
 
   /** Runs provided effect completing this activity with the effect result.
@@ -55,7 +55,7 @@ object ZActivity {
     */
   def run[R, E, A](
     action:                    ZIO[R, E, A]
-  )(implicit zactivityOptions: ZActivityOptions[R],
+  )(implicit zactivityOptions: ZActivityRunOptions[R],
     toApplicationFailure:      ToApplicationFailure[E]
   ): A =
     runImpl(action)(toApplicationFailure.wrap)
@@ -63,7 +63,7 @@ object ZActivity {
   private def runImpl[R, E, A](
     action:                    ZIO[R, E, A]
   )(convertError:              E => Exception
-  )(implicit zactivityOptions: ZActivityOptions[R]
+  )(implicit zactivityOptions: ZActivityRunOptions[R]
   ): A = {
     zactivityOptions.activityCompletionClientOpt match {
       case None => runSyncImpl(action, convertError)
@@ -86,7 +86,7 @@ object ZActivity {
     ctx:                       ActivityExecutionContext,
     activityCompletionClient:  ActivityCompletionClient,
     taskToken:                 Array[Byte]
-  )(implicit zactivityOptions: ZActivityOptions[R]
+  )(implicit zactivityOptions: ZActivityRunOptions[R]
   ): A = {
 
     ctx.doNotCompleteOnReturn()
@@ -126,7 +126,7 @@ object ZActivity {
   private def runSyncImpl[R, E, A](
     action:                    ZIO[R, E, A],
     convertError:              E => Exception
-  )(implicit zactivityOptions: ZActivityOptions[R]
+  )(implicit zactivityOptions: ZActivityRunOptions[R]
   ): A = {
     ZioUnsafeFacade.unsafeRunZIO[R, E, A](
       zactivityOptions.runtime,

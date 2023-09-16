@@ -4,7 +4,13 @@ import zio._
 import zio.temporal.internal.ClassTagUtils
 import io.temporal.worker.Worker
 import zio.temporal.activity.{ExtendsActivity, IsActivity}
-import zio.temporal.workflow.{ExtendsWorkflow, HasPublicNullaryConstructor, IsConcreteClass, IsWorkflow}
+import zio.temporal.workflow.{
+  ExtendsWorkflow,
+  HasPublicNullaryConstructor,
+  IsConcreteClass,
+  IsWorkflow,
+  WorkflowImplementationClass
+}
 import io.temporal.worker.WorkerFactory
 
 import scala.reflect.ClassTag
@@ -36,6 +42,29 @@ class ZWorker private[zio] (
     */
   def addWorkflow[I: ExtendsWorkflow]: ZWorker.AddWorkflowDsl[I] =
     new ZWorker.AddWorkflowDsl[I](this)
+
+  // TODO: finish it
+  /** Registers workflow implementation classes with a worker. Can be called multiple times to add more types. A
+    * workflow implementation class must implement at least one interface with a method annotated with
+    * [[zio.temporal.workflowMethod]]. By default, the short name of the interface is used as a workflow type that this
+    * worker supports.
+    *
+    * <p>Implementations that share a worker must implement different interfaces as a workflow type is identified by the
+    * workflow interface, not by the implementation.
+    *
+    * @throws io.temporal.worker.TypeAlreadyRegisteredException
+    *   if one of the workflow types is already registered
+    */
+  def addWorkflowImplementations(
+    workflowImplementationClass: WorkflowImplementationClass[_],
+    moreClasses:                 WorkflowImplementationClass[_]*
+  ): UIO[ZWorker] = ZIO.succeed {
+    toJava.registerWorkflowImplementationTypes(
+      (workflowImplementationClass +: moreClasses)
+        .map(_.runtimeClass): _*
+    )
+    this
+  }
 
   /** Registers activity implementation objects with a worker. An implementation object can implement one or more
     * activity types.

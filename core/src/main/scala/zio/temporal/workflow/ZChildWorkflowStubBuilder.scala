@@ -12,6 +12,7 @@ import zio.temporal.{ZRetryOptions, ZSearchAttribute}
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
+// TODO: make ZChildWorkflowOptions instead
 object ZChildWorkflowStubBuilder {
   type Of[A]   = ZChildWorkflowStubBuilder[ZChildWorkflowStub.Of[A]]
   type Untyped = ZChildWorkflowStubBuilder[ZChildWorkflowStub.Untyped]

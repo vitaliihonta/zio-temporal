@@ -3,16 +3,17 @@ package com.example.bookingsaga
 import zio._
 import zio.temporal._
 import zio.temporal.workflow._
-import zio.temporal.activity.ZActivityStub
+import zio.temporal.activity._
 
 class TripBookingWorkflowImpl extends TripBookingWorkflow {
   private val activities: ZActivityStub.Of[TripBookingActivities] = ZWorkflow
-    .newActivityStub[TripBookingActivities]
-    .withStartToCloseTimeout(1.hour)
-    .withRetryOptions(
-      ZRetryOptions.default.withMaximumAttempts(1)
+    .newActivityStub[TripBookingActivities](
+      ZActivityOptions
+        .withStartToCloseTimeout(1.hour)
+        .withRetryOptions(
+          ZRetryOptions.default.withMaximumAttempts(1)
+        )
     )
-    .build
 
   override def bookTrip(name: String): Unit = {
     val bookingSaga = for {

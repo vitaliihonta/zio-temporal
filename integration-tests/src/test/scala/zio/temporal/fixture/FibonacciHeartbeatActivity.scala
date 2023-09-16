@@ -15,7 +15,7 @@ object FibonacciHeartbeatActivityImpl {
   case class HeartbeatDetails(sum: BigDecimal, curr: Int, prev: Int, step: Int)
 }
 
-class FibonacciHeartbeatActivityImpl(iterationsCounter: AtomicInteger)(implicit options: ZActivityOptions[Any])
+class FibonacciHeartbeatActivityImpl(iterationsCounter: AtomicInteger)(implicit options: ZActivityRunOptions[Any])
     extends FibonacciHeartbeatActivity {
   import FibonacciHeartbeatActivityImpl.HeartbeatDetails
 

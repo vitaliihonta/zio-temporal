@@ -4,17 +4,17 @@ import com.example.payments.workflows.{BankError, BankIsDownError, InvalidConfir
 import com.example.transactions._
 import zio._
 import zio.temporal.activity.ZActivity
-import zio.temporal.activity.ZActivityOptions
+import zio.temporal.activity.ZActivityRunOptions
 import zio.temporal.protobuf.syntax._
 
 import java.util.UUID
 
 object PaymentActivityImpl {
-  val make: URLayer[ZActivityOptions[Any], PaymentActivity] =
-    ZLayer.fromFunction(new PaymentActivityImpl()(_: ZActivityOptions[Any]))
+  val make: URLayer[ZActivityRunOptions[Any], PaymentActivity] =
+    ZLayer.fromFunction(new PaymentActivityImpl()(_: ZActivityRunOptions[Any]))
 }
 
-class PaymentActivityImpl(implicit options: ZActivityOptions[Any]) extends PaymentActivity {
+class PaymentActivityImpl(implicit options: ZActivityRunOptions[Any]) extends PaymentActivity {
 
   override def proceed(transaction: ProceedTransactionCommand): TransactionView =
     ZActivity.run {
