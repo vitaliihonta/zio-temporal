@@ -5,8 +5,6 @@ import io.temporal.common.converter._
 object ProtobufDataConverter {
 
   /** Creates data converted supporting given protobuf generated types
-    * @param files
-    *   generated protobuf files
     * @return
     *   a [[DataConverter]] supporting given protobuf types
     */

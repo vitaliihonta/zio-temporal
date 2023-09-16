@@ -4,11 +4,12 @@ import com.google.protobuf.ByteString
 import com.google.protobuf.any.Any
 import io.temporal.api.common.v1.Payload
 import io.temporal.common.converter.{EncodingKeys, PayloadConverter}
-import scalapb.{GeneratedMessage, GeneratedMessageCompanion}
-
+import scalapb.{GeneratedMessage, GeneratedMessageCompanion, GeneratedSealedOneof}
 import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
 import java.{util => ju}
+import scala.util.Try
+import scala.collection.concurrent.TrieMap
 
 /** Used to deserialize protobuf generated types */
 class ScalapbPayloadConverter extends PayloadConverter {
@@ -76,8 +77,13 @@ class ScalapbPayloadConverter extends PayloadConverter {
     writeGeneratedMessage(ZUnit())
 
   override def fromData[T](content: Payload, valueClass: Class[T], valueType: Type): T =
-    getCompanion(content, content.getMetadataOrThrow(EncodingKeys.METADATA_MESSAGE_TYPE_KEY).toStringUtf8, valueClass)
-      .parseFrom(content.getData.newCodedInput()) match {
+    getCompanion(
+      content,
+      content.getMetadataOrThrow(EncodingKeys.METADATA_MESSAGE_TYPE_KEY).toStringUtf8,
+      valueClass
+    ).parseFrom(
+      content.getData.newCodedInput()
+    ) match {
       case optional: Optional =>
         optional.value match {
           case None => None.asInstanceOf[T]
@@ -115,34 +121,63 @@ class ScalapbPayloadConverter extends PayloadConverter {
       case value    => value.asInstanceOf[T]
     }
 
+  import ScalapbPayloadConverter.CacheKey
+
+  private val companionsCache = TrieMap.empty[CacheKey, GeneratedMessageCompanion[GeneratedMessage]]
+
   private def getCompanion[T](
     content:    Payload,
     typeUrl:    String,
     valueClass: Class[T]
-  ): GeneratedMessageCompanion[GeneratedMessage] =
-    if (isEither(typeUrl)) widen(Result.messageCompanion)
-    else if (isOption(typeUrl)) widen(Optional.messageCompanion)
-    else {
-      try {
-        val companionClass = Class.forName(valueClass.getName + "$")
-        companionClass
-          .getDeclaredField(scalaModuleField)
-          .get(null)
-          .asInstanceOf[GeneratedMessageCompanion[GeneratedMessage]]
-      } catch {
-        case _: Exception =>
-          throw new ProtobufPayloadException(s"Unable to convert $content to $typeUrl")
+  ): GeneratedMessageCompanion[GeneratedMessage] = {
+    companionsCache.getOrElseUpdate(
+      CacheKey(typeUrl, valueClass),
+      getCompanionImpl(content, typeUrl, valueClass)
+    )
+  }
+
+  private def getCompanionImpl[T](
+    content:    Payload,
+    typeUrl:    String,
+    valueClass: Class[T]
+  ): GeneratedMessageCompanion[GeneratedMessage] = {
+
+    val tryValueClassCompanion = {
+      // Special case 1: ScalaPB-generated oneOf via sealed trait. It requires a little different class lookup
+      if (valueClass.isInterface && valueClass.getInterfaces.contains(classOf[GeneratedSealedOneof])) {
+        val subClassType = typeUrl.split("\\.").last
+        val subClassName = valueClass.getName.replace(valueClass.getSimpleName, subClassType)
+        getClassCompanion(Class.forName(subClassName))
+      } else {
+        // Regular case
+        getClassCompanion(valueClass)
       }
     }
 
-  private def isEither(typeUrl: String): Boolean =
-    typeUrl.startsWith("scala.util.Either")
+    tryValueClassCompanion
+      .orElse {
+        // Special case 2: Either, Option and Unit are converted into zio-temporal-provided wrappers.
+        // While the valueClass refers to them, the actual bytes must be encoded into wrappers.
+        Try(Class.forName(typeUrl))
+          .flatMap(getClassCompanion(_))
+      }
+      .getOrElse {
+        throw new ProtobufPayloadException(s"Unable to convert $content to $valueClass")
+      }
+  }
 
-  private def isOption(typeUrl: String): Boolean =
-    typeUrl.startsWith("scala.Option")
+  private def getClassCompanion[T](valueClass: Class[T]): Try[GeneratedMessageCompanion[GeneratedMessage]] = {
+    Try {
+      val companionClass = Class.forName(valueClass.getName + "$")
+      companionClass
+        .getDeclaredField(scalaModuleField)
+        .get(null)
+        // it may fail if the class is not protobuf generated
+        .asInstanceOf[GeneratedMessageCompanion[GeneratedMessage]]
+    }
+  }
+}
 
-  private def widen[A <: GeneratedMessage](
-    cmp: GeneratedMessageCompanion[A]
-  ): GeneratedMessageCompanion[GeneratedMessage] =
-    cmp.asInstanceOf[GeneratedMessageCompanion[GeneratedMessage]]
+object ScalapbPayloadConverter {
+  protected final case class CacheKey(typeUrl: String, valueClass: Class[_])
 }
