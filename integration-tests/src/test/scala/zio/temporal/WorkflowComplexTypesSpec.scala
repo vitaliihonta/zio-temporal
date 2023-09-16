@@ -12,7 +12,7 @@ object WorkflowComplexTypesSpec extends BaseTemporalSpec {
   override val spec: Spec[TestEnvironment with Scope, Any] =
     suite("Complex type serialization")(
       test("either") {
-        ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
+        ZTestWorkflowEnvironment.activityRunOptionsWithZIO[Any] { implicit activityOptions =>
           val taskQueue  = "either-workflow"
           val workflowId = UUID.randomUUID().toString
 
@@ -35,7 +35,7 @@ object WorkflowComplexTypesSpec extends BaseTemporalSpec {
         }
       },
       test("super complex types") {
-        ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
+        ZTestWorkflowEnvironment.activityRunOptionsWithZIO[Any] { implicit activityOptions =>
           val taskQueue  = "super-complex-type-workflow"
           val workflowId = UUID.randomUUID().toString
 

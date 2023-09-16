@@ -46,7 +46,10 @@ val publishSettings = Seq(
 
 lazy val coverageSettings = Seq(
   coverageExcludedPackages := "com\\.example\\..*;.*\\.JavaTypeTag;.*\\.JavaTypeTag\\..*;.*\\.TypeIsSpecified;" +
-    "zio\\.temporal\\.internal\\.*Macro*;"
+    "zio\\.temporal\\.internal\\.*Macro*;" +
+    // todo: add other deprecated builders as well
+    "zio\\.temporal\\.activity\\.ZLocalActivityStubBuilder*;" +
+    "zio\\.temporal\\.activity\\.ZLocalStubBuilder*;"
 )
 
 lazy val baseProjectSettings = Seq(

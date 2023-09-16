@@ -202,12 +202,12 @@ object ZActivityOptions {
     *
     * <p>If [[withScheduleToCloseTimeout]] is not provided, then this timeout is required.
     */
-  def withStartToCloseTimeout(timeout: Duration): ZActivityOptions =
+  def withStartToCloseTimeout(value: Duration): ZActivityOptions =
     new ZActivityOptions(
       heartbeatTimeout = None,
       scheduleToCloseTimeout = None,
       scheduleToStartTimeout = None,
-      startToCloseTimeout = Some(timeout),
+      startToCloseTimeout = Some(value),
       taskQueue = None,
       retryOptions = None,
       contextPropagators = Nil,
@@ -226,10 +226,10 @@ object ZActivityOptions {
     *
     * <p>Defaults to unlimited, which is chosen if set to null.
     */
-  def withScheduleToCloseTimeout(timeout: Duration): ZActivityOptions =
+  def withScheduleToCloseTimeout(value: Duration): ZActivityOptions =
     new ZActivityOptions(
       heartbeatTimeout = None,
-      scheduleToCloseTimeout = Some(timeout),
+      scheduleToCloseTimeout = Some(value),
       scheduleToStartTimeout = None,
       startToCloseTimeout = None,
       taskQueue = None,

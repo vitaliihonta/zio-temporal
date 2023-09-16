@@ -272,14 +272,14 @@ object WorkflowSpec extends BaseTemporalSpec {
 
     }.provideTestWorkflowEnv,
     test("run workflow with ZIO") {
-      ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
+      ZTestWorkflowEnvironment.activityRunOptionsWithZIO[Any] { implicit activityRunOptions =>
         val taskQueue = "zio-queue"
 
         for {
           workflowId <- ZIO.randomWith(_.nextUUID).map(_.toString + taskQueue)
           _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
                  ZWorker.addWorkflow[ZioWorkflowImpl].fromClass @@
-                 ZWorker.addActivityImplementation(new ZioActivityImpl()(activityOptions))
+                 ZWorker.addActivityImplementation(new ZioActivityImpl())
           _ <- ZTestWorkflowEnvironment.setup()
           zioWorkflow <- ZTestWorkflowEnvironment
                            .newWorkflowStub[ZioWorkflow]
@@ -301,8 +301,38 @@ object WorkflowSpec extends BaseTemporalSpec {
       }
 
     }.provideTestWorkflowEnv,
+    test("run workflow with ZIO with local activity") {
+      ZTestWorkflowEnvironment.activityRunOptionsWithZIO[Any] { implicit activityRunOptions =>
+        val taskQueue = "zio-local-queue"
+
+        for {
+          workflowId <- ZIO.randomWith(_.nextUUID).map(_.toString + taskQueue)
+          _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
+                 ZWorker.addWorkflow[ZioLocalWorkflowImpl].fromClass @@
+                 ZWorker.addActivityImplementation(new ZioActivityImpl())
+          _ <- ZTestWorkflowEnvironment.setup()
+          zioWorkflow <- ZTestWorkflowEnvironment
+                           .newWorkflowStub[ZioLocalWorkflow]
+                           .withTaskQueue(taskQueue)
+                           .withWorkflowId(workflowId)
+                           .withWorkflowRunTimeout(30.seconds)
+                           .withWorkflowTaskTimeout(30.seconds)
+                           .withWorkflowExecutionTimeout(30.seconds)
+                           .build
+          _ <- ZWorkflowStub.start(
+                 zioWorkflow.echo("HELLO THERE")
+               )
+          workflowStub <- ZTestWorkflowEnvironment.newWorkflowStub[ZioLocalWorkflow](workflowId)
+          _ <- ZWorkflowStub.signal(
+                 workflowStub.complete()
+               )
+          result <- workflowStub.result[String]
+        } yield assertTrue(result == "Echoed HELLO THERE")
+      }
+
+    }.provideTestWorkflowEnv,
     test("run workflow with continue as new") {
-      ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
+      ZTestWorkflowEnvironment.activityRunOptionsWithZIO[Any] { implicit activityRunOptions =>
         val taskQueue = "continue-as-new-queue"
 
         for {
@@ -328,7 +358,7 @@ object WorkflowSpec extends BaseTemporalSpec {
 
     }.provideTestWorkflowEnv,
     test("run custom-named workflow with continue as new") {
-      ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
+      ZTestWorkflowEnvironment.activityRunOptionsWithZIO[Any] { implicit activityRunOptions =>
         val taskQueue = "continue-as-new-named-queue"
 
         for {
@@ -354,7 +384,7 @@ object WorkflowSpec extends BaseTemporalSpec {
 
     }.provideTestWorkflowEnv,
     test("run workflow with ZIO untyped activity") {
-      ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
+      ZTestWorkflowEnvironment.activityRunOptionsWithZIO[Any] { implicit activityRunOptions =>
         val taskQueue = "zio-untyped-queue"
 
         for {
@@ -426,7 +456,7 @@ object WorkflowSpec extends BaseTemporalSpec {
 
     }.provideTestWorkflowEnv @@ TestAspect.flaky,
     test("run workflow with successful sagas") {
-      ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
+      ZTestWorkflowEnvironment.activityRunOptionsWithZIO[Any] { implicit activityRunOptions =>
         val taskQueue      = "saga-queue"
         val successFunc    = (_: String, _: BigDecimal) => ZIO.succeed(Done())
         val expectedResult = BigDecimal(5.0)
@@ -454,7 +484,7 @@ object WorkflowSpec extends BaseTemporalSpec {
 
     }.provideTestWorkflowEnv,
     test("run workflow with saga compensations") {
-      ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
+      ZTestWorkflowEnvironment.activityRunOptionsWithZIO[Any] { implicit activityRunOptions =>
         val taskQueue = "saga-queue"
 
         val From = "from"
@@ -551,7 +581,7 @@ object WorkflowSpec extends BaseTemporalSpec {
       } yield assertions
     }.provideTestWorkflowEnv @@ TestAspect.flaky(3),
     test("run parameterized workflow") {
-      ZTestWorkflowEnvironment.activityOptionsWithZIO[Any] { implicit activityOptions =>
+      ZTestWorkflowEnvironment.activityRunOptionsWithZIO[Any] { implicit activityRunOptions =>
         val taskQueue = "parameterized-queue"
 
         def runWorkflow[Input <: ParameterizedWorkflowInput](

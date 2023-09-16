@@ -40,15 +40,16 @@ class TypedMathWorkflowImpl extends MathWorkflow {
   private lazy val logger = ZWorkflow.makeLogger
 
   private val activity: ZActivityStub.Of[ArithmeticActivity] = ZWorkflow
-    .newLocalActivityStub[ArithmeticActivity]
-    .withStartToCloseTimeout(10.seconds)
-    .withRetryOptions(
-      ZRetryOptions.default
-        .withMaximumAttempts(3)
-        // Without this block, division will be retried
-        .withDoNotRetry(nameOf[SafeMath.MathError])
+    .newLocalActivityStub[ArithmeticActivity](
+      ZLocalActivityOptions
+        .withStartToCloseTimeout(10.seconds)
+        .withRetryOptions(
+          ZRetryOptions.default
+            .withMaximumAttempts(3)
+            // Without this block, division will be retried
+            .withDoNotRetry(nameOf[SafeMath.MathError])
+        )
     )
-    .build
 
   override def formula(a: Int): Int = {
     val twice = ZActivityStub.execute(

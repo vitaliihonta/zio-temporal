@@ -342,12 +342,14 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   untyped activity stub builder
     */
-  @deprecated("Use newActivityStub accepting ZActivityOptions", since = "0.5.0")
+  @deprecated("Use newUntypedActivityStub accepting ZActivityOptions", since = "0.5.0")
   def newUntypedActivityStub: ZActivityStubBuilderInitial.Untyped =
     new ZActivityStubBuilderInitial.Untyped(buildActivityStubUntyped)
 
   /** Creates a builder of untyped client stub to activities
     *
+    * @param options
+    *   activity options
     * @return
     *   untyped activity stub builder
     */
@@ -361,16 +363,40 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   local activity stub builder
     */
+  @deprecated("Use newLocalActivityStub accepting ZLocalActivityOptions", since = "0.5.0")
   def newLocalActivityStub[A: ClassTag: IsActivity]: ZLocalActivityStubBuilderInitial.Of[A] =
     new ZLocalActivityStubBuilderInitial.Of[A](buildLocalActivityTyped[A])
+
+  /** Creates a builder of client stub to local activities that implement given interface.
+    *
+    * @tparam A
+    *   activity interface
+    * @param options
+    *   local activity options
+    * @return
+    *   local activity stub builder
+    */
+  def newLocalActivityStub[A: ClassTag: IsActivity](options: ZLocalActivityOptions): ZActivityStub.Of[A] =
+    buildLocalActivityTyped[A].apply(options.toJava)
 
   /** Creates a builder of untyped client stub to local activities that implement given interface.
     *
     * @return
     *   local activity stub builder
     */
+  @deprecated("Use newUntypedLocalActivityStub accepting ZLocalActivityOptions", since = "0.5.0")
   def newUntypedLocalActivityStub: ZLocalActivityStubBuilderInitial.Untyped =
     new ZLocalActivityStubBuilderInitial.Untyped(buildLocalActivityUntyped)
+
+  /** Creates a builder of untyped client stub to local activities that implement given interface.
+    *
+    * @param options
+    *   local activity options
+    * @return
+    *   local activity stub builder
+    */
+  def newUntypedLocalActivityStub(options: ZLocalActivityOptions): ZActivityStub.Untyped =
+    buildLocalActivityUntyped(options.toJava)
 
   /** Creates a builder of client stub that can be used to start a child workflow that implements given interface.
     *

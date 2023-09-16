@@ -43,7 +43,7 @@ class ZTestWorkflowEnvironment[+R] private[zio] (val toJava: TestWorkflowEnviron
   /** Returns the in-memory test Temporal service that is owned by this. */
   lazy val workflowServiceStubs: ZWorkflowServiceStubs = new ZWorkflowServiceStubs(toJava.getWorkflowServiceStubs)
 
-  implicit lazy val activityOptions: ZActivityRunOptions[R] =
+  implicit lazy val activityRunOptions: ZActivityRunOptions[R] =
     new ZActivityRunOptions[R](runtime, Some(workflowClient.toJava.newActivityCompletionClient()))
 
   /** Setup test environment with a guaranteed finalization.
@@ -162,11 +162,11 @@ object ZTestWorkflowEnvironment {
   def workflowServiceStubs: URIO[ZTestWorkflowEnvironment[Any], ZWorkflowServiceStubs] =
     ZIO.serviceWith[ZTestWorkflowEnvironment[Any]](_.workflowServiceStubs)
 
-  def activityOptions[R: Tag]: URIO[ZTestWorkflowEnvironment[R], ZActivityRunOptions[R]] =
-    ZIO.serviceWith[ZTestWorkflowEnvironment[R]](_.activityOptions)
+  def activityRunOptions[R: Tag]: URIO[ZTestWorkflowEnvironment[R], ZActivityRunOptions[R]] =
+    ZIO.serviceWith[ZTestWorkflowEnvironment[R]](_.activityRunOptions)
 
   /** Access activity options */
-  def activityOptionsWithZIO[R]: ActivityOptionsWithZIOPartiallyApplied[R] =
+  def activityRunOptionsWithZIO[R]: ActivityOptionsWithZIOPartiallyApplied[R] =
     new ActivityOptionsWithZIOPartiallyApplied[R]
 
   final class ActivityOptionsWithZIOPartiallyApplied[R](private val `dummy`: Boolean = true) extends AnyVal {
@@ -174,7 +174,7 @@ object ZTestWorkflowEnvironment {
       f:            ZActivityRunOptions[R] => ZIO[R2, E, A]
     )(implicit tag: Tag[R]
     ): ZIO[R2, E, A] =
-      ZIO.serviceWithZIO[ZTestWorkflowEnvironment[R]](testEnv => f(testEnv.activityOptions))
+      ZIO.serviceWithZIO[ZTestWorkflowEnvironment[R]](testEnv => f(testEnv.activityRunOptions))
   }
 
   /** Creates new typed workflow stub builder
