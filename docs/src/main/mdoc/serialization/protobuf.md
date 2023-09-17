@@ -95,6 +95,5 @@ import zio.temporal.protobuf.ProtobufDataConverter
 
 val optionsLayer =
   ZWorkflowClientOptions.make @@
-    // override automatically picks up generated Protobuf files
-    ZWorkflowClientOptions.withDataConverter(ProtobufDataConverter.makeAutoLoad())
+    ZWorkflowClientOptions.withDataConverter(ProtobufDataConverter.make())
 ```
