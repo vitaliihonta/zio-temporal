@@ -120,6 +120,18 @@ object ZTestActivityEnvironment {
   def activityRunOptions[R: Tag]: URIO[ZTestActivityEnvironment[R], ZActivityRunOptions[R]] =
     ZIO.serviceWith[ZTestActivityEnvironment[R]](_.activityRunOptions)
 
+  /** Access activity options */
+  def activityRunOptionsWithZIO[R]: ActivityRunOptionsWithZIOPartiallyApplied[R] =
+    new ActivityRunOptionsWithZIOPartiallyApplied[R]
+
+  final class ActivityRunOptionsWithZIOPartiallyApplied[R](private val `dummy`: Boolean = true) extends AnyVal {
+    def apply[R2 <: ZTestActivityEnvironment[R], E, A](
+      f:            ZActivityRunOptions[R] => ZIO[R2, E, A]
+    )(implicit tag: Tag[R]
+    ): ZIO[R2, E, A] =
+      ZIO.serviceWithZIO[ZTestActivityEnvironment[R]](testEnv => f(testEnv.activityRunOptions))
+  }
+
   /** Registers activity implementations to test. Use [[newActivityStub]] to create stubs that can be used to invoke
     * them.
     *

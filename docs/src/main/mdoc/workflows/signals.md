@@ -71,10 +71,10 @@ Then we could implement a stateful workflow as follows:
 
 ```scala mdoc:silent
 class PaymentWorkflowImpl extends PaymentWorkflow {
-  private val paymentActivity: ZActivityStub.Of[PaymentActivity] = ZWorkflow
-    .newActivityStub[PaymentActivity]
-    .withStartToCloseTimeout(10.seconds)
-    .build
+  private val paymentActivity: ZActivityStub.Of[PaymentActivity] = 
+    ZWorkflow.newActivityStub[PaymentActivity](
+      ZActivityOptions.withStartToCloseTimeout(10.seconds)
+    )
     
   private val paymentState = ZWorkflowState.make[PaymentState](PaymentState.Initial)
   
@@ -109,12 +109,12 @@ First, you will need to start the workflow:
 val transactionId = UUID.randomUUID().toString
 val startWorkflow = ZIO.serviceWithZIO[ZWorkflowClient] { workflowClient =>
   for {
-    paymentWorkflow <- workflowClient
-                        .newWorkflowStub[PaymentWorkflow]
-                        .withTaskQueue("payment-queue")
-                        .withWorkflowId(transactionId)
-                        .withWorkflowRunTimeout(10.second)
-                        .build
+    paymentWorkflow <- workflowClient.newWorkflowStub[PaymentWorkflow](
+                         ZWorkflowOptions
+                           .withWorkflowId(transactionId)
+                           .withTaskQueue("payment-queue")
+                           .withWorkflowRunTimeout(10.second)
+                       )
    _ <- ZWorkflowStub.execute(
           paymentWorkflow.proceed(amount = 42, from = "me",  to = "you")
         )

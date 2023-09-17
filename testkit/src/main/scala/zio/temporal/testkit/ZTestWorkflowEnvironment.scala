@@ -168,10 +168,10 @@ object ZTestWorkflowEnvironment {
     ZIO.serviceWith[ZTestWorkflowEnvironment[R]](_.activityRunOptions)
 
   /** Access activity options */
-  def activityRunOptionsWithZIO[R]: ActivityOptionsWithZIOPartiallyApplied[R] =
-    new ActivityOptionsWithZIOPartiallyApplied[R]
+  def activityRunOptionsWithZIO[R]: ActivityRunOptionsWithZIOPartiallyApplied[R] =
+    new ActivityRunOptionsWithZIOPartiallyApplied[R]
 
-  final class ActivityOptionsWithZIOPartiallyApplied[R](private val `dummy`: Boolean = true) extends AnyVal {
+  final class ActivityRunOptionsWithZIOPartiallyApplied[R](private val `dummy`: Boolean = true) extends AnyVal {
     def apply[R2 <: ZTestWorkflowEnvironment[R], E, A](
       f:            ZActivityRunOptions[R] => ZIO[R2, E, A]
     )(implicit tag: Tag[R]

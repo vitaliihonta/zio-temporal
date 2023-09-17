@@ -84,7 +84,7 @@ To Heartbeat an Activity Execution, use the `ZActivityExecutionContext`:
 class RecordProcessorActivityImpl(
   recordLoader:     RecordLoader,
   recordProcessor:  RecordProcessor
-)(implicit options: ZActivityOptions[Any])
+)(implicit options: ZActivityRunOptions[Any])
     extends RecordProcessorActivity {
 
   override def processRecords(): Int = {
@@ -145,12 +145,13 @@ trait HeartbeatingActivityBatchWorkflow {
 
 class HeartbeatingActivityBatchWorkflowImpl extends HeartbeatingActivityBatchWorkflow {
   
-  private val recordProcessor: ZActivityStub.Of[RecordProcessorActivity] = ZWorkflow
-    .newActivityStub[RecordProcessorActivity]
-    .withStartToCloseTimeout(1.hour)
-    // Heartbeat timeout
-    .withHeartbeatTimeout(10.seconds)
-    .build
+  private val recordProcessor: ZActivityStub.Of[RecordProcessorActivity] = 
+    ZWorkflow.newActivityStub[RecordProcessorActivity](
+      ZActivityOptions
+        .withStartToCloseTimeout(1.hour)
+        // Heartbeat timeout
+        .withHeartbeatTimeout(10.seconds)
+    )
 
   private val logger = ZWorkflow.makeLogger
 

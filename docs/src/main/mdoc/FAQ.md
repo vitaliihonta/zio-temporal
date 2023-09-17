@@ -102,9 +102,10 @@ import zio.temporal.workflow._
 
 class EchoWorkflowImpl extends EchoWorkflow {
   // Inside some workflow
-  private val activity: ZActivityStub.Untyped = ZWorkflow.newUntypedActivityStub
-    .withStartToCloseTimeout(5.seconds)
-    .build
+  private val activity: ZActivityStub.Untyped = 
+    ZWorkflow.newUntypedActivityStub(
+      ZActivityOptions.withStartToCloseTimeout(5.seconds)
+    )
 
   override def echoWorkflow(what: String): String = {
     activity.execute[String]("Echo", what)
@@ -122,10 +123,12 @@ On the other hand, an untyped workflow signal must be invoked with the same lowe
 ```scala mdoc:silent
 ZIO.serviceWithZIO[ZWorkflowClient] { workflowClient =>
   for {
-    echoWorkflow <- workflowClient.newUntypedWorkflowStub("EchoWorkflow")
-      .withTaskQueue("task-queue")
-      .withWorkflowId("workflow-id-a1b2c3")
-      .build
+    echoWorkflow <- workflowClient.newUntypedWorkflowStub(
+                      workflowType = "EchoWorkflow",
+                      options = ZWorkflowOptions
+                        .withWorkflowId("workflow-id-a1b2c3")
+                        .withTaskQueue("task-queue")
+                    )
 
     _ <- echoWorkflow.start("HELLO THERE")
     _ <- echoWorkflow.signal("signalSomething")

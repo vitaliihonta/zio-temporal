@@ -28,7 +28,7 @@ trait EchoActivities {
   def echo(what: String): String
 }
 
-class EchoActivitiesImpl(implicit options: ZActivityOptions[Any]) extends EchoActivities {
+class EchoActivitiesImpl(implicit options: ZActivityRunOptions[Any]) extends EchoActivities {
   override def echo(what: String): String =
     ZActivity.run {
       ZIO
@@ -44,15 +44,14 @@ Here is an example of testing this activity:
 object EchoActivitySpec extends ZIOSpecDefault {
   override val spec = suite("EchoActivities")(
     test("echoes message") {
-      ZTestActivityEnvironment.activityOptions[Any].flatMap { implicit options =>
+      ZTestActivityEnvironment.activityRunOptionsWithZIO[Any] { implicit options =>
         for {
           // Provide a "factory" method to construct the activity
           _ <- ZTestActivityEnvironment.addActivityImplementation(new EchoActivitiesImpl)
           // Get the activity stub
-          stub <- ZTestActivityEnvironment
-            .newActivityStub[EchoActivities]
-            .withStartToCloseTimeout(5.seconds)
-            .build
+          stub <- ZTestActivityEnvironment.newActivityStub[EchoActivities](
+            ZActivityOptions.withStartToCloseTimeout(5.seconds)
+          )
           // Invoke the activity
           result = stub.echo("hello")
           // Test your code
@@ -68,7 +67,8 @@ object EchoActivitySpec extends ZIOSpecDefault {
 
 **Notes**
 - `ZTestActivityEnvironment` companion object has a plenty of methods to configure the test environment
-  - `ZTestActivityEnvironment.activityOptions[R]` provides with `ZActivityOptions` needed to run ZIO inside activities
+  - `ZTestActivityEnvironment.activityRunOptions[R]` provides with `ZActivityRunOptions` needed to run ZIO inside activities
+   - `ZTestActivityEnvironment.activityRunOptionsWithZIO[R]` allows building a ZIO accessing `ZActivityRunOptions` (like `ZIO.serviceWithZIO` for ZIO environment)
   - `ZTestActivityEnvironment.addActivityImplementation` populates the test environment with Activity implementations
   - `ZTestActivityEnvironment.newActivityStub` returns a stub  for testing
 - Unlike real Activity stubs, those returned by `ZTestActivityEnvironment` run locally. Therefore, its methods can be called directly (without wrapping into `ZActivityStub.execute`)
@@ -97,7 +97,7 @@ object FibonacciHeartbeatActivityImpl {
 
 // The counter is needed for demo purposes
 class FibonacciHeartbeatActivityImpl(iterationsCounter: AtomicInteger)(
-  implicit options: ZActivityOptions[Any]
+  implicit options: ZActivityRunOptions[Any]
 ) extends FibonacciHeartbeatActivity {
   
   import FibonacciHeartbeatActivityImpl.HeartbeatDetails
@@ -147,15 +147,14 @@ You can now simply test that the activity uses heartbeats:
 object FibonacciHeartbeatActivityActivitySpec extends ZIOSpecDefault {
   override val spec = suite("FibonacciHeartbeatActivity")(
     test("performs heartbeats message") {
-      ZTestActivityEnvironment.activityOptions[Any].flatMap { implicit options =>
+      ZTestActivityEnvironment.activityRunOptionsWithZIO[Any] { implicit options =>
         // Initialize a fresh counter
         val numIterations = new AtomicInteger()
         for {
           _ <- ZTestActivityEnvironment.addActivityImplementation(new FibonacciHeartbeatActivityImpl(numIterations))
-          stub <- ZTestActivityEnvironment
-            .newActivityStub[FibonacciHeartbeatActivity]
-            .withStartToCloseTimeout(1.minute)
-            .build
+          stub <- ZTestActivityEnvironment.newActivityStub[FibonacciHeartbeatActivity](
+            ZActivityOptions.withStartToCloseTimeout(1.minute)
+          )
           // Set heartbeat details as if 3 iterations were performed
           _ <- ZTestActivityEnvironment.setHeartbeatDetails(
             FibonacciHeartbeatActivityImpl.HeartbeatDetails(

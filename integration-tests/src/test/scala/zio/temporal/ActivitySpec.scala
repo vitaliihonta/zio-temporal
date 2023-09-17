@@ -15,7 +15,7 @@ object ActivitySpec extends BaseTemporalSpec {
 
   override val spec = suite("ZActivity")(
     test("runs simple activity") {
-      ZTestActivityEnvironment.activityRunOptions[Any].flatMap { implicit options =>
+      ZTestActivityEnvironment.activityRunOptionsWithZIO[Any] { implicit options =>
         for {
           _ <- ZTestActivityEnvironment.addActivityImplementation(new ZioActivityImpl)
           stub <- ZTestActivityEnvironment
@@ -27,7 +27,7 @@ object ActivitySpec extends BaseTemporalSpec {
       }
     }.provideTestActivityEnv,
     test("runs heartbeat activity from start") {
-      ZTestActivityEnvironment.activityRunOptions[Any].flatMap { implicit options =>
+      ZTestActivityEnvironment.activityRunOptionsWithZIO[Any] { implicit options =>
         val numIterations = new AtomicInteger()
         for {
           _ <- ZTestActivityEnvironment.addActivityImplementation(new FibonacciHeartbeatActivityImpl(numIterations))
@@ -45,7 +45,7 @@ object ActivitySpec extends BaseTemporalSpec {
       }
     }.provideTestActivityEnv,
     test("runs heartbeat activity from latest checkpoint") {
-      ZTestActivityEnvironment.activityRunOptions[Any].flatMap { implicit options =>
+      ZTestActivityEnvironment.activityRunOptionsWithZIO[Any] { implicit options =>
         val numIterations = new AtomicInteger()
         for {
           _ <- ZTestActivityEnvironment.addActivityImplementation(new FibonacciHeartbeatActivityImpl(numIterations))

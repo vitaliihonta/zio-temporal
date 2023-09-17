@@ -36,7 +36,7 @@ In order to Continue-As-New, it's required to define a `ZWorkflowContinueAsNewSt
 class LongRunningWorkflowImpl extends LongRunningWorkflow {
   private val logger = ZWorkflow.makeLogger
   
-  private val nextRun = ZWorkflow.newContinueAsNewStub[LongRunningWorkflow].build
+  private val nextRun = ZWorkflow.newContinueAsNewStub[LongRunningWorkflow]()
   
   override def watchFiles(paths: List[String]): Unit = {
     logger.info(s"Watching files=$paths")
@@ -49,7 +49,14 @@ class LongRunningWorkflowImpl extends LongRunningWorkflow {
 ```
 
 - To create a Continue-As-New stub, you must use `ZWorkflow.newContinueAsNewStub[<Type>]` method.
-  - It's possible to configure it because `newChildWorkflowStub` returns a builder
 - **Reminder: you must always** wrap the Continue-As-New invocation into `ZWorkflowContinueAsNewStub.execute` method.
     - `nextRun.watchFiles(paths)` invocation would be re-written into an untyped Temporal's Continue-As-New call
     - A direct method invocation will throw an exception
+
+You can provide additional configure for the next run using `ZContinueAsNewOptions`:
+
+```scala mdoc
+val continueAsNewOptions = ZContinueAsNewOptions.default
+  .withWorkflowRunTimeout(5.minutes)
+  .withTaskQueue("<other-task-queue>")
+```

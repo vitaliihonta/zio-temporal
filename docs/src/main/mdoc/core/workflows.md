@@ -58,16 +58,21 @@ That's it!
 ## Executing workflows
 
 First, you should connect to the Temporal cluster. This is done via the Workflow client.  
+Any workflow run requires providing some mandatory parameters, such as the unique Workflow ID, the Task Queue, and other various parameters (such as timeouts).  
+The configuration is passed using `ZWorkflowOptions`:
+
+```scala mdoc
+val workflowOptions = ZWorkflowOptions
+  .withWorkflowId(UUID.randomUUID().toString)
+  .withTaskQueue("echo-queue")
+  .withWorkflowRunTimeout(10.second)
+```
+
 In order to run a specific workflow, you should create a Workflow stub:
 
 ```scala mdoc:silent
 def createWorkflowStub(workflowClient: ZWorkflowClient): UIO[ZWorkflowStub.Of[EchoWorkflow]] = 
-  workflowClient
-    .newWorkflowStub[EchoWorkflow]
-    .withTaskQueue("echo-queue")
-    .withWorkflowId(UUID.randomUUID().toString)
-    .withWorkflowRunTimeout(10.second)
-    .build
+  workflowClient.newWorkflowStub[EchoWorkflow](workflowOptions)
 ```
 
 Important notes:
@@ -75,8 +80,7 @@ Important notes:
 - You need a `ZWorkflowClient` instance to build a Workflow stub. You should either access it via ZIO environment or
   have it already created somewhere
 - In `client.newWorkflowStub` method you provide the specific workflow interface you will work with
-- You provide all the necessary configuration for the stub, such as the Task Queue name, the Workflow ID and the run
-  timeout
+  - The method requires specifying the Workflow Interface type and `ZWorkflowOptions`
 
 Having a Workflow stub, you'll be able to execute the workflow. Executing means starting the workflow and waiting for
 its completion:
