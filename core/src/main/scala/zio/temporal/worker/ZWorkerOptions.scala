@@ -155,6 +155,8 @@ final case class ZWorkerOptions private[zio] (
   ): ZWorkerOptions =
     copy(javaOptionsCustomization = f)
 
+  /** Converts worker options to Java SDK's [[WorkerOptions]]
+    */
   def toJava: WorkerOptions = {
     val builder = WorkerOptions.newBuilder()
 

@@ -11,7 +11,7 @@ import zio.temporal.workflow.ZWorkflowClientOptions
   * @see
   *   [[WorkerFactoryOptions]]
   */
-case class ZWorkerFactoryOptions private[zio] (
+final case class ZWorkerFactoryOptions private[zio] (
   workflowCacheSize:                    Option[Int],
   maxWorkflowThreadCount:               Option[Int],
   workerInterceptors:                   List[WorkerInterceptor],
@@ -48,6 +48,15 @@ case class ZWorkerFactoryOptions private[zio] (
     builder.setWorkerInterceptors(workerInterceptors: _*)
     enableLoggingInReplay.foreach(builder.setEnableLoggingInReplay)
     javaOptionsCustomization(builder).build()
+  }
+
+  override def toString: String = {
+    s"ZWorkerFactoryOptions(" +
+      s"workflowCacheSize=$workflowCacheSize" +
+      s", maxWorkflowThreadCount=$maxWorkflowThreadCount" +
+      s", workerInterceptors=$workerInterceptors" +
+      s", enableLoggingInReplay=$enableLoggingInReplay" +
+      s")"
   }
 }
 

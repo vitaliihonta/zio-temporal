@@ -30,8 +30,15 @@ final case class ZScheduleOptions private[zio] (
   /** Set the search attributes for the schedule.
     */
   def withSearchAttributes(values: Map[String, ZSearchAttribute]): ZScheduleOptions =
-    copy(searchAttributes = Some(ZSearchAttributes.fromJava(ZSearchAttribute.toJavaSearchAttributes(values))))
+    withSearchAttributes(ZSearchAttributes.fromJava(ZSearchAttribute.toJavaSearchAttributes(values)))
 
+  /** Set the search attributes for the schedule.
+    */
+  def withSearchAttributes(values: ZSearchAttributes): ZScheduleOptions =
+    copy(searchAttributes = Some(values))
+
+  /** Convert schedule options to Java SDK's [[ScheduleOptions]]
+    */
   def toJava: ScheduleOptions = {
     ScheduleOptions
       .newBuilder()

@@ -62,19 +62,27 @@ final case class ZRetryOptions private[zio] (
       .newBuilder()
       .setDoNotRetry(doNotRetry: _*)
 
-    maximumAttempts
-      .foreach(maximumAttempts => builder.setMaximumAttempts(maximumAttempts))
+    maximumAttempts.foreach(builder.setMaximumAttempts)
 
     initialInterval
       .foreach(initialInterval => builder.setInitialInterval(initialInterval.asJava))
 
-    backoffCoefficient
-      .foreach(backoffCoefficient => builder.setBackoffCoefficient(backoffCoefficient))
+    backoffCoefficient.foreach(builder.setBackoffCoefficient)
 
     maximumInterval
       .foreach(maximumInterval => builder.setMaximumInterval(maximumInterval.asJava))
 
     javaOptionsCustomization(builder).build()
+  }
+
+  override def toString: String = {
+    s"ZRetryOptions(" +
+      s"maximumAttempts=$maximumAttempts" +
+      s", initialInterval=$initialInterval" +
+      s", backoffCoefficient=$backoffCoefficient" +
+      s", maximumInterval=$maximumInterval" +
+      s", doNotRetry=$doNotRetry" +
+      s")"
   }
 }
 
