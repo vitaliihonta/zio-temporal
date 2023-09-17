@@ -2,13 +2,14 @@ package zio.temporal
 
 import zio._
 import zio.logging.backend.SLF4J
+import zio.temporal.activity.{ZActivityImplementationObject, ZActivityOptions, ZActivityType}
 import zio.temporal.fixture._
 import zio.temporal.testkit._
 import zio.temporal.worker._
 import zio.temporal.workflow._
 import zio.test._
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
+
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger, AtomicReference}
 import scala.collection.mutable.ListBuffer
 
 object WorkflowSpec extends BaseTemporalSpec {
@@ -496,13 +497,20 @@ object WorkflowSpec extends BaseTemporalSpec {
         val From = "from"
         val To   = "to"
 
-        val compensated  = new AtomicBoolean(false)
-        val error        = TransferError("fraud")
-        val withdrawFunc = (_: String, _: BigDecimal) => ZIO.succeed(Done())
+        val compensated = new AtomicBoolean(false)
+        val withdrawn   = new AtomicInteger(0)
+        val error       = TransferError("fraud")
+        val withdrawFunc = (_: String, _: BigDecimal) =>
+          ZIO.succeed {
+            withdrawn.incrementAndGet()
+            Done()
+          }
         val depositFunc: (String, BigDecimal) => IO[TransferError, Done] = {
           case (From, _) =>
-            compensated.set(true)
-            ZIO.succeed(Done())
+            ZIO.succeed {
+              compensated.set(true)
+              Done()
+            }
           case _ =>
             ZIO.fail(error)
         }
@@ -513,7 +521,22 @@ object WorkflowSpec extends BaseTemporalSpec {
           workflowId <- ZIO.randomWith(_.nextUUID)
 
           _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
-                 ZWorker.addWorkflow[SagaWorkflowImpl].fromClass @@
+                 ZWorker
+                   .addWorkflow[SagaWorkflowImpl]
+                   .withOptions(
+                     // provide more activity options here
+                     ZWorkflowImplementationOptions.default.withActivityOptions(
+                       ZActivityType[TransferActivity] ->
+                         ZActivityOptions
+                           .withStartToCloseTimeout(5.seconds)
+                           .withRetryOptions(
+                             ZRetryOptions.default
+                               .withMaximumAttempts(1)
+                               .withDoNotRetry(nameOf[TransferError])
+                           )
+                     )
+                   )
+                   .fromClass @@
                  ZWorker.addActivityImplementation(new TransferActivityImpl(depositFunc, withdrawFunc))
 
           _ <- ZTestWorkflowEnvironment.setup()
@@ -527,7 +550,12 @@ object WorkflowSpec extends BaseTemporalSpec {
                       .execute(sagaWorkflow.transfer(TransferCommand(From, To, amount)))
                       .either
         } yield {
-          assert(result)(Assertion.isLeft) && assertTrue(compensated.get())
+          assert(result)(Assertion.isLeft) &&
+          assertTrue(
+            compensated.get(),
+            // activity options were applied correctly
+            withdrawn.get() == 1
+          )
         }
       }
 
@@ -701,8 +729,57 @@ object WorkflowSpec extends BaseTemporalSpec {
 
         result <- ZWorkflowStub.execute(memoWorkflow.withMemo("zio"))
       } yield assert(result)(Assertion.isSome(Assertion.equalTo("temporal")))
+    }.provideTestWorkflowEnv,
+    test("Register workflows using addWorkflowImplementations") {
+      val taskQueue = "child-2-queue"
+
+      for {
+        workflowId <- ZIO.randomWith(_.nextUUID)
+        _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
+               ZWorker.addWorkflowImplementations(
+                 ZWorkflowImplementationClass[GreetingWorkflowImpl],
+                 ZWorkflowImplementationClass[GreetingChildImpl]
+               )
+        _ <- ZTestWorkflowEnvironment.setup()
+        greetingWorkflow <- ZTestWorkflowEnvironment.newWorkflowStub[GreetingWorkflow](
+                              ZWorkflowOptions
+                                .withWorkflowId(workflowId.toString)
+                                .withTaskQueue(taskQueue)
+                                .withWorkflowRunTimeout(10.second)
+                            )
+        result <- ZWorkflowStub.execute(
+                    greetingWorkflow.getGreeting("Vitalii")
+                  )
+      } yield assertTrue(result == "Hello Vitalii!")
+    }.provideTestWorkflowEnv,
+    test("Register activities using addActivityImplementations") {
+      val taskQueue = "multi-activities-workflow-queue"
+
+      ZTestWorkflowEnvironment.activityRunOptionsWithZIO[Any] { implicit activityRunOptions =>
+        for {
+          workflowId <- ZIO.randomWith(_.nextUUID)
+          _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
+                 ZWorker.addWorkflowImplementations(
+                   List(
+                     ZWorkflowImplementationClass[MultiActivitiesWorkflowImpl]
+                   )
+                 ) @@
+                 ZWorker.addActivityImplementations(
+                   ZActivityImplementationObject(new ZioActivityImpl()),
+                   ZActivityImplementationObject(ComplexTypesActivityImpl())
+                 )
+          _ <- ZTestWorkflowEnvironment.setup()
+          multiWorkflow <- ZTestWorkflowEnvironment.newWorkflowStub[MultiActivitiesWorkflow](
+                             ZWorkflowOptions
+                               .withWorkflowId(workflowId.toString)
+                               .withTaskQueue(taskQueue)
+                               .withWorkflowRunTimeout(10.second)
+                           )
+          result <- ZWorkflowStub.execute(
+                      multiWorkflow.doSomething("Vitalii")
+                    )
+        } yield assertTrue(result == "Echoed Vitalii, list=2")
+      }
     }.provideTestWorkflowEnv
   )
-
-  // TODO: test multiple workflows registration
 }

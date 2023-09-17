@@ -46,16 +46,9 @@ trait SagaWorkflow {
 
 class SagaWorkflowImpl extends SagaWorkflow {
 
-  private val activity = ZWorkflow
-    .newActivityStub[TransferActivity](
-      ZActivityOptions
-        .withStartToCloseTimeout(5.seconds)
-        .withRetryOptions(
-          ZRetryOptions.default
-            .withMaximumAttempts(1)
-            .withDoNotRetry(nameOf[TransferError])
-        )
-    )
+  private val activity = ZWorkflow.newActivityStub[TransferActivity](
+    ZActivityOptions.withStartToCloseTimeout(5.seconds)
+  )
 
   override def transfer(command: TransferCommand): BigDecimal = {
     val saga = for {

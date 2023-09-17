@@ -16,8 +16,10 @@ object Main extends ZIOAppDefault {
   override def run: ZIO[ZIOAppArgs with Scope, Any, Any] = {
     val registerWorkflows =
       ZWorkerFactory.newWorker(TaskQueue) @@
-        ZWorker.addWorkflow[FoodDeliveryWorkflowImpl].fromClass @@
-        ZWorker.addWorkflow[FoodOrderWorkflowImpl].fromClass
+        ZWorker.addWorkflowImplementations(
+          ZWorkflowImplementationClass[FoodDeliveryWorkflowImpl],
+          ZWorkflowImplementationClass[FoodOrderWorkflowImpl]
+        )
 
     val invokeWorkflows = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
