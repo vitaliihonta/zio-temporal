@@ -15,10 +15,20 @@ trait MultiActivitiesWorkflow {
 class MultiActivitiesWorkflowImpl extends MultiActivitiesWorkflow {
   private val logger = ZWorkflow.makeLogger
 
-  private val zioActivity = ZWorkflow
-    .newActivityStub[ZioActivity](
-      ZActivityOptions.withStartToCloseTimeout(5.seconds)
-    )
+  ZWorkflow.applyActivityOptions(
+    ZActivityType[ZioActivity] ->
+      ZActivityOptions
+        .withStartToCloseTimeout(5.seconds)
+        .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(1)),
+    ZActivityType[ComplexTypesActivity] ->
+      ZActivityOptions
+        .withStartToCloseTimeout(5.seconds)
+        .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(3))
+  )
+
+  private val zioActivity = ZWorkflow.newActivityStub[ZioActivity](
+    ZActivityOptions.withStartToCloseTimeout(5.seconds)
+  )
 
   private val complexTypesActivity = ZWorkflow.newActivityStub[ComplexTypesActivity](
     ZActivityOptions.withStartToCloseTimeout(5.seconds)

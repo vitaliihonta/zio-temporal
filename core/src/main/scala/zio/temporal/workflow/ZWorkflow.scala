@@ -22,6 +22,7 @@ import java.util.UUID
 import scala.jdk.OptionConverters._
 import scala.reflect.ClassTag
 import scala.util.Random
+import scala.jdk.CollectionConverters._
 
 object ZWorkflow extends ZWorkflowVersionSpecific {
 
@@ -304,14 +305,69 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
   /** Sets the default activity options that will be used for activity stubs that have no [[ZActivityOptions]]
     * specified.<br> This overrides a value provided by
     * [[zio.temporal.worker.ZWorkflowImplementationOptions.defaultActivityOptions]].<br> A more specific
-    * per-activity-type option specified in [[WorkflowImplementationOptions#getActivityOptions]] or
-    * [[WorkflowImplementationOptions.applyActivityOptions]] takes precedence over this setting.
+    * per-activity-type option specified in [[zio.temporal.worker.ZWorkflowImplementationOptions.activityOptions]] or
+    * [[applyActivityOptions]] takes precedence over this setting.
     *
-    * @param defaultActivityOptions
+    * @param value
     *   [[ZActivityOptions]] to be used as a default
     */
-  def setDefaultActivityOptions(defaultActivityOptions: ZActivityOptions): Unit = {
-    Workflow.setDefaultActivityOptions(defaultActivityOptions.toJava)
+  def setDefaultActivityOptions(value: ZActivityOptions): Unit = {
+    Workflow.setDefaultActivityOptions(value.toJava)
+  }
+
+  /** @see
+    *   [[applyActivityOptions]]
+    */
+  def applyActivityOptions(values: (ZActivityType, ZActivityOptions)*): Unit =
+    applyActivityOptions(values.toMap)
+
+  /** Adds activity options per activity type that will be used for an activity stub that has no [[ZActivityOptions]]
+    * specified.<br> This method refines an original set of @code Map<String, ActivityOptions> provided by
+    * [[zio.temporal.worker.ZWorkflowImplementationOptions.activityOptions]]<br> These more specific options take
+    * precedence over more generic setting [[setDefaultActivityOptions]]
+    *
+    * <p>If an activity type already has a [[ZActivityOptions]] set by an earlier call to this method or from
+    * [[zio.temporal.worker.ZWorkflowImplementationOptions.defaultActivityOptions]], new [[ZActivityOptions]] from
+    * `values` will be merged into the old ones by Java SDK's [[ActivityOptions.Builder.mergeActivityOptions]]
+    *
+    * @param values
+    *   a map of activity types to [[ZActivityOptions]]
+    */
+  def applyActivityOptions(values: Map[ZActivityType, ZActivityOptions]): Unit = {
+    Workflow.applyActivityOptions(
+      values.map { case (at, o) => at.activityType -> o.toJava }.asJava
+    )
+  }
+
+  /** Sets the default local activity options that will be used for activity stubs that have no
+    * [[ZLocalActivityOptions]] specified.<br> This overrides a value provided by
+    * [[zio.temporal.worker.ZWorkflowImplementationOptions.defaultLocalActivityOptions]].<br> A more specific
+    * per-activity-type option specified in [[zio.temporal.worker.ZWorkflowImplementationOptions.localActivityOptions]]
+    * or [[applyLocalActivityOptions]] takes precedence over this setting.
+    *
+    * @param value
+    *   [[ZLocalActivityOptions]] to be used as a default
+    */
+  def setDefaultLocalActivityOptions(value: ZLocalActivityOptions): Unit = {
+    Workflow.setDefaultLocalActivityOptions(value.toJava)
+  }
+
+  /** Adds local activity options per activity type that will be used for a local activity stub that has no
+    * [[ZLocalActivityOptions]] specified.<br> This method refines an original set of options provided by
+    * [[zio.temporal.worker.ZWorkflowImplementationOptions.defaultLocalActivityOptions]]<br> These more specific options
+    * take precedence over more generic setting [[setDefaultLocalActivityOptions]]
+    *
+    * <p>If an activity type already has a [[ZLocalActivityOptions]] set by an earlier call to this method or from
+    * [[zio.temporal.worker.ZWorkflowImplementationOptions.defaultLocalActivityOptions]], new [[ZLocalActivityOptions]]
+    * from `values` will be merged into the old ones using [[LocalActivityOptions.Builder.mergeActivityOptions]]
+    *
+    * @param values
+    *   a map of activity types to [[ZLocalActivityOptions]]
+    */
+  def applyLocalActivityOptions(values: Map[ZActivityType, ZLocalActivityOptions]): Unit = {
+    Workflow.applyLocalActivityOptions(
+      values.map { case (at, o) => at.activityType -> o.toJava }.asJava
+    )
   }
 
   /** Creates a builder of client stub to activities that implement given interface.
