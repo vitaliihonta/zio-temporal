@@ -1,8 +1,7 @@
 package zio.temporal.schedules
 
 import io.temporal.client.schedules.ScheduleOptions
-import zio.temporal.ZSearchAttribute
-
+import zio.temporal.{ZSearchAttribute, ZSearchAttributes}
 import scala.jdk.CollectionConverters._
 
 /** Options for creating a schedule. */
@@ -10,7 +9,7 @@ final case class ZScheduleOptions private[zio] (
   triggerImmediately: Boolean,
   backfills:          List[ZScheduleBackfill],
   memo:               Map[String, AnyRef],
-  searchAttributes:   Map[String, ZSearchAttribute]) {
+  searchAttributes:   Option[ZSearchAttributes]) {
 
   /** Set if the schedule will be triggered immediately upon creation. */
   def withTriggerImmediately(value: Boolean): ZScheduleOptions =
@@ -22,12 +21,16 @@ final case class ZScheduleOptions private[zio] (
 
   /** Set the memo for the schedule. Values for the memo cannot be null. */
   def withMemo(values: (String, AnyRef)*): ZScheduleOptions =
-    copy(memo = values.toMap)
+    withMemo(values.toMap)
+
+  /** Set the memo for the schedule. Values for the memo cannot be null. */
+  def withMemo(values: Map[String, AnyRef]): ZScheduleOptions =
+    copy(memo = values)
 
   /** Set the search attributes for the schedule.
     */
-  def withSearchAttributes(attrs: Map[String, ZSearchAttribute]): ZScheduleOptions =
-    copy(searchAttributes = attrs)
+  def withSearchAttributes(values: Map[String, ZSearchAttribute]): ZScheduleOptions =
+    copy(searchAttributes = Some(ZSearchAttributes.fromJava(ZSearchAttribute.toJavaSearchAttributes(values))))
 
   def toJava: ScheduleOptions = {
     ScheduleOptions
@@ -38,10 +41,8 @@ final case class ZScheduleOptions private[zio] (
       .setSearchAttributes(
         // todo: update once java SDK updates it
         searchAttributes
-          .map { case (key, attr) =>
-            key -> attr.meta.encode(attr.value).asInstanceOf[AnyRef]
-          }
-          .toMap
+          .map(_.toJava.getUntypedValues.asScala.map { case (k, v) => k.getName -> v })
+          .getOrElse(Map.empty[String, AnyRef])
           .asJava
       )
       .build()
@@ -65,6 +66,6 @@ object ZScheduleOptions {
       triggerImmediately = false,
       backfills = Nil,
       memo = Map.empty,
-      searchAttributes = Map.empty
+      searchAttributes = None
     )
 }

@@ -1,9 +1,7 @@
 package zio.temporal.fixture
 
-import zio._
 import zio.temporal._
 import zio.temporal.workflow._
-import zio.temporal.activity._
 
 @workflowInterface
 trait GreetingNamedWorkflow {
@@ -19,7 +17,9 @@ trait GreetingNamedChild {
 
 class GreetingWorkflowNamedImpl extends GreetingNamedWorkflow {
   override def getGreeting(name: String): String = {
-    val child = ZWorkflow.newChildWorkflowStub[GreetingNamedChild].build
+    val child = ZWorkflow.newChildWorkflowStub[GreetingNamedChild](
+      ZChildWorkflowOptions.withWorkflowId(s"greeting-named-child/${ZWorkflow.info.workflowId}")
+    )
 
     println("Invoking child workflow...")
     val greetingPromise = ZChildWorkflowStub.executeAsync(

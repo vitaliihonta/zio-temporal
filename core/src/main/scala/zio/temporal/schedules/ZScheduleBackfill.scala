@@ -33,7 +33,9 @@ final case class ZScheduleBackfill(
   def withOverlapPolicy(value: ScheduleOverlapPolicy): ZScheduleBackfill =
     copy(overlapPolicy = value)
 
-  def toJava =
+  /** Converts schedule backfill to Java SDK's [[ScheduleBackfill]]
+    */
+  def toJava: ScheduleBackfill =
     new ScheduleBackfill(startAt, endAt, overlapPolicy)
 
   override def toString: String = {
@@ -43,4 +45,13 @@ final case class ZScheduleBackfill(
       s", overlapPolicy=$overlapPolicy" +
       s")"
   }
+}
+
+object ZScheduleBackfill {
+  def fromJava(backfill: ScheduleBackfill): ZScheduleBackfill =
+    ZScheduleBackfill(
+      startAt = backfill.getStartAt,
+      endAt = backfill.getEndAt,
+      overlapPolicy = backfill.getOverlapPolicy
+    )
 }

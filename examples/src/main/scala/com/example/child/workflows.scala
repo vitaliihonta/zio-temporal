@@ -25,13 +25,16 @@ class GreetingChildImpl extends GreetingChild {
 // Define the parent workflow implementation. It implements the getGreeting workflow method
 class GreetingWorkflowImpl extends GreetingWorkflow {
   private val logger = ZWorkflow.makeLogger
+
   override def getGreeting(name: String): String = {
     /*
      * Define the child workflow stub. Since workflows are stateful,
      * a new stub must be created for each child workflow.
      */
     val child: ZChildWorkflowStub.Of[GreetingChild] =
-      ZWorkflow.newChildWorkflowStub[GreetingChild].build
+      ZWorkflow.newChildWorkflowStub[GreetingChild](
+        ZChildWorkflowOptions.withWorkflowId(s"greeting-child/${ZWorkflow.info.workflowId}")
+      )
 
     // This is a non blocking call that returns immediately.
     // Use child.composeGreeting("Hello", name) to call synchronously

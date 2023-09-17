@@ -139,7 +139,7 @@ final case class ZWorkerOptions private[zio] (
     copy(disableEagerExecution = Some(value))
 
   /** Set a unique identifier for this worker. The identifier should be stable with respect to the code the worker uses
-    * for workflows, activities, and interceptors. For more information see: TODO: Doc link
+    * for workflows, activities, and interceptors.
     */
   def withBuildId(value: String): ZWorkerOptions =
     copy(buildId = Some(value))

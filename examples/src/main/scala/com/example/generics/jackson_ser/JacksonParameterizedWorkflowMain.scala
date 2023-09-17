@@ -71,10 +71,9 @@ abstract class DelegatingParameterizedWorkflow[
     logger.info("Creating child workflows...")
     // Create multiple parallel child workflows
     val taskRuns = ZAsync.foreachParDiscard(inputTasks) { case (randomData, input) =>
-      val child = ZWorkflow
-        .newChildWorkflowStub[ChildWorkflow]
-        .withWorkflowId(s"$thisWorkflowId/child/$randomData")
-        .build
+      val child = ZWorkflow.newChildWorkflowStub[ChildWorkflow](
+        ZChildWorkflowOptions.withWorkflowId(s"$thisWorkflowId/child/$randomData")
+      )
 
       logger.info(s"Starting child workflow input=$input...")
       ZChildWorkflowStub.executeAsync(

@@ -48,21 +48,24 @@ trait NotificationChildBasedWorkflow {
 }
 
 class NotificationChildBasedWorkflowImpl extends NotificationChildBasedWorkflow {
-  private val logger = ZWorkflow.makeLogger
+  private val logger         = ZWorkflow.makeLogger
+  private val thisWorkflowId = ZWorkflow.info.workflowId
 
   // Using base Workflow type here
   private val senders: List[ZChildWorkflowStub.Of[NotificationsSenderWorkflow]] =
     List(
-      ZWorkflow
-        .newChildWorkflowStub[PushNotificationsSenderWorkflow]
-        .withRetryOptions(
-          ZRetryOptions.default.withMaximumAttempts(2)
-        )
-        .build,
-      ZWorkflow
-        .newChildWorkflowStub[SmsNotificationsSenderWorkflow]
-        .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(2))
-        .build
+      ZWorkflow.newChildWorkflowStub[PushNotificationsSenderWorkflow](
+        ZChildWorkflowOptions
+          .withWorkflowId(s"$thisWorkflowId/push")
+          .withRetryOptions(
+            ZRetryOptions.default.withMaximumAttempts(2)
+          )
+      ),
+      ZWorkflow.newChildWorkflowStub[SmsNotificationsSenderWorkflow](
+        ZChildWorkflowOptions
+          .withWorkflowId(s"$thisWorkflowId/sms")
+          .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(2))
+      )
     )
 
   override def send(msg: String): Unit = {

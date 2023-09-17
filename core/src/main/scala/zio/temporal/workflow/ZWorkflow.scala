@@ -2,7 +2,7 @@ package zio.temporal.workflow
 
 import com.uber.m3.tally.Scope
 import io.temporal.activity.{ActivityOptions, LocalActivityOptions}
-import io.temporal.workflow.{CancellationScope, ContinueAsNewOptions, Workflow}
+import io.temporal.workflow.{CancellationScope, ChildWorkflowOptions, ContinueAsNewOptions, Workflow}
 import org.slf4j.Logger
 import zio.temporal.activity._
 import zio.temporal.internal.{ClassTagUtils, TemporalWorkflowFacade, ZWorkflowVersionSpecific}
@@ -405,8 +405,20 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   child workflow stub builder
     */
+  @deprecated("Use newChildWorkflowStub accepting ZChildWorkflowOptions", since = "0.5.0")
   def newChildWorkflowStub[A: ClassTag: IsWorkflow]: ZChildWorkflowStubBuilder.Of[A] =
-    new ZChildWorkflowStubBuilder.Of[A](ZChildWorkflowStubBuilder.buildTyped[A], identity)
+    new ZChildWorkflowStubBuilder.Of[A](buildChildWorkflowTyped[A], identity)
+
+  /** Creates client stub that can be used to start a child workflow that implements given interface. Use
+    * [[newExternalWorkflowStub]] to get a stub to signal a workflow without starting it.
+    *
+    * @tparam A
+    *   interface type implemented by activities
+    * @param options
+    *   options passed to the child workflow.
+    */
+  def newChildWorkflowStub[A: ClassTag: IsWorkflow](options: ZChildWorkflowOptions): ZChildWorkflowStub.Of[A] =
+    buildChildWorkflowTyped[A].apply(options.toJava)
 
   /** Creates a builder of untyped client stub that can be used to start a child workflow that implements given
     * interface.
@@ -414,8 +426,19 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   child workflow stub builder
     */
+  @deprecated("Use newUntypedChildWorkflowStub accepting ZChildWorkflowOptions", since = "0.5.0")
   def newUntypedChildWorkflowStub(workflowType: String): ZChildWorkflowStubBuilder.Untyped =
-    new ZChildWorkflowStubBuilder.Untyped(ZChildWorkflowStubBuilder.buildUntyped(workflowType), identity)
+    new ZChildWorkflowStubBuilder.Untyped(buildChildWorkflowUntyped(workflowType), identity)
+
+  /** Creates untyped client stub that can be used to start and signal a child workflow.
+    *
+    * @param workflowType
+    *   name of the workflow type to start.
+    * @param options
+    *   options passed to the child workflow.
+    */
+  def newUntypedChildWorkflowStub(workflowType: String, options: ZChildWorkflowOptions): ZChildWorkflowStub.Untyped =
+    buildChildWorkflowUntyped(workflowType)(options.toJava)
 
   /** Creates client stub that can be used to signal or cancel an existing workflow
     *
@@ -593,5 +616,25 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     options =>
       new ZActivityStub.UntypedImpl(
         Workflow.newUntypedLocalActivityStub(options)
+      )
+
+  private[temporal] def buildChildWorkflowTyped[A: ClassTag]: ChildWorkflowOptions => ZChildWorkflowStub.Of[A] =
+    options =>
+      ZChildWorkflowStub.Of(
+        new ZChildWorkflowStubImpl(
+          Workflow.newUntypedChildWorkflowStub(
+            ClassTagUtils.getWorkflowType[A],
+            options
+          ),
+          ClassTagUtils.classOf[A]
+        )
+      )
+
+  private[temporal] def buildChildWorkflowUntyped(
+    workflowType: String
+  ): ChildWorkflowOptions => ZChildWorkflowStub.Untyped =
+    options =>
+      new ZChildWorkflowStub.UntypedImpl(
+        Workflow.newUntypedChildWorkflowStub(workflowType, options)
       )
 }

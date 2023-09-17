@@ -49,7 +49,9 @@ lazy val coverageSettings = Seq(
     "zio\\.temporal\\.internal\\.*Macro*;" +
     // todo: add other deprecated builders as well
     "zio\\.temporal\\.activity\\.ZLocalActivityStubBuilder*;" +
-    "zio\\.temporal\\.activity\\.ZLocalStubBuilder*;"
+    "zio\\.temporal\\.activity\\.ZLocalStubBuilder*;" +
+    "zio\\.temporal\\.workflow\\.ZWorkflowStubBuilder*;" +
+    "zio\\.temporal\\.workflow\\.ZChildWorkflowStubBuilder*;"
 )
 
 lazy val baseProjectSettings = Seq(
