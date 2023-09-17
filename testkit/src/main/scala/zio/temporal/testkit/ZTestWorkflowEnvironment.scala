@@ -186,7 +186,7 @@ object ZTestWorkflowEnvironment {
     * @return
     *   builder instance
     */
-  @deprecated("Use newWorkflowStub accepting ZWorkerOptions", since = "0.5.0")
+  @deprecated("Use newWorkflowStub accepting ZWorkerOptions", since = "0.6.0")
   def newWorkflowStub[
     A: ClassTag: IsWorkflow
   ]: ZWorkflowStubBuilderTaskQueueDsl[URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Of[A]]] =
@@ -221,7 +221,7 @@ object ZTestWorkflowEnvironment {
     * @return
     *   builder instance
     */
-  @deprecated("Use newUntypedWorkflowStub accepting ZWorkerOptions", since = "0.5.0")
+  @deprecated("Use newUntypedWorkflowStub accepting ZWorkerOptions", since = "0.6.0")
   def newUntypedWorkflowStub(
     workflowType: String
   ): ZWorkflowStubBuilderTaskQueueDsl[URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Untyped]] =

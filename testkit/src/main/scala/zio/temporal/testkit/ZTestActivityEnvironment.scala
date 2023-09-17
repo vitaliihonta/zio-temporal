@@ -6,13 +6,11 @@ import zio.temporal.activity.{
   IsActivity,
   ZActivityOptions,
   ZActivityRunOptions,
-  ZActivityStub,
   ZActivityStubBuilderInitial
 }
 import zio._
 import zio.temporal.{JavaTypeTag, TypeIsSpecified}
 import zio.temporal.internal.ClassTagUtils
-
 import scala.reflect.ClassTag
 
 class ZTestActivityEnvironment[+R] private[zio] (
@@ -61,7 +59,7 @@ class ZTestActivityEnvironment[+R] private[zio] (
     * @return
     *   The stub builder for the activity.
     */
-  @deprecated("Use newLocalActivityStub accepting ZLocalActivityOptions", since = "0.5.0")
+  @deprecated("Use newLocalActivityStub accepting ZLocalActivityOptions", since = "0.6.0")
   def newActivityStub[A <: AnyRef: IsActivity: ClassTag]: ZActivityStubBuilderInitial[UIO[A]] =
     new ZActivityStubBuilderInitial[UIO[A]](
       buildImpl = options => ZIO.succeed(toJava.newActivityStub(ClassTagUtils.classOf[A], options))
@@ -158,7 +156,7 @@ object ZTestActivityEnvironment {
     * @return
     *   The stub builder for the activity.
     */
-  @deprecated("Use newLocalActivityStub accepting ZLocalActivityOptions", since = "0.5.0")
+  @deprecated("Use newLocalActivityStub accepting ZLocalActivityOptions", since = "0.6.0")
   def newActivityStub[
     A <: AnyRef: IsActivity: ClassTag
   ]: ZActivityStubBuilderInitial[URIO[ZTestActivityEnvironment[Any], A]] =

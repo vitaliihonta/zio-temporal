@@ -28,7 +28,7 @@ final class ZWorkflowClient private[zio] (val toJava: WorkflowClient) {
     * @return
     *   builder instance
     */
-  @deprecated("Use newWorkflowStub accepting ZWorkerOptions", since = "0.5.0")
+  @deprecated("Use newWorkflowStub accepting ZWorkerOptions", since = "0.6.0")
   def newWorkflowStub[A: ClassTag: IsWorkflow]: ZWorkflowStubBuilderTaskQueueDsl.Of[A] =
     new ZWorkflowStubBuilderTaskQueueDsl.Of[A](TemporalWorkflowFacade.createWorkflowStubTyped[A](toJava))
 
@@ -79,7 +79,7 @@ final class ZWorkflowClient private[zio] (val toJava: WorkflowClient) {
     * @return
     *   builder instance
     */
-  @deprecated("Use newUntypedWorkflowStub accepting ZWorkerOptions", since = "0.5.0")
+  @deprecated("Use newUntypedWorkflowStub accepting ZWorkerOptions", since = "0.6.0")
   def newUntypedWorkflowStub(workflowType: String): ZWorkflowStubBuilderTaskQueueDsl.Untyped =
     new ZWorkflowStubBuilderTaskQueueDsl.Untyped(TemporalWorkflowFacade.createWorkflowStubUntyped(workflowType, toJava))
 

@@ -7,13 +7,13 @@ import zio._
 import zio.temporal.{ZRetryOptions, ZSearchAttribute, ZSearchAttributes}
 import scala.jdk.CollectionConverters._
 
-@deprecated("Build ZWorkflowOptions and provide it directly", since = "0.5.0")
+@deprecated("Build ZWorkflowOptions and provide it directly", since = "0.6.0")
 object ZWorkflowStubBuilderTaskQueueDsl {
   type Of[A]   = ZWorkflowStubBuilderTaskQueueDsl[UIO[ZWorkflowStub.Of[A]]]
   type Untyped = ZWorkflowStubBuilderTaskQueueDsl[UIO[ZWorkflowStub.Untyped]]
 }
 
-@deprecated("Build ZWorkflowOptions and provide it directly", since = "0.5.0")
+@deprecated("Build ZWorkflowOptions and provide it directly", since = "0.6.0")
 final class ZWorkflowStubBuilderTaskQueueDsl[Res] private[zio] (
   buildImpl: WorkflowOptions => Res) {
 
@@ -21,7 +21,7 @@ final class ZWorkflowStubBuilderTaskQueueDsl[Res] private[zio] (
     new ZWorkflowStubBuilderWorkflowIdDsl[Res](buildImpl, taskQueue)
 }
 
-@deprecated("Build ZWorkflowOptions and provide it directly", since = "0.5.0")
+@deprecated("Build ZWorkflowOptions and provide it directly", since = "0.6.0")
 final class ZWorkflowStubBuilderWorkflowIdDsl[Res] private[zio] (
   buildImpl: WorkflowOptions => Res,
   taskQueue: String) {
@@ -30,7 +30,7 @@ final class ZWorkflowStubBuilderWorkflowIdDsl[Res] private[zio] (
     new ZWorkflowStubBuilder[Res](buildImpl, taskQueue, workflowId, additionalConfig = identity)
 }
 
-@deprecated("Build ZWorkflowOptions and provide it directly", since = "0.5.0")
+@deprecated("Build ZWorkflowOptions and provide it directly", since = "0.6.0")
 final class ZWorkflowStubBuilder[Res] private[zio] (
   buildImpl:        WorkflowOptions => Res,
   taskQueue:        String,

@@ -2,7 +2,7 @@ package zio.temporal.workflow
 
 import com.uber.m3.tally.Scope
 import io.temporal.activity.{ActivityOptions, LocalActivityOptions}
-import io.temporal.workflow.{CancellationScope, ChildWorkflowOptions, ContinueAsNewOptions, Workflow}
+import io.temporal.workflow.{CancellationScope, Workflow}
 import org.slf4j.Logger
 import zio.temporal.activity._
 import zio.temporal.internal.{ClassTagUtils, TemporalWorkflowFacade, ZWorkflowVersionSpecific}
@@ -17,7 +17,6 @@ import zio.temporal.{
   ZWorkflowInfo
 }
 import zio.{Random => _, _}
-
 import java.util.UUID
 import scala.jdk.OptionConverters._
 import scala.reflect.ClassTag
@@ -370,7 +369,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   activity stub builder
     */
-  @deprecated("Use newActivityStub accepting ZActivityOptions", since = "0.5.0")
+  @deprecated("Use newActivityStub accepting ZActivityOptions", since = "0.6.0")
   def newActivityStub[A: ClassTag: IsActivity]: ZActivityStubBuilderInitial.Of[A] =
     new ZActivityStubBuilderInitial.Of[A](TemporalWorkflowFacade.buildActivityStubTyped[A])
 
@@ -391,7 +390,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   untyped activity stub builder
     */
-  @deprecated("Use newUntypedActivityStub accepting ZActivityOptions", since = "0.5.0")
+  @deprecated("Use newUntypedActivityStub accepting ZActivityOptions", since = "0.6.0")
   def newUntypedActivityStub: ZActivityStubBuilderInitial.Untyped =
     new ZActivityStubBuilderInitial.Untyped(TemporalWorkflowFacade.buildActivityStubUntyped)
 
@@ -412,7 +411,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   local activity stub builder
     */
-  @deprecated("Use newLocalActivityStub accepting ZLocalActivityOptions", since = "0.5.0")
+  @deprecated("Use newLocalActivityStub accepting ZLocalActivityOptions", since = "0.6.0")
   def newLocalActivityStub[A: ClassTag: IsActivity]: ZLocalActivityStubBuilderInitial.Of[A] =
     new ZLocalActivityStubBuilderInitial.Of[A](TemporalWorkflowFacade.buildLocalActivityStubTyped[A])
 
@@ -433,7 +432,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   local activity stub builder
     */
-  @deprecated("Use newUntypedLocalActivityStub accepting ZLocalActivityOptions", since = "0.5.0")
+  @deprecated("Use newUntypedLocalActivityStub accepting ZLocalActivityOptions", since = "0.6.0")
   def newUntypedLocalActivityStub: ZLocalActivityStubBuilderInitial.Untyped =
     new ZLocalActivityStubBuilderInitial.Untyped(TemporalWorkflowFacade.buildLocalActivityStubUntyped)
 
@@ -454,7 +453,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   child workflow stub builder
     */
-  @deprecated("Use newChildWorkflowStub accepting ZChildWorkflowOptions", since = "0.5.0")
+  @deprecated("Use newChildWorkflowStub accepting ZChildWorkflowOptions", since = "0.6.0")
   def newChildWorkflowStub[A: ClassTag: IsWorkflow]: ZChildWorkflowStubBuilder.Of[A] =
     new ZChildWorkflowStubBuilder.Of[A](TemporalWorkflowFacade.buildChildWorkflowStubTyped[A], identity)
 
@@ -475,7 +474,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   child workflow stub builder
     */
-  @deprecated("Use newUntypedChildWorkflowStub accepting ZChildWorkflowOptions", since = "0.5.0")
+  @deprecated("Use newUntypedChildWorkflowStub accepting ZChildWorkflowOptions", since = "0.6.0")
   def newUntypedChildWorkflowStub(workflowType: String): ZChildWorkflowStubBuilder.Untyped =
     new ZChildWorkflowStubBuilder.Untyped(TemporalWorkflowFacade.buildChildWorkflowStubUntyped(workflowType), identity)
 
@@ -560,7 +559,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @tparam A
     *   an interface type implemented by the next run of the workflow
     */
-  @deprecated("Use newContinueAsNewStub accepting ZContinueAsNewOptions", since = "0.5.0")
+  @deprecated("Use newContinueAsNewStub accepting ZContinueAsNewOptions", since = "0.6.0")
   def newContinueAsNewStub[A: ClassTag: IsWorkflow]: ZWorkflowContinueAsNewStubBuilder[A] =
     new ZWorkflowContinueAsNewStubBuilder[A](identity)
 

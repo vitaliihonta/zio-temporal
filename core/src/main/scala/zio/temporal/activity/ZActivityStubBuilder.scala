@@ -5,20 +5,16 @@ import io.temporal.activity.ActivityCancellationType
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.VersioningIntent
 import io.temporal.common.context.ContextPropagator
-import io.temporal.workflow.Workflow
 import zio.temporal.ZRetryOptions
-import zio.temporal.internal.ClassTagUtils
-
 import scala.jdk.CollectionConverters._
-import scala.reflect.ClassTag
 
-@deprecated("Build ZActivityOptions and provide it directly", since = "0.5.0")
+@deprecated("Build ZActivityOptions and provide it directly", since = "0.6.0")
 object ZActivityStubBuilderInitial {
   type Of[A]   = ZActivityStubBuilderInitial[ZActivityStub.Of[A]]
   type Untyped = ZActivityStubBuilderInitial[ZActivityStub.Untyped]
 }
 
-@deprecated("Build ZActivityOptions and provide it directly", since = "0.5.0")
+@deprecated("Build ZActivityOptions and provide it directly", since = "0.6.0")
 final class ZActivityStubBuilderInitial[Res] private[zio] (buildImpl: ActivityOptions => Res) {
 
   /** Maximum time of a single Activity attempt.
@@ -46,7 +42,7 @@ final class ZActivityStubBuilderInitial[Res] private[zio] (buildImpl: ActivityOp
     new ZActivityStubBuilder[Res](buildImpl, _.setScheduleToCloseTimeout(timeout))
 }
 
-@deprecated("Build ZActivityOptions and provide it directly", since = "0.5.0")
+@deprecated("Build ZActivityOptions and provide it directly", since = "0.6.0")
 final class ZActivityStubBuilder[Res] private[zio] (
   buildImpl:    ActivityOptions => Res,
   buildOptions: ActivityOptions.Builder => ActivityOptions.Builder) {
