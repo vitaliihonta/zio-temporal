@@ -51,7 +51,8 @@ lazy val coverageSettings = Seq(
     "zio\\.temporal\\.activity\\.ZLocalActivityStubBuilder*;" +
     "zio\\.temporal\\.activity\\.ZLocalStubBuilder*;" +
     "zio\\.temporal\\.workflow\\.ZWorkflowStubBuilder*;" +
-    "zio\\.temporal\\.workflow\\.ZChildWorkflowStubBuilder*;"
+    "zio\\.temporal\\.workflow\\.ZChildWorkflowStubBuilder*;" +
+    "zio\\.temporal\\.workflow\\.ZWorkflowContinueAsNewStubBuilder*;"
 )
 
 lazy val baseProjectSettings = Seq(

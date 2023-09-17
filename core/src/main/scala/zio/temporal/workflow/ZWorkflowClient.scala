@@ -3,10 +3,8 @@ package zio.temporal.workflow
 import io.temporal.client.{ActivityCompletionClient, BuildIdOperation, WorkflowClient}
 import zio._
 import zio.stream._
-import zio.temporal.internal.{ClassTagUtils, TemporalInteraction}
-import zio.temporal.workflow.internal.WorkflowBuilders
+import zio.temporal.internal.{ClassTagUtils, TemporalInteraction, TemporalWorkflowFacade}
 import zio.temporal.{TemporalIO, ZHistoryEvent, ZWorkflowExecutionHistory, ZWorkflowExecutionMetadata}
-
 import scala.jdk.OptionConverters._
 import scala.reflect.ClassTag
 
@@ -32,7 +30,7 @@ final class ZWorkflowClient private[zio] (val toJava: WorkflowClient) {
     */
   @deprecated("Use newWorkflowStub accepting ZWorkerOptions", since = "0.5.0")
   def newWorkflowStub[A: ClassTag: IsWorkflow]: ZWorkflowStubBuilderTaskQueueDsl.Of[A] =
-    new ZWorkflowStubBuilderTaskQueueDsl.Of[A](WorkflowBuilders.typed[A](toJava))
+    new ZWorkflowStubBuilderTaskQueueDsl.Of[A](TemporalWorkflowFacade.createWorkflowStubTyped[A](toJava))
 
   /** Creates workflow client stub that can be used to start a single workflow execution. The first call must be to a
     * method annotated with @[[zio.temporal.workflowMethod]]. After workflow is started it can be also used to send
@@ -47,7 +45,7 @@ final class ZWorkflowClient private[zio] (val toJava: WorkflowClient) {
     *   Stub that implements workflowInterface and can be used to start workflow and signal or query it after the start.
     */
   def newWorkflowStub[A: ClassTag: IsWorkflow](options: ZWorkflowOptions): UIO[ZWorkflowStub.Of[A]] =
-    WorkflowBuilders.typed[A](toJava).apply(options.toJava)
+    TemporalWorkflowFacade.createWorkflowStubTyped[A](toJava).apply(options.toJava)
 
   /** Creates workflow client stub for a known execution. Use it to send signals or queries to a running workflow. Do
     * not call methods annotated with @[[zio.temporal.workflowMethod]].
@@ -83,7 +81,7 @@ final class ZWorkflowClient private[zio] (val toJava: WorkflowClient) {
     */
   @deprecated("Use newUntypedWorkflowStub accepting ZWorkerOptions", since = "0.5.0")
   def newUntypedWorkflowStub(workflowType: String): ZWorkflowStubBuilderTaskQueueDsl.Untyped =
-    new ZWorkflowStubBuilderTaskQueueDsl.Untyped(WorkflowBuilders.untyped(workflowType, toJava))
+    new ZWorkflowStubBuilderTaskQueueDsl.Untyped(TemporalWorkflowFacade.createWorkflowStubUntyped(workflowType, toJava))
 
   /** Creates workflow untyped client stub that can be used to start a single workflow execution. After workflow is
     * started it can be also used to send signals or queries to it. IMPORTANT! Stub is per workflow instance. So new
@@ -97,7 +95,7 @@ final class ZWorkflowClient private[zio] (val toJava: WorkflowClient) {
     *   Stub that can be used to start workflow and later to signal or query it.
     */
   def newUntypedWorkflowStub(workflowType: String, options: ZWorkflowOptions): UIO[ZWorkflowStub.Untyped] =
-    WorkflowBuilders.untyped(workflowType, toJava)(options.toJava)
+    TemporalWorkflowFacade.createWorkflowStubUntyped(workflowType, toJava)(options.toJava)
 
   /** Creates workflow untyped client stub for a known execution. Use it to send signals or queries to a running
     * workflow. Do not call methods annotated with @[[zio.temporal.workflowMethod]].

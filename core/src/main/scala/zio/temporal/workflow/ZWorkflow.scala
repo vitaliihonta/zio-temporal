@@ -323,7 +323,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     */
   @deprecated("Use newActivityStub accepting ZActivityOptions", since = "0.5.0")
   def newActivityStub[A: ClassTag: IsActivity]: ZActivityStubBuilderInitial.Of[A] =
-    new ZActivityStubBuilderInitial.Of[A](buildActivityStubTyped[A])
+    new ZActivityStubBuilderInitial.Of[A](TemporalWorkflowFacade.buildActivityStubTyped[A])
 
   /** Creates a builder of client stub to activities that implement given interface.
     *
@@ -335,7 +335,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     *   activity stub builder
     */
   def newActivityStub[A: ClassTag: IsActivity](options: ZActivityOptions): ZActivityStub.Of[A] =
-    buildActivityStubTyped[A].apply(options.toJava)
+    TemporalWorkflowFacade.buildActivityStubTyped[A].apply(options.toJava)
 
   /** Creates a builder of untyped client stub to activities
     *
@@ -344,7 +344,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     */
   @deprecated("Use newUntypedActivityStub accepting ZActivityOptions", since = "0.5.0")
   def newUntypedActivityStub: ZActivityStubBuilderInitial.Untyped =
-    new ZActivityStubBuilderInitial.Untyped(buildActivityStubUntyped)
+    new ZActivityStubBuilderInitial.Untyped(TemporalWorkflowFacade.buildActivityStubUntyped)
 
   /** Creates a builder of untyped client stub to activities
     *
@@ -354,7 +354,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     *   untyped activity stub builder
     */
   def newUntypedActivityStub(options: ZActivityOptions): ZActivityStub.Untyped =
-    buildActivityStubUntyped(options.toJava)
+    TemporalWorkflowFacade.buildActivityStubUntyped(options.toJava)
 
   /** Creates a builder of client stub to local activities that implement given interface.
     *
@@ -365,7 +365,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     */
   @deprecated("Use newLocalActivityStub accepting ZLocalActivityOptions", since = "0.5.0")
   def newLocalActivityStub[A: ClassTag: IsActivity]: ZLocalActivityStubBuilderInitial.Of[A] =
-    new ZLocalActivityStubBuilderInitial.Of[A](buildLocalActivityTyped[A])
+    new ZLocalActivityStubBuilderInitial.Of[A](TemporalWorkflowFacade.buildLocalActivityStubTyped[A])
 
   /** Creates a builder of client stub to local activities that implement given interface.
     *
@@ -377,7 +377,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     *   local activity stub builder
     */
   def newLocalActivityStub[A: ClassTag: IsActivity](options: ZLocalActivityOptions): ZActivityStub.Of[A] =
-    buildLocalActivityTyped[A].apply(options.toJava)
+    TemporalWorkflowFacade.buildLocalActivityStubTyped[A].apply(options.toJava)
 
   /** Creates a builder of untyped client stub to local activities that implement given interface.
     *
@@ -386,7 +386,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     */
   @deprecated("Use newUntypedLocalActivityStub accepting ZLocalActivityOptions", since = "0.5.0")
   def newUntypedLocalActivityStub: ZLocalActivityStubBuilderInitial.Untyped =
-    new ZLocalActivityStubBuilderInitial.Untyped(buildLocalActivityUntyped)
+    new ZLocalActivityStubBuilderInitial.Untyped(TemporalWorkflowFacade.buildLocalActivityStubUntyped)
 
   /** Creates a builder of untyped client stub to local activities that implement given interface.
     *
@@ -396,7 +396,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     *   local activity stub builder
     */
   def newUntypedLocalActivityStub(options: ZLocalActivityOptions): ZActivityStub.Untyped =
-    buildLocalActivityUntyped(options.toJava)
+    TemporalWorkflowFacade.buildLocalActivityStubUntyped(options.toJava)
 
   /** Creates a builder of client stub that can be used to start a child workflow that implements given interface.
     *
@@ -407,7 +407,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     */
   @deprecated("Use newChildWorkflowStub accepting ZChildWorkflowOptions", since = "0.5.0")
   def newChildWorkflowStub[A: ClassTag: IsWorkflow]: ZChildWorkflowStubBuilder.Of[A] =
-    new ZChildWorkflowStubBuilder.Of[A](buildChildWorkflowTyped[A], identity)
+    new ZChildWorkflowStubBuilder.Of[A](TemporalWorkflowFacade.buildChildWorkflowStubTyped[A], identity)
 
   /** Creates client stub that can be used to start a child workflow that implements given interface. Use
     * [[newExternalWorkflowStub]] to get a stub to signal a workflow without starting it.
@@ -418,7 +418,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     *   options passed to the child workflow.
     */
   def newChildWorkflowStub[A: ClassTag: IsWorkflow](options: ZChildWorkflowOptions): ZChildWorkflowStub.Of[A] =
-    buildChildWorkflowTyped[A].apply(options.toJava)
+    TemporalWorkflowFacade.buildChildWorkflowStubTyped[A].apply(options.toJava)
 
   /** Creates a builder of untyped client stub that can be used to start a child workflow that implements given
     * interface.
@@ -428,7 +428,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     */
   @deprecated("Use newUntypedChildWorkflowStub accepting ZChildWorkflowOptions", since = "0.5.0")
   def newUntypedChildWorkflowStub(workflowType: String): ZChildWorkflowStubBuilder.Untyped =
-    new ZChildWorkflowStubBuilder.Untyped(buildChildWorkflowUntyped(workflowType), identity)
+    new ZChildWorkflowStubBuilder.Untyped(TemporalWorkflowFacade.buildChildWorkflowStubUntyped(workflowType), identity)
 
   /** Creates untyped client stub that can be used to start and signal a child workflow.
     *
@@ -438,7 +438,7 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     *   options passed to the child workflow.
     */
   def newUntypedChildWorkflowStub(workflowType: String, options: ZChildWorkflowOptions): ZChildWorkflowStub.Untyped =
-    buildChildWorkflowUntyped(workflowType)(options.toJava)
+    TemporalWorkflowFacade.buildChildWorkflowStubUntyped(workflowType)(options.toJava)
 
   /** Creates client stub that can be used to signal or cancel an existing workflow
     *
@@ -605,54 +605,4 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     */
   def metricsScope: Scope =
     Workflow.getMetricsScope
-
-  private def buildActivityStubTyped[A: ClassTag]: ActivityOptions => ZActivityStub.Of[A] =
-    options =>
-      ZActivityStub.Of[A](
-        new ZActivityStubImpl(
-          Workflow.newUntypedActivityStub(options),
-          ClassTagUtils.classOf[A]
-        )
-      )
-
-  private def buildActivityStubUntyped: ActivityOptions => ZActivityStub.Untyped =
-    options =>
-      new ZActivityStub.UntypedImpl(
-        Workflow.newUntypedActivityStub(options)
-      )
-
-  private[temporal] def buildLocalActivityTyped[A: ClassTag]: LocalActivityOptions => ZActivityStub.Of[A] =
-    options =>
-      ZActivityStub.Of[A](
-        new ZActivityStubImpl(
-          Workflow.newUntypedLocalActivityStub(options),
-          ClassTagUtils.classOf[A]
-        )
-      )
-
-  private[temporal] def buildLocalActivityUntyped: LocalActivityOptions => ZActivityStub.Untyped =
-    options =>
-      new ZActivityStub.UntypedImpl(
-        Workflow.newUntypedLocalActivityStub(options)
-      )
-
-  private[temporal] def buildChildWorkflowTyped[A: ClassTag]: ChildWorkflowOptions => ZChildWorkflowStub.Of[A] =
-    options =>
-      ZChildWorkflowStub.Of(
-        new ZChildWorkflowStubImpl(
-          Workflow.newUntypedChildWorkflowStub(
-            ClassTagUtils.getWorkflowType[A],
-            options
-          ),
-          ClassTagUtils.classOf[A]
-        )
-      )
-
-  private[temporal] def buildChildWorkflowUntyped(
-    workflowType: String
-  ): ChildWorkflowOptions => ZChildWorkflowStub.Untyped =
-    options =>
-      new ZChildWorkflowStub.UntypedImpl(
-        Workflow.newUntypedChildWorkflowStub(workflowType, options)
-      )
 }

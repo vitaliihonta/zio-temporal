@@ -5,11 +5,10 @@ import zio._
 import zio.temporal.ZAwaitTerminationOptions
 import zio.temporal.activity.ZActivityRunOptions
 import zio.temporal.ZCurrentTimeMillis
+import zio.temporal.internal.TemporalWorkflowFacade
 import zio.temporal.worker.ZWorker
 import zio.temporal.worker.ZWorkerOptions
 import zio.temporal.workflow._
-import zio.temporal.workflow.internal.WorkflowBuilders
-
 import java.util.concurrent.TimeUnit
 import scala.reflect.ClassTag
 
@@ -193,7 +192,7 @@ object ZTestWorkflowEnvironment {
   ]: ZWorkflowStubBuilderTaskQueueDsl[URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Of[A]]] =
     new ZWorkflowStubBuilderTaskQueueDsl[URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Of[A]]](options =>
       ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
-        WorkflowBuilders.typed[A](testEnv.workflowClient.toJava).apply(options)
+        TemporalWorkflowFacade.createWorkflowStubTyped[A](testEnv.workflowClient.toJava).apply(options)
       }
     )
 
@@ -212,7 +211,7 @@ object ZTestWorkflowEnvironment {
     options: ZWorkflowOptions
   ): URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Of[A]] =
     ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
-      WorkflowBuilders.typed[A](testEnv.workflowClient.toJava).apply(options.toJava)
+      TemporalWorkflowFacade.createWorkflowStubTyped[A](testEnv.workflowClient.toJava).apply(options.toJava)
     }
 
   /** Creates new untyped type workflow stub builder
@@ -228,7 +227,7 @@ object ZTestWorkflowEnvironment {
   ): ZWorkflowStubBuilderTaskQueueDsl[URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Untyped]] =
     new ZWorkflowStubBuilderTaskQueueDsl[URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Untyped]](options =>
       ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
-        WorkflowBuilders.untyped(workflowType, testEnv.workflowClient.toJava).apply(options)
+        TemporalWorkflowFacade.createWorkflowStubUntyped(workflowType, testEnv.workflowClient.toJava).apply(options)
       }
     )
 
@@ -247,7 +246,9 @@ object ZTestWorkflowEnvironment {
     options:      ZWorkflowOptions
   ): URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Untyped] =
     ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
-      WorkflowBuilders.untyped(workflowType, testEnv.workflowClient.toJava).apply(options.toJava)
+      TemporalWorkflowFacade
+        .createWorkflowStubUntyped(workflowType, testEnv.workflowClient.toJava)
+        .apply(options.toJava)
     }
 
   /** Creates workflow client stub for a known execution.
