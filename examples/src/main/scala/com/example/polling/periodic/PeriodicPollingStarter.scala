@@ -23,11 +23,11 @@ object PeriodicPollingStarter extends ZIOAppDefault {
     val invokeWorkflows = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
         workflowId <- ZIO.randomWith(_.nextUUID)
-        workflow <- client
-                      .newWorkflowStub[PollingWorkflow]
-                      .withTaskQueue(TaskQueue)
-                      .withWorkflowId(workflowId.toString)
-                      .build
+        workflow <- client.newWorkflowStub[PollingWorkflow](
+                      ZWorkflowOptions
+                        .withWorkflowId(workflowId.toString)
+                        .withTaskQueue(TaskQueue)
+                    )
         result <- ZWorkflowStub.execute(
                     workflow.exec()
                   )

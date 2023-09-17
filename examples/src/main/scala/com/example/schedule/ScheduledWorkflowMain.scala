@@ -18,11 +18,11 @@ object ScheduledWorkflowMain extends ZIOAppDefault {
         ZWorker.addWorkflow[HelloWorkflowWithTimeImpl].fromClass
 
     def startSchedules(workflowId: String, scheduleId: String) = ZIO.serviceWithZIO[ZScheduleClient] { scheduleClient =>
-      val stub = scheduleClient
-        .newScheduleStartWorkflowStub[HelloWorkflowWithTime]()
-        .withTaskQueue(TaskQueue)
-        .withWorkflowId(workflowId)
-        .build
+      val stub = scheduleClient.newScheduleStartWorkflowStub[HelloWorkflowWithTime](
+        ZWorkflowOptions
+          .withWorkflowId(workflowId)
+          .withTaskQueue(TaskQueue)
+      )
 
       val intervalSpec = ZScheduleSpec
         .intervals(every(15.minutes))
@@ -94,11 +94,11 @@ object ScheduledWorkflowMain extends ZIOAppDefault {
                    )
                    .withStartAt(now.plusSeconds(10))
 
-                 val newStub = scheduleClient
-                   .newScheduleStartWorkflowStub[HelloWorkflowWithTime]()
-                   .withTaskQueue(TaskQueue)
-                   .withWorkflowId(workflowId)
-                   .build
+                 val newStub = scheduleClient.newScheduleStartWorkflowStub[HelloWorkflowWithTime](
+                   ZWorkflowOptions
+                     .withWorkflowId(workflowId)
+                     .withTaskQueue(TaskQueue)
+                 )
 
                  ZScheduleUpdate(
                    input.description.schedule

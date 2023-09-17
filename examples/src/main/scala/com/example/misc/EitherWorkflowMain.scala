@@ -36,12 +36,11 @@ case class EitherActivityImpl()(implicit options: ZActivityRunOptions[Any]) exte
 
 case class EitherWorkflowImpl() extends EitherWorkflow {
   override def start: Either[String, Int] = {
-    val stub = ZWorkflow
-      .newActivityStub[EitherActivity](
-        ZActivityOptions
-          .withStartToCloseTimeout(1.seconds)
-          .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(1))
-      )
+    val stub = ZWorkflow.newActivityStub[EitherActivity](
+      ZActivityOptions
+        .withStartToCloseTimeout(1.seconds)
+        .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(1))
+    )
 
     // Deterministic random
     val randomSum = ZWorkflow.newRandom.nextInt()
@@ -65,14 +64,14 @@ object EitherWorkflowMain extends ZIOAppDefault {
     val invokeWorkflows = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
         workflowId <- Random.nextUUID
-        eitherWorkflow <- client
-                            .newWorkflowStub[EitherWorkflow]
-                            .withTaskQueue(TaskQueue)
-                            .withWorkflowId(workflowId.toString)
-                            .withRetryOptions(
-                              ZRetryOptions.default.withMaximumAttempts(1)
-                            )
-                            .build
+        eitherWorkflow <- client.newWorkflowStub[EitherWorkflow](
+                            ZWorkflowOptions
+                              .withWorkflowId(workflowId.toString)
+                              .withTaskQueue(TaskQueue)
+                              .withRetryOptions(
+                                ZRetryOptions.default.withMaximumAttempts(1)
+                              )
+                          )
         _ <- ZIO.logInfo("Running workflow with either return type...")
         res <- ZWorkflowStub.execute(
                  eitherWorkflow.start

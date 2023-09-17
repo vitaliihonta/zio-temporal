@@ -99,11 +99,11 @@ object PolymorphicChildWorkflowsMain extends ZIOAppDefault {
 
     def sendMsg(client: ZWorkflowClient, msg: String): TemporalIO[Unit] = for {
       workflowId <- ZIO.randomWith(_.nextUUID)
-      notificationsWorkflow <- client
-                                 .newWorkflowStub[NotificationChildBasedWorkflow]
-                                 .withTaskQueue(TaskQueue)
-                                 .withWorkflowId(workflowId.toString)
-                                 .build
+      notificationsWorkflow <- client.newWorkflowStub[NotificationChildBasedWorkflow](
+                                 ZWorkflowOptions
+                                   .withWorkflowId(workflowId.toString)
+                                   .withTaskQueue(TaskQueue)
+                               )
       _ <- ZWorkflowStub.execute(
              notificationsWorkflow.send(msg)
            )

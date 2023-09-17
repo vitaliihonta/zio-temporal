@@ -23,11 +23,11 @@ object TripBookingSaga extends ZIOAppDefault {
     def bookingFlow(name: String) = for {
       client <- ZIO.service[ZWorkflowClient]
       tripId <- ZIO.randomWith(_.nextUUID)
-      trip <- client
-                .newWorkflowStub[TripBookingWorkflow]
-                .withTaskQueue(TaskQueue)
-                .withWorkflowId(tripId.toString)
-                .build
+      trip <- client.newWorkflowStub[TripBookingWorkflow](
+                ZWorkflowOptions
+                  .withWorkflowId(tripId.toString)
+                  .withTaskQueue(TaskQueue)
+              )
 
       _ <- ZWorkflowStub
              .execute(

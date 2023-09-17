@@ -4,7 +4,7 @@ import zio._
 import zio.temporal.fixture._
 import zio.temporal.testkit._
 import zio.temporal.worker.ZWorker
-import zio.temporal.workflow.ZWorkflowStub
+import zio.temporal.workflow.{ZWorkflowOptions, ZWorkflowStub}
 import zio.test._
 import java.util.UUID
 
@@ -23,11 +23,11 @@ object WorkflowComplexTypesSpec extends BaseTemporalSpec {
 
             _ <- ZTestWorkflowEnvironment.setup()
 
-            stub <- ZTestWorkflowEnvironment
-                      .newWorkflowStub[EitherWorkflow]
-                      .withTaskQueue(taskQueue)
-                      .withWorkflowId(workflowId)
-                      .build
+            stub <- ZTestWorkflowEnvironment.newWorkflowStub[EitherWorkflow](
+                      ZWorkflowOptions
+                        .withWorkflowId(workflowId)
+                        .withTaskQueue(taskQueue)
+                    )
             result <- ZWorkflowStub.execute(
                         stub.start
                       )
@@ -46,11 +46,11 @@ object WorkflowComplexTypesSpec extends BaseTemporalSpec {
 
             _ <- ZTestWorkflowEnvironment.setup()
 
-            stub <- ZTestWorkflowEnvironment
-                      .newWorkflowStub[ComplexWorkflow]
-                      .withTaskQueue(taskQueue)
-                      .withWorkflowId(workflowId)
-                      .build
+            stub <- ZTestWorkflowEnvironment.newWorkflowStub[ComplexWorkflow](
+                      ZWorkflowOptions
+                        .withWorkflowId(workflowId)
+                        .withTaskQueue(taskQueue)
+                    )
             _ <- ZWorkflowStub.start(
                    stub.start
                  )
@@ -78,10 +78,10 @@ object WorkflowComplexTypesSpec extends BaseTemporalSpec {
                   ),
                   third = false
                 )
-              )
-            ) &&
-            assertTrue(list == List(Foo("x"), Foo("y"))) &&
-            assertTrue(triple == Triple(Foo("x"), 1, "y"))
+              ),
+              list == List(Foo("x"), Foo("y")),
+              triple == Triple(Foo("x"), 1, "y")
+            )
           }
         }
       }

@@ -1,47 +1,19 @@
 package zio.temporal.workflow
 
-import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowOptions
 import io.temporal.api.enums.v1.WorkflowIdReusePolicy
 import io.temporal.common.context.ContextPropagator
 import zio._
 import zio.temporal.{ZRetryOptions, ZSearchAttribute, ZSearchAttributes}
-
-import scala.reflect.ClassTag
 import scala.jdk.CollectionConverters._
-import zio.temporal.internal.ClassTagUtils
 
-// TODO: make WorkflowOptions instead
+@deprecated("Build ZWorkflowOptions and provide it directly", since = "0.5.0")
 object ZWorkflowStubBuilderTaskQueueDsl {
   type Of[A]   = ZWorkflowStubBuilderTaskQueueDsl[UIO[ZWorkflowStub.Of[A]]]
   type Untyped = ZWorkflowStubBuilderTaskQueueDsl[UIO[ZWorkflowStub.Untyped]]
-
-  private[temporal] def typed[A: ClassTag](client: WorkflowClient): WorkflowOptions => UIO[ZWorkflowStub.Of[A]] =
-    options =>
-      ZIO.succeed {
-        ZWorkflowStub.Of[A](
-          new ZWorkflowStubImpl(
-            client.newUntypedWorkflowStub(
-              ClassTagUtils.getWorkflowType[A],
-              options
-            ),
-            ClassTagUtils.classOf[A]
-          )
-        )
-      }
-
-  private[temporal] def untyped(
-    workflowType: String,
-    client:       WorkflowClient
-  ): WorkflowOptions => UIO[ZWorkflowStub.Untyped] =
-    options =>
-      ZIO.succeed {
-        new ZWorkflowStub.UntypedImpl(
-          client.newUntypedWorkflowStub(workflowType, options)
-        )
-      }
 }
 
+@deprecated("Build ZWorkflowOptions and provide it directly", since = "0.5.0")
 final class ZWorkflowStubBuilderTaskQueueDsl[Res] private[zio] (
   buildImpl: WorkflowOptions => Res) {
 
@@ -49,6 +21,7 @@ final class ZWorkflowStubBuilderTaskQueueDsl[Res] private[zio] (
     new ZWorkflowStubBuilderWorkflowIdDsl[Res](buildImpl, taskQueue)
 }
 
+@deprecated("Build ZWorkflowOptions and provide it directly", since = "0.5.0")
 final class ZWorkflowStubBuilderWorkflowIdDsl[Res] private[zio] (
   buildImpl: WorkflowOptions => Res,
   taskQueue: String) {
@@ -57,6 +30,7 @@ final class ZWorkflowStubBuilderWorkflowIdDsl[Res] private[zio] (
     new ZWorkflowStubBuilder[Res](buildImpl, taskQueue, workflowId, additionalConfig = identity)
 }
 
+@deprecated("Build ZWorkflowOptions and provide it directly", since = "0.5.0")
 final class ZWorkflowStubBuilder[Res] private[zio] (
   buildImpl:        WorkflowOptions => Res,
   taskQueue:        String,

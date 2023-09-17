@@ -17,11 +17,11 @@ object HeartbeatingActivityBatchStarter extends ZIOAppDefault {
       workflowClient <- ZIO.service[ZWorkflowClient]
       workflowId     <- ZIO.randomWith(_.nextUUID)
 
-      batchWorkflow <- workflowClient
-                         .newWorkflowStub[HeartbeatingActivityBatchWorkflow]
-                         .withTaskQueue(HeartbeatingActivityBatchWorker.TaskQueue)
-                         .withWorkflowId(workflowId.toString)
-                         .build
+      batchWorkflow <- workflowClient.newWorkflowStub[HeartbeatingActivityBatchWorkflow](
+                         ZWorkflowOptions
+                           .withWorkflowId(workflowId.toString)
+                           .withTaskQueue(HeartbeatingActivityBatchWorker.TaskQueue)
+                       )
 
       execution <- ZWorkflowStub.start(
                      batchWorkflow.processBatch()

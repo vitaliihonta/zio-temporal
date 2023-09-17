@@ -40,18 +40,18 @@ class TemporalPaymentService(workflowClient: ZWorkflowClient) extends PaymentSer
       for {
         transactionId <- ZIO.randomWith(_.nextUUID)
         _             <- updateLogContext(transactionId)
-        paymentWorkflow <- workflowClient
-                             .newWorkflowStub[PaymentWorkflow]
-                             .withTaskQueue("payments")
-                             .withWorkflowId(transactionId.toString)
-                             .withWorkflowExecutionTimeout(6.minutes)
-                             // Avoid setting runTimeout < timeout in ZWorkflow.awaitWhile
-                             // Otherwise, you'll get a creepy error
-                             .withWorkflowRunTimeout(1.minute)
-                             .withRetryOptions(
-                               ZRetryOptions.default.withMaximumAttempts(5)
-                             )
-                             .build
+        paymentWorkflow <- workflowClient.newWorkflowStub[PaymentWorkflow](
+                             ZWorkflowOptions
+                               .withWorkflowId(transactionId.toString)
+                               .withTaskQueue("payments")
+                               .withWorkflowExecutionTimeout(6.minutes)
+                               // Avoid setting runTimeout < timeout in ZWorkflow.awaitWhile
+                               // Otherwise, you'll get a creepy error
+                               .withWorkflowRunTimeout(1.minute)
+                               .withRetryOptions(
+                                 ZRetryOptions.default.withMaximumAttempts(5)
+                               )
+                           )
         _ <- ZIO.logInfo("Going to trigger workflow")
         _ <- ZWorkflowStub.start(
                paymentWorkflow.proceed(

@@ -9,6 +9,7 @@ import zio.temporal.worker._
 import zio.temporal.workflow.{
   ZWorkflowClient,
   ZWorkflowClientOptions,
+  ZWorkflowOptions,
   ZWorkflowServiceStubs,
   ZWorkflowServiceStubsOptions,
   ZWorkflowStub
@@ -83,11 +84,11 @@ object VersionedWorkerMain extends ZIOCliDefault {
                BuildIdOperation.newIdInNewDefaultSet(buildId)
              )
         subscriptionId <- Random.nextUUID
-        subscriptionWorkflow <- client
-                                  .newWorkflowStub[SubscriptionWorkflow]
-                                  .withTaskQueue(TaskQueue)
-                                  .withWorkflowId(subscriptionId.toString)
-                                  .build
+        subscriptionWorkflow <- client.newWorkflowStub[SubscriptionWorkflow](
+                                  ZWorkflowOptions
+                                    .withWorkflowId(subscriptionId.toString)
+                                    .withTaskQueue(TaskQueue)
+                                )
 
         _ <- ZIO.logInfo(s"Starting subscription workflow id=$subscriptionId")
         execution <- ZWorkflowStub.start(

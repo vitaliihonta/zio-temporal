@@ -22,29 +22,29 @@ object Main extends ZIOAppDefault {
     val invokeWorkflows = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
         workflowId <- Random.nextUUID
-        orderWorkflow <- client
-                           .newWorkflowStub[FoodOrderWorkflow]
-                           .withTaskQueue(TaskQueue)
-                           .withWorkflowId(workflowId.toString)
-                           .withSearchAttributes(
-                             /** NOTE: make sure to add a search attributes
-                               * {{{
-                               *    temporal operator search-attribute create --namespace default --name Vendor --type Keyword
-                               *    temporal operator search-attribute create --namespace default --name VendorVersion --type Text
-                               * }}}
-                               */
-                             Map(
-                               "Vendor"        -> ZSearchAttribute.keyword("vhonta.dev"),
-                               "VendorVersion" -> ZSearchAttribute("1.0.0")
+        orderWorkflow <- client.newWorkflowStub[FoodOrderWorkflow](
+                           ZWorkflowOptions
+                             .withWorkflowId(workflowId.toString)
+                             .withTaskQueue(TaskQueue)
+                             .withSearchAttributes(
+                               /** NOTE: make sure to add a search attributes
+                                 * {{{
+                                 *    temporal operator search-attribute create --namespace default --name Vendor --type Keyword
+                                 *    temporal operator search-attribute create --namespace default --name VendorVersion --type Text
+                                 * }}}
+                                 */
+                               Map(
+                                 "Vendor"        -> ZSearchAttribute.keyword("vhonta.dev"),
+                                 "VendorVersion" -> ZSearchAttribute("1.0.0")
+                               )
                              )
-                           )
-                           .build
+                         )
 
-        deliveryWorkflow <- client
-                              .newWorkflowStub[FoodDeliveryWorkflow]
-                              .withTaskQueue(TaskQueue)
-                              .withWorkflowId(FoodDeliveryWorkflow.makeId(workflowId.toString))
-                              .build
+        deliveryWorkflow <- client.newWorkflowStub[FoodDeliveryWorkflow](
+                              ZWorkflowOptions
+                                .withWorkflowId(FoodDeliveryWorkflow.makeId(workflowId.toString))
+                                .withTaskQueue(TaskQueue)
+                            )
 
         goods           = List("peperoni pizza", "coke")
         deliveryAddress = "Sample street, 5/2, 10000"

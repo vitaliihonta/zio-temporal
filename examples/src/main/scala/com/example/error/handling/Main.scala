@@ -22,12 +22,12 @@ object Main extends ZIOAppDefault {
     val invokeWorkflows = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
         workflowId <- Random.nextUUID
-        mathWorkflow <- client
-                          .newWorkflowStub[MathWorkflow]
-                          .withTaskQueue(TaskQueue)
-                          .withWorkflowId(workflowId.toString)
-                          .withWorkflowExecutionTimeout(30.seconds)
-                          .build
+        mathWorkflow <- client.newWorkflowStub[MathWorkflow](
+                          ZWorkflowOptions
+                            .withWorkflowId(workflowId.toString)
+                            .withTaskQueue(TaskQueue)
+                            .withWorkflowExecutionTimeout(30.seconds)
+                        )
         _ <- ZIO.logInfo("Running math workflow!")
         res <- ZWorkflowStub.execute(
                  mathWorkflow.formula(4)

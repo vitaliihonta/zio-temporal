@@ -43,17 +43,17 @@ object GenericWorkflowsClientStubMain extends ZIOAppDefault {
 
     val flow = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
-        wf1 <- client
-                 .newWorkflowStub[WorkflowFoo]
-                 .withTaskQueue("tmp")
-                 .withWorkflowId("fooo")
-                 .build
+        wf1 <- client.newWorkflowStub[WorkflowFoo](
+                 ZWorkflowOptions
+                   .withWorkflowId("fooo")
+                   .withTaskQueue("tmp")
+               )
 
-        wf2 <- client
-                 .newWorkflowStub[WorkflowBar]
-                 .withTaskQueue("tmp")
-                 .withWorkflowId("baaar")
-                 .build
+        wf2 <- client.newWorkflowStub[WorkflowBar](
+                 ZWorkflowOptions
+                   .withWorkflowId("baaar")
+                   .withTaskQueue("tmp")
+               )
 
         sum <- basicExecute(wf1).zipWith(basicExecute(wf2))(_ + _)
 

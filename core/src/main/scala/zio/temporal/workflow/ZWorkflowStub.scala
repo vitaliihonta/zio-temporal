@@ -6,8 +6,8 @@ import zio.temporal.{JavaTypeTag, TemporalIO, TypeIsSpecified, ZWorkflowExecutio
 import zio.temporal.internal.{BasicStubOps, Stubs, TemporalInteraction}
 import zio.temporal.query.ZWorkflowStubQuerySyntax
 import zio.temporal.signal.{ZWorkflowClientSignalWithStartSyntax, ZWorkflowStubSignalSyntax}
-
 import java.util.concurrent.TimeUnit
+import scala.jdk.OptionConverters._
 
 sealed trait ZWorkflowStub extends BasicStubOps with ZWorkflowClientSignalWithStartSyntax {
   def toJava: WorkflowStub
@@ -34,9 +34,9 @@ sealed trait ZWorkflowStub extends BasicStubOps with ZWorkflowClientSignalWithSt
     * <p>Cancellation cancels [[io.temporal.workflow.CancellationScope]] that wraps the main workflow method. Note that
     * workflow can take long time to get canceled or even completely ignore the cancellation request.
     *
-    * @throws WorkflowNotFoundException
+    * @throws io.temporal.client.WorkflowNotFoundException
     *   if the workflow execution doesn't exist or is already completed
-    * @throws WorkflowServiceException
+    * @throws io.temporal.client.WorkflowServiceException
     *   for all other failures including networking and service availability issues
     */
   def cancel: TemporalIO[Unit] =
@@ -51,13 +51,19 @@ sealed trait ZWorkflowStub extends BasicStubOps with ZWorkflowClientSignalWithSt
     *   optional reason for the termination request
     * @param details
     *   additional details about the termination reason
-    * @throws WorkflowNotFoundException
+    * @throws io.temporal.client.WorkflowNotFoundException
     *   if the workflow execution doesn't exist or is already completed
-    * @throws WorkflowServiceException
+    * @throws io.temporal.client.WorkflowServiceException
     *   for all other failures including networking and service availability issues
     */
   def terminate(reason: Option[String], details: Any*): TemporalIO[Unit] =
     untyped.terminate(reason, details: _*)
+
+  /** @return
+    *   None if the stub is created to bound to an existing execution.
+    */
+  def options: Option[ZWorkflowOptions] =
+    toJava.getOptions.toScala.map(ZWorkflowOptions.fromJava)
 }
 
 /** Represents untyped workflow stub
@@ -88,9 +94,9 @@ object ZWorkflowStub
       *   name of the signal handler. Usually it is a method name.
       * @param args
       *   signal method arguments
-      * @throws WorkflowNotFoundException
+      * @throws io.temporal.client.WorkflowNotFoundException
       *   if the workflow execution doesn't exist or completed and can't be signalled
-      * @throws WorkflowServiceException
+      * @throws io.temporal.client.WorkflowServiceException
       *   for all other failures including networking and service availability issues
       */
     def signal(signalName: String, args: Any*): TemporalIO[Unit]
@@ -114,11 +120,11 @@ object ZWorkflowStub
       *   optional query arguments
       * @return
       *   query result
-      * @throws WorkflowNotFoundException
+      * @throws io.temporal.client.WorkflowNotFoundException
       *   if the workflow execution doesn't exist
-      * @throws WorkflowQueryException
+      * @throws io.temporal.client.WorkflowQueryException
       *   if the query failed during it's execution by the workflow worker or was rejected on any stage
-      * @throws WorkflowServiceException
+      * @throws io.temporal.client.WorkflowServiceException
       *   for all other failures including networking and service availability issues
       */
     def query[R: TypeIsSpecified: JavaTypeTag](queryType: String, args: Any*): TemporalIO[R]
@@ -145,9 +151,9 @@ object ZWorkflowStub
       * <p>Cancellation cancels [[io.temporal.workflow.CancellationScope]] that wraps the main workflow method. Note
       * that workflow can take long time to get canceled or even completely ignore the cancellation request.
       *
-      * @throws WorkflowNotFoundException
+      * @throws io.temporal.client.WorkflowNotFoundException
       *   if the workflow execution doesn't exist or is already completed
-      * @throws WorkflowServiceException
+      * @throws io.temporal.client.WorkflowServiceException
       *   for all other failures including networking and service availability issues
       */
     def cancel: TemporalIO[Unit]
@@ -161,9 +167,9 @@ object ZWorkflowStub
       *   optional reason for the termination request
       * @param details
       *   additional details about the termination reason
-      * @throws WorkflowNotFoundException
+      * @throws io.temporal.client.WorkflowNotFoundException
       *   if the workflow execution doesn't exist or is already completed
-      * @throws WorkflowServiceException
+      * @throws io.temporal.client.WorkflowServiceException
       *   for all other failures including networking and service availability issues
       */
     def terminate(reason: Option[String], details: Any*): TemporalIO[Unit]

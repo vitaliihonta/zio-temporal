@@ -69,20 +69,18 @@ class NotificationActivityBasedWorkflowImpl extends NotificationActivityBasedWor
   // Using base Workflow type here
   private val senders: List[ZActivityStub.Of[NotificationsSenderActivity]] =
     List(
-      ZWorkflow
-        .newActivityStub[PushNotificationsSenderActivity](
-          ZActivityOptions
-            .withStartToCloseTimeout(1.minute)
-            .withRetryOptions(
-              ZRetryOptions.default.withMaximumAttempts(2)
-            )
-        ),
-      ZWorkflow
-        .newActivityStub[SmsNotificationsSenderActivity](
-          ZActivityOptions
-            .withStartToCloseTimeout(1.minute)
-            .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(2))
-        )
+      ZWorkflow.newActivityStub[PushNotificationsSenderActivity](
+        ZActivityOptions
+          .withStartToCloseTimeout(1.minute)
+          .withRetryOptions(
+            ZRetryOptions.default.withMaximumAttempts(2)
+          )
+      ),
+      ZWorkflow.newActivityStub[SmsNotificationsSenderActivity](
+        ZActivityOptions
+          .withStartToCloseTimeout(1.minute)
+          .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(2))
+      )
     )
 
   override def send(msg: String): Unit = {
@@ -118,11 +116,11 @@ object PolymorphicActivityMain extends ZIOAppDefault {
 
     def sendMsg(client: ZWorkflowClient, msg: String): TemporalIO[Unit] = for {
       workflowId <- ZIO.randomWith(_.nextUUID)
-      notificationsWorkflow <- client
-                                 .newWorkflowStub[NotificationActivityBasedWorkflow]
-                                 .withTaskQueue(TaskQueue)
-                                 .withWorkflowId(workflowId.toString)
-                                 .build
+      notificationsWorkflow <- client.newWorkflowStub[NotificationActivityBasedWorkflow](
+                                 ZWorkflowOptions
+                                   .withWorkflowId(workflowId.toString)
+                                   .withTaskQueue(TaskQueue)
+                               )
       _ <- ZWorkflowStub.execute(
              notificationsWorkflow.send(msg)
            )

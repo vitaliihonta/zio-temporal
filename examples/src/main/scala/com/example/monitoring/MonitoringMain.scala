@@ -39,11 +39,11 @@ object MonitoringMain extends ZIOAppDefault {
       ZIO.serviceWithZIO[ZWorkflowClient] { client =>
         for {
           workflowId <- Random.nextUUID
-          sampleWorkflow <- client
-                              .newWorkflowStub[SampleWorkflow]
-                              .withTaskQueue(TaskQueue)
-                              .withWorkflowId(workflowId.toString)
-                              .build
+          sampleWorkflow <- client.newWorkflowStub[SampleWorkflow](
+                              ZWorkflowOptions
+                                .withWorkflowId(workflowId.toString)
+                                .withTaskQueue(TaskQueue)
+                            )
 
           result <- ZWorkflowStub.execute(
                       sampleWorkflow.greetAndBye(who)

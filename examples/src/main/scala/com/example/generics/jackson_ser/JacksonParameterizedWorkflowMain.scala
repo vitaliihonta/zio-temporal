@@ -170,17 +170,17 @@ object JacksonParameterizedWorkflowMain extends ZIOAppDefault {
     val flow = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
         uuid <- ZIO.randomWith(_.nextUUID)
-        sodaWf <- client
-                    .newWorkflowStub[SodaWorkflow]
-                    .withTaskQueue(TaskQueue)
-                    .withWorkflowId(s"jackson-soda/$uuid")
-                    .build
+        sodaWf <- client.newWorkflowStub[SodaWorkflow](
+                    ZWorkflowOptions
+                      .withWorkflowId(s"jackson-soda/$uuid")
+                      .withTaskQueue(TaskQueue)
+                  )
 
-        juiceWf <- client
-                     .newWorkflowStub[JuiceWorkflow]
-                     .withTaskQueue(TaskQueue)
-                     .withWorkflowId(s"jackson-juice/$uuid")
-                     .build
+        juiceWf <- client.newWorkflowStub[JuiceWorkflow](
+                     ZWorkflowOptions
+                       .withWorkflowId(s"jackson-juice/$uuid")
+                       .withTaskQueue(TaskQueue)
+                   )
 
         _ <- runWorkflow(sodaWf)(WorkflowInput.Soda("coke"))
                .zip(runWorkflow(juiceWf)(WorkflowInput.Juice("orange")))
