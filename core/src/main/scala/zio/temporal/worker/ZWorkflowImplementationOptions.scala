@@ -1,7 +1,7 @@
 package zio.temporal.worker
 
 import io.temporal.worker.WorkflowImplementationOptions
-import zio.temporal.activity.{ZActivityType, ZActivityOptions, ZLocalActivityOptions}
+import zio.temporal.activity.{ZActivityOptions, ZLocalActivityOptions}
 import scala.jdk.CollectionConverters._
 
 final case class ZWorkflowImplementationOptions private[zio] (
@@ -44,23 +44,23 @@ final case class ZWorkflowImplementationOptions private[zio] (
   def withFailWorkflowExceptionTypes(values: List[Class[_ <: Throwable]]): ZWorkflowImplementationOptions =
     copy(failWorkflowExceptionTypes = values)
 
-  /** Set individual activity options per activityType. Will be merged with the map from
+  /** Set individual activity options per activityType ('''activity method name'''). Will be merged with the map from
     * [[zio.temporal.workflow.ZWorkflow.newActivityStub]] which has the highest precedence.
     *
     * @param values
     *   map from activityType to ActivityOptions
     */
-  def withActivityOptions(values: (ZActivityType, ZActivityOptions)*): ZWorkflowImplementationOptions =
+  def withActivityOptions(values: (String, ZActivityOptions)*): ZWorkflowImplementationOptions =
     withActivityOptions(values.toMap)
 
-  /** Set individual activity options per activityType. Will be merged with the map from
+  /** Set individual activity options per activityType ('''activity method name'''). Will be merged with the map from
     * [[zio.temporal.workflow.ZWorkflow.newActivityStub]] which has the highest precedence.
     *
     * @param values
     *   map from activityType to ActivityOptions
     */
-  def withActivityOptions(values: Map[ZActivityType, ZActivityOptions]): ZWorkflowImplementationOptions =
-    copy(activityOptions = values.map { case (at, options) => at.activityType -> options }.toMap)
+  def withActivityOptions(values: Map[String, ZActivityOptions]): ZWorkflowImplementationOptions =
+    copy(activityOptions = values)
 
   /** These activity options have the lowest precedence across all activity options. Will be overwritten entirely by
     * [[zio.temporal.workflow.ZWorkflow.newActivityStub]] and then by the individual activity options if any are set
@@ -72,23 +72,23 @@ final case class ZWorkflowImplementationOptions private[zio] (
   def withDefaultActivityOptions(value: ZActivityOptions): ZWorkflowImplementationOptions =
     copy(defaultActivityOptions = Some(value))
 
-  /** Set individual local activity options per activityType. Will be merged with the map from
-    * [[zio.temporal.workflow.ZWorkflow.newLocalActivityStub]] which has the highest precedence.
+  /** Set individual local activity options per activityType ('''activity method name'''). Will be merged with the map
+    * from [[zio.temporal.workflow.ZWorkflow.newLocalActivityStub]] which has the highest precedence.
     *
     * @param values
     *   map from activityType to ActivityOptions
     */
-  def withLocalActivityOptions(values: (ZActivityType, ZLocalActivityOptions)*): ZWorkflowImplementationOptions =
+  def withLocalActivityOptions(values: (String, ZLocalActivityOptions)*): ZWorkflowImplementationOptions =
     withLocalActivityOptions(values.toMap)
 
-  /** Set individual local activity options per activityType. Will be merged with the map from
-    * [[zio.temporal.workflow.ZWorkflow.newLocalActivityStub]] which has the highest precedence.
+  /** Set individual local activity options per activityType ('''activity method name'''). Will be merged with the map
+    * from [[zio.temporal.workflow.ZWorkflow.newLocalActivityStub]] which has the highest precedence.
     *
     * @param values
     *   map from activityType to ActivityOptions
     */
-  def withLocalActivityOptions(values: Map[ZActivityType, ZLocalActivityOptions]): ZWorkflowImplementationOptions =
-    copy(localActivityOptions = values.map { case (at, options) => at.activityType -> options }.toMap)
+  def withLocalActivityOptions(values: Map[String, ZLocalActivityOptions]): ZWorkflowImplementationOptions =
+    copy(localActivityOptions = values)
 
   /** These local activity options have the lowest precedence across all local activity options. Will be overwritten
     * entirely by [[zio.temporal.workflow.ZWorkflow.newLocalActivityStub]] and then by the individual local activity

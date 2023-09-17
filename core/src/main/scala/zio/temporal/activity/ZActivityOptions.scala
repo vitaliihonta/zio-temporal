@@ -75,7 +75,7 @@ final case class ZActivityOptions private[zio] (
     * <pre><code> InitialInterval: 1 second BackoffCoefficient: 2 MaximumInterval: 100 seconds // 100 * InitialInterval
     * MaximumAttempts: 0 // Unlimited NonRetryableErrorTypes: [] </pre></code>
     *
-    * <p>If both [[withScheduleToStartTimeout]] and [[ZRetryOptions.withMaximumAttempts]] are not set, the Activity will
+    * <p>If both [[withScheduleToCloseTimeout]] and [[ZRetryOptions.withMaximumAttempts]] are not set, the Activity will
     * not be retried.
     *
     * <p>To ensure zero retries, set [[ZRetryOptions.withMaximumAttempts]] to 1.

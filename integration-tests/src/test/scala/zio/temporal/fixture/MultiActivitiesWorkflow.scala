@@ -16,11 +16,11 @@ class MultiActivitiesWorkflowImpl extends MultiActivitiesWorkflow {
   private val logger = ZWorkflow.makeLogger
 
   ZWorkflow.applyActivityOptions(
-    ZActivityType[ZioActivity] ->
+    "Echo" ->
       ZActivityOptions
         .withStartToCloseTimeout(5.seconds)
         .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(1)),
-    ZActivityType[ComplexTypesActivity] ->
+    "ComplexList" ->
       ZActivityOptions
         .withStartToCloseTimeout(5.seconds)
         .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(3))

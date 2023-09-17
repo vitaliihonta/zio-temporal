@@ -5,6 +5,9 @@ import scala.jdk.CollectionConverters._
 
 object ZReplayResults {
   final case class ZReplayError(workflowId: String, exception: Exception)
+
+  def fromJava(value: ReplayResults): ZReplayResults =
+    new ZReplayResults(value)
 }
 
 /** Contains workflow reply results

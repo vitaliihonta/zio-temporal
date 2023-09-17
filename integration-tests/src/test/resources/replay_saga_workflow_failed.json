@@ -1,0 +1,322 @@
+{
+  "events": [
+    {
+      "eventId": "1",
+      "eventTime": "2023-09-17T16:16:49.101388Z",
+      "eventType": "WorkflowExecutionStarted",
+      "version": "0",
+      "taskId": "1051706",
+      "workerMayIgnore": false,
+      "workflowExecutionStartedEventAttributes": {
+        "workflowType": {
+          "name": "SagaWorkflow"
+        },
+        "parentWorkflowNamespace": "",
+        "parentWorkflowNamespaceId": "",
+        "parentWorkflowExecution": null,
+        "parentInitiatedEventId": "0",
+        "taskQueue": {
+          "name": "replay-test-queue",
+          "kind": "Normal",
+          "normalName": ""
+        },
+        "input": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "eyJmcm9tIjoiSm9obiBEb2UiLCJ0byI6IlZpdGFsaWkiLCJhbW91bnQiOjQyLjQyfQ=="
+            }
+          ]
+        },
+        "workflowExecutionTimeout": "0s",
+        "workflowRunTimeout": "0s",
+        "workflowTaskTimeout": "10s",
+        "continuedExecutionRunId": "",
+        "initiator": "Unspecified",
+        "continuedFailure": null,
+        "lastCompletionResult": null,
+        "originalExecutionRunId": "69bb857e-95ac-4938-b7be-9b768d3d9e17",
+        "identity": "48015@MBP-Vitalii",
+        "firstExecutionRunId": "69bb857e-95ac-4938-b7be-9b768d3d9e17",
+        "retryPolicy": null,
+        "attempt": 1,
+        "workflowExecutionExpirationTime": null,
+        "cronSchedule": "",
+        "firstWorkflowTaskBackoff": "0s",
+        "memo": {
+          "fields": {}
+        },
+        "searchAttributes": null,
+        "prevAutoResetPoints": null,
+        "header": {
+          "fields": {}
+        },
+        "parentInitiatedEventVersion": "0",
+        "workflowId": "a77ecdc7-f219-4dd5-862f-681192858e61",
+        "sourceVersionStamp": null
+      }
+    },
+    {
+      "eventId": "2",
+      "eventTime": "2023-09-17T16:16:49.101410Z",
+      "eventType": "WorkflowTaskScheduled",
+      "version": "0",
+      "taskId": "1051707",
+      "workerMayIgnore": false,
+      "workflowTaskScheduledEventAttributes": {
+        "taskQueue": {
+          "name": "replay-test-queue",
+          "kind": "Normal",
+          "normalName": ""
+        },
+        "startToCloseTimeout": "10s",
+        "attempt": 1
+      }
+    },
+    {
+      "eventId": "3",
+      "eventTime": "2023-09-17T16:16:49.102539Z",
+      "eventType": "WorkflowTaskStarted",
+      "version": "0",
+      "taskId": "1051712",
+      "workerMayIgnore": false,
+      "workflowTaskStartedEventAttributes": {
+        "scheduledEventId": "2",
+        "identity": "48015@MBP-Vitalii",
+        "requestId": "0f7c2a0e-37b5-48df-82ea-c1dc492ac484",
+        "suggestContinueAsNew": false,
+        "historySizeBytes": "354"
+      }
+    },
+    {
+      "eventId": "4",
+      "eventTime": "2023-09-17T16:16:49.417017Z",
+      "eventType": "WorkflowTaskCompleted",
+      "version": "0",
+      "taskId": "1051716",
+      "workerMayIgnore": false,
+      "workflowTaskCompletedEventAttributes": {
+        "scheduledEventId": "2",
+        "startedEventId": "3",
+        "identity": "48015@MBP-Vitalii",
+        "binaryChecksum": "",
+        "workerVersion": {
+          "buildId": "",
+          "bundleId": "",
+          "useVersioning": false
+        },
+        "sdkMetadata": {
+          "coreUsedFlags": [],
+          "langUsedFlags": [
+            1
+          ]
+        },
+        "meteringMetadata": {
+          "nonfirstLocalActivityExecutionAttempts": 0
+        }
+      }
+    },
+    {
+      "eventId": "5",
+      "eventTime": "2023-09-17T16:16:49.417050Z",
+      "eventType": "ActivityTaskScheduled",
+      "version": "0",
+      "taskId": "1051717",
+      "workerMayIgnore": false,
+      "activityTaskScheduledEventAttributes": {
+        "activityId": "7e225cc0-a420-3bc7-96db-35fd3156cce3",
+        "activityType": {
+          "name": "Withdraw"
+        },
+        "taskQueue": {
+          "name": "replay-test-queue",
+          "kind": "Normal",
+          "normalName": ""
+        },
+        "header": {
+          "fields": {}
+        },
+        "input": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "IkpvaG4gRG9lIg=="
+            },
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "NDIuNDI="
+            }
+          ]
+        },
+        "scheduleToCloseTimeout": "0s",
+        "scheduleToStartTimeout": "0s",
+        "startToCloseTimeout": "5s",
+        "heartbeatTimeout": "0s",
+        "workflowTaskCompletedEventId": "4",
+        "retryPolicy": {
+          "initialInterval": "1s",
+          "backoffCoefficient": 2,
+          "maximumInterval": "100s",
+          "maximumAttempts": 3,
+          "nonRetryableErrorTypes": []
+        },
+        "useCompatibleVersion": false
+      }
+    },
+    {
+      "eventId": "6",
+      "eventTime": "2023-09-17T16:16:52.519816Z",
+      "eventType": "ActivityTaskStarted",
+      "version": "0",
+      "taskId": "1051729",
+      "workerMayIgnore": false,
+      "activityTaskStartedEventAttributes": {
+        "scheduledEventId": "5",
+        "identity": "48015@MBP-Vitalii",
+        "requestId": "cbd3d1bd-98b1-4966-9a2d-9774c2ffeb1b",
+        "attempt": 3,
+        "lastFailure": {
+          "message": "BOOOM!",
+          "source": "JavaSDK",
+          "stackTrace": "zio.temporal.fixture.Tmp$.$anonfun$run$4(SagaWorkflow.scala:84)\nzio.ZIO$.$anonfun$die$1(ZIO.scala:3087)\nzio.ZIO$.$anonfun$failCause$3(ZIO.scala:3161)\nzio.internal.FiberRuntime.runLoop(FiberRuntime.scala:890)\nzio.internal.FiberRuntime.evaluateEffect(FiberRuntime.scala:381)\nzio.internal.FiberRuntime.start(FiberRuntime.scala:1339)\nzio.Runtime$UnsafeAPIV1.fork(Runtime.scala:127)\nzio.Runtime$UnsafeAPIV1.fork(Runtime.scala:123)\nzio.temporal.internal.ZioUnsafeFacade$.$anonfun$unsafeRunAsyncZIO$1(ZioUnsafeFacade.scala:20)\nzio.temporal.internal.ZioUnsafeFacade$.$anonfun$unsafeRunAsyncZIO$1$adapted(ZioUnsafeFacade.scala:14)\nzio.Unsafe$.unsafe(Unsafe.scala:37)\nzio.temporal.internal.ZioUnsafeFacade$.unsafeRunAsyncZIO(ZioUnsafeFacade.scala:14)\nzio.temporal.activity.ZActivity$.runAsyncImpl(ZActivity.scala:116)\nzio.temporal.activity.ZActivity$.runImpl(ZActivity.scala:74)\nzio.temporal.activity.ZActivity$.run(ZActivity.scala:38)\nzio.temporal.fixture.TransferActivityImpl.withdraw(SagaWorkflow.scala:33)\nsun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\nsun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\nsun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\njava.lang.reflect.Method.invoke(Method.java:498)\nio.temporal.internal.activity.RootActivityInboundCallsInterceptor$POJOActivityInboundCallsInterceptor.executeActivity(RootActivityInboundCallsInterceptor.java:64)\nio.temporal.internal.activity.RootActivityInboundCallsInterceptor.execute(RootActivityInboundCallsInterceptor.java:43)\nio.temporal.internal.activity.ActivityTaskExecutors$BaseActivityTaskExecutor.execute(ActivityTaskExecutors.java:107)\nio.temporal.internal.activity.ActivityTaskHandlerImpl.handle(ActivityTaskHandlerImpl.java:124)\nio.temporal.internal.worker.ActivityWorker$TaskHandlerImpl.handleActivity(ActivityWorker.java:278)\nio.temporal.internal.worker.ActivityWorker$TaskHandlerImpl.handle(ActivityWorker.java:243)\nio.temporal.internal.worker.ActivityWorker$TaskHandlerImpl.handle(ActivityWorker.java:216)\nio.temporal.internal.worker.PollTaskExecutor.lambda$process$0(PollTaskExecutor.java:105)\njava.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)\njava.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)\njava.lang.Thread.run(Thread.java:750)\n",
+          "encodedAttributes": null,
+          "cause": null,
+          "applicationFailureInfo": {
+            "type": "java.lang.RuntimeException",
+            "nonRetryable": false,
+            "details": null
+          }
+        }
+      }
+    },
+    {
+      "eventId": "7",
+      "eventTime": "2023-09-17T16:16:52.543568Z",
+      "eventType": "ActivityTaskFailed",
+      "version": "0",
+      "taskId": "1051730",
+      "workerMayIgnore": false,
+      "activityTaskFailedEventAttributes": {
+        "failure": {
+          "message": "BOOOM!",
+          "source": "JavaSDK",
+          "stackTrace": "zio.temporal.fixture.Tmp$.$anonfun$run$4(SagaWorkflow.scala:84)\nzio.ZIO$.$anonfun$die$1(ZIO.scala:3087)\nzio.ZIO$.$anonfun$failCause$3(ZIO.scala:3161)\nzio.internal.FiberRuntime.runLoop(FiberRuntime.scala:890)\nzio.internal.FiberRuntime.evaluateEffect(FiberRuntime.scala:381)\nzio.internal.FiberRuntime.start(FiberRuntime.scala:1339)\nzio.Runtime$UnsafeAPIV1.fork(Runtime.scala:127)\nzio.Runtime$UnsafeAPIV1.fork(Runtime.scala:123)\nzio.temporal.internal.ZioUnsafeFacade$.$anonfun$unsafeRunAsyncZIO$1(ZioUnsafeFacade.scala:20)\nzio.temporal.internal.ZioUnsafeFacade$.$anonfun$unsafeRunAsyncZIO$1$adapted(ZioUnsafeFacade.scala:14)\nzio.Unsafe$.unsafe(Unsafe.scala:37)\nzio.temporal.internal.ZioUnsafeFacade$.unsafeRunAsyncZIO(ZioUnsafeFacade.scala:14)\nzio.temporal.activity.ZActivity$.runAsyncImpl(ZActivity.scala:116)\nzio.temporal.activity.ZActivity$.runImpl(ZActivity.scala:74)\nzio.temporal.activity.ZActivity$.run(ZActivity.scala:38)\nzio.temporal.fixture.TransferActivityImpl.withdraw(SagaWorkflow.scala:33)\nsun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\nsun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\nsun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\njava.lang.reflect.Method.invoke(Method.java:498)\nio.temporal.internal.activity.RootActivityInboundCallsInterceptor$POJOActivityInboundCallsInterceptor.executeActivity(RootActivityInboundCallsInterceptor.java:64)\nio.temporal.internal.activity.RootActivityInboundCallsInterceptor.execute(RootActivityInboundCallsInterceptor.java:43)\nio.temporal.internal.activity.ActivityTaskExecutors$BaseActivityTaskExecutor.execute(ActivityTaskExecutors.java:107)\nio.temporal.internal.activity.ActivityTaskHandlerImpl.handle(ActivityTaskHandlerImpl.java:124)\nio.temporal.internal.worker.ActivityWorker$TaskHandlerImpl.handleActivity(ActivityWorker.java:278)\nio.temporal.internal.worker.ActivityWorker$TaskHandlerImpl.handle(ActivityWorker.java:243)\nio.temporal.internal.worker.ActivityWorker$TaskHandlerImpl.handle(ActivityWorker.java:216)\nio.temporal.internal.worker.PollTaskExecutor.lambda$process$0(PollTaskExecutor.java:105)\njava.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)\njava.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)\njava.lang.Thread.run(Thread.java:750)\n",
+          "encodedAttributes": null,
+          "cause": null,
+          "applicationFailureInfo": {
+            "type": "java.lang.RuntimeException",
+            "nonRetryable": false,
+            "details": null
+          }
+        },
+        "scheduledEventId": "5",
+        "startedEventId": "6",
+        "identity": "",
+        "retryState": "MaximumAttemptsReached",
+        "workerVersion": null
+      }
+    },
+    {
+      "eventId": "8",
+      "eventTime": "2023-09-17T16:16:52.543583Z",
+      "eventType": "WorkflowTaskScheduled",
+      "version": "0",
+      "taskId": "1051731",
+      "workerMayIgnore": false,
+      "workflowTaskScheduledEventAttributes": {
+        "taskQueue": {
+          "name": "48015@MBP-Vitalii:202e4ca1-bb6d-48d0-a66b-29565aa60465",
+          "kind": "Sticky",
+          "normalName": "replay-test-queue"
+        },
+        "startToCloseTimeout": "10s",
+        "attempt": 1
+      }
+    },
+    {
+      "eventId": "9",
+      "eventTime": "2023-09-17T16:16:52.547504Z",
+      "eventType": "WorkflowTaskStarted",
+      "version": "0",
+      "taskId": "1051735",
+      "workerMayIgnore": false,
+      "workflowTaskStartedEventAttributes": {
+        "scheduledEventId": "8",
+        "identity": "48015@MBP-Vitalii",
+        "requestId": "c0090357-09ea-4172-964a-a2f244b385a2",
+        "suggestContinueAsNew": false,
+        "historySizeBytes": "5720"
+      }
+    },
+    {
+      "eventId": "10",
+      "eventTime": "2023-09-17T16:16:52.614217Z",
+      "eventType": "WorkflowTaskCompleted",
+      "version": "0",
+      "taskId": "1051739",
+      "workerMayIgnore": false,
+      "workflowTaskCompletedEventAttributes": {
+        "scheduledEventId": "8",
+        "startedEventId": "9",
+        "identity": "48015@MBP-Vitalii",
+        "binaryChecksum": "",
+        "workerVersion": {
+          "buildId": "",
+          "bundleId": "",
+          "useVersioning": false
+        },
+        "sdkMetadata": null,
+        "meteringMetadata": {
+          "nonfirstLocalActivityExecutionAttempts": 0
+        }
+      }
+    },
+    {
+      "eventId": "11",
+      "eventTime": "2023-09-17T16:16:52.614237Z",
+      "eventType": "WorkflowExecutionFailed",
+      "version": "0",
+      "taskId": "1051740",
+      "workerMayIgnore": false,
+      "workflowExecutionFailedEventAttributes": {
+        "failure": {
+          "message": "Activity task failed",
+          "source": "",
+          "stackTrace": "",
+          "encodedAttributes": null,
+          "cause": {
+            "message": "BOOOM!",
+            "source": "JavaSDK",
+            "stackTrace": "zio.temporal.fixture.Tmp$.$anonfun$run$4(SagaWorkflow.scala:84)\nzio.ZIO$.$anonfun$die$1(ZIO.scala:3087)\nzio.ZIO$.$anonfun$failCause$3(ZIO.scala:3161)\nzio.internal.FiberRuntime.runLoop(FiberRuntime.scala:890)\nzio.internal.FiberRuntime.evaluateEffect(FiberRuntime.scala:381)\nzio.internal.FiberRuntime.start(FiberRuntime.scala:1339)\nzio.Runtime$UnsafeAPIV1.fork(Runtime.scala:127)\nzio.Runtime$UnsafeAPIV1.fork(Runtime.scala:123)\nzio.temporal.internal.ZioUnsafeFacade$.$anonfun$unsafeRunAsyncZIO$1(ZioUnsafeFacade.scala:20)\nzio.temporal.internal.ZioUnsafeFacade$.$anonfun$unsafeRunAsyncZIO$1$adapted(ZioUnsafeFacade.scala:14)\nzio.Unsafe$.unsafe(Unsafe.scala:37)\nzio.temporal.internal.ZioUnsafeFacade$.unsafeRunAsyncZIO(ZioUnsafeFacade.scala:14)\nzio.temporal.activity.ZActivity$.runAsyncImpl(ZActivity.scala:116)\nzio.temporal.activity.ZActivity$.runImpl(ZActivity.scala:74)\nzio.temporal.activity.ZActivity$.run(ZActivity.scala:38)\nzio.temporal.fixture.TransferActivityImpl.withdraw(SagaWorkflow.scala:33)\nsun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\nsun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\nsun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\njava.lang.reflect.Method.invoke(Method.java:498)\nio.temporal.internal.activity.RootActivityInboundCallsInterceptor$POJOActivityInboundCallsInterceptor.executeActivity(RootActivityInboundCallsInterceptor.java:64)\nio.temporal.internal.activity.RootActivityInboundCallsInterceptor.execute(RootActivityInboundCallsInterceptor.java:43)\nio.temporal.internal.activity.ActivityTaskExecutors$BaseActivityTaskExecutor.execute(ActivityTaskExecutors.java:107)\nio.temporal.internal.activity.ActivityTaskHandlerImpl.handle(ActivityTaskHandlerImpl.java:124)\nio.temporal.internal.worker.ActivityWorker$TaskHandlerImpl.handleActivity(ActivityWorker.java:278)\nio.temporal.internal.worker.ActivityWorker$TaskHandlerImpl.handle(ActivityWorker.java:243)\nio.temporal.internal.worker.ActivityWorker$TaskHandlerImpl.handle(ActivityWorker.java:216)\nio.temporal.internal.worker.PollTaskExecutor.lambda$process$0(PollTaskExecutor.java:105)\njava.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)\njava.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)\njava.lang.Thread.run(Thread.java:750)\n",
+            "encodedAttributes": null,
+            "cause": null,
+            "applicationFailureInfo": {
+              "type": "java.lang.RuntimeException",
+              "nonRetryable": false,
+              "details": null
+            }
+          },
+          "activityFailureInfo": {
+            "scheduledEventId": "5",
+            "startedEventId": "6",
+            "identity": "",
+            "activityType": {
+              "name": "Withdraw"
+            },
+            "activityId": "7e225cc0-a420-3bc7-96db-35fd3156cce3",
+            "retryState": "MaximumAttemptsReached"
+          }
+        },
+        "retryState": "RetryPolicyNotSet",
+        "workflowTaskCompletedEventId": "10",
+        "newExecutionRunId": ""
+      }
+    }
+  ]
+}

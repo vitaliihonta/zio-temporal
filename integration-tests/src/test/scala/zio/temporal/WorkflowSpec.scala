@@ -2,7 +2,7 @@ package zio.temporal
 
 import zio._
 import zio.logging.backend.SLF4J
-import zio.temporal.activity.{ZActivityImplementationObject, ZActivityOptions, ZActivityType}
+import zio.temporal.activity.{ZActivityImplementationObject, ZActivityOptions}
 import zio.temporal.fixture._
 import zio.temporal.testkit._
 import zio.temporal.worker._
@@ -526,9 +526,10 @@ object WorkflowSpec extends BaseTemporalSpec {
                    .withOptions(
                      // provide more activity options here
                      ZWorkflowImplementationOptions.default.withActivityOptions(
-                       ZActivityType[TransferActivity] ->
+                       "Deposit" ->
                          ZActivityOptions
                            .withStartToCloseTimeout(5.seconds)
+                           .withScheduleToCloseTimeout(60.seconds)
                            .withRetryOptions(
                              ZRetryOptions.default
                                .withMaximumAttempts(1)

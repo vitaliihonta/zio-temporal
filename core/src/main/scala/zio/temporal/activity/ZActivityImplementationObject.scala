@@ -34,7 +34,7 @@ object ZActivityImplementationObject {
     * @param value
     *   the correct activity implementation object
     * @return
-    *   [[ZActivityType]]
+    *   [[ZActivityImplementationObject]]
     */
   def apply[T <: AnyRef: ExtendsActivity](value: T): ZActivityImplementationObject[T] =
     new ZActivityImplementationObject[T](value)

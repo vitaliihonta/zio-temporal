@@ -1,0 +1,434 @@
+{
+  "events": [
+    {
+      "eventId": "1",
+      "eventTime": "2023-09-17T15:50:43.637543Z",
+      "eventType": "WorkflowExecutionStarted",
+      "version": "0",
+      "taskId": "1051316",
+      "workerMayIgnore": false,
+      "workflowExecutionStartedEventAttributes": {
+        "workflowType": {
+          "name": "SagaWorkflow"
+        },
+        "parentWorkflowNamespace": "",
+        "parentWorkflowNamespaceId": "",
+        "parentWorkflowExecution": null,
+        "parentInitiatedEventId": "0",
+        "taskQueue": {
+          "name": "replay-test-queue",
+          "kind": "Normal",
+          "normalName": ""
+        },
+        "input": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "eyJmcm9tIjoiSm9obiBEb2UiLCJ0byI6IlZpdGFsaWkiLCJhbW91bnQiOjQyLjQyfQ=="
+            }
+          ]
+        },
+        "workflowExecutionTimeout": "0s",
+        "workflowRunTimeout": "0s",
+        "workflowTaskTimeout": "10s",
+        "continuedExecutionRunId": "",
+        "initiator": "Unspecified",
+        "continuedFailure": null,
+        "lastCompletionResult": null,
+        "originalExecutionRunId": "0f1ea509-c1ac-4cb9-aacd-1d79d2d6088d",
+        "identity": "46180@MBP-Vitalii",
+        "firstExecutionRunId": "0f1ea509-c1ac-4cb9-aacd-1d79d2d6088d",
+        "retryPolicy": null,
+        "attempt": 1,
+        "workflowExecutionExpirationTime": null,
+        "cronSchedule": "",
+        "firstWorkflowTaskBackoff": "0s",
+        "memo": {
+          "fields": {}
+        },
+        "searchAttributes": null,
+        "prevAutoResetPoints": null,
+        "header": {
+          "fields": {}
+        },
+        "parentInitiatedEventVersion": "0",
+        "workflowId": "f617e540-ebac-4e2c-a201-af61f57f0202",
+        "sourceVersionStamp": null
+      }
+    },
+    {
+      "eventId": "2",
+      "eventTime": "2023-09-17T15:50:43.637570Z",
+      "eventType": "WorkflowTaskScheduled",
+      "version": "0",
+      "taskId": "1051317",
+      "workerMayIgnore": false,
+      "workflowTaskScheduledEventAttributes": {
+        "taskQueue": {
+          "name": "replay-test-queue",
+          "kind": "Normal",
+          "normalName": ""
+        },
+        "startToCloseTimeout": "10s",
+        "attempt": 1
+      }
+    },
+    {
+      "eventId": "3",
+      "eventTime": "2023-09-17T15:50:43.638849Z",
+      "eventType": "WorkflowTaskStarted",
+      "version": "0",
+      "taskId": "1051322",
+      "workerMayIgnore": false,
+      "workflowTaskStartedEventAttributes": {
+        "scheduledEventId": "2",
+        "identity": "46180@MBP-Vitalii",
+        "requestId": "69561fff-ed8e-4174-b120-723d018f2dd4",
+        "suggestContinueAsNew": false,
+        "historySizeBytes": "356"
+      }
+    },
+    {
+      "eventId": "4",
+      "eventTime": "2023-09-17T15:50:43.978775Z",
+      "eventType": "WorkflowTaskCompleted",
+      "version": "0",
+      "taskId": "1051326",
+      "workerMayIgnore": false,
+      "workflowTaskCompletedEventAttributes": {
+        "scheduledEventId": "2",
+        "startedEventId": "3",
+        "identity": "46180@MBP-Vitalii",
+        "binaryChecksum": "",
+        "workerVersion": {
+          "buildId": "",
+          "bundleId": "",
+          "useVersioning": false
+        },
+        "sdkMetadata": {
+          "coreUsedFlags": [],
+          "langUsedFlags": [
+            1
+          ]
+        },
+        "meteringMetadata": {
+          "nonfirstLocalActivityExecutionAttempts": 0
+        }
+      }
+    },
+    {
+      "eventId": "5",
+      "eventTime": "2023-09-17T15:50:43.978806Z",
+      "eventType": "ActivityTaskScheduled",
+      "version": "0",
+      "taskId": "1051327",
+      "workerMayIgnore": false,
+      "activityTaskScheduledEventAttributes": {
+        "activityId": "d904fcad-349b-3556-99f0-aedfddc85e27",
+        "activityType": {
+          "name": "Withdraw"
+        },
+        "taskQueue": {
+          "name": "replay-test-queue",
+          "kind": "Normal",
+          "normalName": ""
+        },
+        "header": {
+          "fields": {}
+        },
+        "input": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "IkpvaG4gRG9lIg=="
+            },
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "NDIuNDI="
+            }
+          ]
+        },
+        "scheduleToCloseTimeout": "0s",
+        "scheduleToStartTimeout": "0s",
+        "startToCloseTimeout": "5s",
+        "heartbeatTimeout": "0s",
+        "workflowTaskCompletedEventId": "4",
+        "retryPolicy": {
+          "initialInterval": "1s",
+          "backoffCoefficient": 2,
+          "maximumInterval": "100s",
+          "maximumAttempts": 0,
+          "nonRetryableErrorTypes": []
+        },
+        "useCompatibleVersion": false
+      }
+    },
+    {
+      "eventId": "6",
+      "eventTime": "2023-09-17T15:50:43.979861Z",
+      "eventType": "ActivityTaskStarted",
+      "version": "0",
+      "taskId": "1051333",
+      "workerMayIgnore": false,
+      "activityTaskStartedEventAttributes": {
+        "scheduledEventId": "5",
+        "identity": "46180@MBP-Vitalii",
+        "requestId": "5239e199-ccf9-4287-8ff6-218cc6c966c5",
+        "attempt": 1,
+        "lastFailure": null
+      }
+    },
+    {
+      "eventId": "7",
+      "eventTime": "2023-09-17T15:50:44.020244Z",
+      "eventType": "ActivityTaskCompleted",
+      "version": "0",
+      "taskId": "1051334",
+      "workerMayIgnore": false,
+      "activityTaskCompletedEventAttributes": {
+        "result": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "e30="
+            }
+          ]
+        },
+        "scheduledEventId": "5",
+        "startedEventId": "6",
+        "identity": "46180@MBP-Vitalii",
+        "workerVersion": null
+      }
+    },
+    {
+      "eventId": "8",
+      "eventTime": "2023-09-17T15:50:44.020249Z",
+      "eventType": "WorkflowTaskScheduled",
+      "version": "0",
+      "taskId": "1051335",
+      "workerMayIgnore": false,
+      "workflowTaskScheduledEventAttributes": {
+        "taskQueue": {
+          "name": "46180@MBP-Vitalii:c03a7749-7e1f-413d-81ee-f0373619ed7e",
+          "kind": "Sticky",
+          "normalName": "replay-test-queue"
+        },
+        "startToCloseTimeout": "10s",
+        "attempt": 1
+      }
+    },
+    {
+      "eventId": "9",
+      "eventTime": "2023-09-17T15:50:44.021167Z",
+      "eventType": "WorkflowTaskStarted",
+      "version": "0",
+      "taskId": "1051339",
+      "workerMayIgnore": false,
+      "workflowTaskStartedEventAttributes": {
+        "scheduledEventId": "8",
+        "identity": "46180@MBP-Vitalii",
+        "requestId": "aa525b27-7db8-49e0-aa87-a049668d1ae5",
+        "suggestContinueAsNew": false,
+        "historySizeBytes": "988"
+      }
+    },
+    {
+      "eventId": "10",
+      "eventTime": "2023-09-17T15:50:44.041066Z",
+      "eventType": "WorkflowTaskCompleted",
+      "version": "0",
+      "taskId": "1051343",
+      "workerMayIgnore": false,
+      "workflowTaskCompletedEventAttributes": {
+        "scheduledEventId": "8",
+        "startedEventId": "9",
+        "identity": "46180@MBP-Vitalii",
+        "binaryChecksum": "",
+        "workerVersion": {
+          "buildId": "",
+          "bundleId": "",
+          "useVersioning": false
+        },
+        "sdkMetadata": null,
+        "meteringMetadata": {
+          "nonfirstLocalActivityExecutionAttempts": 0
+        }
+      }
+    },
+    {
+      "eventId": "11",
+      "eventTime": "2023-09-17T15:50:44.041096Z",
+      "eventType": "ActivityTaskScheduled",
+      "version": "0",
+      "taskId": "1051344",
+      "workerMayIgnore": false,
+      "activityTaskScheduledEventAttributes": {
+        "activityId": "e1af7a81-d768-3df3-9f99-5d2a2ec7c342",
+        "activityType": {
+          "name": "Deposit"
+        },
+        "taskQueue": {
+          "name": "replay-test-queue",
+          "kind": "Normal",
+          "normalName": ""
+        },
+        "header": {
+          "fields": {}
+        },
+        "input": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "IlZpdGFsaWki"
+            },
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "NDIuNDI="
+            }
+          ]
+        },
+        "scheduleToCloseTimeout": "0s",
+        "scheduleToStartTimeout": "0s",
+        "startToCloseTimeout": "5s",
+        "heartbeatTimeout": "0s",
+        "workflowTaskCompletedEventId": "10",
+        "retryPolicy": {
+          "initialInterval": "1s",
+          "backoffCoefficient": 2,
+          "maximumInterval": "100s",
+          "maximumAttempts": 0,
+          "nonRetryableErrorTypes": []
+        },
+        "useCompatibleVersion": false
+      }
+    },
+    {
+      "eventId": "12",
+      "eventTime": "2023-09-17T15:50:44.042122Z",
+      "eventType": "ActivityTaskStarted",
+      "version": "0",
+      "taskId": "1051349",
+      "workerMayIgnore": false,
+      "activityTaskStartedEventAttributes": {
+        "scheduledEventId": "11",
+        "identity": "46180@MBP-Vitalii",
+        "requestId": "c642870c-a3d9-4562-9da0-e3e117dd6c2e",
+        "attempt": 1,
+        "lastFailure": null
+      }
+    },
+    {
+      "eventId": "13",
+      "eventTime": "2023-09-17T15:50:44.048203Z",
+      "eventType": "ActivityTaskCompleted",
+      "version": "0",
+      "taskId": "1051350",
+      "workerMayIgnore": false,
+      "activityTaskCompletedEventAttributes": {
+        "result": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "e30="
+            }
+          ]
+        },
+        "scheduledEventId": "11",
+        "startedEventId": "12",
+        "identity": "46180@MBP-Vitalii",
+        "workerVersion": null
+      }
+    },
+    {
+      "eventId": "14",
+      "eventTime": "2023-09-17T15:50:44.048206Z",
+      "eventType": "WorkflowTaskScheduled",
+      "version": "0",
+      "taskId": "1051351",
+      "workerMayIgnore": false,
+      "workflowTaskScheduledEventAttributes": {
+        "taskQueue": {
+          "name": "46180@MBP-Vitalii:c03a7749-7e1f-413d-81ee-f0373619ed7e",
+          "kind": "Sticky",
+          "normalName": "replay-test-queue"
+        },
+        "startToCloseTimeout": "10s",
+        "attempt": 1
+      }
+    },
+    {
+      "eventId": "15",
+      "eventTime": "2023-09-17T15:50:44.048943Z",
+      "eventType": "WorkflowTaskStarted",
+      "version": "0",
+      "taskId": "1051355",
+      "workerMayIgnore": false,
+      "workflowTaskStartedEventAttributes": {
+        "scheduledEventId": "14",
+        "identity": "46180@MBP-Vitalii",
+        "requestId": "63ce99d6-a7ec-4451-9468-4ca03c207c58",
+        "suggestContinueAsNew": false,
+        "historySizeBytes": "1609"
+      }
+    },
+    {
+      "eventId": "16",
+      "eventTime": "2023-09-17T15:50:44.070219Z",
+      "eventType": "WorkflowTaskCompleted",
+      "version": "0",
+      "taskId": "1051359",
+      "workerMayIgnore": false,
+      "workflowTaskCompletedEventAttributes": {
+        "scheduledEventId": "14",
+        "startedEventId": "15",
+        "identity": "46180@MBP-Vitalii",
+        "binaryChecksum": "",
+        "workerVersion": {
+          "buildId": "",
+          "bundleId": "",
+          "useVersioning": false
+        },
+        "sdkMetadata": null,
+        "meteringMetadata": {
+          "nonfirstLocalActivityExecutionAttempts": 0
+        }
+      }
+    },
+    {
+      "eventId": "17",
+      "eventTime": "2023-09-17T15:50:44.070238Z",
+      "eventType": "WorkflowExecutionCompleted",
+      "version": "0",
+      "taskId": "1051360",
+      "workerMayIgnore": false,
+      "workflowExecutionCompletedEventAttributes": {
+        "result": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "NDIuNDI="
+            }
+          ]
+        },
+        "workflowTaskCompletedEventId": "16",
+        "newExecutionRunId": ""
+      }
+    }
+  ]
+}

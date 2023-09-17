@@ -318,13 +318,13 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
   /** @see
     *   [[applyActivityOptions]]
     */
-  def applyActivityOptions(values: (ZActivityType, ZActivityOptions)*): Unit =
+  def applyActivityOptions(values: (String, ZActivityOptions)*): Unit =
     applyActivityOptions(values.toMap)
 
-  /** Adds activity options per activity type that will be used for an activity stub that has no [[ZActivityOptions]]
-    * specified.<br> This method refines an original set of @code Map<String, ActivityOptions> provided by
-    * [[zio.temporal.worker.ZWorkflowImplementationOptions.activityOptions]]<br> These more specific options take
-    * precedence over more generic setting [[setDefaultActivityOptions]]
+  /** Adds activity options per activity type ('''activity method name''') that will be used for an activity stub that
+    * has no [[ZActivityOptions]] specified.<br> This method refines an original set of @code Map<String,
+    * ActivityOptions> provided by [[zio.temporal.worker.ZWorkflowImplementationOptions.activityOptions]]<br> These more
+    * specific options take precedence over more generic setting [[setDefaultActivityOptions]]
     *
     * <p>If an activity type already has a [[ZActivityOptions]] set by an earlier call to this method or from
     * [[zio.temporal.worker.ZWorkflowImplementationOptions.defaultActivityOptions]], new [[ZActivityOptions]] from
@@ -333,11 +333,8 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @param values
     *   a map of activity types to [[ZActivityOptions]]
     */
-  def applyActivityOptions(values: Map[ZActivityType, ZActivityOptions]): Unit = {
-    Workflow.applyActivityOptions(
-      values.map { case (at, o) => at.activityType -> o.toJava }.asJava
-    )
-  }
+  def applyActivityOptions(values: Map[String, ZActivityOptions]): Unit =
+    Workflow.applyActivityOptions(values.map { case (k, v) => k -> v.toJava }.asJava)
 
   /** Sets the default local activity options that will be used for activity stubs that have no
     * [[ZLocalActivityOptions]] specified.<br> This overrides a value provided by
@@ -348,14 +345,13 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @param value
     *   [[ZLocalActivityOptions]] to be used as a default
     */
-  def setDefaultLocalActivityOptions(value: ZLocalActivityOptions): Unit = {
+  def setDefaultLocalActivityOptions(value: ZLocalActivityOptions): Unit =
     Workflow.setDefaultLocalActivityOptions(value.toJava)
-  }
 
-  /** Adds local activity options per activity type that will be used for a local activity stub that has no
-    * [[ZLocalActivityOptions]] specified.<br> This method refines an original set of options provided by
-    * [[zio.temporal.worker.ZWorkflowImplementationOptions.defaultLocalActivityOptions]]<br> These more specific options
-    * take precedence over more generic setting [[setDefaultLocalActivityOptions]]
+  /** Adds local activity options per activity type ('''activity method name''') that will be used for a local activity
+    * stub that has no [[ZLocalActivityOptions]] specified.<br> This method refines an original set of options provided
+    * by [[zio.temporal.worker.ZWorkflowImplementationOptions.defaultLocalActivityOptions]]<br> These more specific
+    * options take precedence over more generic setting [[setDefaultLocalActivityOptions]]
     *
     * <p>If an activity type already has a [[ZLocalActivityOptions]] set by an earlier call to this method or from
     * [[zio.temporal.worker.ZWorkflowImplementationOptions.defaultLocalActivityOptions]], new [[ZLocalActivityOptions]]
@@ -364,11 +360,8 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @param values
     *   a map of activity types to [[ZLocalActivityOptions]]
     */
-  def applyLocalActivityOptions(values: Map[ZActivityType, ZLocalActivityOptions]): Unit = {
-    Workflow.applyLocalActivityOptions(
-      values.map { case (at, o) => at.activityType -> o.toJava }.asJava
-    )
-  }
+  def applyLocalActivityOptions(values: Map[String, ZLocalActivityOptions]): Unit =
+    Workflow.applyLocalActivityOptions(values.map { case (k, v) => k -> v.toJava }.asJava)
 
   /** Creates a builder of client stub to activities that implement given interface.
     *
