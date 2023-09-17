@@ -530,6 +530,18 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
   def getPreviousRunFailure: Option[Exception] =
     Workflow.getPreviousRunFailure.toScala
 
+  /** Extract Memo associated with the given key and deserialized into an object of generic type.
+    *
+    * @tparam T
+    *   Scala type
+    * @param key
+    *   memo key
+    * @return
+    *   Some of deserialized Memo or None if the key is not present in the memo
+    */
+  def getMemo[T](key: String)(implicit javaTypeTag: JavaTypeTag[T]): Option[T] =
+    Option(Workflow.getMemo(key, javaTypeTag.klass, javaTypeTag.genericType))
+
   /** Invokes function retrying in case of failures according to retry options. Synchronous variant.
     *
     * @param options

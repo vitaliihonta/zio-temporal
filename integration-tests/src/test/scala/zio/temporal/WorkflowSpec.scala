@@ -681,6 +681,26 @@ object WorkflowSpec extends BaseTemporalSpec {
 
         result <- ZWorkflowStub.execute(retryWorkflow.withRetry(2)).either
       } yield assert(result)(Assertion.isRight(Assertion.equalTo("OK")))
+    }.provideTestWorkflowEnv,
+    test("Workflow memo") {
+      val taskQueue = "memo-queue"
+      for {
+        workflowId <- ZIO.randomWith(_.nextUUID)
+        _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
+               ZWorker.addWorkflow[MemoWorkflowImpl].fromClass
+
+        _ <- ZTestWorkflowEnvironment.setup()
+
+        memoWorkflow <- ZTestWorkflowEnvironment.newWorkflowStub[MemoWorkflow](
+                          ZWorkflowOptions
+                            .withWorkflowId(workflowId.toString)
+                            .withTaskQueue(taskQueue)
+                            .withMemo("zio" -> "temporal")
+                            .withWorkflowRunTimeout(10.second)
+                        )
+
+        result <- ZWorkflowStub.execute(memoWorkflow.withMemo("zio"))
+      } yield assert(result)(Assertion.isSome(Assertion.equalTo("temporal")))
     }.provideTestWorkflowEnv
   )
 
