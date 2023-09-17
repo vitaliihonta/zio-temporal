@@ -511,8 +511,26 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @tparam A
     *   an interface type implemented by the next run of the workflow
     */
+  @deprecated("Use newContinueAsNewStub accepting ZContinueAsNewOptions", since = "0.5.0")
   def newContinueAsNewStub[A: ClassTag: IsWorkflow]: ZWorkflowContinueAsNewStubBuilder[A] =
     new ZWorkflowContinueAsNewStubBuilder[A](identity)
+
+  /** Continues the current workflow execution as a new run possibly overriding the workflow type and options.
+    *
+    * @tparam A
+    *   workflow type override for the next run, can be null of no override is needed
+    * @param options
+    *   option overrides for the next run, can be null if no overrides are needed
+    */
+  def newContinueAsNewStub[A: ClassTag: IsWorkflow](
+    options: ZContinueAsNewOptions = ZContinueAsNewOptions.default
+  ): ZWorkflowContinueAsNewStub.Of[A] = ZWorkflowContinueAsNewStub.Of[A](
+    new ZWorkflowContinueAsNewStubImpl(
+      ClassTagUtils.getWorkflowType[A],
+      options.toJava,
+      ClassTagUtils.classOf[A]
+    )
+  )
 
   /** Continues the current workflow execution as a new run possibly overriding the workflow type and options.
     *
@@ -523,8 +541,8 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @param args
     *   arguments of the next run.
     */
-  def continueAsNew(workflowType: String, options: Option[ContinueAsNewOptions], args: Any*): Unit = {
-    TemporalWorkflowFacade.continueAsNew[Any](workflowType, options.orNull, args.toList)
+  def continueAsNew(workflowType: String, options: Option[ZContinueAsNewOptions], args: Any*): Unit = {
+    TemporalWorkflowFacade.continueAsNew[Any](workflowType, options.map(_.toJava).orNull, args.toList)
   }
 
   /** GetLastCompletionResult extract last completion result from previous run for this cron workflow. This is used in

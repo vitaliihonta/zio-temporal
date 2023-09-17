@@ -12,7 +12,7 @@ trait ContinueAsNewWorkflow {
 }
 
 class ContinueAsNewWorkflowImpl extends ContinueAsNewWorkflow {
-  private val continueAsNewStub = ZWorkflow.newContinueAsNewStub[ContinueAsNewWorkflow].build
+  private val continueAsNewStub = ZWorkflow.newContinueAsNewStub[ContinueAsNewWorkflow]()
 
   override def doSomething(n: Int): String = {
     println(s"Test iteration #$n")
@@ -20,7 +20,10 @@ class ContinueAsNewWorkflowImpl extends ContinueAsNewWorkflow {
     else if (n == 1) {
       // to test compilation issues
       println(s"Continue as second n=$n")
-      val stub2 = ZWorkflow.newContinueAsNewStub[ContinueAsNewWorkflow].build
+      val stub2 = ZWorkflow.newContinueAsNewStub[ContinueAsNewWorkflow](
+        ZContinueAsNewOptions.default
+          .withWorkflowRunTimeout(5.minutes)
+      )
       ZWorkflowContinueAsNewStub.execute(
         stub2.doSomething(n + 1)
       )
@@ -40,7 +43,7 @@ trait ContinueAsNewNamedWorkflow {
 }
 
 class ContinueAsNewNamedWorkflowImpl extends ContinueAsNewNamedWorkflow {
-  private val continueAsNewStub = ZWorkflow.newContinueAsNewStub[ContinueAsNewNamedWorkflow].build
+  private val continueAsNewStub = ZWorkflow.newContinueAsNewStub[ContinueAsNewNamedWorkflow]()
 
   override def doSomething(n: Int): String = {
     println(s"Test iteration #$n")
@@ -48,7 +51,7 @@ class ContinueAsNewNamedWorkflowImpl extends ContinueAsNewNamedWorkflow {
     else if (n == 1) {
       // to test compilation issues
       println(s"Continue as second n=$n")
-      val stub2 = ZWorkflow.newContinueAsNewStub[ContinueAsNewNamedWorkflow].build
+      val stub2 = ZWorkflow.newContinueAsNewStub[ContinueAsNewNamedWorkflow]()
       ZWorkflowContinueAsNewStub.execute(
         stub2.doSomething(n + 1)
       )
