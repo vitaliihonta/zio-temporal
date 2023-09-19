@@ -3,7 +3,9 @@ package zio.temporal.workflow
 import io.temporal.workflow.{QueueConsumer, WorkflowQueue}
 import zio.Duration
 
-final class ZWorkflowQueue[E](val toJava: WorkflowQueue[E]) extends ZQueueConsumer[E](toJava) with ZQueueProducer[E] {
+final class ZWorkflowQueue[E] private[zio] (val toJava: WorkflowQueue[E])
+    extends ZQueueConsumer[E](toJava)
+    with ZQueueProducer[E] {
 
   override def offer(e: E): Boolean =
     toJava.offer(e)
@@ -35,7 +37,7 @@ trait ZQueueProducer[E] {
 
 }
 
-class ZQueueConsumer[E](toJava: QueueConsumer[E]) {
+class ZQueueConsumer[E] private[zio] (toJava: QueueConsumer[E]) {
 
   def take(): E =
     toJava.take()
