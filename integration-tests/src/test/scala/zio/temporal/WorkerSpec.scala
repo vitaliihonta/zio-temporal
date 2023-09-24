@@ -71,29 +71,24 @@ object WorkerSpec extends BaseTemporalSpec {
     test("Register activities using addActivityImplementationsLayer") {
       val taskQueue = "multi-activities-workflow-queue"
 
-      val activitiesLayer
-        : URLayer[ReporterService with ZActivityRunOptions[Any], List[ZActivityImplementationObject[_]]] =
-        ZLayer.collectAll(
-          List(
-            ZActivityImplementationObject.layer(
-              ZLayer.fromFunction(new ZioActivityImpl()(_: ZActivityRunOptions[Any]))
-            ),
-            ZActivityImplementationObject.layer(
-              ZLayer.fromFunction(ComplexTypesActivityImpl()(_: ZActivityRunOptions[Any]))
-            ),
-            ZActivityImplementationObject.layer(ActivityWithDependenciesImpl.make)
-          )
+      val activitiesLayer = ZLayer.collectAll(
+        List(
+          ZActivityImplementationObject.layer(
+            ZLayer.fromFunction(new ZioActivityImpl()(_: ZActivityRunOptions[Any]))
+          ),
+          ZActivityImplementationObject.layer(
+            ZLayer.fromFunction(ComplexTypesActivityImpl()(_: ZActivityRunOptions[Any]))
+          ),
+          ZActivityImplementationObject.layer(ActivityWithDependenciesImpl.make)
         )
+      )
 
       for {
         workflowId <- ZIO.randomWith(_.nextUUID)
         _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
                ZWorker.addWorkflowImplementations(
-                 List(
-                   ZWorkflowImplementationClass[EvenMoreMultiActivitiesWorkflowImpl]
-                 )
-               ) @@
-               ZWorker.addActivityImplementationsLayer(activitiesLayer)
+                 List(ZWorkflowImplementationClass[EvenMoreMultiActivitiesWorkflowImpl])
+               ) @@ ZWorker.addActivityImplementationsLayer(activitiesLayer)
         _ <- ZTestWorkflowEnvironment.setup()
         multiWorkflow <- ZTestWorkflowEnvironment.newWorkflowStub[MultiActivitiesWorkflow](
                            ZWorkflowOptions

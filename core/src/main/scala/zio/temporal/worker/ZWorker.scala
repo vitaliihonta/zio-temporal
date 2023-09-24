@@ -153,8 +153,7 @@ class ZWorker private[zio] (
 
 object ZWorker {
 
-  type Add[+LowerR, -UpperR]                      = ZIOAspect[LowerR, UpperR, Nothing, Any, ZWorker, ZWorker]
-  type AddZIO[+LowerR, -UpperR, +LowerE, -UpperE] = ZIOAspect[LowerR, UpperR, LowerE, UpperE, ZWorker, ZWorker]
+  type Add[+LowerR, -UpperR] = ZIOAspect[LowerR, UpperR, Nothing, Any, ZWorker, ZWorker]
 
   /** Adds workflow to this worker
     */
@@ -266,9 +265,9 @@ object ZWorker {
     */
   def addActivityImplementationsLayer[R0, E0](
     activitiesLayer: ZLayer[R0, E0, List[ZActivityImplementationObject[_]]]
-  ): ZWorker.AddZIO[Nothing, R0 with Scope, Any, E0] = {
-    new ZIOAspect[Nothing, R0 with Scope, Any, E0, ZWorker, ZWorker] {
-      override def apply[R >: Nothing <: R0 with Scope, E >: Any <: E0, A >: ZWorker <: ZWorker](
+  ): ZIOAspect[Nothing, R0 with Scope, E0, Any, ZWorker, ZWorker] = {
+    new ZIOAspect[Nothing, R0 with Scope, E0, Any, ZWorker, ZWorker] {
+      override def apply[R >: Nothing <: R0 with Scope, E >: E0 <: Any, A >: ZWorker <: ZWorker](
         zio:            ZIO[R, E, A]
       )(implicit trace: Trace
       ): ZIO[R, E, A] = {

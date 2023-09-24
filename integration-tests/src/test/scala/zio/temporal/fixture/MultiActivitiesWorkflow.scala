@@ -65,7 +65,8 @@ trait ActivityWithDependencies {
 }
 
 object ActivityWithDependenciesImpl {
-  val make: URLayer[ReporterService with ZActivityRunOptions[Any], ActivityWithDependencies] =
+  // the error here is just for testing purposes
+  val make: ZLayer[ReporterService with ZActivityRunOptions[Any], Config.Error, ActivityWithDependencies] =
     ZLayer.fromFunction(ActivityWithDependenciesImpl(_: ReporterService)(_: ZActivityRunOptions[Any]))
 }
 
