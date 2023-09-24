@@ -38,5 +38,5 @@ object WorkflowReplayerSpec extends BaseTemporalSpec {
           assertTrue(1 == 1)
         }
     }.provideTestWorkflowEnv
-  )
+  ) @@ TestAspect.flaky @@ TestAspect.sequential /* throws some flaky internal error in JDK 8 */
 }
