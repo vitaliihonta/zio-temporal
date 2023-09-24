@@ -8,6 +8,7 @@ import zio.temporal.state._
 
 @activityInterface
 trait ZioActivity {
+  @activityMethod(name = "Echo")
   def echo(what: String): String
 }
 

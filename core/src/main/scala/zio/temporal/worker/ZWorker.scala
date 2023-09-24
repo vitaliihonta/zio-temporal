@@ -153,7 +153,8 @@ class ZWorker private[zio] (
 
 object ZWorker {
 
-  type Add[+LowerR, -UpperR] = ZIOAspect[LowerR, UpperR, Nothing, Any, ZWorker, ZWorker]
+  type Add[+LowerR, -UpperR]                      = ZIOAspect[LowerR, UpperR, Nothing, Any, ZWorker, ZWorker]
+  type AddZIO[+LowerR, -UpperR, +LowerE, -UpperE] = ZIOAspect[LowerR, UpperR, LowerE, UpperE, ZWorker, ZWorker]
 
   /** Adds workflow to this worker
     */
@@ -257,6 +258,28 @@ object ZWorker {
       ): ZIO[R, E, A] =
         zio.flatMap(_.addActivityImplementations(activityImplementationObjects))
     }
+
+  /** Adds activities from the given [[ZLayer]]
+    *
+    * @param activitiesLayer
+    *   the list of activity implementation objects as a [[ZLayer]]
+    */
+  def addActivityImplementationsLayer[R0, E0](
+    activitiesLayer: ZLayer[R0, E0, List[ZActivityImplementationObject[_]]]
+  ): ZWorker.AddZIO[Nothing, R0 with Scope, Any, E0] = {
+    new ZIOAspect[Nothing, R0 with Scope, Any, E0, ZWorker, ZWorker] {
+      override def apply[R >: Nothing <: R0 with Scope, E >: Any <: E0, A >: ZWorker <: ZWorker](
+        zio:            ZIO[R, E, A]
+      )(implicit trace: Trace
+      ): ZIO[R, E, A] = {
+        zio.flatMap { worker =>
+          activitiesLayer.build.flatMap { env =>
+            worker.addActivityImplementations(env.get[List[ZActivityImplementationObject[_]]])
+          }
+        }
+      }
+    }
+  }
 
   def addActivityImplementationService[Activity <: AnyRef: ExtendsActivity: Tag]: ZWorker.Add[Nothing, Activity] =
     new ZIOAspect[Nothing, Activity, Nothing, Any, ZWorker, ZWorker] {

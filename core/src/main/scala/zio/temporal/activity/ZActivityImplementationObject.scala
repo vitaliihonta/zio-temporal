@@ -1,5 +1,7 @@
 package zio.temporal.activity
 
+import zio._
+
 /** Type-safe wrapper of activity implementation object. The wrapper can be constructed only if the wrapped object is a
   * correct activity implementation.
   *
@@ -38,4 +40,14 @@ object ZActivityImplementationObject {
     */
   def apply[T <: AnyRef: ExtendsActivity](value: T): ZActivityImplementationObject[T] =
     new ZActivityImplementationObject[T](value)
+
+  /** Constructs the wrapper from an ZIO environment */
+  def service[T <: AnyRef: ExtendsActivity: Tag]: URIO[T, ZActivityImplementationObject[T]] =
+    ZIO.serviceWith[T](ZActivityImplementationObject[T](_))
+
+  /** Constructs the wrapper from a ZLayer */
+  def layer[R, E, T <: AnyRef: ExtendsActivity: Tag](
+    value: ZLayer[R, E, T]
+  ): ZLayer[R, E, ZActivityImplementationObject[T]] =
+    value >>> ZLayer.fromZIO(service[T])
 }

@@ -53,7 +53,7 @@ class LongRunningWorkflowImpl extends LongRunningWorkflow {
     - `nextRun.watchFiles(paths)` invocation would be re-written into an untyped Temporal's Continue-As-New call
     - A direct method invocation will throw an exception
 
-You can provide additional configure for the next run using `ZContinueAsNewOptions`:
+You can provide additional configuration for the next run using `ZContinueAsNewOptions`:
 
 ```scala mdoc
 val continueAsNewOptions = ZContinueAsNewOptions.default

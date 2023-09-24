@@ -6,9 +6,9 @@ import scala.jdk.CollectionConverters._
 
 final case class ZWorkflowImplementationOptions private[zio] (
   failWorkflowExceptionTypes:  List[Class[_ <: Throwable]],
-  activityOptions:             Map[String, ZActivityOptions],
+  activityOptions:             Option[Map[String, ZActivityOptions]],
   defaultActivityOptions:      Option[ZActivityOptions],
-  localActivityOptions:        Map[String, ZLocalActivityOptions],
+  localActivityOptions:        Option[Map[String, ZLocalActivityOptions]],
   defaultLocalActivityOptions: Option[ZLocalActivityOptions],
   private val javaOptionsCustomization: WorkflowImplementationOptions.Builder => WorkflowImplementationOptions.Builder) {
 
@@ -60,7 +60,7 @@ final case class ZWorkflowImplementationOptions private[zio] (
     *   map from activityType to ActivityOptions
     */
   def withActivityOptions(values: Map[String, ZActivityOptions]): ZWorkflowImplementationOptions =
-    copy(activityOptions = values)
+    copy(activityOptions = Some(values))
 
   /** These activity options have the lowest precedence across all activity options. Will be overwritten entirely by
     * [[zio.temporal.workflow.ZWorkflow.newActivityStub]] and then by the individual activity options if any are set
@@ -88,7 +88,7 @@ final case class ZWorkflowImplementationOptions private[zio] (
     *   map from activityType to ActivityOptions
     */
   def withLocalActivityOptions(values: Map[String, ZLocalActivityOptions]): ZWorkflowImplementationOptions =
-    copy(localActivityOptions = values)
+    copy(localActivityOptions = Some(values))
 
   /** These local activity options have the lowest precedence across all local activity options. Will be overwritten
     * entirely by [[zio.temporal.workflow.ZWorkflow.newLocalActivityStub]] and then by the individual local activity
@@ -116,9 +116,11 @@ final case class ZWorkflowImplementationOptions private[zio] (
     val builder = WorkflowImplementationOptions.newBuilder()
 
     builder.setFailWorkflowExceptionTypes(failWorkflowExceptionTypes: _*)
-    builder.setActivityOptions(activityOptions.map { case (k, v) => k -> v.toJava }.asJava)
+    activityOptions.foreach(options => builder.setActivityOptions(options.map { case (k, v) => k -> v.toJava }.asJava))
     defaultActivityOptions.foreach(o => builder.setDefaultActivityOptions(o.toJava))
-    builder.setLocalActivityOptions(localActivityOptions.map { case (k, v) => k -> v.toJava }.asJava)
+    localActivityOptions.foreach(options =>
+      builder.setLocalActivityOptions(options.map { case (k, v) => k -> v.toJava }.asJava)
+    )
     defaultLocalActivityOptions.foreach(o => builder.setDefaultLocalActivityOptions(o.toJava))
 
     javaOptionsCustomization(builder).build()
@@ -139,9 +141,9 @@ object ZWorkflowImplementationOptions {
   val default: ZWorkflowImplementationOptions = {
     ZWorkflowImplementationOptions(
       failWorkflowExceptionTypes = Nil,
-      activityOptions = Map.empty,
+      activityOptions = None,
       defaultActivityOptions = None,
-      localActivityOptions = Map.empty,
+      localActivityOptions = None,
       defaultLocalActivityOptions = None,
       javaOptionsCustomization = identity
     )

@@ -7,17 +7,18 @@ const sidebars = {
         "core/overview",
         "core/workflows",
         "core/activities",
-        "core/configuration"
+        "core/configuration",
+        "core/workers"
       ]
     },
     {
       type: "category",
       label: "Workflows",
       items: [
-        "workflows/state",
         "workflows/queries",
         "workflows/signals",
         "workflows/child-workflows",
+        "workflows/state",
         "workflows/continue-as-new",
         "workflows/timers",
         "workflows/external-workflows",

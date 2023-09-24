@@ -41,7 +41,7 @@ trait BookingWorkflow {
 }
 ```
 
-When declaring activities inside the workflow implementation, it's allowed to provide custom timeouts and retry policies.  
+When declaring activities inside the workflow implementation, it's possible to provide custom timeouts and retry policies.  
 They are provided using `ZRetryOptions`:
 ```scala mdoc
 val retryOptions = ZRetryOptions.default

@@ -58,7 +58,7 @@ That's it!
 ## Executing workflows
 
 First, you should connect to the Temporal cluster. This is done via the Workflow client.  
-Any workflow run requires providing some mandatory parameters, such as the unique Workflow ID, the Task Queue, and other various parameters (such as timeouts).  
+Any workflow run requires providing some mandatory parameters, such as the unique Workflow ID, the Task Queue, and optionally others (such as timeouts).  
 The configuration is passed using `ZWorkflowOptions`:
 
 ```scala mdoc
@@ -144,7 +144,7 @@ val workerAspects: URLayer[ZWorkerFactory, Unit] = ZLayer.fromZIO {
 ```
 
 This syntax allows avoiding syntactic noise of monadic composition and accessing ZIO's environment.  
-Therefore, it's a preferred one.  
+Therefore, **it's a preferred one**.  
 
 Important notes:
 

@@ -37,6 +37,11 @@ class HeartbeatingActivityBatchWorkflowImpl extends HeartbeatingActivityBatchWor
         .withHeartbeatTimeout(10.seconds)
     )
 
+  private val reporter: ZActivityStub.Of[ReporterActivity] = ZWorkflow
+    .newActivityStub[ReporterActivity](
+      ZActivityOptions.withStartToCloseTimeout(10.seconds)
+    )
+
   private val logger = ZWorkflow.makeLogger
 
   // No special logic needed here as activity is retried automatically by the service.
@@ -45,7 +50,9 @@ class HeartbeatingActivityBatchWorkflowImpl extends HeartbeatingActivityBatchWor
     val result = ZActivityStub.execute(
       recordProcessor.processRecords()
     )
-    logger.info(s"Workflow result is $result")
+    ZActivityStub.execute(
+      reporter.reportProcessed(result)
+    )
     result
   }
 }
