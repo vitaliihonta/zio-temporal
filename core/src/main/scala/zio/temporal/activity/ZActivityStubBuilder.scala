@@ -5,33 +5,16 @@ import io.temporal.activity.ActivityCancellationType
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.VersioningIntent
 import io.temporal.common.context.ContextPropagator
-import io.temporal.workflow.Workflow
 import zio.temporal.ZRetryOptions
-import zio.temporal.internal.ClassTagUtils
-
 import scala.jdk.CollectionConverters._
-import scala.reflect.ClassTag
 
+@deprecated("Build ZActivityOptions and provide it directly", since = "0.6.0")
 object ZActivityStubBuilderInitial {
   type Of[A]   = ZActivityStubBuilderInitial[ZActivityStub.Of[A]]
   type Untyped = ZActivityStubBuilderInitial[ZActivityStub.Untyped]
-
-  private[temporal] def buildTyped[A: ClassTag]: ActivityOptions => ZActivityStub.Of[A] =
-    options =>
-      ZActivityStub.Of[A](
-        new ZActivityStubImpl(
-          Workflow.newUntypedActivityStub(options),
-          ClassTagUtils.classOf[A]
-        )
-      )
-
-  private[temporal] def buildUntyped: ActivityOptions => ZActivityStub.Untyped =
-    options =>
-      new ZActivityStub.UntypedImpl(
-        Workflow.newUntypedActivityStub(options)
-      )
 }
 
+@deprecated("Build ZActivityOptions and provide it directly", since = "0.6.0")
 final class ZActivityStubBuilderInitial[Res] private[zio] (buildImpl: ActivityOptions => Res) {
 
   /** Maximum time of a single Activity attempt.
@@ -40,23 +23,53 @@ final class ZActivityStubBuilderInitial[Res] private[zio] (buildImpl: ActivityOp
     * detect that an Activity that didn't complete on time. So this timeout should be as short as the longest possible
     * execution of the Activity body. Potentially long-running Activities must specify HeartbeatTimeout and call
     * [[ZActivityExecutionContext.heartbeat]] periodically for timely failure detection.
+    *
+    * <p>If [[withScheduleToCloseTimeout]] is not provided, then this timeout is required.
     */
-  def withStartToCloseTimeout(timeout: Duration) =
-    new ZActivityStubBuilder[Res](buildImpl, timeout, identity)
-}
-
-final class ZActivityStubBuilder[Res] private[zio] (
-  buildImpl:           ActivityOptions => Res,
-  startToCloseTimeout: Duration,
-  additionalOptions:   ActivityOptions.Builder => ActivityOptions.Builder) {
-
-  private def copy(options: ActivityOptions.Builder => ActivityOptions.Builder): ZActivityStubBuilder[Res] =
-    new ZActivityStubBuilder[Res](buildImpl, startToCloseTimeout, additionalOptions andThen options)
+  def withStartToCloseTimeout(timeout: Duration): ZActivityStubBuilder[Res] =
+    new ZActivityStubBuilder[Res](buildImpl, _.setStartToCloseTimeout(timeout))
 
   /** Total time that a workflow is willing to wait for an Activity to complete.
     *
-    * <p>ScheduleToCloseTimeout limits the total time of an Activity's execution including retries. * <p>Defaults to
-    * unlimited, which is chosen if set to null.
+    * <p>ScheduleToCloseTimeout limits the total time of an Activity's execution including retries
+    * [[withStartToCloseTimeout]] to limit the time of a single attempt).
+    *
+    * <p>Either this option or [[withStartToCloseTimeout]] is required.
+    *
+    * <p>Defaults to unlimited, which is chosen if set to null.
+    */
+  def withScheduleToCloseTimeout(timeout: Duration): ZActivityStubBuilder[Res] =
+    new ZActivityStubBuilder[Res](buildImpl, _.setScheduleToCloseTimeout(timeout))
+}
+
+@deprecated("Build ZActivityOptions and provide it directly", since = "0.6.0")
+final class ZActivityStubBuilder[Res] private[zio] (
+  buildImpl:    ActivityOptions => Res,
+  buildOptions: ActivityOptions.Builder => ActivityOptions.Builder) {
+
+  private def copy(options: ActivityOptions.Builder => ActivityOptions.Builder): ZActivityStubBuilder[Res] =
+    new ZActivityStubBuilder[Res](buildImpl, buildOptions andThen options)
+
+  /** Maximum time of a single Activity attempt.
+    *
+    * <p>Note that the Temporal Server doesn't detect Worker process failures directly. It relies on this timeout to
+    * detect that an Activity that didn't complete on time. So this timeout should be as short as the longest possible
+    * execution of the Activity body. Potentially long-running Activities must specify HeartbeatTimeout and call
+    * [[ZActivityExecutionContext.heartbeat]] periodically for timely failure detection.
+    *
+    * <p>If [[withScheduleToCloseTimeout]] is not provided, then this timeout is required.
+    */
+  def withStartToCloseTimeout(timeout: Duration): ZActivityStubBuilder[Res] =
+    new ZActivityStubBuilder[Res](buildImpl, _.setStartToCloseTimeout(timeout))
+
+  /** Total time that a workflow is willing to wait for an Activity to complete.
+    *
+    * <p>ScheduleToCloseTimeout limits the total time of an Activity's execution including retries
+    * [[withStartToCloseTimeout]] to limit the time of a single attempt).
+    *
+    * <p>Either this option or [[withStartToCloseTimeout]] is required.
+    *
+    * <p>Defaults to unlimited, which is chosen if set to null.
     */
   def withScheduleToCloseTimeout(timeout: Duration): ZActivityStubBuilder[Res] =
     copy(_.setScheduleToCloseTimeout(timeout.asJava))
@@ -177,11 +190,9 @@ final class ZActivityStubBuilder[Res] private[zio] (
     *   activity stub
     */
   def build: Res = {
-    val options = additionalOptions {
-      ActivityOptions
-        .newBuilder()
-        .setStartToCloseTimeout(startToCloseTimeout.asJava)
-    }.build()
+    val options = buildOptions(
+      ActivityOptions.newBuilder()
+    ).build()
 
     buildImpl(options)
   }

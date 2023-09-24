@@ -32,11 +32,12 @@ class GreetingWorkflowImpl extends GreetingWorkflow {
     * for example. Note that an activity must heartbeat to receive cancellation notifications.
     */
   private val activities: ZActivityStub.Of[GreetingActivities] = ZWorkflow
-    .newActivityStub[GreetingActivities]
-    .withStartToCloseTimeout(GreetingWorkflowImpl.ActivityStartToCloseTimeoutSeconds.seconds)
-    .withHeartbeatTimeout(5.seconds)
-    .withCancellationType(ActivityCancellationType.WAIT_CANCELLATION_COMPLETED)
-    .build
+    .newActivityStub[GreetingActivities](
+      ZActivityOptions
+        .withStartToCloseTimeout(GreetingWorkflowImpl.ActivityStartToCloseTimeoutSeconds.seconds)
+        .withHeartbeatTimeout(5.seconds)
+        .withCancellationType(ActivityCancellationType.WAIT_CANCELLATION_COMPLETED)
+    )
 
   override def getGreeting(name: String): String = {
     var activityResult: List[ZAsync[String]] = Nil

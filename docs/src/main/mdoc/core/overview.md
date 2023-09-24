@@ -14,15 +14,9 @@ Video materials:
 - [Functional Scala 2022: Build Invincible Apps With ZIO And Temporal](https://youtu.be/8MUnEahr5tk)
 
 Example projects using `zio-temporal`:
-- [Basic error handling](https://github.com/vitaliihonta/zio-temporal/tree/main/examples/src/main/scala/com/example/error/handling)
-- [Child workflows](https://github.com/vitaliihonta/zio-temporal/tree/main/examples/src/main/scala/com/example/child)
-- [External workflows](https://github.com/vitaliihonta/zio-temporal/tree/main/examples/src/main/scala/com/example/externalwf)
-- [Booking saga](https://github.com/vitaliihonta/zio-temporal/tree/main/examples/src/main/scala/com/example/bookingsaga)
-- [Parameterization & Generics](https://github.com/vitaliihonta/zio-temporal/tree/main/examples/src/main/scala/com/example/generics)
-- [Payments](https://github.com/vitaliihonta/zio-temporal/tree/main/examples/src/main/scala/com/example/payments)
-- [Long-running workflows](https://github.com/vitaliihonta/zio-temporal/tree/main/examples/src/main/scala/com/example/heartbeatingactivity)
 - [Functional Scala 2022: Cryptocurrency exchange](https://github.com/vitaliihonta/zio-temporal-samples/tree/main/cryptostock)
 - [Content Sync](https://github.com/vitaliihonta/zio-temporal-samples/tree/main/content-sync)
+- [Simple examples](https://github.com/vitaliihonta/zio-temporal/tree/main/examples/src/main)
 
 ## Installation
 

@@ -125,11 +125,12 @@ trait MyWorkflow {
 }
 
 class MyWorkflowImpl extends MyWorkflow {
-   private val activity = ZWorkflow.newActivityStub[MyActivity]
-      .withStartToCloseTimeout(5.seconds)
-      .withVersioningIntent(VersioningIntent.VERSIONING_INTENT_DEFAULT)
-      // ...other options
-      .build 
+   private val activity = ZWorkflow.newActivityStub[MyActivity](
+      ZActivityOptions
+        .withStartToCloseTimeout(5.seconds)
+        .withVersioningIntent(VersioningIntent.VERSIONING_INTENT_DEFAULT)
+        // ...other options
+   ) 
   
    override def doSomething(): Unit = ???
 }

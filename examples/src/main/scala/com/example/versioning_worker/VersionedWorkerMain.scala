@@ -4,11 +4,12 @@ import io.temporal.client.BuildIdOperation
 import zio.{BuildInfo => _, _}
 import zio.cli._
 import zio.logging.backend.SLF4J
-import zio.temporal.activity.ZActivityOptions
+import zio.temporal.activity.ZActivityRunOptions
 import zio.temporal.worker._
 import zio.temporal.workflow.{
   ZWorkflowClient,
   ZWorkflowClientOptions,
+  ZWorkflowOptions,
   ZWorkflowServiceStubs,
   ZWorkflowServiceStubsOptions,
   ZWorkflowStub
@@ -70,7 +71,7 @@ object VersionedWorkerMain extends ZIOCliDefault {
       ZWorkflowServiceStubs.make,
       ZWorkflowServiceStubsOptions.make,
       ZWorkerFactory.make,
-      ZActivityOptions.default
+      ZActivityRunOptions.default
     )
   }
 
@@ -83,11 +84,11 @@ object VersionedWorkerMain extends ZIOCliDefault {
                BuildIdOperation.newIdInNewDefaultSet(buildId)
              )
         subscriptionId <- Random.nextUUID
-        subscriptionWorkflow <- client
-                                  .newWorkflowStub[SubscriptionWorkflow]
-                                  .withTaskQueue(TaskQueue)
-                                  .withWorkflowId(subscriptionId.toString)
-                                  .build
+        subscriptionWorkflow <- client.newWorkflowStub[SubscriptionWorkflow](
+                                  ZWorkflowOptions
+                                    .withWorkflowId(subscriptionId.toString)
+                                    .withTaskQueue(TaskQueue)
+                                )
 
         _ <- ZIO.logInfo(s"Starting subscription workflow id=$subscriptionId")
         execution <- ZWorkflowStub.start(

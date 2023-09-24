@@ -3,7 +3,7 @@ package com.example.externalwf
 import zio._
 import zio.logging.backend.SLF4J
 import zio.temporal._
-import zio.temporal.activity.ZActivityOptions
+import zio.temporal.activity.ZActivityRunOptions
 import zio.temporal.worker._
 import zio.temporal.workflow._
 
@@ -16,35 +16,37 @@ object Main extends ZIOAppDefault {
   override def run: ZIO[ZIOAppArgs with Scope, Any, Any] = {
     val registerWorkflows =
       ZWorkerFactory.newWorker(TaskQueue) @@
-        ZWorker.addWorkflow[FoodDeliveryWorkflowImpl].fromClass @@
-        ZWorker.addWorkflow[FoodOrderWorkflowImpl].fromClass
+        ZWorker.addWorkflowImplementations(
+          ZWorkflowImplementationClass[FoodDeliveryWorkflowImpl],
+          ZWorkflowImplementationClass[FoodOrderWorkflowImpl]
+        )
 
     val invokeWorkflows = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
         workflowId <- Random.nextUUID
-        orderWorkflow <- client
-                           .newWorkflowStub[FoodOrderWorkflow]
-                           .withTaskQueue(TaskQueue)
-                           .withWorkflowId(workflowId.toString)
-                           .withSearchAttributes(
-                             /** NOTE: make sure to add a search attributes
-                               * {{{
-                               *    temporal operator search-attribute create --namespace default --name Vendor --type Keyword
-                               *    temporal operator search-attribute create --namespace default --name VendorVersion --type Text
-                               * }}}
-                               */
-                             Map(
-                               "Vendor"        -> ZSearchAttribute.keyword("vhonta.dev"),
-                               "VendorVersion" -> ZSearchAttribute("1.0.0")
+        orderWorkflow <- client.newWorkflowStub[FoodOrderWorkflow](
+                           ZWorkflowOptions
+                             .withWorkflowId(workflowId.toString)
+                             .withTaskQueue(TaskQueue)
+                             .withSearchAttributes(
+                               /** NOTE: make sure to add a search attributes
+                                 * {{{
+                                 *    temporal operator search-attribute create --namespace default --name Vendor --type Keyword
+                                 *    temporal operator search-attribute create --namespace default --name VendorVersion --type Text
+                                 * }}}
+                                 */
+                               Map(
+                                 "Vendor"        -> ZSearchAttribute.keyword("vhonta.dev"),
+                                 "VendorVersion" -> ZSearchAttribute("1.0.0")
+                               )
                              )
-                           )
-                           .build
+                         )
 
-        deliveryWorkflow <- client
-                              .newWorkflowStub[FoodDeliveryWorkflow]
-                              .withTaskQueue(TaskQueue)
-                              .withWorkflowId(FoodDeliveryWorkflow.makeId(workflowId.toString))
-                              .build
+        deliveryWorkflow <- client.newWorkflowStub[FoodDeliveryWorkflow](
+                              ZWorkflowOptions
+                                .withWorkflowId(FoodDeliveryWorkflow.makeId(workflowId.toString))
+                                .withTaskQueue(TaskQueue)
+                            )
 
         goods           = List("peperoni pizza", "coke")
         deliveryAddress = "Sample street, 5/2, 10000"

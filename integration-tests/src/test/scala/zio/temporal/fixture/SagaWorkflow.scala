@@ -20,18 +20,20 @@ trait TransferActivity {
 class TransferActivityImpl(
   depositFunc:      (String, BigDecimal) => IO[TransferError, Done],
   withdrawFunc:     (String, BigDecimal) => IO[TransferError, Done]
-)(implicit options: ZActivityOptions[Any])
+)(implicit options: ZActivityRunOptions[Any])
     extends TransferActivity {
 
   override def deposit(account: String, amount: BigDecimal): Done = {
     ZActivity.run {
-      depositFunc(account, amount)
+      ZIO.logInfo(s"Deposit account=$account amount=$amount") *>
+        depositFunc(account, amount)
     }
   }
 
   override def withdraw(account: String, amount: BigDecimal): Done =
     ZActivity.run {
-      withdrawFunc(account, amount)
+      ZIO.logInfo(s"withdraw account=$account amount=$amount") *>
+        withdrawFunc(account, amount)
     }
 }
 
@@ -46,17 +48,14 @@ trait SagaWorkflow {
 
 class SagaWorkflowImpl extends SagaWorkflow {
 
-  private val activity = ZWorkflow
-    .newActivityStub[TransferActivity]
-    .withStartToCloseTimeout(5.seconds)
-    .withRetryOptions(
-      ZRetryOptions.default
-        .withMaximumAttempts(1)
-        .withDoNotRetry(nameOf[TransferError])
-    )
-    .build
+  private val activity = ZWorkflow.newActivityStub[TransferActivity](
+    ZActivityOptions.withStartToCloseTimeout(5.seconds)
+  )
 
+  /** Using [[println]] here to see those logs while running [[WorkflowReplayerSpec]]
+    */
   override def transfer(command: TransferCommand): BigDecimal = {
+    println(s"Transfer command=$command")
     val saga = for {
       _ <- ZSaga.attempt(
              ZActivityStub.execute(

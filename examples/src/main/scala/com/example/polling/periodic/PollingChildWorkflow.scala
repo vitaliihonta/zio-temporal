@@ -2,7 +2,7 @@ package com.example.polling.periodic
 
 import zio._
 import zio.temporal._
-import zio.temporal.activity.ZActivityStub
+import zio.temporal.activity.{ZActivityOptions, ZActivityStub}
 import zio.temporal.failure.ActivityFailure
 import zio.temporal.workflow._
 
@@ -19,15 +19,16 @@ class PeriodicPollingChildWorkflowImpl extends PollingChildWorkflow {
   private val singleWorkflowPollAttempts = 10
   private val logger                     = ZWorkflow.makeLogger
 
-  private val continueAsNew = ZWorkflow.newContinueAsNewStub[PollingChildWorkflow].build
+  private val continueAsNew = ZWorkflow.newContinueAsNewStub[PollingChildWorkflow]()
 
   private val activities = ZWorkflow
-    .newActivityStub[PollingActivities]
-    .withStartToCloseTimeout(4.seconds)
-    .withRetryOptions(
-      ZRetryOptions.default.withMaximumAttempts(1)
+    .newActivityStub[PollingActivities](
+      ZActivityOptions
+        .withStartToCloseTimeout(4.seconds)
+        .withRetryOptions(
+          ZRetryOptions.default.withMaximumAttempts(1)
+        )
     )
-    .build
 
   override def exec(pollingInterval: Duration): String = {
 

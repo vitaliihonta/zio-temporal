@@ -13,7 +13,7 @@ import zio.temporal.internal.ConfigurationCompanion
   * @see
   *   [[WorkflowServiceStubsOptions]]
   */
-case class ZWorkflowServiceStubsOptions private[zio] (
+final case class ZWorkflowServiceStubsOptions private[zio] (
   serverUrl:                            String,
   channel:                              Option[ManagedChannel],
   sslContext:                           Option[SslContext],
@@ -127,6 +127,28 @@ case class ZWorkflowServiceStubsOptions private[zio] (
     metricsScope.foreach(builder.setMetricsScope(_))
 
     javaOptionsCustomization(builder).build()
+  }
+
+  override def toString: String = {
+    s"ZWorkflowServiceStubsOptions(" +
+      s"serverUrl=$serverUrl" +
+      s", channel=$channel" +
+      s", sslContext=$sslContext" +
+      s", enableHttps=$enableHttps" +
+      s", enableKeepAlive=$enableKeepAlive" +
+      s", keepAliveTime=$keepAliveTime" +
+      s", keepAliveTimeout=$keepAliveTimeout" +
+      s", keepAlivePermitWithoutStream=$keepAlivePermitWithoutStream" +
+      s", rpcTimeout=$rpcTimeout" +
+      s", rpcLongPollTimeout=$rpcLongPollTimeout" +
+      s", rpcQueryTimeout=$rpcQueryTimeout" +
+      s", rpcRetryOptions=$rpcRetryOptions" +
+      s", connectionBackoffResetFrequency=$connectionBackoffResetFrequency" +
+      s", grpcReconnectFrequency=$grpcReconnectFrequency" +
+      s", headers=$headers" +
+      s", grpcMetadataProvider=$grpcMetadataProvider" +
+      s", metricsScope=$metricsScope" +
+      s")"
   }
 }
 

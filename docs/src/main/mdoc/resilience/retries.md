@@ -41,24 +41,15 @@ trait BookingWorkflow {
 }
 ```
 
-When declaring activities inside the workflow implementation, it's allowed to provide custom timeouts and retry policies:
+When declaring activities inside the workflow implementation, it's possible to provide custom timeouts and retry policies.  
+They are provided using `ZRetryOptions`:
 ```scala mdoc
-class BookingWorkflowImpl extends BookingWorkflow {
-  private val bookingActivity: ZActivityStub.Of[BookingActivity] = ZWorkflow
-    .newActivityStub[BookingActivity]
-    .withStartToCloseTimeout(10.seconds)
-    .withRetryOptions(
-      ZRetryOptions.default
-        .withMaximumAttempts(3)
-        .withInitialInterval(300.millis)
-        .withMaximumAttempts(5)
-        .withBackoffCoefficient(0.5)
-    )
-    .build
-    
-  override def bookFlight(name: String, surname: String, flightNumber: String, cardId: UUID): UUID = 
-    ???
-}
+val retryOptions = ZRetryOptions.default
+  .withMaximumAttempts(3)
+  .withInitialInterval(300.millis)
+  .withMaximumAttempts(5)
+  .withBackoffCoefficient(0.5)
+  .withDoNotRetry(nameOf[IllegalArgumentException])
 ```
 
 Important notes:
@@ -66,22 +57,39 @@ Important notes:
 - `withRetryOptions` allows to specify the retry policy for an activity execution
 - `withMaximumAttempts` limits the number of retries
 - `withInitialInterval`, `withMaximumAttempts` and `withBackoffCoefficient` adds a backoff
+- `withDoNotRetry` allows to specify what errors must not be retries. A helper `nameOf` method is used to get the full type name of the provided Exception
+
+You can then specify retry options into `ZActivityOptions` when creating the Activity Stub:
+
+```scala mdoc
+class BookingWorkflowImpl extends BookingWorkflow {
+  private val bookingActivity: ZActivityStub.Of[BookingActivity] = 
+    ZWorkflow.newActivityStub[BookingActivity](
+      ZActivityOptions
+        .withStartToCloseTimeout(10.seconds)
+        .withRetryOptions(retryOptions)
+    )
+    
+  override def bookFlight(name: String, surname: String, flightNumber: String, cardId: UUID): UUID = 
+    ???
+}
+```
 
 ## Workflow retries
 Adding retry policies for workflows is pretty the same as for activities:
 
 ```scala mdoc:silent
 ZIO.serviceWithZIO[ZWorkflowClient] { workflowClient =>
-  workflowClient
-    .newWorkflowStub[BookingWorkflow]
-    .withTaskQueue("booking")
-    .withWorkflowId("<ANY ID>")
-    .withWorkflowExecutionTimeout(5.minutes)
-    .withWorkflowRunTimeout(10.seconds)
-    .withRetryOptions(
-      ZRetryOptions.default.withMaximumAttempts(5)
-    )
-    .build
+  workflowClient.newWorkflowStub[BookingWorkflow](
+    ZWorkflowOptions
+      .withWorkflowId("<ANY ID>")
+      .withTaskQueue("booking")
+      .withWorkflowExecutionTimeout(5.minutes)
+      .withWorkflowRunTimeout(10.seconds)
+      .withRetryOptions(
+        ZRetryOptions.default.withMaximumAttempts(5)
+      )
+  )
 }
 ```
 

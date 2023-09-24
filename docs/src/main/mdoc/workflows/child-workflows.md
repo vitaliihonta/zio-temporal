@@ -47,9 +47,13 @@ The simplest case of using child workflows is invoking them synchronously using 
 ```scala mdoc:silent
 // Simple parent Workflow implementation
 class GreetingWorkflowSimple extends GreetingWorkflow {
+  private val workflowId = ZWorkflow.info.workflowId
+  
   override def getGreeting(name: String): String = {
     val child: ZChildWorkflowStub.Of[GreetingChild] = 
-      ZWorkflow.newChildWorkflowStub[GreetingChild].build
+      ZWorkflow.newChildWorkflowStub[GreetingChild](
+        ZChildWorkflowOptions.withWorkflowId(s"$workflowId/child")
+      )
 
     ZChildWorkflowStub.execute(
       child.composeGreeting("Hello", name)
@@ -60,8 +64,8 @@ class GreetingWorkflowSimple extends GreetingWorkflow {
 
 Important notes:
 
-- To create a child workflow stub, you must use `ZWorkflow.newChildWorkflowStub[<ChildType>]` method.
-  - It's possible to configure the child workflow because `newChildWorkflowStub` returns a builder
+- To create a child workflow stub, you must use `ZWorkflow.newChildWorkflowStub[<ChildType>](options)` method.
+  - `ZChildWorkflowOptions` configures the child workflow run. The child Workflow ID is mandatory. You can also specify a new Task Queue for the child workflow, and other various options (such as timeouts)
 - **Reminder: you must always** wrap the child workflow invocation into `ZChildWorkflowStub.execute` method.
     - `child.composeGreeting("Hello", name)` invocation would be re-written into an untyped Temporal's workflow invocation
     - A direct method invocation will throw an exception
@@ -80,18 +84,23 @@ It's also possible to spawn multiple child workflows and running them in paralle
 ```scala mdoc:silent
 // Parent Workflow implementation
 class GreetingWorkflowParallel extends GreetingWorkflow {
+  private val workflowId = ZWorkflow.info.workflowId
   
   override def getGreeting(name: String): String = {
 
     // Workflows are stateful, so a new stub must be created for each new child.
-    val child1 = ZWorkflow.newChildWorkflowStub[GreetingChild].build
+    val child1 = ZWorkflow.newChildWorkflowStub[GreetingChild](
+      ZChildWorkflowOptions.withWorkflowId(s"$workflowId/child-1")
+    )
     // The result of the async invocation
     val greeting1: ZAsync[String] = ZChildWorkflowStub.executeAsync(
       child1.composeGreeting("Hello", name)
     )
 
     // Both children will run concurrently.
-    val child2 = ZWorkflow.newChildWorkflowStub[GreetingChild].build
+    val child2 = ZWorkflow.newChildWorkflowStub[GreetingChild](
+      ZChildWorkflowOptions.withWorkflowId(s"$workflowId/child-2")
+    )
     val greeting2 = ZChildWorkflowStub.executeAsync(
       child2.composeGreeting("Bye", name)
     )
@@ -112,9 +121,12 @@ It's possible to send a Signal to a Child Workflow from the parent using `ZChild
 ```scala mdoc:silent
 // Parent Workflow implementation
 class GreetingWorkflowSignaling extends GreetingWorkflow {
+  private val workflowId = ZWorkflow.info.workflowId
 
   override def getGreeting(name: String): String =  {
-    val child = ZWorkflow.newChildWorkflowStub[GreetingChild].build
+    val child = ZWorkflow.newChildWorkflowStub[GreetingChild](
+      ZChildWorkflowOptions.withWorkflowId(s"$workflowId/child")
+    )
     
     // Execute the child asynchronously
     val greeting = ZChildWorkflowStub.executeAsync(

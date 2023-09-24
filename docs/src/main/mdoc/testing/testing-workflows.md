@@ -53,13 +53,13 @@ object SampleWorkflowSpec extends ZIOSpecDefault {
         _ <- ZTestWorkflowEnvironment.setup()
         
         // Create a workflow stub
-        sampleWorkflow <- ZTestWorkflowEnvironment
-          .newWorkflowStub[SampleWorkflow]
-          .withTaskQueue(taskQueue)
-          .withWorkflowId("sample-workflow-id")
-          // Set workflow timeout
-          .withWorkflowRunTimeout(10.second)
-          .build
+        sampleWorkflow <- ZTestWorkflowEnvironment.newWorkflowStub[SampleWorkflow](
+                            ZWorkflowOptions
+                              .withWorkflowId("sample-workflow-id")
+                              .withTaskQueue(taskQueue)
+                              // Set workflow timeout
+                              .withWorkflowRunTimeout(10.second)
+                          )
         
         // Execute the workflow stub
         result <- ZWorkflowStub.execute(sampleWorkflow.echo("Hello"))
@@ -97,7 +97,7 @@ trait GreetingActivity {
 }
 
 // Activity runs ZIO
-class GreetingActivityImpl(implicit options: ZActivityOptions[Any]) extends GreetingActivity {
+class GreetingActivityImpl(implicit options: ZActivityRunOptions[Any]) extends GreetingActivity {
   override def composeGreeting(greeting: String, name: String): String = {
     ZActivity.run {
       ZIO.logInfo(s"Composing greeting=$greeting name=$name") *>
@@ -117,10 +117,9 @@ trait GreetingWorkflow {
 }
 
 class GreetingWorkflowImpl extends GreetingWorkflow {
-  private val activity = ZWorkflow
-    .newActivityStub[GreetingActivity]
-    .withStartToCloseTimeout(5.seconds)
-    .build
+  private val activity = ZWorkflow.newActivityStub[GreetingActivity](
+    ZActivityOptions.withStartToCloseTimeout(5.seconds)
+  )
   
   override def greet(name: String): String = {
     ZActivityStub.execute(
@@ -138,7 +137,7 @@ object GreetingWorkflowSpec extends ZIOSpecDefault {
     test("Composes greeting message") {
       val taskQueue = "greeting-queue"
       // Get ZActivityOptions for the activity
-      ZTestWorkflowEnvironment.activityOptions[Any].flatMap { implicit options =>
+      ZTestWorkflowEnvironment.activityRunOptionsWithZIO[Any] { implicit options =>
         for {
           // Create the worker
           _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
@@ -149,13 +148,13 @@ object GreetingWorkflowSpec extends ZIOSpecDefault {
           _ <- ZTestWorkflowEnvironment.setup()
 
           // Create a workflow stub
-          greetingWorkflow <- ZTestWorkflowEnvironment
-            .newWorkflowStub[GreetingWorkflow]
-            .withTaskQueue(taskQueue)
-            .withWorkflowId("greeting-workflow-id")
-            // Set workflow timeout
-            .withWorkflowRunTimeout(10.second)
-            .build
+          greetingWorkflow <- ZTestWorkflowEnvironment.newWorkflowStub[GreetingWorkflow](
+                                ZWorkflowOptions
+                                  .withWorkflowId("greeting-workflow-id")
+                                  .withTaskQueue(taskQueue)
+                                  // Set workflow timeout
+                                  .withWorkflowRunTimeout(10.second)
+                              )
 
           // Execute the workflow stub
           result <- ZWorkflowStub.execute(greetingWorkflow.greet("World"))
@@ -169,7 +168,8 @@ object GreetingWorkflowSpec extends ZIOSpecDefault {
 }
 ```
 **Notes**
-- Like `ZTestActivityEnvironment`, `ZTestWorkflowEnvironment.activityOptions[R]` provides with `ZActivityOptions` needed to run ZIO inside activities
+- Like `ZTestActivityEnvironment`, `ZTestWorkflowEnvironment.activityRunOptions[R]` provides with `ZActivityOptions` needed to run ZIO inside activities
+  - `ZTestWorkflowEnvironment.activityRunOptionsWithZIO[R]` allows building a ZIO accessing `ZActivityRunOptions` (like `ZIO.serviceWithZIO` for ZIO environment)
 - `ZWorker.addActivityImplementation` can be used to provide activity implementations
 
 ## Time skipping
@@ -233,13 +233,13 @@ object PaymentWorkflowSpec extends ZIOSpecDefault {
         _ <- ZTestWorkflowEnvironment.setup()
 
         // Create a workflow stub
-        paymentWorkflow <- ZTestWorkflowEnvironment
-          .newWorkflowStub[PaymentWorkflow]
-          .withTaskQueue(taskQueue)
-          .withWorkflowId("payment-workflow-id")
-          // Set workflow timeout
-          .withWorkflowRunTimeout(20.minutes)
-          .build
+        paymentWorkflow <- ZTestWorkflowEnvironment.newWorkflowStub[PaymentWorkflow](
+                             ZWorkflowOptions
+                               .withWorkflowId("payment-workflow-id")
+                               .withTaskQueue(taskQueue)
+                               // Set workflow timeout
+                               .withWorkflowRunTimeout(20.minutes)
+                           )
 
         // Start the workflow stub
         _ <- ZWorkflowStub.start(

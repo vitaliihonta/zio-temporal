@@ -10,11 +10,11 @@ trait PollingActivities {
 }
 
 object PeriodicPollingActivityImpl {
-  val make: URLayer[TestService with ZActivityOptions[Any], PollingActivities] =
-    ZLayer.fromFunction(new PeriodicPollingActivityImpl(_: TestService)(_: ZActivityOptions[Any]))
+  val make: URLayer[TestService with ZActivityRunOptions[Any], PollingActivities] =
+    ZLayer.fromFunction(new PeriodicPollingActivityImpl(_: TestService)(_: ZActivityRunOptions[Any]))
 }
 
-class PeriodicPollingActivityImpl(testService: TestService)(implicit options: ZActivityOptions[Any])
+class PeriodicPollingActivityImpl(testService: TestService)(implicit options: ZActivityRunOptions[Any])
     extends PollingActivities {
   override def doPoll(): String =
     ZActivity.run {

@@ -4,39 +4,18 @@ import io.temporal.api.enums.v1.WorkflowIdReusePolicy
 import io.temporal.common.context.ContextPropagator
 import io.temporal.workflow.ChildWorkflowCancellationType
 import io.temporal.workflow.ChildWorkflowOptions
-import io.temporal.workflow.Workflow
 import io.temporal.api.enums.v1.ParentClosePolicy
-import io.temporal.common.SearchAttributes
 import zio._
-import zio.temporal.internal.ClassTagUtils
 import zio.temporal.{ZRetryOptions, ZSearchAttribute, ZSearchAttributes}
-
 import scala.jdk.CollectionConverters._
-import scala.reflect.ClassTag
 
+@deprecated("Build ZChildWorkflowOptions and provide it directly", since = "0.6.0")
 object ZChildWorkflowStubBuilder {
   type Of[A]   = ZChildWorkflowStubBuilder[ZChildWorkflowStub.Of[A]]
   type Untyped = ZChildWorkflowStubBuilder[ZChildWorkflowStub.Untyped]
-
-  private[temporal] def buildTyped[A: ClassTag]: ChildWorkflowOptions => ZChildWorkflowStub.Of[A] =
-    options =>
-      ZChildWorkflowStub.Of(
-        new ZChildWorkflowStubImpl(
-          Workflow.newUntypedChildWorkflowStub(
-            ClassTagUtils.getWorkflowType[A],
-            options
-          ),
-          ClassTagUtils.classOf[A]
-        )
-      )
-
-  private[temporal] def buildUntyped(workflowType: String): ChildWorkflowOptions => ZChildWorkflowStub.Untyped =
-    options =>
-      new ZChildWorkflowStub.UntypedImpl(
-        Workflow.newUntypedChildWorkflowStub(workflowType, options)
-      )
 }
 
+@deprecated("Build ZChildWorkflowOptions and provide it directly", since = "0.6.0")
 class ZChildWorkflowStubBuilder[Res] private[zio] (
   buildImpl:         ChildWorkflowOptions => Res,
   additionalOptions: ChildWorkflowOptions.Builder => ChildWorkflowOptions.Builder) {

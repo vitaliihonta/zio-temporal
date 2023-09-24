@@ -4,11 +4,11 @@ import zio._
 import zio.temporal.activity._
 
 object SubscriptionActivitiesImpl {
-  val make: URLayer[ZActivityOptions[Any], SubscriptionActivities] =
-    ZLayer.fromFunction(new SubscriptionActivitiesImpl()(_: ZActivityOptions[Any]))
+  val make: URLayer[ZActivityRunOptions[Any], SubscriptionActivities] =
+    ZLayer.fromFunction(new SubscriptionActivitiesImpl()(_: ZActivityRunOptions[Any]))
 }
 
-class SubscriptionActivitiesImpl()(implicit options: ZActivityOptions[Any]) extends SubscriptionActivities {
+class SubscriptionActivitiesImpl()(implicit options: ZActivityRunOptions[Any]) extends SubscriptionActivities {
   override def getSubscription(subscriptionId: String): Subscription = {
     ZActivity.run {
       for {

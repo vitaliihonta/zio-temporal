@@ -62,10 +62,11 @@ val scheduleHandleZIO: RIO[ZScheduleClient, ZScheduleHandle] = ZIO.serviceWithZI
 
     // Create a ZScheduleStartWorkflowStub
     stub = scheduleClient
-      .newScheduleStartWorkflowStub[HelloWorkflowWithTime]()
-      .withTaskQueue("<task-queue>")
-      .withWorkflowId("<workflow-id>")
-      .build
+      .newScheduleStartWorkflowStub[HelloWorkflowWithTime](
+        ZWorkflowOptions
+          .withWorkflowId("<workflow-id>")
+          .withTaskQueue("<task-queue>")
+      )
 
     // Schedule specification
     intervalSpec = ZScheduleSpec
@@ -223,11 +224,11 @@ for {
       .withStartAt(now.plusSeconds(10))
 
     // need a new stub to update the workflow
-    val newStub = scheduleClient
-      .newScheduleStartWorkflowStub[HelloWorkflowWithTime]()
-      .withTaskQueue("<task-queue>")
-      .withWorkflowId("<workflow-id>")
-      .build
+    val newStub = scheduleClient.newScheduleStartWorkflowStub[HelloWorkflowWithTime](
+      ZWorkflowOptions
+        .withWorkflowId("<workflow-id>")
+        .withTaskQueue("<task-queue>")
+    )
 
     ZScheduleUpdate(
       input.description.schedule

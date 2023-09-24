@@ -6,7 +6,7 @@ import zio._
 import zio.temporal.worker._
 import zio.temporal.workflow._
 import zio.logging.backend.SLF4J
-import zio.temporal.activity.ZActivityOptions
+import zio.temporal.activity.ZActivityRunOptions
 import zio.temporal.protobuf.ProtobufDataConverter
 
 object Main extends ZIOAppDefault {
@@ -30,7 +30,7 @@ object Main extends ZIOAppDefault {
         PaymentActivityImpl.make,
         PaymentService.make,
         ExampleFlow.make,
-        ZActivityOptions.default,
+        ZActivityRunOptions.default,
         ZWorkflowServiceStubs.make,
         ZWorkerFactory.make
       )

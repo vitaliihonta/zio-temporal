@@ -31,8 +31,7 @@ class ExampleFlow(paymentService: PaymentService) {
 
   private def pollStatus(transactionId: UUID): IO[PaymentError, Transaction] =
     (
-      ZIO.sleep(2.seconds) *>
-        ZIO.logInfo("Checking transaction status...") *>
+      ZIO.logInfo("Checking transaction status...").delay(2.seconds) *>
         paymentService.getState(transactionId)
     ).repeatWhile(_.isEmpty)
       .map(_.get)

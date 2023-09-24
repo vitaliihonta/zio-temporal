@@ -2,9 +2,11 @@ package zio.temporal
 
 import zio._
 import zio.logging.backend.SLF4J
+import zio.temporal.activity.ZActivityOptions
 import zio.temporal.fixture._
 import zio.temporal.testkit._
 import zio.test._
+
 import java.util.concurrent.atomic.AtomicInteger
 
 object ActivitySpec extends BaseTemporalSpec {
@@ -13,42 +15,44 @@ object ActivitySpec extends BaseTemporalSpec {
 
   override val spec = suite("ZActivity")(
     test("runs simple activity") {
-      ZTestActivityEnvironment.activityOptions[Any].flatMap { implicit options =>
+      ZTestActivityEnvironment.activityRunOptionsWithZIO[Any] { implicit options =>
         for {
           _ <- ZTestActivityEnvironment.addActivityImplementation(new ZioActivityImpl)
           stub <- ZTestActivityEnvironment
-                    .newActivityStub[ZioActivity]
-                    .withStartToCloseTimeout(5.seconds)
-                    .build
+                    .newActivityStub[ZioActivity](
+                      ZActivityOptions.withStartToCloseTimeout(5.seconds)
+                    )
           result = stub.echo("hello")
         } yield assertTrue(result == "Echoed hello")
       }
     }.provideTestActivityEnv,
     test("runs heartbeat activity from start") {
-      ZTestActivityEnvironment.activityOptions[Any].flatMap { implicit options =>
+      ZTestActivityEnvironment.activityRunOptionsWithZIO[Any] { implicit options =>
         val numIterations = new AtomicInteger()
         for {
           _ <- ZTestActivityEnvironment.addActivityImplementation(new FibonacciHeartbeatActivityImpl(numIterations))
           stub <- ZTestActivityEnvironment
-                    .newActivityStub[FibonacciHeartbeatActivity]
-                    .withStartToCloseTimeout(1.minute)
-                    .build
+                    .newActivityStub[FibonacciHeartbeatActivity](
+                      ZActivityOptions.withStartToCloseTimeout(1.minute)
+                    )
           result = stub.fibonacciSum(5)
         } yield {
-          assertTrue(result == 12) &&
-          assertTrue(numIterations.get() == 5)
+          assertTrue(
+            result == 12,
+            numIterations.get() == 5
+          )
         }
       }
     }.provideTestActivityEnv,
     test("runs heartbeat activity from latest checkpoint") {
-      ZTestActivityEnvironment.activityOptions[Any].flatMap { implicit options =>
+      ZTestActivityEnvironment.activityRunOptionsWithZIO[Any] { implicit options =>
         val numIterations = new AtomicInteger()
         for {
           _ <- ZTestActivityEnvironment.addActivityImplementation(new FibonacciHeartbeatActivityImpl(numIterations))
           stub <- ZTestActivityEnvironment
-                    .newActivityStub[FibonacciHeartbeatActivity]
-                    .withStartToCloseTimeout(1.minute)
-                    .build
+                    .newActivityStub[FibonacciHeartbeatActivity](
+                      ZActivityOptions.withStartToCloseTimeout(1.minute)
+                    )
           _ <- ZTestActivityEnvironment.setHeartbeatDetails(
                  FibonacciHeartbeatActivityImpl.HeartbeatDetails(
                    sum = 4,
@@ -59,8 +63,10 @@ object ActivitySpec extends BaseTemporalSpec {
                )
           result = stub.fibonacciSum(5)
         } yield {
-          assertTrue(result == 12) &&
-          assertTrue(numIterations.get() == 2)
+          assertTrue(
+            result == 12,
+            numIterations.get() == 2
+          )
         }
       }
     }.provideTestActivityEnv

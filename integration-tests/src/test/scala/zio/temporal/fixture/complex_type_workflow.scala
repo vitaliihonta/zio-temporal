@@ -28,7 +28,7 @@ trait ComplexTypesActivity {
   def superNested: Either[List[String], Triple[Option[Int], Set[UUID], Boolean]]
 }
 
-case class ComplexTypesActivityImpl()(implicit options: ZActivityOptions[Any]) extends ComplexTypesActivity {
+case class ComplexTypesActivityImpl()(implicit options: ZActivityRunOptions[Any]) extends ComplexTypesActivity {
   override def either: Either[String, Int] =
     ZActivity.run {
       ZIO.succeed(Right(42))
@@ -68,9 +68,9 @@ trait EitherWorkflow {
 case class EitherWorkflowImpl() extends EitherWorkflow {
   override def start: Either[String, Int] = {
     val stub = ZWorkflow
-      .newActivityStub[ComplexTypesActivity]
-      .withStartToCloseTimeout(5.seconds)
-      .build
+      .newActivityStub[ComplexTypesActivity](
+        ZActivityOptions.withStartToCloseTimeout(5.seconds)
+      )
 
     ZActivityStub.execute(stub.either)
   }
@@ -93,9 +93,9 @@ trait ComplexWorkflow {
 
 class ComplexWorkflowImpl extends ComplexWorkflow {
   private val stub = ZWorkflow
-    .newActivityStub[ComplexTypesActivity]
-    .withStartToCloseTimeout(5.seconds)
-    .build
+    .newActivityStub[ComplexTypesActivity](
+      ZActivityOptions.withStartToCloseTimeout(5.seconds)
+    )
 
   private val resumed = ZWorkflowState.empty[Unit]
   private val list    = ZWorkflowState.empty[List[Foo]]

@@ -13,11 +13,11 @@ trait SampleActivities {
 }
 
 object SampleActivitiesImpl {
-  val make: URLayer[ZActivityOptions[Any], SampleActivities] =
-    ZLayer.fromFunction(SampleActivitiesImpl()(_: ZActivityOptions[Any]))
+  val make: URLayer[ZActivityRunOptions[Any], SampleActivities] =
+    ZLayer.fromFunction(SampleActivitiesImpl()(_: ZActivityRunOptions[Any]))
 }
 
-case class SampleActivitiesImpl()(implicit options: ZActivityOptions[Any]) extends SampleActivities {
+case class SampleActivitiesImpl()(implicit options: ZActivityRunOptions[Any]) extends SampleActivities {
   override def helloMessage(who: String): String =
     ZActivity.run {
       for {
@@ -48,9 +48,9 @@ trait SampleWorkflow {
 
 class SampleWorkflowImpl extends SampleWorkflow {
   private val sampleActivities = ZWorkflow
-    .newActivityStub[SampleActivities]
-    .withStartToCloseTimeout(5.seconds)
-    .build
+    .newActivityStub[SampleActivities](
+      ZActivityOptions.withStartToCloseTimeout(5.seconds)
+    )
 
   private val random = ZWorkflow.newRandom
 

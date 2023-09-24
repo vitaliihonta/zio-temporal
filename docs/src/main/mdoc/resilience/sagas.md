@@ -90,13 +90,13 @@ trait TripBookingActivities {
 ```scala mdoc:silent
 class TripBookingWorkflowImpl extends TripBookingWorkflow {
   // Create the activity stub 
-  private val activities = ZWorkflow
-    .newActivityStub[TripBookingActivities]
-    .withStartToCloseTimeout(1.hour)
-    .withRetryOptions(
-      ZRetryOptions.default.withMaximumAttempts(1)
-    )
-    .build
+  private val activities = ZWorkflow.newActivityStub[TripBookingActivities](
+    ZActivityOptions
+      .withStartToCloseTimeout(1.hour)
+      .withRetryOptions(
+        ZRetryOptions.default.withMaximumAttempts(1)
+      )
+  )
 
   override def bookTrip(name: String): Unit = {
     val bookingSaga: ZSaga[Unit] = for {

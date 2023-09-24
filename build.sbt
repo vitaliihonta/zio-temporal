@@ -46,7 +46,12 @@ val publishSettings = Seq(
 
 lazy val coverageSettings = Seq(
   coverageExcludedPackages := "com\\.example\\..*;.*\\.JavaTypeTag;.*\\.JavaTypeTag\\..*;.*\\.TypeIsSpecified;" +
-    "zio\\.temporal\\.internal\\.*Macro*;"
+    "zio\\.temporal\\.internal\\.*Macro*;" +
+    "zio\\.temporal\\.activity\\.ZLocalActivityStubBuilder*;" +
+    "zio\\.temporal\\.activity\\.ZLocalStubBuilder*;" +
+    "zio\\.temporal\\.workflow\\.ZWorkflowStubBuilder*;" +
+    "zio\\.temporal\\.workflow\\.ZChildWorkflowStubBuilder*;" +
+    "zio\\.temporal\\.workflow\\.ZWorkflowContinueAsNewStubBuilder*;"
 )
 
 lazy val baseProjectSettings = Seq(

@@ -1,19 +1,24 @@
 package zio.temporal.testkit
 
 import io.temporal.testing.TestActivityEnvironment
-import zio.temporal.activity.{ExtendsActivity, IsActivity, ZActivityOptions, ZActivityStubBuilderInitial}
+import zio.temporal.activity.{
+  ExtendsActivity,
+  IsActivity,
+  ZActivityOptions,
+  ZActivityRunOptions,
+  ZActivityStubBuilderInitial
+}
 import zio._
 import zio.temporal.{JavaTypeTag, TypeIsSpecified}
 import zio.temporal.internal.ClassTagUtils
-
 import scala.reflect.ClassTag
 
 class ZTestActivityEnvironment[+R] private[zio] (
   val toJava: TestActivityEnvironment,
   runtime:    zio.Runtime[R]) {
 
-  implicit lazy val activityOptions: ZActivityOptions[R] =
-    new ZActivityOptions[R](runtime, None)
+  implicit lazy val activityRunOptions: ZActivityRunOptions[R] =
+    new ZActivityRunOptions[R](runtime, None)
 
   /** Registers activity implementations to test. Use [[newActivityStub]] to create stubs that can be used to invoke
     * them.
@@ -54,10 +59,26 @@ class ZTestActivityEnvironment[+R] private[zio] (
     * @return
     *   The stub builder for the activity.
     */
+  @deprecated("Use newLocalActivityStub accepting ZLocalActivityOptions", since = "0.6.0")
   def newActivityStub[A <: AnyRef: IsActivity: ClassTag]: ZActivityStubBuilderInitial[UIO[A]] =
     new ZActivityStubBuilderInitial[UIO[A]](
       buildImpl = options => ZIO.succeed(toJava.newActivityStub(ClassTagUtils.classOf[A], options))
     )
+
+  /** Creates a stub that can be used to invoke activities registered through [[addActivityImplementation]]
+    *
+    * @note
+    *   it's not a [[zio.temporal.activity.ZActivityStub]] because the activity is invoked locally. Wrapping method
+    *   invocation into [[zio.temporal.activity.ZActivityStub.execute]] is not required
+    * @tparam A
+    *   Type of the activity interface.
+    * @param options
+    *   activity options
+    * @return
+    *   The stub builder for the activity.
+    */
+  def newActivityStub[A <: AnyRef: IsActivity: ClassTag](options: ZActivityOptions): UIO[A] =
+    ZIO.succeed(toJava.newActivityStub(ClassTagUtils.classOf[A], options.toJava))
 
   /** Sets a listener that is called every time an activity implementation heartbeats through
     * [[zio.temporal.activity.ZActivityExecutionContext.heartbeat]]
@@ -96,8 +117,20 @@ class ZTestActivityEnvironment[+R] private[zio] (
 }
 
 object ZTestActivityEnvironment {
-  def activityOptions[R: Tag]: URIO[ZTestActivityEnvironment[R], ZActivityOptions[R]] =
-    ZIO.serviceWith[ZTestActivityEnvironment[R]](_.activityOptions)
+  def activityRunOptions[R: Tag]: URIO[ZTestActivityEnvironment[R], ZActivityRunOptions[R]] =
+    ZIO.serviceWith[ZTestActivityEnvironment[R]](_.activityRunOptions)
+
+  /** Access activity options */
+  def activityRunOptionsWithZIO[R]: ActivityRunOptionsWithZIOPartiallyApplied[R] =
+    new ActivityRunOptionsWithZIOPartiallyApplied[R]
+
+  final class ActivityRunOptionsWithZIOPartiallyApplied[R](private val `dummy`: Boolean = true) extends AnyVal {
+    def apply[R2 <: ZTestActivityEnvironment[R], E, A](
+      f:            ZActivityRunOptions[R] => ZIO[R2, E, A]
+    )(implicit tag: Tag[R]
+    ): ZIO[R2, E, A] =
+      ZIO.serviceWithZIO[ZTestActivityEnvironment[R]](testEnv => f(testEnv.activityRunOptions))
+  }
 
   /** Registers activity implementations to test. Use [[newActivityStub]] to create stubs that can be used to invoke
     * them.
@@ -135,6 +168,7 @@ object ZTestActivityEnvironment {
     * @return
     *   The stub builder for the activity.
     */
+  @deprecated("Use newLocalActivityStub accepting ZLocalActivityOptions", since = "0.6.0")
   def newActivityStub[
     A <: AnyRef: IsActivity: ClassTag
   ]: ZActivityStubBuilderInitial[URIO[ZTestActivityEnvironment[Any], A]] =
@@ -144,6 +178,25 @@ object ZTestActivityEnvironment {
           ZIO.succeed(testEnv.toJava.newActivityStub(ClassTagUtils.classOf[A], options))
         }
     )
+
+  /** Creates a stub that can be used to invoke activities registered through [[addActivityImplementation]]
+    *
+    * @note
+    *   it's not a [[zio.temporal.activity.ZActivityStub]] because the activity is invoked locally. Wrapping method
+    *   invocation into [[zio.temporal.activity.ZActivityStub.execute]] is not required
+    * @tparam A
+    *   Type of the activity interface.
+    * @param options
+    *   activity options
+    * @return
+    *   The stub builder for the activity.
+    */
+  def newActivityStub[A <: AnyRef: IsActivity: ClassTag](
+    options: ZActivityOptions
+  ): URIO[ZTestActivityEnvironment[Any], A] =
+    ZIO.serviceWithZIO[ZTestActivityEnvironment[Any]] { testEnv =>
+      ZIO.succeed(testEnv.toJava.newActivityStub(ClassTagUtils.classOf[A], options.toJava))
+    }
 
   /** Sets a listener that is called every time an activity implementation heartbeats through
     * [[zio.temporal.activity.ZActivityExecutionContext.heartbeat]]

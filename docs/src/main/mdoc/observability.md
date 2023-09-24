@@ -338,31 +338,33 @@ trait MyWorkflow {
   def someMethod(): Unit
 }
 ```
-
-**(2)** On the client side:
-
-```scala mdoc:silent
+**(2)** On the client side, create workflow options with search attributes:
+```scala mdoc
 import zio._
 import zio.temporal._
 import zio.temporal.workflow._
 
-val createWorkflow = ZIO.serviceWithZIO[ZWorkflowClient] { workflowClient =>
-  workflowClient.newWorkflowStub[MyWorkflow]
-    .withTaskQueue("<task-queue>")
-    .withWorkflowId("<workflow-id>")
-    .withSearchAttributes(
-      Map(
-        "CustomIntField"         -> ZSearchAttribute(1),
-        "CustomBoolField"        -> ZSearchAttribute(true),
-        "CustomKeywordField"     -> ZSearchAttribute.keyword("borsch"),
-        "CustomKeywordListField" -> ZSearchAttribute.keyword(List("a", "bc", "def"))
-      )
+val workflowOptions = ZWorkflowOptions
+  .withWorkflowId("<workflow-id>")
+  .withTaskQueue("<task-queue>")
+  .withSearchAttributes(
+    Map(
+      "CustomIntField"         -> ZSearchAttribute(1),
+      "CustomBoolField"        -> ZSearchAttribute(true),
+      "CustomKeywordField"     -> ZSearchAttribute.keyword("borsch"),
+      "CustomKeywordListField" -> ZSearchAttribute.keyword(List("a", "bc", "def"))
     )
-    .build
+  )
+```
+
+**(3)** Create the workflow stub with those workflow options:
+```scala mdoc:silent
+val createWorkflow = ZIO.serviceWithZIO[ZWorkflowClient] { workflowClient =>
+  workflowClient.newWorkflowStub[MyWorkflow](workflowOptions)
 }
 ```
 
-**(3)** You might set search attributes in the workflow implementation as well using `upsertSearchAttributes` method:
+**(4)** You might set search attributes in the workflow implementation as well using `upsertSearchAttributes` method:
 
 ```scala mdoc:silent
 import zio.temporal.workflow._

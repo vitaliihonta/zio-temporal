@@ -1,7 +1,8 @@
 package zio.temporal.workflow
 
 import com.uber.m3.tally.Scope
-import io.temporal.workflow.{CancellationScope, ContinueAsNewOptions, Workflow}
+import io.temporal.activity.{ActivityOptions, LocalActivityOptions}
+import io.temporal.workflow.{CancellationScope, Workflow}
 import org.slf4j.Logger
 import zio.temporal.activity._
 import zio.temporal.internal.{ClassTagUtils, TemporalWorkflowFacade, ZWorkflowVersionSpecific}
@@ -20,6 +21,7 @@ import java.util.UUID
 import scala.jdk.OptionConverters._
 import scala.reflect.ClassTag
 import scala.util.Random
+import scala.jdk.CollectionConverters._
 
 object ZWorkflow extends ZWorkflowVersionSpecific {
 
@@ -299,6 +301,67 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
       ZSearchAttribute.toJavaAttributeUpdates(attrs): _*
     )
 
+  /** Sets the default activity options that will be used for activity stubs that have no [[ZActivityOptions]]
+    * specified.<br> This overrides a value provided by
+    * [[zio.temporal.worker.ZWorkflowImplementationOptions.defaultActivityOptions]].<br> A more specific
+    * per-activity-type option specified in [[zio.temporal.worker.ZWorkflowImplementationOptions.activityOptions]] or
+    * [[applyActivityOptions]] takes precedence over this setting.
+    *
+    * @param value
+    *   [[ZActivityOptions]] to be used as a default
+    */
+  def setDefaultActivityOptions(value: ZActivityOptions): Unit = {
+    Workflow.setDefaultActivityOptions(value.toJava)
+  }
+
+  /** @see
+    *   [[applyActivityOptions]]
+    */
+  def applyActivityOptions(values: (String, ZActivityOptions)*): Unit =
+    applyActivityOptions(values.toMap)
+
+  /** Adds activity options per activity type ('''activity method name''') that will be used for an activity stub that
+    * has no [[ZActivityOptions]] specified.<br> This method refines an original set of @code Map<String,
+    * ActivityOptions> provided by [[zio.temporal.worker.ZWorkflowImplementationOptions.activityOptions]]<br> These more
+    * specific options take precedence over more generic setting [[setDefaultActivityOptions]]
+    *
+    * <p>If an activity type already has a [[ZActivityOptions]] set by an earlier call to this method or from
+    * [[zio.temporal.worker.ZWorkflowImplementationOptions.defaultActivityOptions]], new [[ZActivityOptions]] from
+    * `values` will be merged into the old ones by Java SDK's [[ActivityOptions.Builder.mergeActivityOptions]]
+    *
+    * @param values
+    *   a map of activity types to [[ZActivityOptions]]
+    */
+  def applyActivityOptions(values: Map[String, ZActivityOptions]): Unit =
+    Workflow.applyActivityOptions(values.map { case (k, v) => k -> v.toJava }.asJava)
+
+  /** Sets the default local activity options that will be used for activity stubs that have no
+    * [[ZLocalActivityOptions]] specified.<br> This overrides a value provided by
+    * [[zio.temporal.worker.ZWorkflowImplementationOptions.defaultLocalActivityOptions]].<br> A more specific
+    * per-activity-type option specified in [[zio.temporal.worker.ZWorkflowImplementationOptions.localActivityOptions]]
+    * or [[applyLocalActivityOptions]] takes precedence over this setting.
+    *
+    * @param value
+    *   [[ZLocalActivityOptions]] to be used as a default
+    */
+  def setDefaultLocalActivityOptions(value: ZLocalActivityOptions): Unit =
+    Workflow.setDefaultLocalActivityOptions(value.toJava)
+
+  /** Adds local activity options per activity type ('''activity method name''') that will be used for a local activity
+    * stub that has no [[ZLocalActivityOptions]] specified.<br> This method refines an original set of options provided
+    * by [[zio.temporal.worker.ZWorkflowImplementationOptions.defaultLocalActivityOptions]]<br> These more specific
+    * options take precedence over more generic setting [[setDefaultLocalActivityOptions]]
+    *
+    * <p>If an activity type already has a [[ZLocalActivityOptions]] set by an earlier call to this method or from
+    * [[zio.temporal.worker.ZWorkflowImplementationOptions.defaultLocalActivityOptions]], new [[ZLocalActivityOptions]]
+    * from `values` will be merged into the old ones using [[LocalActivityOptions.Builder.mergeActivityOptions]]
+    *
+    * @param values
+    *   a map of activity types to [[ZLocalActivityOptions]]
+    */
+  def applyLocalActivityOptions(values: Map[String, ZLocalActivityOptions]): Unit =
+    Workflow.applyLocalActivityOptions(values.map { case (k, v) => k -> v.toJava }.asJava)
+
   /** Creates a builder of client stub to activities that implement given interface.
     *
     * @tparam A
@@ -306,16 +369,40 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   activity stub builder
     */
+  @deprecated("Use newActivityStub accepting ZActivityOptions", since = "0.6.0")
   def newActivityStub[A: ClassTag: IsActivity]: ZActivityStubBuilderInitial.Of[A] =
-    new ZActivityStubBuilderInitial.Of[A](ZActivityStubBuilderInitial.buildTyped[A])
+    new ZActivityStubBuilderInitial.Of[A](TemporalWorkflowFacade.buildActivityStubTyped[A])
+
+  /** Creates a builder of client stub to activities that implement given interface.
+    *
+    * @tparam A
+    *   activity interface
+    * @param options
+    *   activity options
+    * @return
+    *   activity stub builder
+    */
+  def newActivityStub[A: ClassTag: IsActivity](options: ZActivityOptions): ZActivityStub.Of[A] =
+    TemporalWorkflowFacade.buildActivityStubTyped[A].apply(options.toJava)
 
   /** Creates a builder of untyped client stub to activities
     *
     * @return
     *   untyped activity stub builder
     */
+  @deprecated("Use newUntypedActivityStub accepting ZActivityOptions", since = "0.6.0")
   def newUntypedActivityStub: ZActivityStubBuilderInitial.Untyped =
-    new ZActivityStubBuilderInitial.Untyped(ZActivityStubBuilderInitial.buildUntyped)
+    new ZActivityStubBuilderInitial.Untyped(TemporalWorkflowFacade.buildActivityStubUntyped)
+
+  /** Creates a builder of untyped client stub to activities
+    *
+    * @param options
+    *   activity options
+    * @return
+    *   untyped activity stub builder
+    */
+  def newUntypedActivityStub(options: ZActivityOptions): ZActivityStub.Untyped =
+    TemporalWorkflowFacade.buildActivityStubUntyped(options.toJava)
 
   /** Creates a builder of client stub to local activities that implement given interface.
     *
@@ -324,16 +411,40 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   local activity stub builder
     */
+  @deprecated("Use newLocalActivityStub accepting ZLocalActivityOptions", since = "0.6.0")
   def newLocalActivityStub[A: ClassTag: IsActivity]: ZLocalActivityStubBuilderInitial.Of[A] =
-    new ZLocalActivityStubBuilderInitial.Of[A](ZLocalActivityStubBuilderInitial.buildTyped[A])
+    new ZLocalActivityStubBuilderInitial.Of[A](TemporalWorkflowFacade.buildLocalActivityStubTyped[A])
+
+  /** Creates a builder of client stub to local activities that implement given interface.
+    *
+    * @tparam A
+    *   activity interface
+    * @param options
+    *   local activity options
+    * @return
+    *   local activity stub builder
+    */
+  def newLocalActivityStub[A: ClassTag: IsActivity](options: ZLocalActivityOptions): ZActivityStub.Of[A] =
+    TemporalWorkflowFacade.buildLocalActivityStubTyped[A].apply(options.toJava)
 
   /** Creates a builder of untyped client stub to local activities that implement given interface.
     *
     * @return
     *   local activity stub builder
     */
+  @deprecated("Use newUntypedLocalActivityStub accepting ZLocalActivityOptions", since = "0.6.0")
   def newUntypedLocalActivityStub: ZLocalActivityStubBuilderInitial.Untyped =
-    new ZLocalActivityStubBuilderInitial.Untyped(ZLocalActivityStubBuilderInitial.buildUntyped)
+    new ZLocalActivityStubBuilderInitial.Untyped(TemporalWorkflowFacade.buildLocalActivityStubUntyped)
+
+  /** Creates a builder of untyped client stub to local activities that implement given interface.
+    *
+    * @param options
+    *   local activity options
+    * @return
+    *   local activity stub builder
+    */
+  def newUntypedLocalActivityStub(options: ZLocalActivityOptions): ZActivityStub.Untyped =
+    TemporalWorkflowFacade.buildLocalActivityStubUntyped(options.toJava)
 
   /** Creates a builder of client stub that can be used to start a child workflow that implements given interface.
     *
@@ -342,8 +453,20 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   child workflow stub builder
     */
+  @deprecated("Use newChildWorkflowStub accepting ZChildWorkflowOptions", since = "0.6.0")
   def newChildWorkflowStub[A: ClassTag: IsWorkflow]: ZChildWorkflowStubBuilder.Of[A] =
-    new ZChildWorkflowStubBuilder.Of[A](ZChildWorkflowStubBuilder.buildTyped[A], identity)
+    new ZChildWorkflowStubBuilder.Of[A](TemporalWorkflowFacade.buildChildWorkflowStubTyped[A], identity)
+
+  /** Creates client stub that can be used to start a child workflow that implements given interface. Use
+    * [[newExternalWorkflowStub]] to get a stub to signal a workflow without starting it.
+    *
+    * @tparam A
+    *   interface type implemented by activities
+    * @param options
+    *   options passed to the child workflow.
+    */
+  def newChildWorkflowStub[A: ClassTag: IsWorkflow](options: ZChildWorkflowOptions): ZChildWorkflowStub.Of[A] =
+    TemporalWorkflowFacade.buildChildWorkflowStubTyped[A].apply(options.toJava)
 
   /** Creates a builder of untyped client stub that can be used to start a child workflow that implements given
     * interface.
@@ -351,8 +474,19 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @return
     *   child workflow stub builder
     */
+  @deprecated("Use newUntypedChildWorkflowStub accepting ZChildWorkflowOptions", since = "0.6.0")
   def newUntypedChildWorkflowStub(workflowType: String): ZChildWorkflowStubBuilder.Untyped =
-    new ZChildWorkflowStubBuilder.Untyped(ZChildWorkflowStubBuilder.buildUntyped(workflowType), identity)
+    new ZChildWorkflowStubBuilder.Untyped(TemporalWorkflowFacade.buildChildWorkflowStubUntyped(workflowType), identity)
+
+  /** Creates untyped client stub that can be used to start and signal a child workflow.
+    *
+    * @param workflowType
+    *   name of the workflow type to start.
+    * @param options
+    *   options passed to the child workflow.
+    */
+  def newUntypedChildWorkflowStub(workflowType: String, options: ZChildWorkflowOptions): ZChildWorkflowStub.Untyped =
+    TemporalWorkflowFacade.buildChildWorkflowStubUntyped(workflowType)(options.toJava)
 
   /** Creates client stub that can be used to signal or cancel an existing workflow
     *
@@ -425,8 +559,26 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @tparam A
     *   an interface type implemented by the next run of the workflow
     */
+  @deprecated("Use newContinueAsNewStub accepting ZContinueAsNewOptions", since = "0.6.0")
   def newContinueAsNewStub[A: ClassTag: IsWorkflow]: ZWorkflowContinueAsNewStubBuilder[A] =
     new ZWorkflowContinueAsNewStubBuilder[A](identity)
+
+  /** Continues the current workflow execution as a new run possibly overriding the workflow type and options.
+    *
+    * @tparam A
+    *   workflow type override for the next run, can be null of no override is needed
+    * @param options
+    *   option overrides for the next run, can be null if no overrides are needed
+    */
+  def newContinueAsNewStub[A: ClassTag: IsWorkflow](
+    options: ZContinueAsNewOptions = ZContinueAsNewOptions.default
+  ): ZWorkflowContinueAsNewStub.Of[A] = ZWorkflowContinueAsNewStub.Of[A](
+    new ZWorkflowContinueAsNewStubImpl(
+      ClassTagUtils.getWorkflowType[A],
+      options.toJava,
+      ClassTagUtils.classOf[A]
+    )
+  )
 
   /** Continues the current workflow execution as a new run possibly overriding the workflow type and options.
     *
@@ -437,8 +589,8 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     * @param args
     *   arguments of the next run.
     */
-  def continueAsNew(workflowType: String, options: Option[ContinueAsNewOptions], args: Any*): Unit = {
-    TemporalWorkflowFacade.continueAsNew[Any](workflowType, options.orNull, args.toList)
+  def continueAsNew(workflowType: String, options: Option[ZContinueAsNewOptions], args: Any*): Unit = {
+    TemporalWorkflowFacade.continueAsNew[Any](workflowType, options.map(_.toJava).orNull, args.toList)
   }
 
   /** GetLastCompletionResult extract last completion result from previous run for this cron workflow. This is used in

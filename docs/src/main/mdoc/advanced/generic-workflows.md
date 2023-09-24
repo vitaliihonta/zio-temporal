@@ -118,17 +118,17 @@ def executeWorkflow[DInput <: Drink](
 ZIO.serviceWithZIO[ZWorkflowClient] { client =>
   for {
     // Create stubs
-    sodaWorkflow <- client
-      .newWorkflowStub[SodaWorkflow]
-      .withTaskQueue("generic")
-      .withWorkflowId("soda-workflow-id")
-      .build
+    sodaWorkflow <- client.newWorkflowStub[SodaWorkflow](
+                      ZWorkflowOptions
+                        .withWorkflowId("soda-workflow-id")
+                        .withTaskQueue("generic")
+                    )
 
-    juiceWorkflow <- client
-      .newWorkflowStub[JuiceWorkflow]
-      .withTaskQueue("generic")
-      .withWorkflowId("juice-workflow-id")
-      .build
+    juiceWorkflow <- client.newWorkflowStub[JuiceWorkflow](
+                       ZWorkflowOptions
+                         .withWorkflowId("juice-workflow-id")
+                         .withTaskQueue("generic")
+                     )
     
     _ <- executeWorkflow(sodaWorkflow)(Drink.Soda("Coke"))
     _ <- executeWorkflow(juiceWorkflow)(Drink.Juice("Orange", volume = 2))
@@ -161,10 +161,10 @@ abstract class ParallelDrinkFactory[
   override def processDrinks(count: Int): Unit = {
     ZAsync.foreachPar(produceDrinks(count)) { input =>
       // Polymorphically starts child workflows
-      val child = ZWorkflow
-        .newChildWorkflowStub[DWorkflow]
-        .build
-      
+      val child = ZWorkflow.newChildWorkflowStub[DWorkflow](
+        ZChildWorkflowOptions.withWorkflowId("<meaningful-workflow-id>")  
+      )
+              
       ZChildWorkflowStub.executeAsync(
         child.process(input)
       )
@@ -218,6 +218,8 @@ abstract class BadParentWorkflow[
 ] {
   
   // should not compile
-  private val child = ZWorkflow.newChildWorkflowStub[DWorkflow].build
+  private val child = ZWorkflow.newChildWorkflowStub[DWorkflow](
+    ZChildWorkflowOptions.withWorkflowId("<meaningful-workflow-id>")
+  )
 }
 ```

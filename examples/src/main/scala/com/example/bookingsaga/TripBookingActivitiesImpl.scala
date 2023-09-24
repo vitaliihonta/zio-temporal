@@ -5,11 +5,11 @@ import zio.temporal._
 import zio.temporal.activity._
 
 object TripBookingActivitiesImpl {
-  val make: URLayer[ZActivityOptions[Any], TripBookingActivitiesImpl] =
-    ZLayer.fromFunction(new TripBookingActivitiesImpl()(_: ZActivityOptions[Any]))
+  val make: URLayer[ZActivityRunOptions[Any], TripBookingActivitiesImpl] =
+    ZLayer.fromFunction(new TripBookingActivitiesImpl()(_: ZActivityRunOptions[Any]))
 }
 
-class TripBookingActivitiesImpl(implicit options: ZActivityOptions[Any]) extends TripBookingActivities {
+class TripBookingActivitiesImpl(implicit options: ZActivityRunOptions[Any]) extends TripBookingActivities {
   override def reserveCar(name: String): String = {
     ZActivity.run {
       for {

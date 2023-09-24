@@ -1,11 +1,13 @@
 package zio.temporal.internal
 
+import io.temporal.activity.{ActivityOptions, LocalActivityOptions}
 import io.temporal.api.common.v1.WorkflowExecution
 import io.temporal.client.schedules.ScheduleActionStartWorkflow
-import io.temporal.client.{BatchRequest, WorkflowOptions, WorkflowStub}
+import io.temporal.client.{WorkflowClient, WorkflowOptions, WorkflowStub}
 import io.temporal.common.interceptors.Header
 import io.temporal.workflow.{
   ActivityStub,
+  ChildWorkflowOptions,
   ChildWorkflowStub,
   ContinueAsNewOptions,
   ExternalWorkflowStub,
@@ -17,9 +19,11 @@ import io.temporal.workflow.{
 import java.util.concurrent.{CompletableFuture, TimeUnit}
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
-import zio.Duration
+import zio.{Duration, UIO, ZIO}
 import zio.temporal.JavaTypeTag
+import zio.temporal.activity.{ZActivityStub, ZActivityStubImpl}
 import zio.temporal.schedules.ZScheduleAction
+import zio.temporal.workflow.{ZChildWorkflowStub, ZChildWorkflowStubImpl, ZWorkflowStub, ZWorkflowStubImpl}
 
 object TemporalWorkflowFacade {
   import FunctionConverters._
@@ -155,11 +159,84 @@ object TemporalWorkflowFacade {
       args.asInstanceOf[List[AnyRef]]: _*
     )
 
+  def createWorkflowStubTyped[A: ClassTag](client: WorkflowClient): WorkflowOptions => UIO[ZWorkflowStub.Of[A]] =
+    options =>
+      ZIO.succeed {
+        ZWorkflowStub.Of[A](
+          new ZWorkflowStubImpl(
+            client.newUntypedWorkflowStub(
+              ClassTagUtils.getWorkflowType[A],
+              options
+            ),
+            ClassTagUtils.classOf[A]
+          )
+        )
+      }
+
+  def createWorkflowStubUntyped(
+    workflowType: String,
+    client:       WorkflowClient
+  ): WorkflowOptions => UIO[ZWorkflowStub.Untyped] =
+    options =>
+      ZIO.succeed {
+        new ZWorkflowStub.UntypedImpl(
+          client.newUntypedWorkflowStub(workflowType, options)
+        )
+      }
+
   def continueAsNew[R](workflowType: String, options: ContinueAsNewOptions, args: List[Any]): R = {
     Workflow.continueAsNew(workflowType, options, args.asInstanceOf[List[AnyRef]]: _*)
     // continueAsNew never returns
     null.asInstanceOf[R]
   }
+
+  def buildActivityStubTyped[A: ClassTag]: ActivityOptions => ZActivityStub.Of[A] =
+    options =>
+      ZActivityStub.Of[A](
+        new ZActivityStubImpl(
+          Workflow.newUntypedActivityStub(options),
+          ClassTagUtils.classOf[A]
+        )
+      )
+
+  def buildActivityStubUntyped: ActivityOptions => ZActivityStub.Untyped =
+    options =>
+      new ZActivityStub.UntypedImpl(
+        Workflow.newUntypedActivityStub(options)
+      )
+
+  def buildLocalActivityStubTyped[A: ClassTag]: LocalActivityOptions => ZActivityStub.Of[A] =
+    options =>
+      ZActivityStub.Of[A](
+        new ZActivityStubImpl(
+          Workflow.newUntypedLocalActivityStub(options),
+          ClassTagUtils.classOf[A]
+        )
+      )
+
+  def buildLocalActivityStubUntyped: LocalActivityOptions => ZActivityStub.Untyped =
+    options =>
+      new ZActivityStub.UntypedImpl(
+        Workflow.newUntypedLocalActivityStub(options)
+      )
+
+  def buildChildWorkflowStubTyped[A: ClassTag]: ChildWorkflowOptions => ZChildWorkflowStub.Of[A] =
+    options =>
+      ZChildWorkflowStub.Of(
+        new ZChildWorkflowStubImpl(
+          Workflow.newUntypedChildWorkflowStub(
+            ClassTagUtils.getWorkflowType[A],
+            options
+          ),
+          ClassTagUtils.classOf[A]
+        )
+      )
+
+  def buildChildWorkflowStubUntyped(workflowType: String): ChildWorkflowOptions => ZChildWorkflowStub.Untyped =
+    options =>
+      new ZChildWorkflowStub.UntypedImpl(
+        Workflow.newUntypedChildWorkflowStub(workflowType, options)
+      )
 
   object FunctionConverters {
     implicit def proc(f: () => Unit): Functions.Proc = new Functions.Proc {

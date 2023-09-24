@@ -29,7 +29,7 @@ class ZActivityExecutionContext private[zio] (val toJava: ActivityExecutionConte
 
   /** Extracts Heartbeat details from the last failed attempt. This is used in combination with retry options. An
     * Activity Execution could be scheduled with optional [[zio.temporal.common.ZRetryOptions]] via
-    * [[zio.temporal.activity.ZActivityOptions]]. If an Activity Execution failed then the server would attempt to
+    * [[zio.temporal.activity.ZActivityRunOptions]]. If an Activity Execution failed then the server would attempt to
     * dispatch another Activity Task to retry the execution according to the retry options. If there were Heartbeat
     * details reported by the last Activity Execution that failed, they would be delivered along with the Activity Task
     * for the next retry attempt and can be extracted by the Activity implementation.

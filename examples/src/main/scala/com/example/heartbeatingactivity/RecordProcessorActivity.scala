@@ -12,14 +12,16 @@ trait RecordProcessorActivity {
 }
 
 object RecordProcessorActivityImpl {
-  val make: URLayer[RecordLoader with RecordProcessor with ZActivityOptions[Any], RecordProcessorActivity] =
-    ZLayer.fromFunction(new RecordProcessorActivityImpl(_: RecordLoader, _: RecordProcessor)(_: ZActivityOptions[Any]))
+  val make: URLayer[RecordLoader with RecordProcessor with ZActivityRunOptions[Any], RecordProcessorActivity] =
+    ZLayer.fromFunction(
+      new RecordProcessorActivityImpl(_: RecordLoader, _: RecordProcessor)(_: ZActivityRunOptions[Any])
+    )
 }
 
 class RecordProcessorActivityImpl(
   recordLoader:     RecordLoader,
   recordProcessor:  RecordProcessor
-)(implicit options: ZActivityOptions[Any])
+)(implicit options: ZActivityRunOptions[Any])
     extends RecordProcessorActivity {
 
   override def processRecords(): Int = {

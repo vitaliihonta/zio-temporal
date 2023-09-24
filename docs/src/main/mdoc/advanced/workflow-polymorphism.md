@@ -90,17 +90,17 @@ def basicExecute[W <: NotificationsSenderWorkflow](stub: ZWorkflowStub.Of[W]): T
 ZIO.serviceWithZIO[ZWorkflowClient] { client =>
   for {
     // Create stubs
-    pushWorkflow <- client
-                      .newWorkflowStub[PushNotificationsSenderWorkflow]
-                      .withTaskQueue("push")
-                      .withWorkflowId("SendPush")
-                      .build
+    pushWorkflow <- client.newWorkflowStub[PushNotificationsSenderWorkflow](
+                      ZWorkflowOptions
+                        .withWorkflowId("SendPush")
+                        .withTaskQueue("push")
+                    )
 
-    smsWorkflow <- client
-                    .newWorkflowStub[SmsNotificationsSenderWorkflow]
-                    .withTaskQueue("sms")
-                    .withWorkflowId("SendSMS")
-                    .build
+    smsWorkflow <- client.newWorkflowStub[SmsNotificationsSenderWorkflow](
+                     ZWorkflowOptions
+                       .withWorkflowId("SendSMS")
+                       .withTaskQueue("sms")
+                   )
 
     // Execute the first workflow and recover to the second one
     _ <- basicExecute(pushWorkflow) orElse basicExecute(smsWorkflow)
@@ -123,21 +123,23 @@ trait NotificationChildBasedWorkflow {
 
 class NotificationChildBasedWorkflowImpl extends NotificationChildBasedWorkflow {
   private val logger = ZWorkflow.makeLogger
+  private val workflowId = ZWorkflow.info.workflowId
 
   // Using base Workflow type here
   private val senders: List[ZChildWorkflowStub.Of[NotificationsSenderWorkflow]] =
     List(
-      ZWorkflow
-       .newChildWorkflowStub[PushNotificationsSenderWorkflow]
-       .withRetryOptions(
-         ZRetryOptions.default.withMaximumAttempts(2)
-       )
-       .build,
-      
-      ZWorkflow
-        .newChildWorkflowStub[SmsNotificationsSenderWorkflow]
-        .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(2))
-        .build
+      ZWorkflow.newChildWorkflowStub[PushNotificationsSenderWorkflow](
+        ZChildWorkflowOptions
+          .withWorkflowId(s"$workflowId/push")
+          .withRetryOptions(
+            ZRetryOptions.default.withMaximumAttempts(2)
+          )
+      ),
+      ZWorkflow.newChildWorkflowStub[SmsNotificationsSenderWorkflow](
+        ZChildWorkflowOptions
+          .withWorkflowId(s"$workflowId/sms")
+          .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(2))
+      )
     )
 
   override def send(msg: String): Unit = {

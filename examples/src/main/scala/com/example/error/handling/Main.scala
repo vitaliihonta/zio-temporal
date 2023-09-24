@@ -2,7 +2,7 @@ package com.example.error.handling
 
 import zio._
 import zio.temporal._
-import zio.temporal.activity.ZActivityOptions
+import zio.temporal.activity.ZActivityRunOptions
 import zio.temporal.worker._
 import zio.temporal.workflow._
 import zio.logging.backend.SLF4J
@@ -22,12 +22,12 @@ object Main extends ZIOAppDefault {
     val invokeWorkflows = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
         workflowId <- Random.nextUUID
-        mathWorkflow <- client
-                          .newWorkflowStub[MathWorkflow]
-                          .withTaskQueue(TaskQueue)
-                          .withWorkflowId(workflowId.toString)
-                          .withWorkflowExecutionTimeout(30.seconds)
-                          .build
+        mathWorkflow <- client.newWorkflowStub[MathWorkflow](
+                          ZWorkflowOptions
+                            .withWorkflowId(workflowId.toString)
+                            .withTaskQueue(TaskQueue)
+                            .withWorkflowExecutionTimeout(30.seconds)
+                        )
         _ <- ZIO.logInfo("Running math workflow!")
         res <- ZWorkflowStub.execute(
                  mathWorkflow.formula(4)
@@ -51,7 +51,7 @@ object Main extends ZIOAppDefault {
         // NOTE: try typed/untyped activities
         TypedArithmeticActivityImpl.make,
         ZWorkflowClient.make,
-        ZActivityOptions.default,
+        ZActivityRunOptions.default,
         ZWorkflowServiceStubs.make,
         ZWorkerFactory.make
       )

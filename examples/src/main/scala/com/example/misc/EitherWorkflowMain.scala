@@ -3,7 +3,7 @@ package com.example.misc
 import zio._
 import zio.logging.backend.SLF4J
 import zio.temporal._
-import zio.temporal.activity.{ZActivity, ZActivityOptions, ZActivityStub}
+import zio.temporal.activity.{ZActivity, ZActivityOptions, ZActivityRunOptions, ZActivityStub}
 import zio.temporal.worker._
 import zio.temporal.workflow._
 
@@ -22,11 +22,11 @@ trait EitherActivity {
 }
 
 object EitherActivityImpl {
-  val make: URLayer[ZActivityOptions[Any], EitherActivity] =
-    ZLayer.fromFunction(EitherActivityImpl()(_: ZActivityOptions[Any]))
+  val make: URLayer[ZActivityRunOptions[Any], EitherActivity] =
+    ZLayer.fromFunction(EitherActivityImpl()(_: ZActivityRunOptions[Any]))
 }
 
-case class EitherActivityImpl()(implicit options: ZActivityOptions[Any]) extends EitherActivity {
+case class EitherActivityImpl()(implicit options: ZActivityRunOptions[Any]) extends EitherActivity {
   override def either: Either[String, Int] =
     ZActivity.run {
       ZIO.succeed(Right(41))
@@ -36,11 +36,11 @@ case class EitherActivityImpl()(implicit options: ZActivityOptions[Any]) extends
 
 case class EitherWorkflowImpl() extends EitherWorkflow {
   override def start: Either[String, Int] = {
-    val stub = ZWorkflow
-      .newActivityStub[EitherActivity]
-      .withStartToCloseTimeout(1.seconds)
-      .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(1))
-      .build
+    val stub = ZWorkflow.newActivityStub[EitherActivity](
+      ZActivityOptions
+        .withStartToCloseTimeout(1.seconds)
+        .withRetryOptions(ZRetryOptions.default.withMaximumAttempts(1))
+    )
 
     // Deterministic random
     val randomSum = ZWorkflow.newRandom.nextInt()
@@ -64,14 +64,14 @@ object EitherWorkflowMain extends ZIOAppDefault {
     val invokeWorkflows = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
         workflowId <- Random.nextUUID
-        eitherWorkflow <- client
-                            .newWorkflowStub[EitherWorkflow]
-                            .withTaskQueue(TaskQueue)
-                            .withWorkflowId(workflowId.toString)
-                            .withRetryOptions(
-                              ZRetryOptions.default.withMaximumAttempts(1)
-                            )
-                            .build
+        eitherWorkflow <- client.newWorkflowStub[EitherWorkflow](
+                            ZWorkflowOptions
+                              .withWorkflowId(workflowId.toString)
+                              .withTaskQueue(TaskQueue)
+                              .withRetryOptions(
+                                ZRetryOptions.default.withMaximumAttempts(1)
+                              )
+                          )
         _ <- ZIO.logInfo("Running workflow with either return type...")
         res <- ZWorkflowStub.execute(
                  eitherWorkflow.start
@@ -96,7 +96,7 @@ object EitherWorkflowMain extends ZIOAppDefault {
         ZWorkflowServiceStubs.make,
         ZWorkerFactory.make,
         EitherActivityImpl.make,
-        ZActivityOptions.default
+        ZActivityRunOptions.default
       )
   }
 }

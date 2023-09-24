@@ -2,7 +2,7 @@ package com.example.cancellation
 
 import zio._
 import zio.temporal._
-import zio.temporal.activity.ZActivityOptions
+import zio.temporal.activity.ZActivityRunOptions
 import zio.temporal.worker._
 import zio.temporal.workflow._
 import zio.logging.backend.SLF4J
@@ -22,11 +22,11 @@ object Main extends ZIOAppDefault {
     val invokeWorkflows = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
         workflowId <- Random.nextUUID
-        greetingWorkflow <- client
-                              .newWorkflowStub[GreetingWorkflow]
-                              .withTaskQueue(TaskQueue)
-                              .withWorkflowId(workflowId.toString)
-                              .build
+        greetingWorkflow <- client.newWorkflowStub[GreetingWorkflow](
+                              ZWorkflowOptions
+                                .withWorkflowId(workflowId.toString)
+                                .withTaskQueue(TaskQueue)
+                            )
         _ <- ZIO.logInfo("Running greeting with cancellation workflow!")
         res <- ZWorkflowStub.execute(
                  greetingWorkflow.getGreeting("World")
@@ -49,7 +49,7 @@ object Main extends ZIOAppDefault {
         ZWorkerFactoryOptions.make,
         GreetingActivitiesImpl.make,
         ZWorkflowClient.make,
-        ZActivityOptions.default,
+        ZActivityRunOptions.default,
         ZWorkflowServiceStubs.make,
         ZWorkerFactory.make
       )

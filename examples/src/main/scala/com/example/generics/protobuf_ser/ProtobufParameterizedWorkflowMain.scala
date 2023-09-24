@@ -41,10 +41,9 @@ abstract class DelegatingParameterizedWorkflow[
     logger.info("Creating child workflows...")
     // Create multiple parallel child workflows
     val taskRuns = ZAsync.foreachParDiscard(inputTasks) { case (randomData, input) =>
-      val child = ZWorkflow
-        .newChildWorkflowStub[ChildWorkflow]
-        .withWorkflowId(s"$thisWorkflowId/child/$randomData")
-        .build
+      val child = ZWorkflow.newChildWorkflowStub[ChildWorkflow](
+        ZChildWorkflowOptions.withWorkflowId(s"$thisWorkflowId/child/$randomData")
+      )
 
       logger.info(s"Starting child workflow input=$input...")
       ZChildWorkflowStub.executeAsync(
@@ -140,17 +139,17 @@ object ProtobufParameterizedWorkflowMain extends ZIOAppDefault {
     val flow = ZIO.serviceWithZIO[ZWorkflowClient] { client =>
       for {
         uuid <- ZIO.randomWith(_.nextUUID)
-        sodaWf <- client
-                    .newWorkflowStub[SodaWorkflow]
-                    .withTaskQueue(TaskQueue)
-                    .withWorkflowId(s"proto-soda/$uuid")
-                    .build
+        sodaWf <- client.newWorkflowStub[SodaWorkflow](
+                    ZWorkflowOptions
+                      .withWorkflowId(s"proto-soda/$uuid")
+                      .withTaskQueue(TaskQueue)
+                  )
 
-        juiceWf <- client
-                     .newWorkflowStub[JuiceWorkflow]
-                     .withTaskQueue(TaskQueue)
-                     .withWorkflowId(s"proto-juice/$uuid")
-                     .build
+        juiceWf <- client.newWorkflowStub[JuiceWorkflow](
+                     ZWorkflowOptions
+                       .withWorkflowId(s"proto-juice/$uuid")
+                       .withTaskQueue(TaskQueue)
+                   )
 
         _ <- runWorkflow(sodaWf)(WorkflowSodaInput("coke"))
                .zip(runWorkflow(juiceWf)(WorkflowJuiceInput("orange")))

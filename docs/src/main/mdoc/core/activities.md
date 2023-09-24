@@ -63,7 +63,7 @@ class BookingActivityImpl extends BookingActivity {
 `ZIO Temporal` also provides you an option to run arbitrary `ZIO` code inside the activity!
 
 ```scala mdoc
-class BookingActivityZIOImpl(implicit options: ZActivityOptions[Any]) extends BookingActivity {
+class BookingActivityZIOImpl(implicit options: ZActivityRunOptions[Any]) extends BookingActivity {
   override def bookFlight(name: String, surname: String, flightNumber: String): UUID = {
     ZActivity.run {
       for {
@@ -84,8 +84,8 @@ class BookingActivityZIOImpl(implicit options: ZActivityOptions[Any]) extends Bo
 ```
 
 Important notes regarding `ZIO` example:
-- In order to run `ZIO` inside the activity, it's required for the activity to have an implicit `ZActivityOptions` available.  
-- `ZActivityOptions[+R]` contains the following:
+- In order to run `ZIO` inside the activity, it's required for the activity to have an implicit `ZActivityRunOptions` available.  
+- `ZActivityRunOptions[+R]` contains the following:
   - `zio.Runtime[+R]` instance allowing to run the `ZIO` itself
   - `ActivityCompletionClient` instance which allows to complete the Activity asynchronously
   - Those, the Activity method execution won't block on the worker, allowing to utilize resources better.
@@ -109,10 +109,10 @@ Then you implement it the same way as usual:
 
 ```scala mdoc
 class BookingWorkflowImpl extends BookingWorkflow {
-  private val bookingActivity: ZActivityStub.Of[BookingActivity] = ZWorkflow
-    .newActivityStub[BookingActivity]
-    .withStartToCloseTimeout(10.seconds)
-    .build
+  private val bookingActivity: ZActivityStub.Of[BookingActivity] = 
+    ZWorkflow.newActivityStub[BookingActivity](
+      ZActivityOptions.withStartToCloseTimeout(10.seconds)
+    )
     
   override def bookFlight(name: String, surname: String, flightNumber: String, cardId: UUID): UUID = {
     val bookingId = ZActivityStub.execute(
@@ -130,6 +130,7 @@ It's also mandatory to provide at least the `start to close timeout`, which we'l
 
 Important notes:
 - `ZWorkflow.newActivityStub` provides you a stub which communicates to Temporal cluster in order to invoke activities
+  - The method requires specifying the Activity Interface type and `ZActivityOptions`
 - **You must always** wrap the activity method invocation into `ZActivityStub.execute` method.
   - The `ZActivityStub.Of[BookingActivity]` is a compile-time stub, so actual method invocations are only valid in compile-time
   - `bookingActivity.bookFlight(name, surname, flightNumber)` invocation would be re-written into an untyped Temporal's activity invocation
@@ -165,8 +166,8 @@ val worker: URLayer[BookingActivity with ZWorkerFactory, Unit] =
 The activity could be created as follows:
 
 ```scala mdoc:silent
-val activityLayer: URLayer[ZActivityOptions[Any], BookingActivity] =
-  ZLayer.fromFunction(new BookingActivityZIOImpl()(_: ZActivityOptions[Any]))
+val activityLayer: URLayer[ZActivityRunOptions[Any], BookingActivity] =
+  ZLayer.fromFunction(new BookingActivityZIOImpl()(_: ZActivityRunOptions[Any]))
 ```
 
 ... and then somewhere you build your program:
@@ -176,7 +177,7 @@ val program = ???
 
 program.provide(
   // ... All the temporal dependencies
-  ZActivityOptions.default, // default ZActivityOptions
+  ZActivityRunOptions.default, // default ZActivityOptions
   activityLayer // The activity implementation
 )
 ```

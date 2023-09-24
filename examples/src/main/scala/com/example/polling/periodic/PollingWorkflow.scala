@@ -12,10 +12,9 @@ trait PollingWorkflow {
 
 class PeriodicPollingWorkflowImpl extends PollingWorkflow {
   override def exec(): String = {
-    val childWorkflow = ZWorkflow
-      .newChildWorkflowStub[PollingChildWorkflow]
-      .withWorkflowId(ZWorkflow.info.workflowId + "/child")
-      .build
+    val childWorkflow = ZWorkflow.newChildWorkflowStub[PollingChildWorkflow](
+      ZChildWorkflowOptions.withWorkflowId(ZWorkflow.info.workflowId + "/child")
+    )
 
     ZChildWorkflowStub.execute(
       childWorkflow.exec(5.seconds)

@@ -56,7 +56,14 @@ sealed trait ZSaga[+A] { self =>
 }
 
 object ZSaga {
-  final case class Options(parallelCompensation: Boolean = false, continueWithError: Boolean = false)
+  final case class Options(parallelCompensation: Boolean = false, continueWithError: Boolean = false) {
+    override def toString: String = {
+      s"ZSaga.Options(" +
+        s"parallelCompensation=$parallelCompensation" +
+        s", continueWithError=$continueWithError" +
+        s")"
+    }
+  }
 
   object Options {
     val default: Options = Options()

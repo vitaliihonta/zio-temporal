@@ -5,7 +5,7 @@ import io.temporal.common.interceptors.Header
 import zio._
 import zio.temporal.TemporalIO
 import zio.temporal.internal.{ClassTagUtils, TemporalInteraction}
-import zio.temporal.workflow.{IsWorkflow, ZWorkflowServiceStubs, ZWorkflowStubBuilderTaskQueueDsl}
+import zio.temporal.workflow.{IsWorkflow, ZWorkflowOptions, ZWorkflowServiceStubs, ZWorkflowStubBuilderTaskQueueDsl}
 import zio.stream._
 
 import scala.reflect.ClassTag
@@ -78,29 +78,33 @@ final class ZScheduleClient private[zio] (val toJava: ScheduleClient) {
     *
     * @tparam A
     *   workflow interface
+    * @param options
+    *   options that will be used to configure and start a new workflow.
     * @param header
     *   headers sent with each workflow scheduled
     * @return
     *   builder instance
     */
   def newScheduleStartWorkflowStub[A: ClassTag: IsWorkflow](
-    header: Header = Header.empty()
-  ): ZWorkflowStubBuilderTaskQueueDsl[ZScheduleStartWorkflowStub.Of[A]] =
-    new ZWorkflowStubBuilderTaskQueueDsl[ZScheduleStartWorkflowStub.Of[A]](options =>
-      ZScheduleStartWorkflowStub.Of(
-        new ZScheduleStartWorkflowStubImpl(
-          ClassTagUtils.classOf[A],
-          options,
-          header
-        )
+    options: ZWorkflowOptions,
+    header:  Header = Header.empty()
+  ): ZScheduleStartWorkflowStub.Of[A] = {
+    ZScheduleStartWorkflowStub.Of(
+      new ZScheduleStartWorkflowStubImpl(
+        ClassTagUtils.classOf[A],
+        options.toJava,
+        header
       )
     )
+  }
 
   /** Creates new untyped schedule start workflow stub builder. The instance could then be used to start a scheduled
     * workflow.
     *
     * @param workflowType
     *   workflow type
+    * @param options
+    *   options that will be used to configure and start a new workflow.
     * @param header
     *   headers sent with each workflow scheduled
     * @return
@@ -108,15 +112,15 @@ final class ZScheduleClient private[zio] (val toJava: ScheduleClient) {
     */
   def newUntypedScheduleStartWorkflowStub(
     workflowType: String,
+    options:      ZWorkflowOptions,
     header:       Header = Header.empty()
-  ): ZWorkflowStubBuilderTaskQueueDsl[ZScheduleStartWorkflowStub.Untyped] =
-    new ZWorkflowStubBuilderTaskQueueDsl[ZScheduleStartWorkflowStub.Untyped](options =>
-      new ZScheduleStartWorkflowStub.UntypedImpl(
-        workflowType,
-        options,
-        header
-      )
+  ): ZScheduleStartWorkflowStub.Untyped = {
+    new ZScheduleStartWorkflowStub.UntypedImpl(
+      workflowType,
+      options.toJava,
+      header
     )
+  }
 }
 
 object ZScheduleClient {

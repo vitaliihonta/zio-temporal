@@ -8,9 +8,9 @@ class SubscriptionWorkflowImpl extends SubscriptionWorkflow {
   private val logger = ZWorkflow.makeLogger
 
   private val subscriptionActivities = ZWorkflow
-    .newActivityStub[SubscriptionActivities]
-    .withStartToCloseTimeout(5.minutes)
-    .build
+    .newActivityStub[SubscriptionActivities](
+      ZActivityOptions.withStartToCloseTimeout(5.minutes)
+    )
 
   override def proceedRecurringSubscription(subscriptionId: String): Unit = {
     logger.info(s"Processing subscription=$subscriptionId")

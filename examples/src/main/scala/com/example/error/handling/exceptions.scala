@@ -7,11 +7,11 @@ import zio.temporal.workflow._
 import zio.temporal.failure.ActivityFailure
 
 object ArithmeticActivityImpl {
-  val make: URLayer[ZActivityOptions[Any], ArithmeticActivity] =
-    ZLayer.fromFunction(ArithmeticActivityImpl()(_: ZActivityOptions[Any]))
+  val make: URLayer[ZActivityRunOptions[Any], ArithmeticActivity] =
+    ZLayer.fromFunction(ArithmeticActivityImpl()(_: ZActivityRunOptions[Any]))
 }
 
-case class ArithmeticActivityImpl()(implicit options: ZActivityOptions[Any]) extends ArithmeticActivity {
+case class ArithmeticActivityImpl()(implicit options: ZActivityRunOptions[Any]) extends ArithmeticActivity {
   override def divide(x: Int, y: Int): Int = {
     ZActivity.run {
       for {
@@ -33,15 +33,16 @@ class MathWorkflowImpl extends MathWorkflow {
   private lazy val logger = ZWorkflow.makeLogger
 
   private val activity: ZActivityStub.Of[ArithmeticActivity] = ZWorkflow
-    .newLocalActivityStub[ArithmeticActivity]
-    .withStartToCloseTimeout(10.seconds)
-    .withRetryOptions(
-      ZRetryOptions.default
-        .withMaximumAttempts(3)
-        // Without this block, division will be retried
-        .withDoNotRetry(nameOf[ArithmeticException])
+    .newLocalActivityStub[ArithmeticActivity](
+      ZLocalActivityOptions
+        .withStartToCloseTimeout(10.seconds)
+        .withRetryOptions(
+          ZRetryOptions.default
+            .withMaximumAttempts(3)
+            // Without this block, division will be retried
+            .withDoNotRetry(nameOf[ArithmeticException])
+        )
     )
-    .build
 
   override def formula(a: Int): Int = {
     val twice = ZActivityStub.execute(

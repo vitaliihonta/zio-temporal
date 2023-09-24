@@ -61,10 +61,10 @@ Then we could implement a stateful workflow as follows:
 
 ```scala mdoc:silent
 class PaymentWorkflowImpl extends PaymentWorkflow {
-  private val paymentActivity: ZActivityStub.Of[PaymentActivity] = ZWorkflow
-    .newActivityStub[PaymentActivity]
-    .withStartToCloseTimeout(10.seconds)
-    .build
+  private val paymentActivity: ZActivityStub.Of[PaymentActivity] = 
+    ZWorkflow.newActivityStub[PaymentActivity](
+      ZActivityOptions.withStartToCloseTimeout(10.seconds)
+    )
     
   private val paymentState = ZWorkflowState.make[PaymentState](PaymentState.Initial)
   
