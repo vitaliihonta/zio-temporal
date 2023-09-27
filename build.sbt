@@ -58,7 +58,8 @@ lazy val baseProjectSettings = Seq(
   scalacOptions ++= {
     val baseOptions = Seq(
       "-language:implicitConversions",
-      "-language:higherKinds"
+      "-language:higherKinds",
+      "-deprecation"
     )
     val crossVersionOptions = CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, y)) if y < 13 => Seq("-Ypartial-unification")

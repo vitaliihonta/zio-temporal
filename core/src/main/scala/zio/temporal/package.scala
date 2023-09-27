@@ -48,11 +48,6 @@ package object temporal {
     */
   def simpleNameOf[A: ClassTag]: String = ClassTagUtils.classOf[A].getSimpleName
 
-  /** Brings aspects `@@` to [[zio.ZLayer]]
-    */
-  implicit def ZLayerAspectSyntax[RIn, E, ROut](self: ZLayer[RIn, E, ROut]): ZLayerAspect.Syntax[RIn, E, ROut] =
-    new ZLayerAspect.Syntax[RIn, E, ROut](self)
-
   /** Temporal uses `tally-core` that has it's own [[com.uber.m3.util.Duration]] class. This method converts
     * [[zio.Duration]] so that consumers won't need to use tally's one.
     */
