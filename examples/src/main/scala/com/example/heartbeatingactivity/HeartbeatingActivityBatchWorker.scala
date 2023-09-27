@@ -44,7 +44,6 @@ object HeartbeatingActivityBatchWorker extends ZIOAppDefault {
         // Activity
         RecordLoaderImpl.make,
         RecordProcessorImpl.make,
-        RecordProcessorActivityImpl.make,
         // Services
         ZWorkflowClient.make,
         ZWorkflowServiceStubs.make,

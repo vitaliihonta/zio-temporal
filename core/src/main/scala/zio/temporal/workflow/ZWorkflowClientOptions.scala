@@ -15,7 +15,7 @@ import scala.jdk.CollectionConverters._
   * @see
   *   [[WorkflowClientOptions]]
   */
-case class ZWorkflowClientOptions private[zio] (
+final case class ZWorkflowClientOptions private[zio] (
   namespace:     Option[String],
   dataConverter: DataConverter,
   interceptors:  List[WorkflowClientInterceptor],
