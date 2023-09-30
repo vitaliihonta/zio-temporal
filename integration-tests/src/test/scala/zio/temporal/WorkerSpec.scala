@@ -104,6 +104,38 @@ object WorkerSpec extends BaseTemporalSpec {
       ZTestWorkflowEnvironment.makeDefault[Any],
       ZLayer.fromZIO(ZTestWorkflowEnvironment.activityRunOptions[Any]),
       ReporterService.make
+    ) @@ TestAspect.withLiveClock,
+    test("Register activities using addActivityImplementationLayer") {
+      val taskQueue = "multi-activities-2-workflow-queue"
+
+      for {
+        workflowId <- ZIO.randomWith(_.nextUUID)
+        _ <- ZTestWorkflowEnvironment.newWorker(taskQueue) @@
+               ZWorker.addWorkflowImplementations(
+                 List(ZWorkflowImplementationClass[EvenMoreMultiActivitiesWorkflowImpl])
+               ) @@
+               ZWorker.addActivityImplementationLayer(
+                 ZLayer.fromFunction(new ZioActivityImpl()(_: ZActivityRunOptions[Any]))
+               ) @@
+               ZWorker.addActivityImplementationLayer(
+                 ZLayer.fromFunction(ComplexTypesActivityImpl()(_: ZActivityRunOptions[Any]))
+               ) @@
+               ZWorker.addActivityImplementationLayer(ActivityWithDependenciesImpl.make)
+        _ <- ZTestWorkflowEnvironment.setup()
+        multiWorkflow <- ZTestWorkflowEnvironment.newWorkflowStub[MultiActivitiesWorkflow](
+                           ZWorkflowOptions
+                             .withWorkflowId(workflowId.toString)
+                             .withTaskQueue(taskQueue)
+                             .withWorkflowRunTimeout(10.second)
+                         )
+        result <- ZWorkflowStub.execute(
+                    multiWorkflow.doSomething("Vitalii")
+                  )
+      } yield assertTrue(result == "Echoed Vitalii, list=2")
+    }.provideSome[Scope](
+      ZTestWorkflowEnvironment.makeDefault[Any],
+      ZLayer.fromZIO(ZTestWorkflowEnvironment.activityRunOptions[Any]),
+      ReporterService.make
     ) @@ TestAspect.withLiveClock
   )
 }

@@ -280,6 +280,8 @@ object ZWorker {
     }
   }
 
+  /** Adds activity from the ZIO environment.
+    */
   def addActivityImplementationService[Activity <: AnyRef: ExtendsActivity: Tag]: ZWorker.Add[Nothing, Activity] =
     new ZIOAspect[Nothing, Activity, Nothing, Any, ZWorker, ZWorker] {
       override def apply[R >: Nothing <: Activity, E >: Nothing <: Any, A >: ZWorker <: ZWorker](
@@ -287,6 +289,26 @@ object ZWorker {
       )(implicit trace: Trace
       ): ZIO[R, E, A] =
         zio.flatMap(_.addActivityImplementationService[Activity])
+    }
+
+  /** Adds activity from the given [[ZLayer]]
+    *
+    * @param layer
+    *   the activity implementation object as a [[ZLayer]]
+    */
+  def addActivityImplementationLayer[R0, Activity <: AnyRef: ExtendsActivity: Tag, E0](
+    layer: ZLayer[R0, E0, Activity]
+  ): ZIOAspect[Nothing, R0 with Scope, E0, Any, ZWorker, ZWorker] =
+    new ZIOAspect[Nothing, R0 with Scope, E0, Any, ZWorker, ZWorker] {
+      override def apply[R >: Nothing <: R0 with Scope, E >: E0 <: Any, A >: ZWorker <: ZWorker](
+        zio:            ZIO[R, E, A]
+      )(implicit trace: Trace
+      ): ZIO[R, E, A] =
+        zio.flatMap { worker =>
+          layer.build.flatMap { env =>
+            worker.addActivityImplementation(env.get[Activity])
+          }
+        }
     }
 
   /** Allows building workers using [[ZIOAspect]]
