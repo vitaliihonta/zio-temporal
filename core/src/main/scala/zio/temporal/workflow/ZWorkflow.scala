@@ -653,4 +653,17 @@ object ZWorkflow extends ZWorkflowVersionSpecific {
     */
   def metricsScope: Scope =
     Workflow.getMetricsScope
+
+  /** Create a new instance of a [[ZWorkflowQueue]] implementation that is adapted to be used from a workflow code.
+    *
+    * @tparam E
+    *   type of queue elements
+    * @param capacity
+    *   the maximum size of the queue
+    * @return
+    *   new instance of [[ZWorkflowQueue]]
+    */
+  def newWorkflowQueue[E](capacity: Int): ZWorkflowQueue[E] =
+    new ZWorkflowQueue(Workflow.newWorkflowQueue(capacity))
+
 }
