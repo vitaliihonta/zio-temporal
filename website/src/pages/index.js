@@ -55,18 +55,18 @@ class TemporalPaymentService(workflowClient: ZWorkflowClient) {
   def createPayment(sender: UUID, receiver: UUID, amount: BigDecimal) =
     for {
       transactionId <- ZIO.randomWith(_.nextUUID)
-      paymentWorkflow <- workflowClient
-                           .newWorkflowStub[PaymentWorkflow]
-                           .withTaskQueue("payments")
-                           .withWorkflowId(transactionId.toString)
-                           // Built-in timeouts
-                           .withWorkflowExecutionTimeout(6.minutes)
-                           .withWorkflowRunTimeout(1.minute)
-                           // Built-in retries
-                           .withRetryOptions(
-                             ZRetryOptions.default.withMaximumAttempts(5)
-                           )
-                           .build
+      paymentWorkflow <- workflowClient.newWorkflowStub[PaymentWorkflow](
+                           ZWorkflowOptions
+                             .withWorkflowId(transactionId.toString)
+                             .withTaskQueue("payments")
+                             // Built-in timeouts
+                             .withWorkflowExecutionTimeout(6.minutes)
+                             .withWorkflowRunTimeout(1.minute)
+                             // Built-in retries
+                             .withRetryOptions(
+                               ZRetryOptions.default.withMaximumAttempts(5)
+                             )
+                         )
       // Start the business process
       _ <- ZWorkflowStub.start(
              paymentWorkflow.proceed(
