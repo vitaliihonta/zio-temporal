@@ -111,7 +111,6 @@ class EchoWorkflowImpl extends EchoWorkflow {
     activity.execute[String]("Echo", what)
   }
 
-  @signalMethod
   override def signalSomething(): Unit = {
     // Do nothing, it's just for demo purposes
   }
