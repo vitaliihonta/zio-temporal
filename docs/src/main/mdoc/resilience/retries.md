@@ -48,7 +48,7 @@ val retryOptions = ZRetryOptions.default
   .withMaximumAttempts(3)
   .withInitialInterval(300.millis)
   .withMaximumAttempts(5)
-  .withBackoffCoefficient(0.5)
+  .withBackoffCoefficient(1.2)
   .withDoNotRetry(nameOf[IllegalArgumentException])
 ```
 
