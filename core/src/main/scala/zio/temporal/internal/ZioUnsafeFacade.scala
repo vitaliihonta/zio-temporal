@@ -4,12 +4,13 @@ import zio._
 
 object ZioUnsafeFacade {
 
-  def unsafeRunAsyncZIO[R, E, A](runtime: Runtime[R],
-                                  action: ZIO[R, E, A]
-                                )(onDie: Throwable => Unit,
-                                  onFailure: E => Unit,
-                                  onSuccess: A => Unit
-                                ): Unit =
+  def unsafeRunAsyncZIO[R, E, A](
+    runtime:   Runtime[R],
+    action:    ZIO[R, E, A]
+  )(onDie:     Throwable => Unit,
+    onFailure: E => Unit,
+    onSuccess: A => Unit
+  ): Unit =
     Unsafe.unsafe { implicit unsafe: Unsafe =>
       val fiber = runtime.unsafe.fork(action)
       fiber.unsafe.addObserver {
@@ -17,16 +18,12 @@ object ZioUnsafeFacade {
           cause.isInterrupted
           cause.failureOrCause.fold(
             onFailure,
-            {
-              case Cause.Die(t, _) => onDie(t)
-              case _ => onDie(new InterruptedException())
-            }
+            _.find { case Cause.Die(t, _) => t }.map(onDie).getOrElse(onDie(new InterruptedException()))
           )
         case Exit.Success(value) => onSuccess(value)
       }
       runtime.unsafe.fork(fiber.interrupt)
     }
-
 
   def unsafeRunZIO[R, E, A](
     runtime:       Runtime[R],
