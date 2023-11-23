@@ -21,7 +21,6 @@ object ZioUnsafeFacade {
           )
         case Exit.Success(value) => onSuccess(value)
       }
-      runtime.unsafe.fork(fiber.interrupt)
     }
 
   def unsafeRunZIO[R, E, A](
