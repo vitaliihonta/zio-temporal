@@ -15,7 +15,6 @@ object ZioUnsafeFacade {
       val fiber = runtime.unsafe.fork(action)
       fiber.unsafe.addObserver {
         case Exit.Failure(cause) =>
-          cause.isInterrupted
           cause.failureOrCause.fold(
             onFailure,
             _.find { case Cause.Die(t, _) => t }.map(onDie).getOrElse(onDie(new InterruptedException()))
