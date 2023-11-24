@@ -42,7 +42,7 @@ sealed trait ZAsync[+A] { self =>
 
   def map[B](f: A => B): ZAsync[B]
 
-  def as[B](value: B): ZAsync[B] =
+  def as[B](value: => B): ZAsync[B] =
     self.map(_ => value)
 
   def unit: ZAsync[Unit] =
