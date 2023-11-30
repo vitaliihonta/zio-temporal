@@ -153,8 +153,14 @@ object ZSaga {
   )(f:           A => ZSaga[B]
   )(implicit bf: BuildFrom[Collection[A], B, Collection[B]]
   ): ZSaga[Collection[B]] =
-    in.foldLeft[ZSaga[mutable.Builder[B, Collection[B]]]](succeed(bf(in)))((io, a) => io.zipWith(f(a))(_ += _))
+    in.foldLeft[ZSaga[mutable.Builder[B, Collection[B]]]](succeed(bf(in)))((acc, a) => acc.zipWith(f(a))(_ += _))
       .map(_.result())
+
+  def foreachDiscard[A](
+    in: Iterable[A]
+  )(f:  A => ZSaga[Any]
+  ): ZSaga[Unit] =
+    in.foldLeft[ZSaga[Any]](unit)((acc, a) => acc.flatMap(_ => f(a))).unit
 
   // Internal
   private[temporal] final case class Attempt[A] private[zio] (thunk: () => A) extends ZSaga[A]
