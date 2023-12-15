@@ -9,7 +9,7 @@ on:
   pull_request:
   push:
     branches:
-      - 'main'
+      - "main"
   release:
     types:
       - published
@@ -63,7 +63,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: ['17']
+        java: ["17"]
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v3
@@ -86,7 +86,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: ['8', '11']
+        java: ["11", "17"]
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v3
@@ -122,7 +122,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: 8
+          java-version: 17
           check-latest: true
       - name: Install libuv
         run: sudo apt-get update && sudo apt-get install -y libuv1-dev
