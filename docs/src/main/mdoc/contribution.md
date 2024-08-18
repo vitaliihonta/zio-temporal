@@ -31,3 +31,10 @@ make start-site
 make gen-doc
 ```
 The watcher should pick up your changes
+
+## Working on Documentation
+
+If you are editing the documentation (not the API Scaladocs) and you want to see the results as you work, you can:
+
+1. Run `npm run start` from the `/website` directory, which will start the Docusaurus server (port `3000`), and leave it running.
+2. Run `sbt mdoc` from the root `/` directory, which will copy your changes from the `src` directory (where you are working) to the `target` directory (where Docusaurus can see the changes to update the browser window).

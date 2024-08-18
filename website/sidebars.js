@@ -68,6 +68,52 @@ const sidebars = {
       ]
     },
     {
+      type: "category",
+      label: "Tutorial",
+      items: [
+        {
+          type: "doc",
+          id: "tutorial/tutorial-intro",
+          label: "Background Review"
+        },
+        {
+          type: "doc",
+          id: "tutorial/environment-setup",
+          label: "Setting Up the Tutorial Environment"
+        },
+        {
+          type: "doc",
+          id: "tutorial/workflow-definition",
+          label: "Defining a Workflow"
+        },
+        {
+          type: "doc",
+          id: "tutorial/worker-creation",
+          label: "Creating a Worker"
+        },
+        {
+          type: "doc",
+          id: "tutorial/workflow-execution",
+          label: "Executing a Workflow"
+        },
+        {
+          type: "doc",
+          id: "tutorial/json-io",
+          label: "Using a Complex Workflow Parameter"
+        },
+        {
+          type: "doc",
+          id: "tutorial/activities",
+          label: "Using a Temporal Activity"
+        },
+        {
+          type: "doc",
+          id: "tutorial/next-steps",
+          label: "Next Steps for Learning"
+        },
+      ]
+    },
+    {
       type: "doc",
       id: "FAQ",
       label: "FAQ"
