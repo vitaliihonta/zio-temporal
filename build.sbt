@@ -16,6 +16,8 @@ ThisBuild / projectStableVersion := {
 
 ThisBuild / organization  := "dev.vhonta"
 ThisBuild / versionScheme := Some("early-semver")
+ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
+ThisBuild / sonatypeRepository     := "https://s01.oss.sonatype.org/service/local"
 
 val publishSettings = Seq(
   publishTo            := sonatypePublishToBundle.value,
