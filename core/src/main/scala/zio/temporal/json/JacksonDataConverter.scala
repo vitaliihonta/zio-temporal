@@ -7,13 +7,15 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import io.temporal.common.converter._
 
 object JacksonDataConverter {
-  val DefaultObjectMapper: ObjectMapper =
+  val DefaultObjectMapperBuilder: JsonMapper.Builder =
     JsonMapper
       .builder()
       .addModule(DefaultScalaModule)
       .addModule(new JavaTimeModule)
       .addModule(BoxedUnitModule)
-      .build()
+
+  val DefaultObjectMapper: ObjectMapper =
+    DefaultObjectMapperBuilder.build()
 
   def make(objectMapper: ObjectMapper = DefaultObjectMapper): DataConverter = {
     new DefaultDataConverter(

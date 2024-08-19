@@ -226,8 +226,23 @@ object ZAsync {
   )(f:           A => ZAsync[B]
   )(implicit bf: BuildFrom[Collection[A], B, Collection[B]]
   ): ZAsync[Collection[B]] =
-    in.foldLeft[ZAsync[mutable.Builder[B, Collection[B]]]](succeed(bf(in)))((io, a) => io.zipWith(f(a))(_ += _))
+    in.foldLeft[ZAsync[mutable.Builder[B, Collection[B]]]](succeed(bf(in)))((acc, a) => acc.zipWith(f(a))(_ += _))
       .map(_.result())
+
+  /** Similar to [[zio.ZIO.foreachDiscard]] for collections
+    *
+    * @param in
+    *   sequence of values
+    * @param f
+    *   value handler
+    * @return
+    *   promise that completes when all inner promises complete
+    */
+  def foreachDiscard[A](
+    in: Iterable[A]
+  )(f:  A => ZAsync[Any]
+  ): ZAsync[Unit] =
+    in.foldLeft[ZAsync[Any]](unit)((acc, a) => acc.flatMap(_ => f(a))).unit
 
   /** Similar to [[zio.ZIO.foreachPar]] for collections
     *
