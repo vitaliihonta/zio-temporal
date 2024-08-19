@@ -11,7 +11,7 @@
 See the list of issues on GitHub and pick one! Or report your own.
 
 If you are having doubts on why or how something works, don't hesitate to ask a question on Discord or via GitHub.  
-This probably means that the documentation, ScalaDocs or code is unclear and be improved for the benefit of all.  
+This probably means that the documentation, ScalaDocs or code is unclear and could be improved for the benefit of all.  
 
 ## Testing locally
 Tests doesn't require any environment installed, so simply run:
