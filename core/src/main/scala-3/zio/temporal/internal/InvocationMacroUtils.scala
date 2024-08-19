@@ -117,7 +117,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
           case vd: ValDef =>
             val t = vd.tpt.tpe
             if (t =:= TypeRepr.of[Any] || t =:= TypeRepr.of[java.lang.Object])
-            Some(SharedCompileTimeMessages.TemporalMethodParameterIssue.isJavaLangObject(param.name.toString))
+              Some(SharedCompileTimeMessages.TemporalMethodParameterIssue.isJavaLangObject(param.name.toString))
             /*only if all base classes are "primitive"*/
             else if (t.baseClasses.forall(lowestBaseTypes.contains)) {
               Some(
