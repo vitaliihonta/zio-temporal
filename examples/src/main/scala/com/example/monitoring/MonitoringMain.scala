@@ -14,7 +14,7 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.`export`.SimpleSpanProcessor
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
 import io.opentelemetry.extension.trace.propagation.OtTracePropagator
-import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
+import io.opentelemetry.semconv.ServiceAttributes
 import io.temporal.failure.TemporalException
 import zio._
 import zio.logging.backend.SLF4J
@@ -108,7 +108,7 @@ object MonitoringMain extends ZIOAppDefault {
 
   private def buildOpenTracingOptions(): OpenTracingOptions = {
     val selfResource = Resource.getDefault.merge(
-      Resource.create(Attributes.of(ResourceAttributes.SERVICE_NAME, "zio-temporal-sample-otel"))
+      Resource.create(Attributes.of(ServiceAttributes.SERVICE_NAME, "zio-temporal-sample-otel"))
     )
 
     val spanProcessor = SimpleSpanProcessor.create(
