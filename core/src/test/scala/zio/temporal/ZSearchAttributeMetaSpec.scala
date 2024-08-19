@@ -50,7 +50,7 @@ class ZSearchAttributeMetaSpec extends AnyWordSpec with Matchers {
       val uuid = UUID.randomUUID()
 
       ZSearchAttributeMeta.uuid.encode(uuid) shouldEqual (uuid.toString)
-      ZSearchAttributeMeta.uuid.decode((uuid.toString)) shouldEqual uuid
+      ZSearchAttributeMeta.uuid.decode(uuid.toString) shouldEqual uuid
 
       ZSearchAttributeMeta.bigInt.attributeKey(keyName) shouldEqual SearchAttributeKey.forText(keyName)
       ZSearchAttributeMeta.bigInt.encode(BigInt(123) * 1000000000000000000L) shouldEqual "123000000000000000000"
@@ -66,18 +66,18 @@ class ZSearchAttributeMetaSpec extends AnyWordSpec with Matchers {
       val ldt = LocalDateTime.now()
       ZSearchAttributeMeta.localDateTime.attributeKey(keyName) shouldEqual SearchAttributeKey.forOffsetDateTime(keyName)
       ZSearchAttributeMeta.localDateTime.encode(ldt) shouldEqual (ldt.atOffset(ZoneOffset.UTC))
-      ZSearchAttributeMeta.localDateTime.decode((ldt.atOffset(ZoneOffset.UTC))) shouldEqual ldt
+      ZSearchAttributeMeta.localDateTime.decode(ldt.atOffset(ZoneOffset.UTC)) shouldEqual ldt
 
       val instant = Instant.now()
       ZSearchAttributeMeta.instant.attributeKey(keyName) shouldEqual SearchAttributeKey.forOffsetDateTime(keyName)
       ZSearchAttributeMeta.instant.encode(instant) shouldEqual (instant.atOffset(ZoneOffset.UTC))
-      ZSearchAttributeMeta.instant.decode((instant.atOffset(ZoneOffset.UTC))) shouldEqual instant
+      ZSearchAttributeMeta.instant.decode(instant.atOffset(ZoneOffset.UTC)) shouldEqual instant
 
       val ctm = new ZCurrentTimeMillis(System.currentTimeMillis())
       ZSearchAttributeMeta.currentTimeMillis.attributeKey(keyName) shouldEqual
         SearchAttributeKey.forOffsetDateTime(keyName)
       ZSearchAttributeMeta.currentTimeMillis.encode(ctm) shouldEqual (ctm.toOffsetDateTime())
-      ZSearchAttributeMeta.currentTimeMillis.decode((ctm.toOffsetDateTime(ZoneOffset.UTC))) shouldEqual ctm
+      ZSearchAttributeMeta.currentTimeMillis.decode(ctm.toOffsetDateTime(ZoneOffset.UTC)) shouldEqual ctm
     }
 
     "encode/decode containers correctly" in {
@@ -85,17 +85,17 @@ class ZSearchAttributeMetaSpec extends AnyWordSpec with Matchers {
 
       listMeta.attributeKey(keyName) shouldEqual SearchAttributeKey.forKeywordList(keyName)
       listMeta.encode(List("hello", "world")) shouldEqual (ju.Arrays.asList("hello", "world"))
-      listMeta.decode((ju.Arrays.asList("hello", "world"))) shouldEqual List("hello", "world")
+      listMeta.decode(ju.Arrays.asList("hello", "world")) shouldEqual List("hello", "world")
 
       val setMeta = ZSearchAttributeMeta[Set[String], ZSearchAttribute.Keyword]
       setMeta.attributeKey(keyName) shouldEqual SearchAttributeKey.forKeywordList(keyName)
       setMeta.encode(Set("hello", "world")) shouldEqual (ju.Arrays.asList("hello", "world"))
-      setMeta.decode((ju.Arrays.asList("hello", "world"))) shouldEqual Set("hello", "world")
+      setMeta.decode(ju.Arrays.asList("hello", "world")) shouldEqual Set("hello", "world")
 
       val arrayMeta = ZSearchAttributeMeta[Array[String], ZSearchAttribute.Keyword]
       arrayMeta.attributeKey(keyName) shouldEqual SearchAttributeKey.forKeywordList(keyName)
       arrayMeta.encode(Array("hello", "world")) shouldEqual (ju.Arrays.asList("hello", "world"))
-      arrayMeta.decode((ju.Arrays.asList("hello", "world"))) shouldEqual Array("hello", "world")
+      arrayMeta.decode(ju.Arrays.asList("hello", "world")) shouldEqual Array("hello", "world")
 
       val optionPlainMeta = ZSearchAttributeMeta.option[String, ZSearchAttribute.Plain, String]
       optionPlainMeta.attributeKey(keyName) shouldEqual SearchAttributeKey.forText(keyName)

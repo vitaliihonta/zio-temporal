@@ -21,7 +21,7 @@ class ZLocalActivityStubBuilderInitial[Res] private[zio] (buildImpl: LocalActivi
 class ZLocalActivityStubBuilder[Res] private[zio] (
   buildImpl:           LocalActivityOptions => Res,
   startToCloseTimeout: Duration,
-  additionalOptions:   LocalActivityOptions.Builder => LocalActivityOptions.Builder) {
+  additionalOptions: LocalActivityOptions.Builder => LocalActivityOptions.Builder) {
 
   def withScheduleToCloseTimeout(timeout: Duration): ZLocalActivityStubBuilder[Res] =
     copy(_.setScheduleToCloseTimeout(timeout.asJava))

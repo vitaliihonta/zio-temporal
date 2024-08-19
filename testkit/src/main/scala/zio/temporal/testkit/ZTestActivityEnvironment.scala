@@ -15,7 +15,7 @@ import scala.reflect.ClassTag
 
 class ZTestActivityEnvironment[+R] private[zio] (
   val toJava: TestActivityEnvironment,
-  runtime:    zio.Runtime[R]) {
+  runtime: zio.Runtime[R]) {
 
   implicit lazy val activityRunOptions: ZActivityRunOptions[R] =
     new ZActivityRunOptions[R](runtime, None)
@@ -153,9 +153,8 @@ object ZTestActivityEnvironment {
     * @throws TypeAlreadyRegisteredException
     *   if one of the activity types is already registered
     */
-  def addActivityImplementationService[
-    A <: AnyRef: ExtendsActivity: Tag
-  ]: URIO[ZTestActivityEnvironment[Any] with A, Unit] =
+  def addActivityImplementationService[A <: AnyRef: ExtendsActivity: Tag]
+    : URIO[ZTestActivityEnvironment[Any] with A, Unit] =
     ZIO.serviceWithZIO[ZTestActivityEnvironment[Any]](_.addActivityImplementationService)
 
   /** Creates a stub that can be used to invoke activities registered through [[addActivityImplementation]]
@@ -169,9 +168,8 @@ object ZTestActivityEnvironment {
     *   The stub builder for the activity.
     */
   @deprecated("Use newLocalActivityStub accepting ZLocalActivityOptions", since = "0.6.0")
-  def newActivityStub[
-    A <: AnyRef: IsActivity: ClassTag
-  ]: ZActivityStubBuilderInitial[URIO[ZTestActivityEnvironment[Any], A]] =
+  def newActivityStub[A <: AnyRef: IsActivity: ClassTag]
+    : ZActivityStubBuilderInitial[URIO[ZTestActivityEnvironment[Any], A]] =
     new ZActivityStubBuilderInitial[URIO[ZTestActivityEnvironment[Any], A]](
       buildImpl = options =>
         ZIO.serviceWithZIO[ZTestActivityEnvironment[Any]] { testEnv =>

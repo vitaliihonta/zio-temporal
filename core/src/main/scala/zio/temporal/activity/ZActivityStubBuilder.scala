@@ -44,7 +44,7 @@ final class ZActivityStubBuilderInitial[Res] private[zio] (buildImpl: ActivityOp
 
 @deprecated("Build ZActivityOptions and provide it directly", since = "0.6.0")
 final class ZActivityStubBuilder[Res] private[zio] (
-  buildImpl:    ActivityOptions => Res,
+  buildImpl: ActivityOptions => Res,
   buildOptions: ActivityOptions.Builder => ActivityOptions.Builder) {
 
   private def copy(options: ActivityOptions.Builder => ActivityOptions.Builder): ZActivityStubBuilder[Res] =

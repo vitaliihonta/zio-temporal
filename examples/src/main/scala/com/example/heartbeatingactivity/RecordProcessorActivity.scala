@@ -19,8 +19,8 @@ object RecordProcessorActivityImpl {
 }
 
 class RecordProcessorActivityImpl(
-  recordLoader:     RecordLoader,
-  recordProcessor:  RecordProcessor
+  recordLoader:    RecordLoader,
+  recordProcessor: RecordProcessor
 )(implicit options: ZActivityRunOptions[Any])
     extends RecordProcessorActivity {
 

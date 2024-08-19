@@ -18,8 +18,8 @@ trait TransferActivity {
 }
 
 class TransferActivityImpl(
-  depositFunc:      (String, BigDecimal) => IO[TransferError, Done],
-  withdrawFunc:     (String, BigDecimal) => IO[TransferError, Done]
+  depositFunc:  (String, BigDecimal) => IO[TransferError, Done],
+  withdrawFunc: (String, BigDecimal) => IO[TransferError, Done]
 )(implicit options: ZActivityRunOptions[Any])
     extends TransferActivity {
 

@@ -28,8 +28,7 @@ object ZWorkflowImplementationClass {
     * @return
     *   [[ZWorkflowImplementationClass]]
     */
-  def apply[
-    T: ClassTag: ExtendsWorkflow: IsConcreteClass: HasPublicNullaryConstructor
-  ]: ZWorkflowImplementationClass[T] =
+  def apply[T: ClassTag: ExtendsWorkflow: IsConcreteClass: HasPublicNullaryConstructor]
+    : ZWorkflowImplementationClass[T] =
     new ZWorkflowImplementationClass[T](ClassTagUtils.classOf[T])
 }

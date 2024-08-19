@@ -9,9 +9,10 @@ private[zio] object StubProxies {
   final class IllegalStubProxyInvocationException(msg: String) extends RuntimeException(msg)
 
   def proxy[Delegate, Proxied](
-    delegate:             Delegate
-  )(implicit delegateCtg: ClassTag[Delegate],
-    proxiedCtg:           ClassTag[Proxied]
+    delegate: Delegate
+  )(implicit
+    delegateCtg: ClassTag[Delegate],
+    proxiedCtg:  ClassTag[Proxied]
   ): Delegate with Proxied = {
     val Delegate = delegateCtg.runtimeClass
     val Proxied  = proxiedCtg.runtimeClass

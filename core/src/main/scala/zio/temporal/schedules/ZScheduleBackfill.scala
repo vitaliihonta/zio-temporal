@@ -14,8 +14,8 @@ import java.time.Instant
   *   Overlap policy to use for this backfill request.
   */
 final case class ZScheduleBackfill(
-  startAt:       Instant,
-  endAt:         Instant,
+  startAt: Instant,
+  endAt:   Instant,
   overlapPolicy: ScheduleOverlapPolicy = ScheduleOverlapPolicy.SCHEDULE_OVERLAP_POLICY_UNSPECIFIED) {
 
   /** Set the start of the range to evaluate the schedule in. This is exclusive.

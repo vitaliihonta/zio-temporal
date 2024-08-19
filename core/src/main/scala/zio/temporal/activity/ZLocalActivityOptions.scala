@@ -6,12 +6,12 @@ import zio.temporal.ZRetryOptions
 
 /** Options used to configure how a local Activity is invoked. */
 final case class ZLocalActivityOptions private[zio] (
-  scheduleToCloseTimeout:               Option[Duration],
-  startToCloseTimeout:                  Option[Duration],
-  scheduleToStartTimeout:               Option[Duration],
-  localRetryThreshold:                  Option[Duration],
-  retryOptions:                         Option[ZRetryOptions],
-  doNotIncludeArgumentsIntoMarker:      Option[Boolean],
+  scheduleToCloseTimeout:          Option[Duration],
+  startToCloseTimeout:             Option[Duration],
+  scheduleToStartTimeout:          Option[Duration],
+  localRetryThreshold:             Option[Duration],
+  retryOptions:                    Option[ZRetryOptions],
+  doNotIncludeArgumentsIntoMarker: Option[Boolean],
   private val javaOptionsCustomization: LocalActivityOptions.Builder => LocalActivityOptions.Builder) {
 
   /** @see

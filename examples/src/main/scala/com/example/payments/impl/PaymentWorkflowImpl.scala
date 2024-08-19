@@ -2,7 +2,6 @@ package com.example.payments.impl
 
 import com.example.payments.workflows.{InvalidConfirmationCodeError, PaymentActivity, PaymentWorkflow}
 import com.example.transactions._
-import io.temporal.failure.CanceledFailure
 import zio._
 import zio.temporal._
 import zio.temporal.workflow._
@@ -11,11 +10,10 @@ import zio.temporal.activity.{ZActivityOptions, ZActivityStub}
 import org.slf4j.MDC
 import zio.temporal.failure.{ActivityFailure, ApplicationFailure}
 
-import scala.concurrent.TimeoutException
 import scala.util.control.NoStackTrace
 
 case class TransactionState(
-  transaction:  TransactionView,
+  transaction: TransactionView,
   confirmation: Option[ConfirmTransactionCommand]) {}
 
 private[impl] case object ConfirmationTimeout extends Exception("Confirmation timeout") with NoStackTrace

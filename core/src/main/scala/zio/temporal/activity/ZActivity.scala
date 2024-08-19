@@ -54,9 +54,10 @@ object ZActivity {
     *   result of executing the action
     */
   def run[R, E, A](
-    action:                    ZIO[R, E, A]
-  )(implicit zactivityOptions: ZActivityRunOptions[R],
-    toApplicationFailure:      ToApplicationFailure[E]
+    action: ZIO[R, E, A]
+  )(implicit
+    zactivityOptions:     ZActivityRunOptions[R],
+    toApplicationFailure: ToApplicationFailure[E]
   ): A =
     runImpl(action)(toApplicationFailure.wrap)
 

@@ -21,9 +21,9 @@ final case class ZWorkflowClientOptions private[zio] (
   interceptors:  List[WorkflowClientInterceptor],
   identity:      Option[String],
   @deprecated("use worker's buildId instead", since = "0.3.0")
-  binaryChecksum:                       Option[String],
-  contextPropagators:                   List[ContextPropagator],
-  queryRejectCondition:                 Option[QueryRejectCondition],
+  binaryChecksum:       Option[String],
+  contextPropagators:   List[ContextPropagator],
+  queryRejectCondition: Option[QueryRejectCondition],
   private val javaOptionsCustomization: WorkflowClientOptions.Builder => WorkflowClientOptions.Builder) {
 
   /** Set the namespace

@@ -32,9 +32,9 @@ final class ZWorkflowStubBuilderWorkflowIdDsl[Res] private[zio] (
 
 @deprecated("Build ZWorkflowOptions and provide it directly", since = "0.6.0")
 final class ZWorkflowStubBuilder[Res] private[zio] (
-  buildImpl:        WorkflowOptions => Res,
-  taskQueue:        String,
-  workflowId:       String,
+  buildImpl:  WorkflowOptions => Res,
+  taskQueue:  String,
+  workflowId: String,
   additionalConfig: WorkflowOptions.Builder => WorkflowOptions.Builder) {
 
   private def copy(config: WorkflowOptions.Builder => WorkflowOptions.Builder): ZWorkflowStubBuilder[Res] =

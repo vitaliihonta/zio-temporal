@@ -14,8 +14,8 @@ ThisBuild / projectStableVersion := {
   else (ThisBuild / version).value
 }
 
-ThisBuild / organization           := "dev.vhonta"
-ThisBuild / versionScheme          := Some("early-semver")
+ThisBuild / organization  := "dev.vhonta"
+ThisBuild / versionScheme := Some("early-semver")
 
 val publishSettings = Seq(
   publishTo            := sonatypePublishToBundle.value,

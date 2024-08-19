@@ -12,10 +12,10 @@ import zio.temporal.workflow.ZWorkflowClientOptions
   *   [[WorkerFactoryOptions]]
   */
 final case class ZWorkerFactoryOptions private[zio] (
-  workflowCacheSize:                    Option[Int],
-  maxWorkflowThreadCount:               Option[Int],
-  workerInterceptors:                   List[WorkerInterceptor],
-  enableLoggingInReplay:                Option[Boolean],
+  workflowCacheSize:      Option[Int],
+  maxWorkflowThreadCount: Option[Int],
+  workerInterceptors:     List[WorkerInterceptor],
+  enableLoggingInReplay:  Option[Boolean],
   private val javaOptionsCustomization: WorkerFactoryOptions.Builder => WorkerFactoryOptions.Builder) {
 
   def withWorkflowCacheSize(value: Int): ZWorkerFactoryOptions =

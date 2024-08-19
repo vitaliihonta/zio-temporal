@@ -187,9 +187,8 @@ object ZTestWorkflowEnvironment {
     *   builder instance
     */
   @deprecated("Use newWorkflowStub accepting ZWorkerOptions", since = "0.6.0")
-  def newWorkflowStub[
-    A: ClassTag: IsWorkflow
-  ]: ZWorkflowStubBuilderTaskQueueDsl[URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Of[A]]] =
+  def newWorkflowStub[A: ClassTag: IsWorkflow]
+    : ZWorkflowStubBuilderTaskQueueDsl[URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Of[A]]] =
     new ZWorkflowStubBuilderTaskQueueDsl[URIO[ZTestWorkflowEnvironment[Any], ZWorkflowStub.Of[A]]](options =>
       ZIO.serviceWithZIO[ZTestWorkflowEnvironment[Any]] { testEnv =>
         TemporalWorkflowFacade.createWorkflowStubTyped[A](testEnv.workflowClient.toJava).apply(options)

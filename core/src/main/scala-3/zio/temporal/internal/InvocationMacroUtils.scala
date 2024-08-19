@@ -57,7 +57,7 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
   case class MethodInvocation(
     instance:   Term,
     methodName: String,
-    args:       List[Term]) {
+    args: List[Term]) {
 
     val tpe: TypeRepr         = instance.tpe.widen
     private val unwrappedType = unwrapStub(instance.tpe.widen)
@@ -117,8 +117,8 @@ class InvocationMacroUtils[Q <: Quotes](using override val q: Q) extends MacroUt
           case vd: ValDef =>
             val t = vd.tpt.tpe
             if (t =:= TypeRepr.of[Any] || t =:= TypeRepr.of[java.lang.Object])
-              Some(SharedCompileTimeMessages.TemporalMethodParameterIssue.isJavaLangObject(param.name.toString))
-              /*only if all base classes are "primitive"*/
+            Some(SharedCompileTimeMessages.TemporalMethodParameterIssue.isJavaLangObject(param.name.toString))
+            /*only if all base classes are "primitive"*/
             else if (t.baseClasses.forall(lowestBaseTypes.contains)) {
               Some(
                 SharedCompileTimeMessages.TemporalMethodParameterIssue.erasedToJavaLangObject(
