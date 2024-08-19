@@ -10,7 +10,7 @@ import scala.jdk.CollectionConverters._
   * <p>epoch + (n * every) + offset.
   */
 final case class ZScheduleIntervalSpec private[zio] (
-  every:  Duration,
+  every: Duration,
   offset: Option[Duration]) {
 
   def withOffset(value: Duration): ZScheduleIntervalSpec =
@@ -71,7 +71,7 @@ final case class ZScheduleCalendarSpec private[zio] (
   month:      List[ZScheduleRange],
   year:       List[ZScheduleRange],
   dayOfWeek:  List[ZScheduleRange],
-  comment:    Option[String]) {
+  comment: Option[String]) {
 
   def withSeconds(values: ZScheduleRange*): ZScheduleCalendarSpec =
     withSeconds(values.toList)

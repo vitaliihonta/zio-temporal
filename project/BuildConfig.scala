@@ -68,12 +68,12 @@ object BuildConfig extends Dependencies {
 trait Dependencies {
 
   private object versions {
-    val temporal   = "1.21.2"
-    val zio        = "2.0.18"
-    val zioLogging = "2.1.14"
-    val enumeratum = "1.7.3"
-    val jackson    = "2.15.2"
-    val otel       = "1.29.0"
+    val temporal   = "1.25.0"
+    val zio        = "2.1.7"
+    val zioLogging = "2.3.0"
+    val enumeratum = "1.7.4"
+    val jackson    = "2.17.2"
+    val otel       = "1.40.0"
   }
 
   object org {
@@ -117,7 +117,7 @@ trait Dependencies {
 
   object Utility {
     val scalaJava8Compat  = "org.scala-lang.modules" %% "scala-java8-compat"      % "1.0.2"
-    val collectionsCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.10.0"
+    val collectionsCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.12.0"
   }
 
   object ScalaReflect {
@@ -133,17 +133,18 @@ trait Dependencies {
   }
 
   object Testing {
-    val scalatest = "org.scalatest" %% "scalatest" % "3.2.16"
+    val scalatest = "org.scalatest" %% "scalatest" % "3.2.19"
   }
 
   object Monitoring {
-    val otelApi              = "io.opentelemetry" % "opentelemetry-api"                         % versions.otel
-    val otelExporterOtlp     = "io.opentelemetry" % "opentelemetry-exporter-otlp"               % versions.otel
-    val otelTracePropagators = "io.opentelemetry" % "opentelemetry-extension-trace-propagators" % versions.otel
-    val otelOpentracingShim  = "io.opentelemetry" % "opentelemetry-opentracing-shim"            % versions.otel
+    val otelApi              = "io.opentelemetry"         % "opentelemetry-api"                         % versions.otel
+    val otelExporterOtlp     = "io.opentelemetry"         % "opentelemetry-exporter-otlp"               % versions.otel
+    val otelTracePropagators = "io.opentelemetry"         % "opentelemetry-extension-trace-propagators" % versions.otel
+    val otelOpentracingShim  = "io.opentelemetry"         % "opentelemetry-opentracing-shim"            % versions.otel
+    val otelSemvonc          = "io.opentelemetry.semconv" % "opentelemetry-semconv"                     % "1.26.0-alpha"
 
-    val otel = Seq(otelApi, otelExporterOtlp, otelTracePropagators, otelOpentracingShim)
+    val otel = Seq(otelApi, otelExporterOtlp, otelTracePropagators, otelOpentracingShim, otelSemvonc)
 
-    val micrometerOtlp = "io.micrometer" % "micrometer-registry-otlp" % "1.11.3"
+    val micrometerOtlp = "io.micrometer" % "micrometer-registry-otlp" % "1.13.2"
   }
 }

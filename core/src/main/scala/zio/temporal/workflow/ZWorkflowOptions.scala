@@ -9,17 +9,17 @@ import scala.jdk.CollectionConverters._
 
 /** Options used to configure how a workflow is executed. */
 final case class ZWorkflowOptions private[zio] (
-  workflowId:                           String,
-  taskQueue:                            String,
-  workflowIdReusePolicy:                Option[WorkflowIdReusePolicy],
-  workflowRunTimeout:                   Option[Duration],
-  workflowExecutionTimeout:             Option[Duration],
-  workflowTaskTimeout:                  Option[Duration],
-  retryOptions:                         Option[ZRetryOptions],
-  memo:                                 Map[String, AnyRef],
-  searchAttributes:                     Option[ZSearchAttributes],
-  contextPropagators:                   List[ContextPropagator],
-  disableEagerExecution:                Option[Boolean],
+  workflowId:               String,
+  taskQueue:                String,
+  workflowIdReusePolicy:    Option[WorkflowIdReusePolicy],
+  workflowRunTimeout:       Option[Duration],
+  workflowExecutionTimeout: Option[Duration],
+  workflowTaskTimeout:      Option[Duration],
+  retryOptions:             Option[ZRetryOptions],
+  memo:                     Map[String, AnyRef],
+  searchAttributes:         Option[ZSearchAttributes],
+  contextPropagators:       List[ContextPropagator],
+  disableEagerExecution:    Option[Boolean],
   private val javaOptionsCustomization: WorkflowOptions.Builder => WorkflowOptions.Builder) {
 
   /** Workflow id to use when starting. Prefer assigning business meaningful ids if possible.

@@ -13,10 +13,10 @@ import scala.jdk.CollectionConverters._
   *   [[ScheduleClientOptions]]
   */
 final case class ZScheduleClientOptions private[zio] (
-  namespace:                            Option[String],
-  dataConverter:                        Option[DataConverter],
-  identity:                             Option[String],
-  contextPropagators:                   List[ContextPropagator],
+  namespace:          Option[String],
+  dataConverter:      Option[DataConverter],
+  identity:           Option[String],
+  contextPropagators: List[ContextPropagator],
   private val javaOptionsCustomization: ScheduleClientOptions.Builder => ScheduleClientOptions.Builder) {
 
   /** Set the namespace this client will operate on. */

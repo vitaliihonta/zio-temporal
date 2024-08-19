@@ -71,7 +71,7 @@ object ActivityWithDependenciesImpl {
 }
 
 case class ActivityWithDependenciesImpl(
-  reporterService:  ReporterService
+  reporterService: ReporterService
 )(implicit options: ZActivityRunOptions[Any])
     extends ActivityWithDependencies {
   override def reportSomething(n: Int): Unit =

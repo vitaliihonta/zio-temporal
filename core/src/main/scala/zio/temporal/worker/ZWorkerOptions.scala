@@ -23,7 +23,7 @@ final case class ZWorkerOptions private[zio] (
   stickyQueueScheduleToStartTimeout:       Option[Duration],
   disableEagerExecution:                   Option[Boolean],
   /*implies useBuildIdForVersioning as well*/
-  buildId:                              Option[String],
+  buildId: Option[String],
   private val javaOptionsCustomization: WorkerOptions.Builder => WorkerOptions.Builder) {
 
   /** @param value

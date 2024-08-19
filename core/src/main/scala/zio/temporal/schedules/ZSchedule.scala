@@ -11,7 +11,7 @@ final case class ZSchedule private[zio] (
   action: ZScheduleAction,
   spec:   ZScheduleSpec,
   policy: ZSchedulePolicy,
-  state:  ZScheduleState) {
+  state: ZScheduleState) {
 
   /** Update the action for this schedule. Required to build.
     *
@@ -103,11 +103,11 @@ object ZSchedule {
   * The [[times]] is a union represented as [[ZScheduleSpec.Times]] type. [[ZScheduleSpec.skip]] is used for exclusions
   */
 final case class ZScheduleSpec private[zio] (
-  times:        ZScheduleSpec.Times,
-  startAt:      Option[Instant],
-  endAt:        Option[Instant],
-  skip:         List[ZScheduleCalendarSpec],
-  jitter:       Option[Duration],
+  times:   ZScheduleSpec.Times,
+  startAt: Option[Instant],
+  endAt:   Option[Instant],
+  skip:    List[ZScheduleCalendarSpec],
+  jitter:  Option[Duration],
   timeZoneName: Option[String]) {
 
   /** Set the start time of the schedule, before which any matching times will be skipped. */
@@ -285,8 +285,8 @@ object ZScheduleSpec {
 
 /** Policies of a schedule. */
 final case class ZSchedulePolicy private[zio] (
-  overlap:        Option[ScheduleOverlapPolicy],
-  catchupWindow:  Option[Duration],
+  overlap:       Option[ScheduleOverlapPolicy],
+  catchupWindow: Option[Duration],
   pauseOnFailure: Option[Boolean]) {
 
   /** Set the policy for what happens when an action is started while another is still running. */
@@ -340,9 +340,9 @@ object ZSchedulePolicy {
 
 /** State of a schedule. */
 final case class ZScheduleState(
-  note:             Option[String],
-  paused:           Option[Boolean],
-  limitedAction:    Option[Boolean],
+  note:          Option[String],
+  paused:        Option[Boolean],
+  limitedAction: Option[Boolean],
   remainingActions: Option[Long]) {
 
   /** Set a human-readable message for the schedule. */

@@ -12,13 +12,13 @@ import java.time.Instant
   *   [[TestEnvironmentOptions]]
   */
 final case class ZTestEnvironmentOptions private[zio] (
-  workerFactoryOptions:                 ZWorkerFactoryOptions,
-  workflowClientOptions:                ZWorkflowClientOptions,
-  metricsScope:                         Option[Scope],
-  useExternalService:                   Option[Boolean],
-  target:                               Option[String],
-  initialTimeMillis:                    Option[Long],
-  useTimeskipping:                      Option[Boolean],
+  workerFactoryOptions:  ZWorkerFactoryOptions,
+  workflowClientOptions: ZWorkflowClientOptions,
+  metricsScope:          Option[Scope],
+  useExternalService:    Option[Boolean],
+  target:                Option[String],
+  initialTimeMillis:     Option[Long],
+  useTimeskipping:       Option[Boolean],
   private val javaOptionsCustomization: TestEnvironmentOptions.Builder => TestEnvironmentOptions.Builder) {
 
   def withWorkerFactoryOptions(value: ZWorkerFactoryOptions): ZTestEnvironmentOptions =

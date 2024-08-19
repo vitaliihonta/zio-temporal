@@ -9,20 +9,20 @@ import zio.temporal.{ZRetryOptions, ZSearchAttribute, ZSearchAttributes}
 import scala.jdk.CollectionConverters._
 
 final case class ZChildWorkflowOptions private[zio] (
-  workflowId:                           String,
-  namespace:                            Option[String],
-  workflowIdReusePolicy:                Option[WorkflowIdReusePolicy],
-  workflowRunTimeout:                   Option[Duration],
-  workflowExecutionTimeout:             Option[Duration],
-  workflowTaskTimeout:                  Option[Duration],
-  taskQueue:                            Option[String],
-  retryOptions:                         Option[ZRetryOptions],
-  parentClosePolicy:                    Option[ParentClosePolicy],
-  memo:                                 Map[String, AnyRef],
-  searchAttributes:                     Option[ZSearchAttributes],
-  contextPropagators:                   List[ContextPropagator],
-  cancellationType:                     Option[ChildWorkflowCancellationType],
-  versioningIntent:                     Option[VersioningIntent],
+  workflowId:               String,
+  namespace:                Option[String],
+  workflowIdReusePolicy:    Option[WorkflowIdReusePolicy],
+  workflowRunTimeout:       Option[Duration],
+  workflowExecutionTimeout: Option[Duration],
+  workflowTaskTimeout:      Option[Duration],
+  taskQueue:                Option[String],
+  retryOptions:             Option[ZRetryOptions],
+  parentClosePolicy:        Option[ParentClosePolicy],
+  memo:                     Map[String, AnyRef],
+  searchAttributes:         Option[ZSearchAttributes],
+  contextPropagators:       List[ContextPropagator],
+  cancellationType:         Option[ChildWorkflowCancellationType],
+  versioningIntent:         Option[VersioningIntent],
   private val javaOptionsCustomization: ChildWorkflowOptions.Builder => ChildWorkflowOptions.Builder) {
 
   /** Workflow id to use when starting. Prefer assigning business meaningful ids if possible.

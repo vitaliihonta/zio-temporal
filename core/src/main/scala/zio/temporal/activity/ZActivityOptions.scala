@@ -9,16 +9,16 @@ import scala.jdk.CollectionConverters._
 
 /** Options used to configure how an activity is invoked. */
 final case class ZActivityOptions private[zio] (
-  heartbeatTimeout:                     Option[Duration],
-  scheduleToCloseTimeout:               Option[Duration],
-  scheduleToStartTimeout:               Option[Duration],
-  startToCloseTimeout:                  Option[Duration],
-  taskQueue:                            Option[String],
-  retryOptions:                         Option[ZRetryOptions],
-  contextPropagators:                   List[ContextPropagator],
-  cancellationType:                     Option[ActivityCancellationType],
-  disableEagerExecution:                Option[Boolean],
-  versioningIntent:                     Option[VersioningIntent],
+  heartbeatTimeout:       Option[Duration],
+  scheduleToCloseTimeout: Option[Duration],
+  scheduleToStartTimeout: Option[Duration],
+  startToCloseTimeout:    Option[Duration],
+  taskQueue:              Option[String],
+  retryOptions:           Option[ZRetryOptions],
+  contextPropagators:     List[ContextPropagator],
+  cancellationType:       Option[ActivityCancellationType],
+  disableEagerExecution:  Option[Boolean],
+  versioningIntent:       Option[VersioningIntent],
   private val javaOptionsCustomization: ActivityOptions.Builder => ActivityOptions.Builder) {
 
   /** Maximum time of a single Activity attempt.

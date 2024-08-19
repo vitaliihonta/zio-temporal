@@ -17,7 +17,7 @@ object ZChildWorkflowStubBuilder {
 
 @deprecated("Build ZChildWorkflowOptions and provide it directly", since = "0.6.0")
 class ZChildWorkflowStubBuilder[Res] private[zio] (
-  buildImpl:         ChildWorkflowOptions => Res,
+  buildImpl: ChildWorkflowOptions => Res,
   additionalOptions: ChildWorkflowOptions.Builder => ChildWorkflowOptions.Builder) {
 
   def withNamespace(namespace: String): ZChildWorkflowStubBuilder[Res] =

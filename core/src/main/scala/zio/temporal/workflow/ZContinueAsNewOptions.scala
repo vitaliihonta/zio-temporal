@@ -11,13 +11,13 @@ import scala.jdk.CollectionConverters._
   * option should be taken from the originating workflow run.
   */
 final case class ZContinueAsNewOptions private[zio] (
-  workflowRunTimeout:                   Option[Duration],
-  taskQueue:                            Option[String],
-  workflowTaskTimeout:                  Option[Duration],
-  memo:                                 Map[String, AnyRef],
-  searchAttributes:                     Option[ZSearchAttributes],
-  contextPropagators:                   List[ContextPropagator],
-  versioningIntent:                     Option[VersioningIntent],
+  workflowRunTimeout:  Option[Duration],
+  taskQueue:           Option[String],
+  workflowTaskTimeout: Option[Duration],
+  memo:                Map[String, AnyRef],
+  searchAttributes:    Option[ZSearchAttributes],
+  contextPropagators:  List[ContextPropagator],
+  versioningIntent:    Option[VersioningIntent],
   private val javaOptionsCustomization: ContinueAsNewOptions.Builder => ContinueAsNewOptions.Builder) {
 
   /** @see

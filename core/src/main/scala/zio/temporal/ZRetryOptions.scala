@@ -9,11 +9,11 @@ import io.temporal.common.RetryOptions
   *   [[RetryOptions]]
   */
 final case class ZRetryOptions private[zio] (
-  maximumAttempts:                      Option[Int],
-  initialInterval:                      Option[Duration],
-  backoffCoefficient:                   Option[Double],
-  maximumInterval:                      Option[Duration],
-  doNotRetry:                           Seq[String],
+  maximumAttempts:    Option[Int],
+  initialInterval:    Option[Duration],
+  backoffCoefficient: Option[Double],
+  maximumInterval:    Option[Duration],
+  doNotRetry:         Seq[String],
   private val javaOptionsCustomization: RetryOptions.Builder => RetryOptions.Builder) {
 
   /** When exceeded the amount of attempts, stop. Even if expiration time is not reached. Default is unlimited.

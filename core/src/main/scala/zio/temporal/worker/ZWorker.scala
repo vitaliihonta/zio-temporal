@@ -331,8 +331,8 @@ object ZWorker {
       * @see
       *   [[Worker#registerWorkflowImplementationTypes]]
       */
-    def fromClass(
-      implicit ctg:                ClassTag[I],
+    def fromClass(implicit
+      ctg:                         ClassTag[I],
       isConcreteClass:             IsConcreteClass[I],
       hasPublicNullaryConstructor: HasPublicNullaryConstructor[I]
     ): ZWorker.Add[Nothing, Any] =
@@ -352,8 +352,9 @@ object ZWorker {
       *   [[Worker#registerWorkflowImplementationTypes]]
       */
     def fromClass(
-      cls:                         Class[I]
-    )(implicit isConcreteClass:    IsConcreteClass[I],
+      cls: Class[I]
+    )(implicit
+      isConcreteClass:             IsConcreteClass[I],
       hasPublicNullaryConstructor: HasPublicNullaryConstructor[I]
     ): ZWorker.Add[Nothing, Any] =
       new ZIOAspect[Nothing, Any, Nothing, Any, ZWorker, ZWorker] {
@@ -426,8 +427,8 @@ object ZWorker {
       * @see
       *   [[Worker#registerWorkflowImplementationTypes]]
       */
-    def fromClass(
-      implicit ctg:                ClassTag[I],
+    def fromClass(implicit
+      ctg:                         ClassTag[I],
       isConcreteClass:             IsConcreteClass[I],
       hasPublicNullaryConstructor: HasPublicNullaryConstructor[I]
     ): UIO[ZWorker] =
@@ -440,8 +441,9 @@ object ZWorker {
       *   [[Worker#registerWorkflowImplementationTypes]]
       */
     def fromClass(
-      cls:                         Class[I]
-    )(implicit isConcreteClass:    IsConcreteClass[I],
+      cls: Class[I]
+    )(implicit
+      isConcreteClass:             IsConcreteClass[I],
       hasPublicNullaryConstructor: HasPublicNullaryConstructor[I]
     ): UIO[ZWorker] = {
       ZIO.succeed {

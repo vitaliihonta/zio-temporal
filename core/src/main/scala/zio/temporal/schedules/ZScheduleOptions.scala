@@ -9,7 +9,7 @@ final case class ZScheduleOptions private[zio] (
   triggerImmediately: Boolean,
   backfills:          List[ZScheduleBackfill],
   memo:               Map[String, AnyRef],
-  searchAttributes:   Option[ZSearchAttributes]) {
+  searchAttributes: Option[ZSearchAttributes]) {
 
   /** Set if the schedule will be triggered immediately upon creation. */
   def withTriggerImmediately(value: Boolean): ZScheduleOptions =
