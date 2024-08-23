@@ -110,11 +110,11 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.`export`.SimpleSpanProcessor
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
 import io.opentelemetry.extension.trace.propagation.OtTracePropagator
-import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
+import io.opentelemetry.semconv.ServiceAttributes
 
 val tracingOptions: OpenTracingOptions = {
   val selfResource = Resource.getDefault.merge(
-    Resource.create(Attributes.of(ResourceAttributes.SERVICE_NAME, "<resource-name>"))
+    Resource.create(Attributes.of(ServiceAttributes.SERVICE_NAME, "<resource-name>"))
   )
   
   val spanProcessor = SimpleSpanProcessor.create(
