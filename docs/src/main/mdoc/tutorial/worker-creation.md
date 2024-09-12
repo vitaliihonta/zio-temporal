@@ -209,7 +209,7 @@ so it needs a `ZWorkerFactory` and a `Scope` to run.  Conveniently, `ZIOAppDefau
 provideSome[Scope](???)
 ```
 
-Where `???` will be all the dependencies that we do provide.  In fact you can leave the value parameter list empty and the Scala compiler will helpfully tell you which dependencies are missing.  This is valuable here, because although we know we must provide a `ZWorkerFactory`, it turns out that `ZWorkerFactor` has its own dependencies.  `ZWorkflowClient` and `ZWorkflowServiceStubs` are necessary for connecting to the Temporal server.
+where `???` will be all the dependencies that we do provide.  In fact you can leave the value parameter list empty and the Scala compiler will helpfully tell you which dependencies are missing.  This is valuable here, because although we know we must provide a `ZWorkerFactory`, it turns out that `ZWorkerFactor` has its own dependencies.  `ZWorkflowClient` and `ZWorkflowServiceStubs` are necessary for connecting to the Temporal server.
 
 In addition to these three types, each requires a configuration object, whose corresponding name is the same with `Options` appended.
 

@@ -1,12 +1,12 @@
 # A Working Environment for This Tutorial
 
-The previous section mentioned the various background knowledged assumed in the following sections.  This section gives instructions for preparing a local environment where you can experiment with the features of ZIO-Temporal for yourself as you read along.
+The previous section mentioned the various background knowledged assumed in later sections.  This section gives instructions for preparing a local environment where you can experiment with the features of ZIO-Temporal for yourself as you read along.
 
 To try the examples in this tutorial, you will need the ZIO-Temporal library as well as a running Temporal server.  There are different ways to do this, but here some suggestions.
 
 ## Install Scala, Java, and SBT
 
-You will need to have Scala and SBT available, as well as the Java Development Kit.  The examples in this book were tested with Scala version 3 and Java version 17.
+You will need to have Scala and SBT available, as well as the Java Development Kit.  The examples in this tutorial were tested with Scala version 3 and Java version 17.
 
 There are multiple ways to install Scala, SBT, and Java described on the [Scala official website](https://scala-lang.org/download/).  The easiest is probably to use `Coursier`, which can install all Scala development components with a single `setup` command.  Complete installation instructions are on  [the Coursier website](https://get-coursier.io/docs/cli-installation).
 
