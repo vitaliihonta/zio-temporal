@@ -74,7 +74,7 @@ const sidebars = {
         {
           type: "doc",
           id: "tutorial/tutorial-intro",
-          label: "Background Review"
+          label: "Background Prerequisites"
         },
         {
           type: "doc",

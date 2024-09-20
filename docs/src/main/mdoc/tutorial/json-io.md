@@ -34,11 +34,11 @@ ZWorkflowStub.execute(helloWorld("Alice", "ice cream"))
 
 There are a number of problems with doing it this way.  For one thing, a Workflow with many parameters can have an unweildy method signature.  Another problem is that changing the parameters will change the signature which means that all invocations must also be changed.  Even more complicating is the fact that Workflows may be very long running—months or years—and the signature of the Workflow method may change while Workflows are running.
 
-A way to simplify the situation is to declare the Workflow method to have a single parameter of a custom type.  That type can be as complex as we need, and we can change its definition without changing the signature of the method that takes it.  For our simple two-`String` example, we can use a Scala [_product type_](https://en.wikipedia.org/wiki/Product_type), implemented as `case class`.
+A way to simplify the situation is to declare the Workflow method to have a single parameter of a custom type.  That type can be as complex as we need, and we can change its definition without changing the signature of the method that takes it.  For our simple two-`String` example, we can use a Scala [_product type_](https://en.wikipedia.org/wiki/Product_type), implemented as [`case class`](https://docs.scala-lang.org/tour/case-classes.html#inner-main).
 
-A product type contains one each of a fixed number of values of specified types.  It is called a product type because the total number of possible values is the product of the number of possible values of each member type.  For example, a value of type `Boolean` has two possible values: `true` and `false`.  A product type containing two `Boolean` values has four possible values because four is the product of two times two: `(true, true)`, `(true, false)`, `(false, true)`, and `(false, false)`.  A product type containing a `Boolean` and a `Byte` would have a number of possible values equal to the number of possible `Boolean` values times the number of possible `Byte` values or 2 × 256.
+A product type contains one each of a fixed number of values of specified types.  It is called a product type because the total number of possible values is the product of the number of possible values of each member type.  For example, a value of type `Boolean` has two possible values: `true` and `false`.  A product type containing two `Boolean` values has four possible values because four is the product of two times two: `(true, true)`, `(true, false)`, `(false, true)`, and `(false, false)`.  A product type containing a `Boolean` and a `Byte` would have a number of possible values equal to the number of possible `Boolean` values times the number of possible `Byte` values or the _product_ of 2 × 256.
 
-(This is in distinction to a [_sum type_](https://en.wikipedia.org/wiki/Tagged_union), which contains only one of a fixed number of values of any specified types, so the total number of possible values is the sum of the number of possible values of each member’s type.  An example of a sum type in Scala is `Either`.)
+(This is in distinction to a [_sum type_](https://en.wikipedia.org/wiki/Tagged_union), which contains only one of a fixed number of values of any specified types, so the total number of possible values is the sum of the number of possible values of each member’s type.  An example of a sum type in Scala is [`Either`](https://www.scala-lang.org/api/current/scala/util/Either.html).)
 
 Since we want the Workflow method to have two `String` parameters, we can use a single product type with two `String` members, defined like this:
 
@@ -112,3 +112,5 @@ Be certain that the values for "Task Queue" and "Workflow Type" match those in t
 ![_Input and Results_](img/input-and-results-json.png)
 
 The `String` result of the Workflow Execution is what we wanted.  Now you know how to use an arbitrary Scala type as the input parameter for a Temporal Workflow.  You can change the definition of that type without changing the signature of the Workflow method that takes it.
+
+In the next section you will learn how to include Activities in a Workflow.
