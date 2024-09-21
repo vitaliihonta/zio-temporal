@@ -85,7 +85,7 @@ ZWorker.addWorkflow[HelloWorldImpl].fromClass
 
 This expression makes little sense without the Worker to which it applies, and for that application the value returned by this expression is an _aspect_.  Aspect Oriented Programming (AOP) is [a vast subject](https://en.wikipedia.org/wiki/Aspect-oriented_programming) far beyond the scope of this tutorial, but in general an aspect is a “transformer” that modifies the behavior of its input in some well-defined way.  Here, this aspect is a transformer to modify a Worker by configuring it to handle Workflows of type `HelloWorld`.
 
-Understand that the expression above does not return a `ZIO` instance, but rather a [`ZIOAspect`](https://javadoc.io/doc/dev.zio/zio_3/latest/zio/ZIOAspect$.html).  You apply a `ZIOAspect` to a `ZIO` using the [`@@`](https://javadoc.io/doc/dev.zio/zio_3/latest/zio/ZIO.html#@@-fffff765) operator.
+Understand that the expression above does not return a `ZIO` instance, but rather a [`ZIOAspect`](https://javadoc.io/doc/dev.zio/zio_3/latest/zio/ZIOAspect$.html).  You apply a `ZIOAspect` to a `ZIO` using the [`@@`](https://javadoc.io/doc/dev.zio/zio_3/latest/zio/ZIO.html#@@-fffff765) (apply-aspect) operator.
 
 So if we combine the invocations of `newWorker()` and `addWorkflow[]` like this:
 
