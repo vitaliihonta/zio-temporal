@@ -53,7 +53,7 @@ A Temporal Worker must be configured to know which Workflows it supports, becaus
 
 Recall that a Temporal Workflow definition comprises (1) an annotated Scala trait that declares the Workflow methods, and (2) a class that implements those methods.  When you want to invoke methods of your Workflow, rather than constructing an instance of the Workflow class yourself, the Temporal library will do it for you and give you a proxy stub that implements the Workflow trait.  You can invoke methods on that stub and the Temporal infrastructure will forward the invocation to the Temporal server, to a Queue, from where a Worker will pick it up and then invoke the method on a real instance of your implementing class (which might be running on a different machine than the stub).
 
-All this happens behind the scenes so you need not worry about it; to you it’s as if you are working directly with an instance of the Workflow class.  But in order for all this to happen, the Worker must be configured with the type of that Workflow class.  The `addworkflow[]` method is the way to do this configuration.
+All this happens behind the scenes so you need not worry about it; to you it’s as if you are working directly with an instance of the Workflow class.  But in order for all this to happen, the Worker must be configured with the type of that Workflow class.  The `addWorkflow[]` method is the way to do this configuration.
 
 In the previous section we defined a Workflow comprising a trait named `HelloWorld` and an implementing class `HelloWorldImpl`:
 
@@ -213,7 +213,7 @@ so it needs a `ZWorkerFactory` and a `Scope` to run.  Conveniently, `ZIOAppDefau
 provideSome[Scope](???)
 ```
 
-where `???` will be all the dependencies that we do provide.  In fact you can leave the value parameter list empty and helpfully the Scala compiler will tell you which dependencies are missing.  This is valuable here, because although we know we must provide a `ZWorkerFactory`, it turns out that `ZWorkerFactor` has its own dependencies.  `ZWorkflowClient` and `ZWorkflowServiceStubs` are necessary for connecting to the Temporal server.
+where `???` will be all the dependencies that we do provide.  In fact you can leave the value parameter list empty and helpfully the Scala compiler will tell you which dependencies are missing.  This is valuable here, because although we know we must provide a `ZWorkerFactory`, it turns out that `ZWorkerFactory` has its own dependencies.  `ZWorkflowClient` and `ZWorkflowServiceStubs` are necessary for connecting to the Temporal server.
 
 In addition to these three types, each requires a configuration object, whose corresponding name is the same with `Options` appended.
 
@@ -310,7 +310,7 @@ There is not much terminal output, but you can confirm that the Worker has conne
 http://localhost:8233/namespaces/default/task-queues/my-task-queue
 ```
 
-where the final path segment is the name of the Task Queue that was passed as the argument to the `ZWorkerfactory.newWorker()` method in the Scala program.
+where the final path segment is the name of the Task Queue that was passed as the argument to the `ZWorkerFactory.newWorker()` method in the Scala program.
 
 Now that the Worker is running, try to start a Workflow using the Temporal web GUI.  Look for the [![_Start Workflow_](img/start-workflow-button.png)](http://localhost:8233/namespaces/default/workflows/start-workflow) button near the upper right of the GUI window.  Clicking it will bring you to a form into which you can enter the Workflow details.
 

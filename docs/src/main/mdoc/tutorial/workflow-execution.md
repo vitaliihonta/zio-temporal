@@ -30,7 +30,7 @@ If you focus on what your program does in this diagram, it’s quite simple; onl
 
 Everything else in the diagram happens automatically, and this automatic process can do even more for you when there are problems that Temporal hides from you, for example automatically retrying tasks in the case of intermittent failures.
 
-So once you know how to take these two simple steps you will be able to write a program that starts a Workflow execution.  The first step is to aquire a stub instance of your Workflow trait.
+So once you know how to take these two simple steps you will be able to write a program that starts a Workflow execution.  The first step is to acquire a stub instance of your Workflow trait.
 
 ## Invoke the Workflow Method on the Stub, Not on the Implementation
 
@@ -160,9 +160,9 @@ It’s a good idea to use Workflow identifiers that distinguish Workflow Executi
 workflowID = s"hello-$time"
 ```
 
-will define a `String` variable whose value is an informative and unique indentifier for a Workflow Execution.
+will define a `String` variable whose value is an informative and unique identifier for a Workflow Execution.
 
-But where do we get the `time`?  We could use the Java standard library to get the current system time, but when programming with ZIO we have another option.  One problem with using a non-deterministic method that returns a different value with each invocation is that it makes testing more complicated, because the result of such a method might raise an error in one test run and then be unreproducable later.
+But where do we get the `time`?  We could use the Java standard library to get the current system time, but when programming with ZIO we have another option.  One problem with using a non-deterministic method that returns a different value with each invocation is that it makes testing more complicated, because the result of such a method might raise an error in one test run and then be unreproducible later.
 
 To avoid this situation, ZIO provides some services that can behave as expected when running in production, but that come with test implementations that can produce the same values every time they are invoked.  One such service is [`Clock`](https://javadoc.io/doc/dev.zio/zio_3/latest/zio/Clock$.html), which has a [`currentDateTime`](https://javadoc.io/static/dev.zio/zio_3/2.1.9/zio/Clock$.html#currentDateTime-63f) method that returns a
 
@@ -265,7 +265,7 @@ The type of the inner `for` expression is:
 ZIO[Any, TemporalException, String]
 ```
 
-By applying `serviceWithZio[]` to the `for` expression, we added the `ZWorkflowClient` dependency to the effect type, and now the ZIO infrastructre will ensure that this dependency is available to the program at compile time.
+By applying `serviceWithZIO[]` to the `for` expression, we added the `ZWorkflowClient` dependency to the effect type, and now the ZIO infrastructure will ensure that this dependency is available to the program at compile time.
 
 Next, consider that the input value to this workflow (`"Alice"`) is hard-coded in the `for` expression.  Let’s instead use a command-line argument to provide that value for the Workflow Execution.
 

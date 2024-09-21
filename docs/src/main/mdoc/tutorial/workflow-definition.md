@@ -25,7 +25,7 @@ These annotations are provided by the [zio.temporal](https://zio-temporal.vhonta
 
 ## Workflows, Tasks, and Activities
 
-Conceptially, a Workflow is a sequence of steps to be performed until completion or failure.  These steps are called _Tasks_, and are of two sorts: [Workflow Tasks](https://docs.temporal.io/workers#workflow-task) and [Activity Tasks](https://docs.temporal.io/workers#activity-task).  By analogy, Workflow Tasks correspond to pure functions: they are deterministic and idempotent with no external side effects.  Activity Tasks correspond to impure functions because they can have side effects.
+Conceptually, a Workflow is a sequence of steps to be performed until completion or failure.  These steps are called _Tasks_, and are of two sorts: [Workflow Tasks](https://docs.temporal.io/workers#workflow-task) and [Activity Tasks](https://docs.temporal.io/workers#activity-task).  By analogy, Workflow Tasks correspond to pure functions: they are deterministic and idempotent with no external side effects.  Activity Tasks correspond to impure functions because they can have side effects.
 
 Temporal needs to distinguish these two types of tasks for the purpose of replaying a Workflow when necessary.  The results of Activities are persisted on the Temporal Server so that if the Worker crashes, for example, the result of any completed Activity is not lost and the Workflow can resume without repeating any side-effects that produced the value returned by the Activity Task.  On the other hand, Workflow Tasks are deterministic and therefore safe to repeat; thus their results are not persisted on the Temporal Server but rather re-calculated if a Workflow is replayed.
 

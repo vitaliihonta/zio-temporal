@@ -32,7 +32,7 @@ and invoke the workflow like this:
 ZWorkflowStub.execute(helloWorld("Alice", "ice cream"))
 ```
 
-There are a number of problems with doing it this way.  For one thing, a Workflow with many parameters can have an unweildy method signature.  Another problem is that changing the parameters will change the signature which means that all invocations must also be changed.  Even more complicating is the fact that Workflows may be very long running—months or years—and the signature of the Workflow method may change while Workflows are running.
+There are a number of problems with doing it this way.  For one thing, a Workflow with many parameters can have an unwieldy method signature.  Another problem is that changing the parameters will change the signature which means that all invocations must also be changed.  Even more complicating is the fact that Workflows may be very long running—months or years—and the signature of the Workflow method may change while Workflows are running.
 
 A way to simplify the situation is to declare the Workflow method to have a single parameter of a custom type.  That type can be as complex as we need, and we can change its definition without changing the signature of the method that takes it.  For our simple two-`String` example, we can use a Scala [_product type_](https://en.wikipedia.org/wiki/Product_type), implemented as [`case class`](https://docs.scala-lang.org/tour/case-classes.html#inner-main).
 

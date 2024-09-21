@@ -27,10 +27,10 @@ Confirm it’s online by pointing your browser to [your localhost port 8233](htt
 
 ZIO-Temporal applications depend on [the ZIO-Temporal library](https://zio.dev/ecosystem/community/zio-temporal/).  The Scala build tool [SBT](https://www.scala-sbt.org/) can manage library dependencies.  As mentioned earlier, the build file is named `build.sbt` and it goes in the root folder of the project.  The Scala source files go in the folder `src/main/scala` under the project root.
 
-Configuration for the build goes in the `build.sbt` file, and we already showed an example of configuring the Scala verson with a key-value pair:
+Configuration for the build goes in the `build.sbt` file, and we already showed an example of configuring the Scala version with a key-value pair:
 
 ```scala
-scalaVersion := "3.5.0"
+scalaVersion := "3.5.1"
 ```
 
 The `:=` operator above assigns the value on the right to the configuration setting named on the left.  Similarly, you can configure the project’s library dependencies using the `libraryDependencies` key.  The operator `+=` will add the value on the right to a collection named on the left.  To add multiple values (the library dependencies) you can use the `++=` operator applied to a collection of values on the right, in this case a [`Seq`](https://www.scala-lang.org/api/current/scala/collection/immutable/Seq$.html):
@@ -51,7 +51,7 @@ Now that you have your tutorial environment set up, our first topic will be how 
 This is a `build.sbt` file that will work for all the examples in this tutorial:
 
 ```scala title="build.sbt"
-scalaVersion := "3.5.0"
+scalaVersion := "3.5.1"
 
 libraryDependencies ++= Seq(
   "dev.vhonta" %% "zio-temporal-core" % "0.6.1",
