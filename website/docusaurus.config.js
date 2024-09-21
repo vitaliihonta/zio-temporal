@@ -20,9 +20,10 @@ const siteConfig = {
       },
     ],
   ],
+  themes: ['@docusaurus/theme-mermaid'],
   themeConfig: {
     prism: {
-      theme: require('prism-react-renderer/themes/nightOwl'),
+      theme: require('prism-react-renderer').themes.nightOwl,
       additionalLanguages: [
         'java',
         'scala',
@@ -100,6 +101,9 @@ const siteConfig = {
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Vitalii Honta`,
     }
+  },
+  markdown: {
+      mermaid: true,
   }
 };
 
